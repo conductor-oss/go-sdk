@@ -1,0 +1,47 @@
+version: "2"
+
+linters:
+  enable:
+    # Bugs and errors
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - misspell
+    - revive
+    # Performance
+    - prealloc
+    # Complexity
+    - gocyclo
+    - gocognit
+    # Security
+    - gosec
+
+  settings:
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+    govet:
+      enable:
+        - shadow
+    gocyclo:
+      min-complexity: 15
+
+  exclusions:
+    paths:
+      - ".*_test.go"
+      - ".*_mock.go"
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+run:
+  timeout: 10m
+  issues-exit-code: 1
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
