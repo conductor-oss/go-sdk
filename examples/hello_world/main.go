@@ -4,7 +4,7 @@ import (
 	hello_world "examples/hello_world/src"
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/conductor-sdk/conductor-go/sdk/log"
 
 	"github.com/conductor-sdk/conductor-go/sdk/client"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
@@ -27,7 +27,7 @@ func main() {
 	wf := hello_world.CreateWorkflow(workflowExecutor)
 	err := wf.Register(true)
 	if err != nil {
-		log.Error(err.Error())
+		log.Error("Failed to register workflow", "error", err)
 		return
 	}
 	// Till Here after registering the workflow
@@ -44,14 +44,14 @@ func main() {
 	)
 
 	if err != nil {
-		log.Error(err.Error())
+		log.Error("Failed to start workflow", "error", err)
 		return
 	}
-	log.Info("Started workflow with Id: ", id)
+	log.Info("Started workflow", "id", id)
 
 	// Get a channel to monitor the workflow execution -
 	// Note: This is useful in case of short duration workflows that completes in few seconds.
 	channel, _ := workflowExecutor.MonitorExecution(id)
 	run := <-channel
-	log.Info("Output of the workflow: ", run.Output)
+	log.Info("Output of the workflow", "output", run.Output)
 }

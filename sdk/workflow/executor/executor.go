@@ -23,7 +23,7 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/event/queue"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/conductor-sdk/conductor-go/sdk/log"
 )
 
 type WorkflowExecutor struct {
@@ -123,7 +123,7 @@ func (e *WorkflowExecutor) StartWorkflow(startWorkflowRequest *model.StartWorkfl
 // which can be used to monitor the completion of the workflow execution.  The channel is available if monitorExecution is set
 func (e *WorkflowExecutor) StartWorkflows(monitorExecution bool, startWorkflowRequests ...*model.StartWorkflowRequest) []*RunningWorkflow {
 	amount := len(startWorkflowRequests)
-	log.Debug(fmt.Sprintf("Starting %d workflows", amount))
+	log.Debug("Starting workflows", "count", amount)
 	startingWorkflowChannel := make([]chan *RunningWorkflow, amount)
 	for idx := 0; idx < len(startWorkflowRequests); {
 		var waitGroup sync.WaitGroup
@@ -138,7 +138,7 @@ func (e *WorkflowExecutor) StartWorkflows(monitorExecution bool, startWorkflowRe
 	for i := 0; i < amount; i += 1 {
 		startedWorkflows[i] = <-startingWorkflowChannel[i]
 	}
-	log.Debug(fmt.Sprintf("Started %d workflows", amount))
+	log.Debug("Started workflows", "count", amount)
 	return startedWorkflows
 }
 

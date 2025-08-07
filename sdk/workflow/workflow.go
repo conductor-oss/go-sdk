@@ -11,9 +11,10 @@ package workflow
 
 import (
 	"encoding/json"
+
+	"github.com/conductor-sdk/conductor-go/sdk/log"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/sdk/workflow/executor"
-	log "github.com/sirupsen/logrus"
 )
 
 type TimeoutPolicy string
@@ -277,7 +278,7 @@ func getInputAsMap(input interface{}) map[string]interface{} {
 	if err != nil {
 		log.Debug(
 			"Failed to parse input",
-			", reason: ", err.Error(),
+			"reason", err,
 		)
 		return nil
 	}

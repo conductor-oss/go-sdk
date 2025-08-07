@@ -13,11 +13,11 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/conductor-sdk/conductor-go/sdk/settings"
-	log "github.com/sirupsen/logrus"
-
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+
+	"github.com/conductor-sdk/conductor-go/sdk/log"
+	"github.com/conductor-sdk/conductor-go/sdk/settings"
 )
 
 var collectionEnabled bool = false
@@ -40,7 +40,7 @@ func ProvideMetrics(metricsSettings *settings.MetricsSettings) {
 		prometheus.MustRegister(gaugeByName[metricName])
 	}
 	collectionEnabled = true
-	
+
 	http.Handle(
 		metricsSettings.ApiEndpoint,
 		promhttp.HandlerFor(
@@ -60,9 +60,9 @@ func handlePanicError(message string) {
 		return
 	}
 	IncrementUncaughtException(message)
-	log.Warning(
+	log.Error(
 		"Uncaught panic",
-		", message: ", message,
-		", error: ", err,
+		"message", message,
+		"error", err,
 	)
 }
