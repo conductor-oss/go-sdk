@@ -60,7 +60,7 @@ func handlePanicError(message string) {
 		return
 	}
 	IncrementUncaughtException(message)
-	log.Error(
+	log.Warn(
 		"Uncaught panic",
 		"message", message,
 		"error", err,

@@ -73,7 +73,7 @@ func ConvertToMap(input interface{}) (map[string]interface{}, error) {
 	}
 	data, err := json.Marshal(input)
 	if err != nil {
-		log.Error(
+		log.Warn(
 			"Failed to parse input",
 			"reason", err,
 		)
