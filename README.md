@@ -259,8 +259,8 @@ INFO[0000] Started 1 worker(s) for taskName greet, polling in interval of 100 ms
 INFO[0000] Started workflow with Id:14a9fcc5-3d74-11ef-83dc-acde48001122 
 INFO[0000] Output of the workflow:map[Greetings:Hello, Gopher] 
 ```
-
 # Further Reading
 
 - [Writing Workers with the Go SDK](docs/workers_sdk.md)
 - [Authoring Workflows with the Go SDK](docs/workflow_sdk.md)
+- [Logging Configuration](docs/logger_sdk.md)

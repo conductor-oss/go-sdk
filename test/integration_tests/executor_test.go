@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/conductor-sdk/conductor-go/sdk/log"
-	"github.com/conductor-sdk/conductor-go/sdk/workflow/executor"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/conductor-sdk/conductor-go/sdk/log"
+	"github.com/conductor-sdk/conductor-go/sdk/workflow/executor"
 
 	"github.com/conductor-sdk/conductor-go/sdk/client"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
@@ -481,31 +482,31 @@ func registerComplexWorkflows() {
 	// Subworkflow-2
 	wfDef, err := getWorkflowDef("complex_wf_signal_test_subworkflow_2.json")
 	if err != nil {
-		log.Fatalf("Failed to get workflow definition: %v", err)
+		log.Fatal("Failed to get workflow definition", "error", err)
 	}
 	err = executor.RegisterWorkflow(true, wfDef)
 	if err != nil {
-		log.Fatalf("Failed to register workflow: %v", err)
+		log.Fatal("Failed to register workflow", "error", err)
 	}
 
 	// Subworkflow-1
 	wfDef, err = getWorkflowDef("complex_wf_signal_test_subworkflow_1.json")
 	if err != nil {
-		log.Fatalf("Failed to get workflow definition: %v", err)
+		log.Fatal("Failed to get workflow definition", "error", err)
 	}
 	err = executor.RegisterWorkflow(true, wfDef)
 	if err != nil {
-		log.Fatalf("Failed to register workflow: %v", err)
+		log.Fatal("Failed to register workflow", "error", err)
 	}
 
 	// Main WF
 	wfDef, err = getWorkflowDef("complex_wf_signal_test.json")
 	if err != nil {
-		log.Fatalf("Failed to get workflow definition: %v", err)
+		log.Fatal("Failed to get workflow definition", "error", err)
 	}
 	err = executor.RegisterWorkflow(true, wfDef)
 	if err != nil {
-		log.Fatalf("Failed to register workflow: %v", err)
+		log.Fatal("Failed to register workflow", "error", err)
 	}
 }
 

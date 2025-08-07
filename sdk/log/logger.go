@@ -1,35 +1,56 @@
 package log
 
-import "go.uber.org/zap"
-
-var (
-	sugar *zap.SugaredLogger
-)
+var defaultLogger Logger
 
 func init() {
-	logger, err := zap.NewProduction()
-	if err != nil {
-		panic("failed to initialize zap logger: " + err.Error()) // Handle error appropriately
-	}
-	defer logger.Sync() // flushes buffer, if any
-	sugar = logger.Sugar()
+	defaultLogger = NewStd(nil)
 }
 
+// Logger is an interface for logging.
+type Logger interface {
+	Debug(args ...interface{})
+	Info(args ...interface{})
+	Warn(args ...interface{})
+	Error(args ...interface{})
+	Fatal(args ...interface{})
+	With(value ...interface{}) Logger
+}
+
+// SetLogger sets a custom logger implementation. If nil is passed, uses the standard logger.
+func SetLogger(l Logger) {
+	if l == nil {
+		defaultLogger = NewStd(nil)
+		return
+	}
+	defaultLogger = l
+}
+
+// Info logs an info level message.
 func Info(args ...interface{}) {
-	sugar.Info(args)
+	defaultLogger.Info(args...)
 }
+
+// Debug logs a debug level message.
 func Debug(args ...interface{}) {
-	sugar.Debug(args)
+	defaultLogger.Debug(args...)
 }
-func Trace(args ...interface{}) {
-	sugar.Debug(args)
+
+// Warn logs a warning level message.
+func Warn(args ...interface{}) {
+	defaultLogger.Warn(args...)
 }
+
+// Error logs an error level message.
 func Error(args ...interface{}) {
-	sugar.Error(args)
+	defaultLogger.Error(args...)
 }
-func Warning(args ...interface{}) {
-	sugar.Warn(args)
+
+// Fatal logs a formatted error level message.
+func Fatal(args ...interface{}) {
+	defaultLogger.Fatal(args...)
 }
-func Fatalf(format string, args ...interface{}) {
-	sugar.Fatalf(format, args...)
+
+// With creates a new logger with the given key-value pair.
+func With(value ...interface{}) Logger {
+	return defaultLogger.With(value...)
 }

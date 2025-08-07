@@ -17,7 +17,6 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/conductor-sdk/conductor-go/sdk/log"
 	"io"
 	"mime/multipart"
 	"net"
@@ -32,6 +31,7 @@ import (
 	"time"
 
 	"github.com/conductor-sdk/conductor-go/sdk/authentication"
+	"github.com/conductor-sdk/conductor-go/sdk/log"
 	"github.com/conductor-sdk/conductor-go/sdk/settings"
 )
 
@@ -76,7 +76,7 @@ func NewAuthenticationSettingsFromEnv() *settings.AuthenticationSettings {
 func NewHttpSettingsFromEnv() *settings.HttpSettings {
 	url := os.Getenv(CONDUCTOR_SERVER_URL)
 	if url == "" {
-		log.Fatalf("Error: %s env variable is not set", CONDUCTOR_SERVER_URL)
+		log.Error("Environment variable CONDUCTOR_SERVER_URL is not set")
 	}
 
 	return settings.NewHttpSettings(url)
@@ -328,7 +328,7 @@ func getDecompressedBody(response *http.Response) ([]byte, error) {
 	case "gzip":
 		reader, err = gzip.NewReader(response.Body)
 		if err != nil {
-			log.Error("Unable to decompress the response ", err.Error())
+			log.Error("Unable to decompress the response", "error", err)
 			if err == io.EOF {
 				return nil, nil
 			}
