@@ -3,19 +3,34 @@ package log
 import (
 	"bytes"
 	stdlog "log"
-	"sync/atomic"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-type dummyLogger struct{ called atomic.Bool }
+type dummyLogger struct {
+	mu     sync.Mutex
+	called bool
+}
 
-func (d *dummyLogger) Debug(a ...interface{})           { d.called.Store(true) }
-func (d *dummyLogger) Info(a ...interface{})            { d.called.Store(true) }
-func (d *dummyLogger) Warn(a ...interface{})            { d.called.Store(true) }
-func (d *dummyLogger) Error(a ...interface{})           { d.called.Store(true) }
-func (d *dummyLogger) Fatal(a ...interface{})           { d.called.Store(true) }
+func (d *dummyLogger) setCalled(val bool) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	d.called = val
+}
+
+func (d *dummyLogger) getCalled() bool {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	return d.called
+}
+
+func (d *dummyLogger) Debug(a ...interface{})           { d.setCalled(true) }
+func (d *dummyLogger) Info(a ...interface{})            { d.setCalled(true) }
+func (d *dummyLogger) Warn(a ...interface{})            { d.setCalled(true) }
+func (d *dummyLogger) Error(a ...interface{})           { d.setCalled(true) }
+func (d *dummyLogger) Fatal(a ...interface{})           { d.setCalled(true) }
 func (d *dummyLogger) With(value ...interface{}) Logger { return d }
 
 func TestSetLogger_DefaultFallback(t *testing.T) {
@@ -23,13 +38,13 @@ func TestSetLogger_DefaultFallback(t *testing.T) {
 	d := &dummyLogger{}
 	SetLogger(d)
 	Info("hi")
-	assert.True(t, d.called.Load(), "custom logger must be used after SetLogger")
+	assert.True(t, d.getCalled(), "custom logger must be used after SetLogger")
 
 	SetLogger(nil) // reset to default std logger
-	d.called.Store(false)
+	d.setCalled(false)
 	Info("again")
 
-	assert.False(t, d.called.Load(), "dummy logger must NOT be called after SetLogger(nil)")
+	assert.False(t, d.getCalled(), "dummy logger must NOT be called after SetLogger(nil)")
 }
 
 func TestSetLogger_WithCustomLogger(t *testing.T) {

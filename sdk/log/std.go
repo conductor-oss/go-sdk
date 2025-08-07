@@ -75,8 +75,7 @@ func (s *stdLogger) Warn(a ...interface{})  { s.logf(lvlWarn, a...) }
 func (s *stdLogger) Error(a ...interface{}) { s.logf(lvlError, a...) }
 
 func (s *stdLogger) Fatal(a ...interface{}) {
-	s.l.Printf("%s %s", "[FATAL]", formatArgs(a...))
-	os.Exit(1)
+	s.l.Fatal(formatArgs(a...))
 }
 
 func (s *stdLogger) With(vals ...interface{}) Logger {
