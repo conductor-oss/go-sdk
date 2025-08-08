@@ -15,5 +15,6 @@ type EventHandler struct {
 	Condition     string   `json:"condition,omitempty"`
 	Actions       []Action `json:"actions"`
 	Active        bool     `json:"active,omitempty"`
+	Description   string   `json:"description,omitempty"`
 	EvaluatorType string   `json:"evaluatorType,omitempty"`
 }
