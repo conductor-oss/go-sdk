@@ -55,7 +55,7 @@ func TestOption_WithPollTimeout_SetsAnyValue(t *testing.T) {
 	WithPollTimeout(0)(&w) // допускается
 	assert.Equal(t, 0*time.Millisecond, w.pollTimeout)
 
-	WithPollTimeout(-1 * time.Second)(&w) // «server default» по договорённости
+	WithPollTimeout(-1 * time.Second)(&w)
 	assert.Equal(t, -1*time.Second, w.pollTimeout)
 
 	WithPollTimeout(250 * time.Millisecond)(&w)
@@ -79,7 +79,7 @@ func TestOption_WithDomain_SetsAsIs(t *testing.T) {
 func TestOptions_Composition_OrderMatters(t *testing.T) {
 	var w Worker
 	WithBatchSize(1)(&w)
-	WithBatchSize(10)(&w) // последняя выигрывает
+	WithBatchSize(10)(&w)
 	assert.Equal(t, 10, w.batchSize)
 
 	WithPollInterval(10 * time.Millisecond)(&w)
