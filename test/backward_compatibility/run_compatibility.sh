@@ -85,7 +85,7 @@ echo "📝 Creating go.mod for current code..."
 cat > go.mod << EOF
 module conductor-backward-compatibility-test
 
-go 1.17
+go 1.23
 
 require (
 	github.com/conductor-sdk/conductor-go v0.0.0

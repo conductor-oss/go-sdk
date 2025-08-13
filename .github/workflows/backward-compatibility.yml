@@ -19,9 +19,10 @@ jobs:
           repository: ${{ github.event.workflow_run.repository.full_name }}
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
+          go-version: '1.23.x'
+          check-latest: true
 
       - name: Run Backward Compatibility Tests
         run: |
