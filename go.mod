@@ -1,6 +1,6 @@
 module github.com/conductor-sdk/conductor-go
 
-go 1.17
+go 1.23
 
 require (
 	github.com/antihax/optional v1.0.0

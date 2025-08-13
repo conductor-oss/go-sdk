@@ -1,4 +1,4 @@
-FROM golang:1.17 as build
+FROM golang:1.23 AS build
 RUN mkdir /package
 COPY /sdk /package/sdk
 COPY /go.mod /package/go.mod
@@ -7,8 +7,11 @@ WORKDIR /package
 RUN go build -v ./...
 
 FROM build as test
-COPY /test /package/test
-RUN go test -v $(go list ./... | grep -v /test/integration_tests)
+COPY /test/unit_tests /package/test/unit_tests
+# Run SDK unit tests
+RUN go test -v -race ./sdk/...
+# Run additional unit tests
+RUN go test -v -race ./test/unit_tests/...
 
 FROM build as inttest
 COPY /test /package/test

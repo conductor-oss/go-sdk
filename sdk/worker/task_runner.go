@@ -119,6 +119,45 @@ func (c *TaskRunner) StartWorker(taskName string, executeFunction model.ExecuteT
 	return c.startWorker(taskName, executeFunction, batchSize, pollInterval, "")
 }
 
+// RegisterWorker registers a worker with this TaskRunner, applies its per-task configuration,
+// and starts or scales the underlying worker goroutines.
+//
+// It accepts any value implementing the Provider interface (for example, *Worker or *TypedWorker).
+//
+// Returns an error if the provider is nil, if it cannot produce a *Worker, or if applying
+// configuration fails.
+func (c *TaskRunner) RegisterWorker(wLike Provider) error {
+	if wLike == nil {
+		return fmt.Errorf("worker is nil")
+	}
+	w := wLike.Worker()
+	if w == nil {
+		return fmt.Errorf("worker adaptation failed: Worker returned nil")
+	}
+	// Apply per-task poll interval
+	if err := c.SetPollIntervalForTask(w.taskName, w.pollInterval); err != nil {
+		return err
+	}
+	// Apply per-task poll timeout if different from default
+	if w.pollTimeout != 0 { // allow zero to mean "do not change"
+		if err := c.SetPollTimeoutForTask(w.taskName, w.pollTimeout); err != nil {
+			return err
+		}
+	}
+	// Start using existing worker infrastructure
+	return c.startWorker(w.taskName, w.handler, w.batchSize, w.pollInterval, w.domain)
+}
+
+// RegisterWorkers registers multiple workers, failing fast if any registration fails.
+func (c *TaskRunner) RegisterWorkers(workers ...Provider) error {
+	for _, w := range workers {
+		if err := c.RegisterWorker(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // SetBatchSize can be used to set the batch size for all workers running the provided task.
 func (c *TaskRunner) SetBatchSize(taskName string, batchSize int) error {
 	if batchSize < 0 {
@@ -294,6 +333,7 @@ func (c *TaskRunner) workOnce(taskName string, executeFunction model.ExecuteTask
 		)
 		return
 	}
+
 	if batchSize < 1 {
 		pauseOnNoAvailableWorkerError(taskName, domain)
 		return
