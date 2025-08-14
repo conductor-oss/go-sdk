@@ -12,15 +12,15 @@ package executor
 import (
 	"context"
 	"fmt"
-	"github.com/antihax/optional"
 	"sync"
 	"time"
 
+	"github.com/antihax/optional"
+
 	"github.com/conductor-sdk/conductor-go/sdk/client"
 	"github.com/conductor-sdk/conductor-go/sdk/concurrency"
+	"github.com/conductor-sdk/conductor-go/sdk/log"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type WorkflowMonitor struct {
@@ -58,9 +58,9 @@ func (w *WorkflowMonitor) monitorRunningWorkflowsDaemon() {
 	for {
 		err := w.monitorRunningWorkflows()
 		if err != nil {
-			log.Warning(
+			log.Warn(
 				"Failed to monitor running workflows",
-				", error: ", err.Error(),
+				"error", err.Error(),
 			)
 		}
 		time.Sleep(w.refreshInterval)
@@ -96,9 +96,9 @@ func (w *WorkflowMonitor) getWorkflowsInTerminalState() ([]*model.Workflow, erro
 		if err != nil {
 			log.Debug(
 				"Failed to get workflow execution status",
-				", reason: ", err.Error(),
-				", workflowId: ", workflowId,
-				", response: ", response,
+				"reason", err,
+				"workflowId", workflowId,
+				"response", response,
 			)
 			return nil, err
 		}
@@ -114,10 +114,8 @@ func (w *WorkflowMonitor) addWorkflowExecutionChannel(workflowId string, executi
 	defer w.mutex.Unlock()
 	w.executionChannelByWorkflowId[workflowId] = executionChannel
 	log.Debug(
-		fmt.Sprint(
-			"Added workflow execution channel",
-			", workflowId: ", workflowId,
-		),
+		"Added workflow execution channel",
+		"workflow_id", workflowId,
 	)
 	return nil
 }
@@ -137,7 +135,7 @@ func (w *WorkflowMonitor) getRunningWorkflowIdList() ([]string, error) {
 func (w *WorkflowMonitor) notifyFinishedWorkflow(workflowId string, workflow *model.Workflow) error {
 	w.mutex.Lock()
 	defer w.mutex.Unlock()
-	log.Debug(fmt.Sprintf("Notifying finished workflowId: %s", workflowId))
+	log.Debug("Notifying finished workflow", "workflow_id", workflowId)
 	executionChannel, ok := w.executionChannelByWorkflowId[workflowId]
 	if !ok {
 		return fmt.Errorf("execution channel not found for workflowId: %s", workflowId)

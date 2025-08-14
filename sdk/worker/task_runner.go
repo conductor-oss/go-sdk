@@ -17,14 +17,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/antihax/optional"
+
 	"github.com/conductor-sdk/conductor-go/sdk/client"
 	"github.com/conductor-sdk/conductor-go/sdk/concurrency"
+	"github.com/conductor-sdk/conductor-go/sdk/log"
 	"github.com/conductor-sdk/conductor-go/sdk/metrics"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/sdk/settings"
-
-	"github.com/antihax/optional"
-	log "github.com/sirupsen/logrus"
 )
 
 const taskUpdateRetryAttemptsLimit = 3
@@ -132,14 +132,15 @@ func (c *TaskRunner) SetBatchSize(taskName string, batchSize int) error {
 	previous := c.batchSizeByTaskName[taskName]
 	c.batchSizeByTaskName[taskName] = batchSize
 	log.Debug(
-		"Set batchSize for task: ", taskName,
-		", from: ", previous,
-		", to: ", c.batchSizeByTaskName[taskName],
+		"Set batchSize for task",
+		"taskName", taskName,
+		"from", previous,
+		"to", c.batchSizeByTaskName[taskName],
 	)
 	if batchSize == 0 {
-		log.Info("Stopped worker for task: ", taskName)
+		log.Info("Stopped worker for task", "taskName", taskName)
 	} else if previous == 0 && c.batchSizeByTaskName[taskName] > 0 {
-		log.Info("Started worker for task: ", taskName)
+		log.Info("Started worker for task", "taskName", taskName)
 	}
 	return nil
 }
@@ -157,12 +158,13 @@ func (c *TaskRunner) IncreaseBatchSize(taskName string, batchSize int) error {
 	previous := c.batchSizeByTaskName[taskName]
 	c.batchSizeByTaskName[taskName] += batchSize
 	log.Debug(
-		"Increased batchSize for task: ", taskName,
-		", from: ", previous,
-		", to: ", c.batchSizeByTaskName[taskName],
+		"Increased batchSize for task",
+		"taskName", taskName,
+		"from", previous,
+		"to", c.batchSizeByTaskName[taskName],
 	)
 	if previous == 0 {
-		log.Info("Started worker for task: ", taskName)
+		log.Info("Started worker for task", "taskName", taskName)
 	}
 	return nil
 }
@@ -180,13 +182,14 @@ func (c *TaskRunner) DecreaseBatchSize(taskName string, batchSize int) error {
 	previous := c.batchSizeByTaskName[taskName]
 	c.batchSizeByTaskName[taskName] -= batchSize
 	log.Debug(
-		"Decreased batchSize for task: ", taskName,
-		", from: ", previous,
-		", to: ", c.batchSizeByTaskName[taskName],
+		"Decreased batchSize for task",
+		"taskName", taskName,
+		"from", previous,
+		"to", c.batchSizeByTaskName[taskName],
 	)
 	if previous-batchSize <= 0 {
 		c.batchSizeByTaskName[taskName] = 0
-		log.Info("Stopped worker for task: ", taskName)
+		log.Info("Stopped worker for task", "taskName", taskName)
 	}
 	return nil
 }
@@ -212,12 +215,7 @@ func (c *TaskRunner) Resume(taskName string) {
 // a signal will be sent to the WaitGroup to indicate that this worker has completed its work.
 // When used in conjunction with TaskRunner.WaitWorkers() it allows a graceful shutdown.
 func (c *TaskRunner) Shutdown(taskName string) {
-	log.Info(
-		fmt.Sprintf(
-			"Shutting down workers for task: %s",
-			taskName,
-		),
-	)
+	log.Info("Shutting down workers for task", "taskName", taskName)
 	c.batchSizeByTaskNameMutex.Lock()
 	delete(c.batchSizeByTaskName, taskName)
 	c.batchSizeByTaskNameMutex.Unlock()
@@ -331,7 +329,7 @@ func (c *TaskRunner) executeAndUpdateTask(taskName string, task model.Task, exec
 	taskResult := c.executeTask(&task, executeFunction)
 	err := c.updateTaskWithRetry(taskName, taskResult)
 	if err != nil {
-		log.Error("failed to update task ", taskName, ",taskId = ", task.TaskId, ",workflowId = ", task.WorkflowInstanceId, ",", err)
+		log.Error("failed to update task", "taskName", taskName, "taskId", task.TaskId, "workflowId", task.WorkflowInstanceId, "error", err)
 	}
 }
 
@@ -344,7 +342,7 @@ func (c *TaskRunner) batchPoll(taskName string, count int, domain string) ([]mod
 	if domain != "" {
 		domainOptional = optional.NewString(domain)
 	}
-	log.Debug("Polling for task: ", taskName, ", in batches of size: ", count, ", with poll timeout: ", timeout)
+	log.Debug("Polling for task", "taskName", taskName, "batchSize", count, "timeout", timeout)
 	metrics.IncrementTaskPoll(taskName)
 	startTime := time.Now()
 	opts := &client.TaskResourceApiBatchPollOpts{
@@ -376,15 +374,16 @@ func (c *TaskRunner) batchPoll(taskName string, count int, domain string) ([]mod
 	if response.StatusCode == 204 {
 		return nil, nil
 	}
-	log.Debug(fmt.Sprintf("Polled %d tasks for taskName: %s", len(tasks), taskName))
+	log.Debug("Polled tasks", "count", len(tasks), "taskName", taskName)
 	return tasks, nil
 }
 
 func (c *TaskRunner) executeTask(t *model.Task, executeFunction model.ExecuteTaskFunction) *model.TaskResult {
-	log.Trace(
-		"Executing task of type: ", t.TaskDefName,
-		", taskId: ", t.TaskId,
-		", workflowId: ", t.WorkflowInstanceId,
+	log.Debug(
+		"Executing task of type",
+		"taskDefName", t.TaskDefName,
+		"taskId", t.TaskId,
+		"workflowId", t.WorkflowInstanceId,
 	)
 	startTime := time.Now()
 	taskExecutionOutput, err := executeFunction(t)
@@ -396,10 +395,10 @@ func (c *TaskRunner) executeTask(t *model.Task, executeFunction model.ExecuteTas
 		metrics.IncrementTaskExecuteError(t.TaskDefName, err)
 		log.Debug(
 			"failed to execute task",
-			", reason: ", err.Error(),
-			", taskName: ", t.TaskDefName,
-			", taskId: ", t.TaskId,
-			", workflowId: ", t.WorkflowInstanceId,
+			"reason", err,
+			"taskName", t.TaskDefName,
+			"taskId", t.TaskId,
+			"workflowId", t.WorkflowInstanceId,
 		)
 		if taskExecutionOutput == nil {
 			return model.NewTaskResultFromTaskWithError(t, err)
@@ -409,27 +408,29 @@ func (c *TaskRunner) executeTask(t *model.Task, executeFunction model.ExecuteTas
 	if err != nil {
 		log.Debug(
 			"Failed to extract taskResult from generated object",
-			", reason: ", err.Error(),
-			", task type: ", t.TaskDefName,
-			", taskId: ", t.TaskId,
-			", workflowId: ", t.WorkflowInstanceId,
-			", response: ", err,
+			"reason", err,
+			"task type", t.TaskDefName,
+			"taskId", t.TaskId,
+			"workflowId", t.WorkflowInstanceId,
+			"response", err,
 		)
 		return model.NewTaskResultFromTaskWithError(t, err)
 	}
-	log.Trace(
-		"Executed task of type: ", t.TaskDefName,
-		", taskId: ", t.TaskId,
-		", workflowId: ", t.WorkflowInstanceId,
+	log.Debug(
+		"Executed task of type",
+		"taskDefName", t.TaskDefName,
+		"taskId", t.TaskId,
+		"workflowId", t.WorkflowInstanceId,
 	)
 	return taskResult
 }
 
 func (c *TaskRunner) updateTaskWithRetry(taskName string, taskResult *model.TaskResult) error {
 	log.Debug(
-		"Updating task of type: ", taskName,
-		", taskId: ", taskResult.TaskId,
-		", workflowId: ", taskResult.WorkflowInstanceId,
+		"Updating task of type",
+		"taskDefName", taskName,
+		"taskId", taskResult.TaskId,
+		"workflowId", taskResult.WorkflowInstanceId,
 	)
 	var lastError error
 	for attempt := 0; attempt <= taskUpdateRetryAttemptsLimit; attempt += 1 {
@@ -441,9 +442,10 @@ func (c *TaskRunner) updateTaskWithRetry(taskName string, taskResult *model.Task
 		_, err := c.updateTask(taskName, taskResult)
 		if err == nil {
 			log.Debug(
-				"Updated task of type: ", taskName,
-				", taskId: ", taskResult.TaskId,
-				", workflowId: ", taskResult.WorkflowInstanceId,
+				"Updated task of type",
+				"taskDefName", taskName,
+				"taskId", taskResult.TaskId,
+				"workflowId", taskResult.WorkflowInstanceId,
 			)
 			return nil
 		}
@@ -505,7 +507,7 @@ func (c *TaskRunner) increaseRunningWorkers(taskName string) error {
 	defer c.runningWorkersByTaskNameMutex.Unlock()
 	c.runningWorkersByTaskName[taskName] += 1
 	c.workerWaitGroup.Add(1)
-	log.Trace("Increased running workers for task: ", taskName)
+	log.Debug("Increased running workers for task", "taskName", taskName)
 	return nil
 }
 
@@ -514,7 +516,7 @@ func (c *TaskRunner) runningWorkerDone(taskName string) error {
 	defer c.runningWorkersByTaskNameMutex.Unlock()
 	c.runningWorkersByTaskName[taskName] -= 1
 	c.workerWaitGroup.Done()
-	log.Trace("Running worker done for task: ", taskName)
+	log.Debug("Running worker done for task", "taskName", taskName)
 	return nil
 }
 
@@ -522,7 +524,7 @@ func (c *TaskRunner) increaseMaxAllowedWorkers(taskName string, batchSize int) e
 	c.batchSizeByTaskNameMutex.Lock()
 	defer c.batchSizeByTaskNameMutex.Unlock()
 	c.batchSizeByTaskName[taskName] += batchSize
-	log.Debug("Increased max allowed workers of task: ", taskName, ", by: ", batchSize)
+	log.Debug("Increased max allowed workers of task", "taskName", taskName, "batchSize", batchSize)
 	return nil
 }
 
@@ -531,7 +533,7 @@ func (c *TaskRunner) SetPollIntervalForTask(taskName string, pollInterval time.D
 	c.pollIntervalByTaskNameMutex.Lock()
 	defer c.pollIntervalByTaskNameMutex.Unlock()
 	c.pollIntervalByTaskName[taskName] = pollInterval
-	log.Info("Updated poll interval for task: ", taskName, " to: ", pollInterval.Milliseconds(), "ms")
+	log.Info("Updated poll interval for task", "taskName", taskName, "ms", pollInterval.Milliseconds())
 	return nil
 }
 
@@ -571,12 +573,12 @@ func (c *TaskRunner) GetBatchSizeForTask(taskName string) (batchSize int) {
 }
 
 func pauseOnGenericError(taskName string, domain string, err error) {
-	log.Error(fmt.Errorf("[%s][%s] %s", taskName, domain, err))
+	log.Error("Generic error occurred", "taskName", taskName, "domain", domain, "error", err)
 	time.Sleep(sleepForOnGenericError)
 }
 
 func pauseOnNoAvailableWorkerError(taskName string, domain string) {
-	log.Trace(fmt.Errorf("no worker available for the task %s, domain %s", taskName, domain))
+	log.Debug("No worker available for the task", "taskName", taskName, "domain", domain)
 	time.Sleep(sleepForOnNoAvailableWorker)
 }
 
@@ -586,7 +588,7 @@ func (c *TaskRunner) SetPollTimeout(pollTimeout time.Duration) error {
 	c.pollTimeoutMutex.Lock()
 	defer c.pollTimeoutMutex.Unlock()
 	c.pollTimeout = pollTimeout
-	log.Info("Updated poll timeout to: ", pollTimeout.Milliseconds(), "ms")
+	log.Info("Updated poll timeout", "ms", pollTimeout.Milliseconds())
 	return nil
 }
 
@@ -617,6 +619,6 @@ func (c *TaskRunner) SetPollTimeoutForTask(taskName string, pollTimeout time.Dur
 	c.pollTimeoutMutex.Lock()
 	defer c.pollTimeoutMutex.Unlock()
 	c.pollTimeoutByTaskName[taskName] = pollTimeout
-	log.Info("Updated poll timeout for task: ", taskName, " to: ", pollTimeout.Milliseconds(), "ms")
+	log.Info("Updated poll timeout for task", "taskName", taskName, "ms", pollTimeout.Milliseconds())
 	return nil
 }

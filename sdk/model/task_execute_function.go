@@ -14,7 +14,7 @@ import (
 	"os"
 	"sync"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/conductor-sdk/conductor-go/sdk/log"
 )
 
 var hostname string
@@ -73,9 +73,9 @@ func ConvertToMap(input interface{}) (map[string]interface{}, error) {
 	}
 	data, err := json.Marshal(input)
 	if err != nil {
-		log.Debug(
+		log.Warn(
 			"Failed to parse input",
-			", reason: ", err.Error(),
+			"reason", err,
 		)
 		return nil, err
 	}

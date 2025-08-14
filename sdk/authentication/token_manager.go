@@ -13,9 +13,9 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/conductor-sdk/conductor-go/sdk/log"
 	"github.com/conductor-sdk/conductor-go/sdk/settings"
 	"github.com/patrickmn/go-cache"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -69,10 +69,10 @@ func (t *CachedTokenManager) refreshToken(httpSettings *settings.HttpSettings, h
 	log.Debug("Refreshing authentication token")
 	token, response, err := GetToken(t.credentials, httpSettings, httpClient)
 	if err != nil {
-		log.Warning(
+		log.Warn(
 			"Failed to refresh authentication token",
-			", response: ", response,
-			", error: ", err,
+			"response", response,
+			"error", err,
 		)
 		t.database.Delete(tokenKey)
 		return "", err
