@@ -6,9 +6,10 @@ import (
 	"os"
 	"time"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/antihax/optional"
 	"github.com/conductor-sdk/conductor-go/sdk/client"
-	"github.com/conductor-sdk/conductor-go/sdk/log"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/sdk/worker"
 	"github.com/conductor-sdk/conductor-go/sdk/workflow"
