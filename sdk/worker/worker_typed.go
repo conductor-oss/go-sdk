@@ -19,8 +19,12 @@ import (
 // TypedWorker is a compositional typed worker that embeds base configuration via Worker
 // and provides a type-safe function with a WorkflowContext.
 type TypedWorker[TIn, TOut any] struct {
-	base    *Worker
-	handler func(TaskContext, TIn) (TOut, error)
+	taskName string
+	handler  func(TaskContext, TIn) (TOut, error)
+
+	options Options
+
+	baseCtx context.Context
 	binder  InputBinder
 }
 
@@ -30,14 +34,15 @@ func NewSimpleTypedWorker[TIn, TOut any](
 	f func(context.Context, TIn) (TOut, error),
 	options ...Option,
 ) *TypedWorker[TIn, TOut] {
-	base := newBaseWorker(taskName, options...)
+	opts := applyOptions(defaultOptions(), options...)
 	adapted := func(ctx TaskContext, in TIn) (TOut, error) {
-		return f(ctx, in)
+		return f(context.Context(ctx), in)
 	}
 	return &TypedWorker[TIn, TOut]{
-		base:    base,
-		handler: adapted,
-		binder:  JSONBinder{},
+		taskName: taskName,
+		handler:  adapted,
+		options:  opts,
+		binder:   JSONBinder{},
 	}
 }
 
@@ -47,11 +52,12 @@ func NewTypedWorker[TIn, TOut any](
 	f func(TaskContext, TIn) (TOut, error),
 	options ...Option,
 ) *TypedWorker[TIn, TOut] {
-	base := newBaseWorker(taskName, options...)
+	opts := applyOptions(defaultOptions(), options...)
 	return &TypedWorker[TIn, TOut]{
-		base:    base,
-		handler: f,
-		binder:  JSONBinder{},
+		taskName: taskName,
+		handler:  f,
+		options:  opts,
+		binder:   JSONBinder{},
 	}
 }
 
@@ -65,13 +71,29 @@ func (tw *TypedWorker[TIn, TOut]) adapter() model.ExecuteTaskFunction {
 		}
 
 		// Execute typed handler
-		return tw.handler(getWorkflowContext(context.Background(), t), in)
+		return tw.handler(getWorkflowContext(tw.baseCtx, t), in)
 	}
 }
 
-// Worker converts the typed worker into a base Worker.
-func (tw *TypedWorker[TIn, TOut]) Worker() *Worker {
-	w := *tw.base
-	w.handler = tw.adapter()
-	return &w
+// TaskName returns the name of the task.
+func (tw *TypedWorker[TIn, TOut]) TaskName() string { return tw.taskName }
+
+// Options returns the options of the worker.
+func (tw *TypedWorker[TIn, TOut]) Options() Options { return tw.options }
+
+// Handler returns the handler of the worker.
+func (tw *TypedWorker[TIn, TOut]) Handler() model.ExecuteTaskFunction { return tw.adapter() }
+
+// BaseContext returns the base context of the worker.
+func (tw *TypedWorker[TIn, TOut]) BaseContext() context.Context { return tw.baseCtx }
+
+// With returns a new worker with the given options.
+func (tw *TypedWorker[TIn, TOut]) With(options ...Option) Worker {
+	return tw.withOptions(applyOptions(tw.options, options...))
+}
+
+func (tw *TypedWorker[TIn, TOut]) withOptions(o Options) Worker {
+	cp := *tw
+	cp.options = o
+	return &cp
 }

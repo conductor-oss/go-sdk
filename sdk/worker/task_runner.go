@@ -65,6 +65,8 @@ type TaskRunner struct {
 	pollTimeoutMutex      sync.RWMutex
 	pollTimeout           time.Duration
 	pollTimeoutByTaskName map[string]time.Duration
+
+	baseCtx context.Context
 }
 
 // NewTaskRunner returns a new TaskRunner which authenticates via HTTP using the provided settings.
@@ -92,6 +94,19 @@ func NewTaskRunnerWithApiClient(
 		pollTimeoutByTaskName:    make(map[string]time.Duration),
 		pollTimeout:              -1 * time.Millisecond, //If negative, the server will use its default.
 	}
+}
+
+// WithBaseContext sets the base context for the task runner.
+func (c *TaskRunner) WithBaseContext(ctx context.Context) *TaskRunner {
+	c.baseCtx = ctx
+	return c
+}
+
+func (c *TaskRunner) getBaseContext() context.Context {
+	if c.baseCtx == nil {
+		return context.Background()
+	}
+	return c.baseCtx
 }
 
 // SetSleepOnGenericError Sets the time for which to wait before continuing to poll/execute when there is an error
@@ -126,30 +141,32 @@ func (c *TaskRunner) StartWorker(taskName string, executeFunction model.ExecuteT
 //
 // Returns an error if the provider is nil, if it cannot produce a *Worker, or if applying
 // configuration fails.
-func (c *TaskRunner) RegisterWorker(wLike Provider) error {
-	if wLike == nil {
+func (c *TaskRunner) RegisterWorker(w Worker) error {
+	if w == nil {
 		return fmt.Errorf("worker is nil")
 	}
-	w := wLike.Worker()
-	if w == nil {
-		return fmt.Errorf("worker adaptation failed: Worker returned nil")
+
+	if w.BaseContext() == nil {
+		w = w.With(WithBaseContext(c.getBaseContext()))
 	}
+
+	opts := w.Options()
 	// Apply per-task poll interval
-	if err := c.SetPollIntervalForTask(w.taskName, w.pollInterval); err != nil {
+	if err := c.SetPollIntervalForTask(w.TaskName(), opts.PollInterval); err != nil {
 		return err
 	}
 	// Apply per-task poll timeout if different from default
-	if w.pollTimeout != 0 { // allow zero to mean "do not change"
-		if err := c.SetPollTimeoutForTask(w.taskName, w.pollTimeout); err != nil {
+	if opts.PollTimeout != 0 { // allow zero to mean "do not change"
+		if err := c.SetPollTimeoutForTask(w.TaskName(), opts.PollTimeout); err != nil {
 			return err
 		}
 	}
 	// Start using existing worker infrastructure
-	return c.startWorker(w.taskName, w.handler, w.batchSize, w.pollInterval, w.domain)
+	return c.startWorker(w.TaskName(), w.Handler(), opts.BatchSize, opts.PollInterval, opts.Domain)
 }
 
 // RegisterWorkers registers multiple workers, failing fast if any registration fails.
-func (c *TaskRunner) RegisterWorkers(workers ...Provider) error {
+func (c *TaskRunner) RegisterWorkers(workers ...Worker) error {
 	for _, w := range workers {
 		if err := c.RegisterWorker(w); err != nil {
 			return err
@@ -398,7 +415,7 @@ func (c *TaskRunner) batchPoll(taskName string, count int, domain string) ([]mod
 	}
 
 	tasks, response, err := c.conductorTaskResourceClient.BatchPoll(
-		context.Background(),
+		c.getBaseContext(),
 		taskName,
 		opts,
 	)
@@ -495,7 +512,7 @@ func (c *TaskRunner) updateTaskWithRetry(taskName string, taskResult *model.Task
 
 func (c *TaskRunner) updateTask(taskName string, taskResult *model.TaskResult) (*http.Response, error) {
 	startTime := time.Now()
-	_, response, err := c.conductorTaskResourceClient.UpdateTask(context.Background(), taskResult)
+	_, response, err := c.conductorTaskResourceClient.UpdateTask(c.getBaseContext(), taskResult)
 	spentTime := time.Since(startTime).Milliseconds()
 	metrics.RecordTaskUpdateTime(taskName, float64(spentTime))
 	return response, err

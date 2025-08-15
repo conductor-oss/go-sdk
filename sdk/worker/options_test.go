@@ -10,6 +10,7 @@
 package worker
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -18,76 +19,94 @@ import (
 )
 
 func TestOption_WithBatchSize_SetsOnlyPositive(t *testing.T) {
-	var w Worker
-	w.batchSize = 99
+	base := Options{BatchSize: 99}
 
-	WithBatchSize(-1)(&w)
-	assert.Equal(t, 99, w.batchSize, "negatives ignored")
+	opts := WithBatchSize(-1)(base)
+	assert.Equal(t, 99, opts.BatchSize, "negatives ignored")
 
-	WithBatchSize(0)(&w)
-	assert.Equal(t, 99, w.batchSize, "zero ignored")
+	opts = WithBatchSize(0)(base)
+	assert.Equal(t, 99, opts.BatchSize, "zero ignored")
 
-	WithBatchSize(1)(&w)
-	assert.Equal(t, 1, w.batchSize)
+	opts = WithBatchSize(1)(base)
+	assert.Equal(t, 1, opts.BatchSize)
 
-	WithBatchSize(5)(&w)
-	assert.Equal(t, 5, w.batchSize, "last wins")
+	opts = WithBatchSize(5)(base)
+	assert.Equal(t, 5, opts.BatchSize)
 }
 
 func TestOption_WithPollInterval_SetsOnlyPositive(t *testing.T) {
-	var w Worker
-	w.pollInterval = 987 * time.Millisecond
+	base := Options{PollInterval: 987 * time.Millisecond}
 
-	WithPollInterval(-10 * time.Millisecond)(&w)
-	assert.Equal(t, 987*time.Millisecond, w.pollInterval, "negatives ignored")
+	opts := WithPollInterval(-10 * time.Millisecond)(base)
+	assert.Equal(t, 987*time.Millisecond, opts.PollInterval, "negatives ignored")
 
-	WithPollInterval(0)(&w)
-	assert.Equal(t, 987*time.Millisecond, w.pollInterval, "zero ignored")
+	opts = WithPollInterval(0)(base)
+	assert.Equal(t, 987*time.Millisecond, opts.PollInterval, "zero ignored")
 
-	WithPollInterval(50 * time.Millisecond)(&w)
-	assert.Equal(t, 50*time.Millisecond, w.pollInterval)
+	opts = WithPollInterval(50 * time.Millisecond)(base)
+	assert.Equal(t, 50*time.Millisecond, opts.PollInterval)
 }
 
 func TestOption_WithPollTimeout_SetsAnyValue(t *testing.T) {
-	var w Worker
-	w.pollTimeout = 111 * time.Millisecond
+	base := Options{PollTimeout: 111 * time.Millisecond}
 
-	WithPollTimeout(0)(&w) // допускается
-	assert.Equal(t, 0*time.Millisecond, w.pollTimeout)
+	opts := WithPollTimeout(0)(base)
+	assert.Equal(t, 0*time.Millisecond, opts.PollTimeout)
 
-	WithPollTimeout(-1 * time.Second)(&w)
-	assert.Equal(t, -1*time.Second, w.pollTimeout)
+	opts = WithPollTimeout(-1 * time.Second)(base)
+	assert.Equal(t, -1*time.Second, opts.PollTimeout)
 
-	WithPollTimeout(250 * time.Millisecond)(&w)
-	assert.Equal(t, 250*time.Millisecond, w.pollTimeout)
+	opts = WithPollTimeout(250 * time.Millisecond)(base)
+	assert.Equal(t, 250*time.Millisecond, opts.PollTimeout)
 }
 
 func TestOption_WithDomain_SetsAsIs(t *testing.T) {
-	var w Worker
-	w.domain = "old"
+	base := Options{Domain: "old"}
 
-	WithDomain("")(&w)
-	assert.Equal(t, "", w.domain)
+	opts := WithDomain("")(base)
+	assert.Equal(t, "", opts.Domain)
 
-	WithDomain("testing")(&w)
-	assert.Equal(t, "testing", w.domain)
+	opts = WithDomain("testing")(base)
+	assert.Equal(t, "testing", opts.Domain)
 
-	WithDomain("  spaced  ")(&w)
-	assert.Equal(t, "  spaced  ", w.domain, "no trimming in option")
+	opts = WithDomain("  spaced  ")(base)
+	assert.Equal(t, "  spaced  ", opts.Domain, "no trimming in option")
 }
 
-func TestOptions_Composition_OrderMatters(t *testing.T) {
-	var w Worker
-	WithBatchSize(1)(&w)
-	WithBatchSize(10)(&w)
-	assert.Equal(t, 10, w.batchSize)
+func TestOptions_Composition_OrderMatters_AndBaseNotMutated(t *testing.T) {
+	base := defaultOptions()
 
-	WithPollInterval(10 * time.Millisecond)(&w)
-	WithPollInterval(25 * time.Millisecond)(&w)
-	assert.Equal(t, 25*time.Millisecond, w.pollInterval)
+	opts := applyOptions(base, WithBatchSize(1), WithBatchSize(10))
+	assert.Equal(t, 10, opts.BatchSize)
+
+	opts = applyOptions(base, WithPollInterval(10*time.Millisecond), WithPollInterval(25*time.Millisecond))
+	assert.Equal(t, 25*time.Millisecond, opts.PollInterval)
+
+	assert.Equal(t, defaultOptions(), base)
+}
+
+func TestApplyOptions_WithNilOptions(t *testing.T) {
+	base := defaultOptions()
+	opts := applyOptions(base, nil, WithBatchSize(5), nil, WithDomain("test"))
+
+	assert.Equal(t, 5, opts.BatchSize)
+	assert.Equal(t, "test", opts.Domain)
+
+	assert.Equal(t, defaultOptions(), base)
+}
+
+func TestDefaultOptions(t *testing.T) {
+	opts := defaultOptions()
+	assert.Equal(t, "", opts.Domain)
+	assert.Equal(t, 1, opts.BatchSize)
+	assert.Equal(t, 100*time.Millisecond, opts.PollInterval)
+	assert.Equal(t, -1*time.Millisecond, opts.PollTimeout)
+	assert.Nil(t, opts.BaseContext)
 }
 
 func TestNewWorker_AppliesOptions(t *testing.T) {
+	ctx := context.WithValue(context.Background(), "base", true)
+
 	w := NewWorker(
 		"opt_task",
 		func(tk *model.Task) (any, error) { return "ok", nil },
@@ -95,21 +114,26 @@ func TestNewWorker_AppliesOptions(t *testing.T) {
 		WithPollInterval(123*time.Millisecond),
 		WithPollTimeout(-1*time.Second),
 		WithDomain("testing"),
+		WithBaseContext(ctx),
 	)
 
-	assert.Equal(t, 3, w.batchSize)
-	assert.Equal(t, 123*time.Millisecond, w.pollInterval)
-	assert.Equal(t, -1*time.Second, w.pollTimeout)
-	assert.Equal(t, "testing", w.domain)
+	opts := w.Options()
+	assert.Equal(t, 3, opts.BatchSize)
+	assert.Equal(t, 123*time.Millisecond, opts.PollInterval)
+	assert.Equal(t, -1*time.Second, opts.PollTimeout)
+	assert.Equal(t, "testing", opts.Domain)
+	assert.Equal(t, ctx, opts.BaseContext)
 }
 
-func TestNewTypedWorker_AppliesOptions_ToBase(t *testing.T) {
+func TestNewTypedWorker_AppliesOptions(t *testing.T) {
 	type In struct {
 		A int `json:"a"`
 	}
 	type Out struct {
 		B int `json:"b"`
 	}
+
+	ctx := context.WithValue(context.Background(), "typed", true)
 
 	tw := NewTypedWorker[In, Out](
 		"typed_opt",
@@ -118,17 +142,36 @@ func TestNewTypedWorker_AppliesOptions_ToBase(t *testing.T) {
 		WithPollInterval(42*time.Millisecond),
 		WithPollTimeout(5*time.Second),
 		WithDomain("typed-domain"),
+		WithBaseContext(ctx),
 	)
 
-	assert.Equal(t, 7, tw.base.batchSize)
-	assert.Equal(t, 42*time.Millisecond, tw.base.pollInterval)
-	assert.Equal(t, 5*time.Second, tw.base.pollTimeout)
-	assert.Equal(t, "typed-domain", tw.base.domain)
+	opts := tw.Options()
+	assert.Equal(t, 7, opts.BatchSize)
+	assert.Equal(t, 42*time.Millisecond, opts.PollInterval)
+	assert.Equal(t, 5*time.Second, opts.PollTimeout)
+	assert.Equal(t, "typed-domain", opts.Domain)
+	assert.Equal(t, ctx, opts.BaseContext)
 
-	w := tw.Worker()
-	assert.NotSame(t, tw.base, w)
-	assert.Equal(t, 7, w.batchSize)
-	assert.Equal(t, 42*time.Millisecond, w.pollInterval)
-	assert.Equal(t, 5*time.Second, w.pollTimeout)
-	assert.Equal(t, "typed-domain", w.domain)
+	w := tw.With()
+	assert.NotSame(t, tw, w)
+	wOpts := w.Options()
+	assert.Equal(t, 7, wOpts.BatchSize)
+	assert.Equal(t, 42*time.Millisecond, wOpts.PollInterval)
+	assert.Equal(t, 5*time.Second, wOpts.PollTimeout)
+	assert.Equal(t, "typed-domain", wOpts.Domain)
+	assert.Equal(t, ctx, wOpts.BaseContext)
+}
+
+func TestApplyOptions_Immutability(t *testing.T) {
+	base := defaultOptions()
+	before := base
+
+	_ = applyOptions(base,
+		WithBatchSize(99),
+		WithDomain("x"),
+		WithPollInterval(5*time.Second),
+		WithPollTimeout(0),
+	)
+
+	assert.Equal(t, before, base, "base options must remain unchanged")
 }

@@ -12,6 +12,7 @@ package worker
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/stretchr/testify/assert"
@@ -79,7 +80,7 @@ func TestTypedWorker_HandlerError_Propagates(t *testing.T) {
 	assert.ErrorIs(t, err, want)
 }
 
-func TestTypedWorker_Constructors_And_Worker(t *testing.T) {
+func TestTypedWorker_Constructors_And_With(t *testing.T) {
 	type In struct {
 		A int `json:"a"`
 	}
@@ -91,11 +92,13 @@ func TestTypedWorker_Constructors_And_Worker(t *testing.T) {
 		return Out{B: in.A}, nil
 	})
 
-	w := tw.Worker()
+	w := tw.With()
 	assert.NotNil(t, w)
-	assert.NotSame(t, tw.base, w) // копия, не та же ссылка
+	assert.NotSame(t, tw, w)
 
-	res, err := w.handler(&model.Task{
+	handler := w.Handler()
+	assert.NotNil(t, handler)
+	res, err := handler(&model.Task{
 		TaskDefName: "t",
 		InputData:   map[string]any{"a": 7},
 	})
@@ -162,4 +165,42 @@ func TestAdapter_NilInputData_IsSafe(t *testing.T) {
 	res, err := tw.adapter()(&model.Task{TaskDefName: "t", InputData: nil})
 	assert.NoError(t, err)
 	assert.Equal(t, Out{B: 1}, res)
+}
+
+func TestTypedWorker_Options(t *testing.T) {
+	type In struct{}
+	type Out struct{}
+
+	tw := NewTypedWorker("test", func(ctx TaskContext, in In) (Out, error) {
+		return Out{}, nil
+	})
+
+	opts := tw.Options()
+	assert.Equal(t, "test", tw.TaskName())
+	assert.Equal(t, 1, opts.BatchSize)
+	assert.Equal(t, 100*time.Millisecond, opts.PollInterval)
+	assert.Equal(t, -1*time.Millisecond, opts.PollTimeout)
+	assert.Equal(t, "", opts.Domain)
+}
+
+func TestTypedWorker_WithOptions(t *testing.T) {
+	type In struct{}
+	type Out struct{}
+
+	tw := NewTypedWorker("test", func(ctx TaskContext, in In) (Out, error) {
+		return Out{}, nil
+	})
+
+	tw2 := tw.With(WithBatchSize(5), WithDomain("test-domain"))
+
+	opts1 := tw.Options()
+	assert.Equal(t, 1, opts1.BatchSize)
+	assert.Equal(t, "", opts1.Domain)
+
+	opts2 := tw2.Options()
+	assert.Equal(t, 5, opts2.BatchSize)
+	assert.Equal(t, "test-domain", opts2.Domain)
+
+	tw2Concrete := tw2.(*TypedWorker[In, Out])
+	assert.NotSame(t, tw.handler, tw2Concrete.handler)
 }

@@ -18,15 +18,14 @@ import (
 )
 
 func TestNewBaseWorker_Defaults(t *testing.T) {
-	w := newBaseWorker("t")
-	assert.Equal(t, "t", w.taskName)
-	assert.Equal(t, 1, w.batchSize)
-	assert.Equal(t, 500*time.Millisecond, w.pollInterval)
-	assert.Equal(t, -1*time.Millisecond, w.pollTimeout)
-	assert.Equal(t, "", w.domain)
+	w := NewWorker("t", func(tk *model.Task) (interface{}, error) { return "ok", nil })
+	assert.Equal(t, "t", w.TaskName())
 
-	_, isJSON := w.binder.(JSONBinder)
-	assert.True(t, isJSON)
+	opts := w.Options()
+	assert.Equal(t, 1, opts.BatchSize)
+	assert.Equal(t, 100*time.Millisecond, opts.PollInterval)
+	assert.Equal(t, -1*time.Millisecond, opts.PollTimeout)
+	assert.Equal(t, "", opts.Domain)
 }
 
 func TestNewWorker_SetsHandlerAndName(t *testing.T) {
@@ -37,51 +36,55 @@ func TestNewWorker_SetsHandlerAndName(t *testing.T) {
 	}
 	w := NewWorker("taskA", h)
 
-	assert.Equal(t, "taskA", w.taskName)
-	out, err := w.handler(&model.Task{TaskDefName: "taskA"})
+	assert.Equal(t, "taskA", w.TaskName())
+	handler := w.Handler()
+	assert.NotNil(t, handler)
+	out, err := handler(&model.Task{TaskDefName: "taskA"})
 	assert.NoError(t, err)
 	assert.Equal(t, "ok", out)
 	assert.True(t, called)
 }
 
 func TestOptions_IgnoreInvalid_AndOrder(t *testing.T) {
-	w := newBaseWorker("t")
+	base := defaultOptions()
 
 	// ignore non-positive
-	WithBatchSize(0)(w)
-	assert.Equal(t, 1, w.batchSize)
-	WithBatchSize(-5)(w)
-	assert.Equal(t, 1, w.batchSize)
+	opts := applyOptions(base, WithBatchSize(0))
+	assert.Equal(t, 1, opts.BatchSize)
+	opts = applyOptions(base, WithBatchSize(-5))
+	assert.Equal(t, 1, opts.BatchSize)
 
-	WithPollInterval(0)(w)
-	assert.Equal(t, 500*time.Millisecond, w.pollInterval)
-	WithPollInterval(-10 * time.Millisecond)(w)
-	assert.Equal(t, 500*time.Millisecond, w.pollInterval)
+	opts = applyOptions(base, WithPollInterval(0))
+	assert.Equal(t, 100*time.Millisecond, opts.PollInterval)
+	opts = applyOptions(base, WithPollInterval(-10*time.Millisecond))
+	assert.Equal(t, 100*time.Millisecond, opts.PollInterval)
 
 	// last wins
-	WithBatchSize(3)(w)
-	WithBatchSize(9)(w)
-	assert.Equal(t, 9, w.batchSize)
+	opts = applyOptions(base, WithBatchSize(3), WithBatchSize(9))
+	assert.Equal(t, 9, opts.BatchSize)
 
-	WithPollInterval(10 * time.Millisecond)(w)
-	WithPollInterval(25 * time.Millisecond)(w)
-	assert.Equal(t, 25*time.Millisecond, w.pollInterval)
+	opts = applyOptions(base, WithPollInterval(10*time.Millisecond), WithPollInterval(25*time.Millisecond))
+	assert.Equal(t, 25*time.Millisecond, opts.PollInterval)
 
-	WithPollTimeout(0)(w)
-	assert.Equal(t, time.Duration(0), w.pollTimeout)
-	WithPollTimeout(-1 * time.Second)(w)
-	assert.Equal(t, -1*time.Second, w.pollTimeout)
-}
-
-func TestWorker_ProviderInterface_ReturnsSelf(t *testing.T) {
-	w := NewWorker("p", func(*model.Task) (interface{}, error) { return nil, nil })
-	var p Provider = w
-	got := p.Worker()
-	assert.Same(t, w, got)
+	opts = applyOptions(base, WithPollTimeout(0))
+	assert.Equal(t, time.Duration(0), opts.PollTimeout)
+	opts = applyOptions(base, WithPollTimeout(-1*time.Second))
+	assert.Equal(t, -1*time.Second, opts.PollTimeout)
 }
 
 func TestNewWorker_NilHandler_AllowsNilButNotCalled(t *testing.T) {
 	w := NewWorker("nilh", nil)
 	assert.NotNil(t, w)
-	assert.Nil(t, w.handler)
+	handler := w.Handler()
+	assert.Nil(t, handler)
+}
+
+func TestWorker_With_IsImmutable(t *testing.T) {
+	w := NewWorker("t", func(tk *model.Task) (interface{}, error) { return nil, nil })
+	w2 := w.With(WithBatchSize(2))
+	_ = w2.With(WithDomain("d2"))
+
+	opts := w.Options()
+	assert.Equal(t, 1, opts.BatchSize)
+	assert.Equal(t, "", opts.Domain)
 }

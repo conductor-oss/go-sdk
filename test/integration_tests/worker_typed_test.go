@@ -45,7 +45,7 @@ func typedHandler(ctx worker.TaskContext, data testdata.TestDataIn) (testdata.Te
 	return testdata.TestDataOut{
 		Message: "processed by typed worker",
 		Sum:     data.B + len(data.A),
-		TaskId:  ctx.GetTaskID(),
+		TaskId:  ctx.TaskID(),
 	}, nil
 }
 

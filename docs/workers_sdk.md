@@ -69,7 +69,7 @@ The SDK includes a new worker API that adds:
 
 - Type-safe handlers via generics: `TypedWorker[TIn, TOut]`
 - Contextual execution: `TaskContext` with workflow/task metadata
-- Clear per-task configuration via options: `WithBatchSize`, `WithPollInterval`, `WithPollTimeout`, `WithDomain`
+- Clear per-task configuration via options: `WithBatchSize`, `WithPollInterval`, `WithPollTimeout`, `WithDomain`, `WithBaseContext`
 - Unified registration using `RegisterWorker` / `RegisterWorkers`
 
 ### Worker with options
@@ -146,13 +146,13 @@ if err != nil { panic(err) }
 
 `TaskContext` extends `context.Context` and exposes:
 
-- `GetWorkflowInstanceID() string`
-- `GetWorkflowType() string`
-- `GetTaskID() string`
-- `GetTaskType() string`
-- `GetRetryCount() int`
-- `GetRetriedTaskID() string`
-- `GetPollCount() int`
+- `WorkflowInstanceID() string`
+- `WorkflowType() string`
+- `TaskID() string`
+- `TaskType() string`
+- `RetryCount() int`
+- `RetriedTaskID() string`
+- `PollCount() int`
 
 ## Starting Workers
 `TaskRunner` interface is used to start the workers, which takes care of polling server for the work, executing worker code and updating the results back to the server.

@@ -10,53 +10,61 @@
 package worker
 
 import (
-	"time"
+	"context"
 
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
-// Worker represents a configurable worker definition that can be registered with TaskRunner.
-// This entity enables an options pattern for configuration.
-type Worker struct {
+// Worker is a generic interface that represents a worker.
+type Worker interface {
+	TaskName() string
+	Options() Options
+	Handler() model.ExecuteTaskFunction
+	BaseContext() context.Context
+	With(...Option) Worker
+}
+
+// BaseWorker represents a configurable worker implementation.
+type BaseWorker struct {
 	taskName string
 	handler  model.ExecuteTaskFunction
 
-	batchSize    int
-	pollInterval time.Duration
-	pollTimeout  time.Duration
-	domain       string
+	options Options
 
-	binder InputBinder
+	baseCtx context.Context
+	binder  InputBinder
 }
-
-// Provider exposes a Worker instance for registration with a TaskRunner.
-// It is implemented by types that can provide a base Worker (e.g., Worker and TypedWorker).
-type Provider interface{ Worker() *Worker }
 
 // NewWorker constructs a Worker.
-func NewWorker(taskName string, f func(t *model.Task) (interface{}, error), options ...Option) *Worker {
-	w := newBaseWorker(taskName, options...)
-	w.handler = f
-	return w
+func NewWorker(taskName string, f func(t *model.Task) (interface{}, error), options ...Option) *BaseWorker {
+	opts := applyOptions(defaultOptions(), options...)
+	return &BaseWorker{
+		taskName: taskName,
+		options:  opts,
+		binder:   JSONBinder{},
+		handler:  f,
+	}
 }
 
-// newBaseWorker initializes a Worker with default configuration.
-func newBaseWorker(taskName string, options ...Option) *Worker {
-	w := &Worker{
-		taskName:     taskName,
-		batchSize:    1,
-		pollInterval: 500 * time.Millisecond,
-		pollTimeout:  -1 * time.Millisecond,
-		domain:       "",
-		binder:       JSONBinder{},
-	}
-	for _, opt := range options {
-		if opt != nil {
-			opt(w)
-		}
-	}
-	return w
+// TaskName returns the name of the task.
+func (w *BaseWorker) TaskName() string { return w.taskName }
+
+// Options returns the options of the worker.
+func (w *BaseWorker) Options() Options { return w.options }
+
+// Handler returns the handler of the worker.
+func (w *BaseWorker) Handler() model.ExecuteTaskFunction { return w.handler }
+
+// BaseContext returns the base context of the worker.
+func (w *BaseWorker) BaseContext() context.Context { return w.baseCtx }
+
+// With returns a new worker with the given options.
+func (w *BaseWorker) With(options ...Option) Worker {
+	return w.withOptions(applyOptions(w.options, options...))
 }
 
-// Worker allows base Worker to satisfy the Provider interface used by registration.
-func (w *Worker) Worker() *Worker { return w }
+func (w *BaseWorker) withOptions(o Options) Worker {
+	cp := *w
+	cp.options = o
+	return &cp
+}

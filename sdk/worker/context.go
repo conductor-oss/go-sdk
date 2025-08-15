@@ -18,13 +18,13 @@ import (
 // TaskContext extends context.Context with Conductor task/workflow metadata.
 type TaskContext interface {
 	context.Context
-	GetWorkflowInstanceID() string
-	GetWorkflowType() string
-	GetTaskID() string
-	GetTaskType() string
-	GetRetryCount() int
-	GetRetriedTaskID() string
-	GetPollCount() int
+	WorkflowInstanceID() string
+	WorkflowType() string
+	TaskID() string
+	TaskType() string
+	RetryCount() int
+	RetriedTaskID() string
+	PollCount() int
 }
 
 type workflowContext struct {
@@ -38,13 +38,13 @@ type workflowContext struct {
 	pollCount          int
 }
 
-func (w *workflowContext) GetWorkflowInstanceID() string { return w.workflowInstanceID }
-func (w *workflowContext) GetWorkflowType() string       { return w.workflowType }
-func (w *workflowContext) GetTaskID() string             { return w.taskID }
-func (w *workflowContext) GetTaskType() string           { return w.taskType }
-func (w *workflowContext) GetRetryCount() int            { return w.retryCount }
-func (w *workflowContext) GetRetriedTaskID() string      { return w.retriedTaskID }
-func (w *workflowContext) GetPollCount() int             { return w.pollCount }
+func (w *workflowContext) WorkflowInstanceID() string { return w.workflowInstanceID }
+func (w *workflowContext) WorkflowType() string       { return w.workflowType }
+func (w *workflowContext) TaskID() string             { return w.taskID }
+func (w *workflowContext) TaskType() string           { return w.taskType }
+func (w *workflowContext) RetryCount() int            { return w.retryCount }
+func (w *workflowContext) RetriedTaskID() string      { return w.retriedTaskID }
+func (w *workflowContext) PollCount() int             { return w.pollCount }
 
 // getWorkflowContext builds a TaskContext with enriched metadata from a model.Task.
 // The context.Context parameter should be the first parameter as per Go conventions.

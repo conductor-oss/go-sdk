@@ -9,39 +9,82 @@
 
 package worker
 
-import "time"
+import (
+	"context"
+	"time"
+)
+
+// Options represents the configuration options for a Worker.
+type Options struct {
+	Domain       string
+	BatchSize    int
+	PollInterval time.Duration
+	PollTimeout  time.Duration
+	BaseContext  context.Context
+}
+
+func defaultOptions() Options {
+	return Options{
+		Domain:       "",
+		BatchSize:    1,
+		PollInterval: 100 * time.Millisecond,
+		PollTimeout:  -1 * time.Millisecond,
+	}
+}
 
 // Option defines a functional option for configuring a Worker.
-type Option func(*Worker)
+type Option func(Options) Options
 
 // WithBatchSize sets the number of tasks to fetch per poll for the worker.
 func WithBatchSize(size int) Option {
-	return func(w *Worker) {
+	return func(o Options) Options {
 		if size > 0 {
-			w.batchSize = size
+			o.BatchSize = size
 		}
+		return o
 	}
 }
 
 // WithPollInterval sets the polling interval for the worker.
 func WithPollInterval(interval time.Duration) Option {
-	return func(w *Worker) {
+	return func(o Options) Options {
 		if interval > 0 {
-			w.pollInterval = interval
+			o.PollInterval = interval
 		}
+		return o
 	}
 }
 
 // WithPollTimeout sets the polling timeout for the worker. Negative values mean server default.
 func WithPollTimeout(timeout time.Duration) Option {
-	return func(w *Worker) {
-		w.pollTimeout = timeout
+	return func(o Options) Options {
+		o.PollTimeout = timeout
+		return o
 	}
 }
 
 // WithDomain sets the task domain for the worker.
 func WithDomain(domain string) Option {
-	return func(w *Worker) {
-		w.domain = domain
+	return func(o Options) Options {
+		o.Domain = domain
+		return o
 	}
+}
+
+// WithBaseContext sets the base context for the worker.
+func WithBaseContext(ctx context.Context) Option {
+	return func(o Options) Options {
+		o.BaseContext = ctx
+		return o
+	}
+}
+
+func applyOptions(base Options, fns ...Option) Options {
+	o := base
+	for _, fn := range fns {
+		if fn != nil {
+			o = fn(o)
+		}
+	}
+	return o
 }
