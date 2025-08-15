@@ -19,8 +19,19 @@ const retryLimit = 5
 
 func TestWorkflowCreation(t *testing.T) {
 	executor := testdata.WorkflowExecutor
+
+	wf := workflow.NewConductorWorkflow(executor).
+		Name("PopulationMinMax").
+		Version(1).
+		Description("Simple Population Min Max workflow").
+		Add(testdata.NewSetStateVariableTask(workflow.NewSimpleTask("set_state", "set_state")))
+	err := wf.Register(true)
+	if err != nil {
+		t.Fatalf("Failed to register workflow: %s, reason: %s", wf.GetName(), err.Error())
+	}
+
 	workflow := testdata.NewKitchenSinkWorkflow(testdata.WorkflowExecutor)
-	err := workflow.Register(true)
+	err = workflow.Register(true)
 	if err != nil {
 		t.Fatalf("Failed to register workflow: %s, reason: %s", workflow.GetName(), err.Error())
 	}
