@@ -65,6 +65,8 @@ type TaskRunner struct {
 	pollTimeoutMutex      sync.RWMutex
 	pollTimeout           time.Duration
 	pollTimeoutByTaskName map[string]time.Duration
+
+	baseCtx context.Context
 }
 
 // NewTaskRunner returns a new TaskRunner which authenticates via HTTP using the provided settings.
@@ -94,6 +96,19 @@ func NewTaskRunnerWithApiClient(
 	}
 }
 
+// WithBaseContext sets the base context for the task runner.
+func (c *TaskRunner) WithBaseContext(ctx context.Context) *TaskRunner {
+	c.baseCtx = ctx
+	return c
+}
+
+func (c *TaskRunner) getBaseContext() context.Context {
+	if c.baseCtx == nil {
+		return context.Background()
+	}
+	return c.baseCtx
+}
+
 // SetSleepOnGenericError Sets the time for which to wait before continuing to poll/execute when there is an error
 // Default is 200 millis, and this function can be used to increase/decrease the duration of the wait time
 // Useful to avoid excessive logs in the worker when there are intermittent issues
@@ -117,6 +132,47 @@ func (c *TaskRunner) StartWorkerWithDomain(taskName string, executeFunction mode
 // same taskName.
 func (c *TaskRunner) StartWorker(taskName string, executeFunction model.ExecuteTaskFunction, batchSize int, pollInterval time.Duration) error {
 	return c.startWorker(taskName, executeFunction, batchSize, pollInterval, "")
+}
+
+// RegisterWorker registers a worker with this TaskRunner, applies its per-task configuration,
+// and starts or scales the underlying worker goroutines.
+//
+// It accepts any value implementing the Provider interface (for example, *Worker or *TypedWorker).
+//
+// Returns an error if the provider is nil, if it cannot produce a *Worker, or if applying
+// configuration fails.
+func (c *TaskRunner) RegisterWorker(w Worker) error {
+	if w == nil {
+		return fmt.Errorf("worker is nil")
+	}
+
+	if w.Options().BaseContext == nil {
+		w = w.With(WithBaseContext(c.getBaseContext()))
+	}
+
+	opts := w.Options()
+	// Apply per-task poll interval
+	if err := c.SetPollIntervalForTask(w.TaskName(), opts.PollInterval); err != nil {
+		return err
+	}
+	// Apply per-task poll timeout if different from default
+	if opts.PollTimeout != 0 { // allow zero to mean "do not change"
+		if err := c.SetPollTimeoutForTask(w.TaskName(), opts.PollTimeout); err != nil {
+			return err
+		}
+	}
+	// Start using existing worker infrastructure
+	return c.startWorker(w.TaskName(), w.Handler(), opts.BatchSize, opts.PollInterval, opts.Domain)
+}
+
+// RegisterWorkers registers multiple workers, failing fast if any registration fails.
+func (c *TaskRunner) RegisterWorkers(workers ...Worker) error {
+	for _, w := range workers {
+		if err := c.RegisterWorker(w); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // SetBatchSize can be used to set the batch size for all workers running the provided task.
@@ -294,6 +350,7 @@ func (c *TaskRunner) workOnce(taskName string, executeFunction model.ExecuteTask
 		)
 		return
 	}
+
 	if batchSize < 1 {
 		pauseOnNoAvailableWorkerError(taskName, domain)
 		return
@@ -358,7 +415,7 @@ func (c *TaskRunner) batchPoll(taskName string, count int, domain string) ([]mod
 	}
 
 	tasks, response, err := c.conductorTaskResourceClient.BatchPoll(
-		context.Background(),
+		c.getBaseContext(),
 		taskName,
 		opts,
 	)
@@ -455,7 +512,7 @@ func (c *TaskRunner) updateTaskWithRetry(taskName string, taskResult *model.Task
 
 func (c *TaskRunner) updateTask(taskName string, taskResult *model.TaskResult) (*http.Response, error) {
 	startTime := time.Now()
-	_, response, err := c.conductorTaskResourceClient.UpdateTask(context.Background(), taskResult)
+	_, response, err := c.conductorTaskResourceClient.UpdateTask(c.getBaseContext(), taskResult)
 	spentTime := time.Since(startTime).Milliseconds()
 	metrics.RecordTaskUpdateTime(taskName, float64(spentTime))
 	return response, err
