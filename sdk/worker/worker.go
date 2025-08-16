@@ -10,8 +10,6 @@
 package worker
 
 import (
-	"context"
-
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
@@ -20,7 +18,6 @@ type Worker interface {
 	TaskName() string
 	Options() Options
 	Handler() model.ExecuteTaskFunction
-	BaseContext() context.Context
 	With(...Option) Worker
 }
 
@@ -31,8 +28,7 @@ type BaseWorker struct {
 
 	options Options
 
-	baseCtx context.Context
-	binder  InputBinder
+	binder InputBinder
 }
 
 // NewWorker constructs a Worker.
@@ -54,9 +50,6 @@ func (w *BaseWorker) Options() Options { return w.options }
 
 // Handler returns the handler of the worker.
 func (w *BaseWorker) Handler() model.ExecuteTaskFunction { return w.handler }
-
-// BaseContext returns the base context of the worker.
-func (w *BaseWorker) BaseContext() context.Context { return w.baseCtx }
 
 // With returns a new worker with the given options.
 func (w *BaseWorker) With(options ...Option) Worker {

@@ -24,8 +24,7 @@ type TypedWorker[TIn, TOut any] struct {
 
 	options Options
 
-	baseCtx context.Context
-	binder  InputBinder
+	binder InputBinder
 }
 
 // NewSimpleTypedWorker creates a typed worker entity with a simple function.
@@ -70,8 +69,17 @@ func (tw *TypedWorker[TIn, TOut]) adapter() model.ExecuteTaskFunction {
 			return nil, fmt.Errorf("input binding error for task %s: %w", t.TaskDefName, err)
 		}
 
+		// Create a new context with cancellation  for proper lifecycle management
+		parentCtx := tw.options.BaseContext
+		if parentCtx == nil {
+			parentCtx = context.Background()
+		}
+
+		ctx, cancel := context.WithCancel(parentCtx)
+		defer cancel()
+
 		// Execute typed handler
-		return tw.handler(getWorkflowContext(tw.baseCtx, t), in)
+		return tw.handler(getWorkflowContext(ctx, t), in)
 	}
 }
 
@@ -83,9 +91,6 @@ func (tw *TypedWorker[TIn, TOut]) Options() Options { return tw.options }
 
 // Handler returns the handler of the worker.
 func (tw *TypedWorker[TIn, TOut]) Handler() model.ExecuteTaskFunction { return tw.adapter() }
-
-// BaseContext returns the base context of the worker.
-func (tw *TypedWorker[TIn, TOut]) BaseContext() context.Context { return tw.baseCtx }
 
 // With returns a new worker with the given options.
 func (tw *TypedWorker[TIn, TOut]) With(options ...Option) Worker {

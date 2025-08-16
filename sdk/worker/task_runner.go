@@ -146,7 +146,7 @@ func (c *TaskRunner) RegisterWorker(w Worker) error {
 		return fmt.Errorf("worker is nil")
 	}
 
-	if w.BaseContext() == nil {
+	if w.Options().BaseContext == nil {
 		w = w.With(WithBaseContext(c.getBaseContext()))
 	}
 
