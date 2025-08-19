@@ -43,6 +43,7 @@ type ConductorWorkflow struct {
 	idempotencyKey                string
 	tags                          []model.TagObject
 	overwiteTags                  bool
+	rateLimitConfig               *model.RateLimitConfig
 }
 
 func NewConductorWorkflow(executor *executor.WorkflowExecutor) *ConductorWorkflow {
@@ -157,6 +158,42 @@ func (workflow *ConductorWorkflow) Tags(tags map[string]string) *ConductorWorkfl
 func (workflow *ConductorWorkflow) OverwriteTags(overwrite bool) *ConductorWorkflow {
 	workflow.overwiteTags = overwrite
 	return workflow
+}
+
+// RateLimitKey sets the rate limit key for grouping workflow executions.
+// Can be a fixed value (e.g., "max") or a dynamic variable from workflow input
+// (e.g., "${workflow.input.correlationId}")
+// This allows for flexible rate limiting strategies:
+// - Fixed key: All workflow instances share the same rate limit
+// - Dynamic key: Different groups of workflows have separate rate limits
+func (workflow *ConductorWorkflow) RateLimitKey(key string) *ConductorWorkflow {
+	if workflow.rateLimitConfig == nil {
+		workflow.rateLimitConfig = &model.RateLimitConfig{}
+	}
+	workflow.rateLimitConfig.RateLimitKey = key
+	return workflow
+}
+
+// ConcurrentExecutionLimit sets the maximum number of workflow executions
+// that can run concurrently for each rate limit key.
+func (workflow *ConductorWorkflow) ConcurrentExecutionLimit(limit int32) *ConductorWorkflow {
+	if workflow.rateLimitConfig == nil {
+		workflow.rateLimitConfig = &model.RateLimitConfig{}
+	}
+	workflow.rateLimitConfig.ConcurrentExecLimit = limit
+	return workflow
+}
+
+// SetRateLimitConfig sets the complete rate limit configuration for the workflow.
+// This method can be used as an alternative to the fluent methods RateLimitKey and ConcurrentExecutionLimit.
+func (workflow *ConductorWorkflow) SetRateLimitConfig(config *model.RateLimitConfig) *ConductorWorkflow {
+	workflow.rateLimitConfig = config
+	return workflow
+}
+
+// GetRateLimitConfig returns the current rate limit configuration
+func (workflow *ConductorWorkflow) GetRateLimitConfig() *model.RateLimitConfig {
+	return workflow.rateLimitConfig
 }
 
 func (workflow *ConductorWorkflow) GetName() (name string) {
@@ -318,6 +355,7 @@ func (workflow *ConductorWorkflow) ToWorkflowDef() *model.WorkflowDef {
 		WorkflowStatusListenerEnabled: workflow.workflowStatusListenerEnabled,
 		Tags:                          workflow.tags,
 		OverwriteTags:                 workflow.overwiteTags,
+		RateLimitConfig:               workflow.rateLimitConfig,
 	}
 }
 
