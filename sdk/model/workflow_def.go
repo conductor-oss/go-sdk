@@ -9,6 +9,7 @@
 
 package model
 
+// RateLimitConfig is the configuration for rate limiting for a workflow.
 type RateLimitConfig struct {
 	RateLimitKey        string `json:"rateLimitKey"`
 	ConcurrentExecLimit int32  `json:"concurrentExecLimit"`

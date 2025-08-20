@@ -162,3 +162,41 @@ func TestUpdateTaskWithWorkflowIdAndTaskRef(t *testing.T) {
 	json, _ := json.Marshal(workflowDef)
 	fmt.Println(string(json))
 }
+
+func TestWorkflowRateLimitConfig(t *testing.T) {
+	// Create workflow with rate limit configuration
+	wf := workflow.NewConductorWorkflow(nil).
+		Name("TEST_GO_RATE_LIMIT_WORKFLOW").
+		Version(1).
+		Description("Test workflow with rate limiting").
+		RateLimitKey("test_key").
+		ConcurrentExecutionLimit(5)
+
+	// Verify rate limit configuration
+	rateLimitConfig := wf.GetRateLimitConfig()
+	assert.NotNil(t, rateLimitConfig)
+	assert.Equal(t, "test_key", rateLimitConfig.RateLimitKey)
+	assert.Equal(t, int32(5), rateLimitConfig.ConcurrentExecLimit)
+
+	// Convert to WorkflowDef and verify
+	workflowDef := wf.ToWorkflowDef()
+	assert.NotNil(t, workflowDef.RateLimitConfig)
+	assert.Equal(t, "test_key", workflowDef.RateLimitConfig.RateLimitKey)
+	assert.Equal(t, int32(5), workflowDef.RateLimitConfig.ConcurrentExecLimit)
+
+	// Use the workflow to set the rate limit config
+	rateLimitConfig = &model.RateLimitConfig{
+		RateLimitKey:        "test_key_1",
+		ConcurrentExecLimit: 10,
+	}
+	wf_2 := workflow.NewConductorWorkflow(nil).
+		Name("TEST_GO_RATE_LIMIT_WORKFLOW").
+		Version(1).
+		Description("Test workflow with rate limiting").
+		SetRateLimitConfig(rateLimitConfig)
+
+	workflowDef = wf_2.ToWorkflowDef()
+	assert.NotNil(t, workflowDef.RateLimitConfig)
+	assert.Equal(t, "test_key_1", workflowDef.RateLimitConfig.RateLimitKey)
+	assert.Equal(t, int32(10), workflowDef.RateLimitConfig.ConcurrentExecLimit)
+}

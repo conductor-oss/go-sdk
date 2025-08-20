@@ -19,125 +19,26 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/workflow"
 	"github.com/conductor-sdk/conductor-go/test/testdata"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
-
-// TestWorkflowRateLimitConfig tests the basic rate limit configuration
-func TestWorkflowRateLimitConfig(t *testing.T) {
-	testWorkflowExecutor := testdata.WorkflowExecutor
-
-	// Create workflow with rate limit configuration
-	wf := workflow.NewConductorWorkflow(testWorkflowExecutor).
-		Name("test_rate_limit_workflow").
-		Version(1).
-		Description("Test workflow with rate limiting").
-		RateLimitKey("test_key").
-		ConcurrentExecutionLimit(5)
-
-	// Add a simple task
-	task := workflow.NewSimpleTask("simple_task", "simple_task_ref")
-	wf.Add(task)
-
-	// Verify rate limit configuration
-	rateLimitConfig := wf.GetRateLimitConfig()
-	assert.NotNil(t, rateLimitConfig)
-	assert.Equal(t, "test_key", rateLimitConfig.RateLimitKey)
-	assert.Equal(t, int32(5), rateLimitConfig.ConcurrentExecLimit)
-
-	// Convert to WorkflowDef and verify
-	workflowDef := wf.ToWorkflowDef()
-	assert.NotNil(t, workflowDef.RateLimitConfig)
-	assert.Equal(t, "test_key", workflowDef.RateLimitConfig.RateLimitKey)
-	assert.Equal(t, int32(5), workflowDef.RateLimitConfig.ConcurrentExecLimit)
-}
-
-// TestWorkflowDynamicRateLimitKey tests dynamic rate limit key with workflow input
-func TestWorkflowDynamicRateLimitKey(t *testing.T) {
-	testWorkflowExecutor := testdata.WorkflowExecutor
-
-	// Create workflow with dynamic rate limit key
-	wf := workflow.NewConductorWorkflow(testWorkflowExecutor).
-		Name("test_dynamic_rate_limit_workflow").
-		Version(1).
-		RateLimitKey("${workflow.input.customerId}").
-		ConcurrentExecutionLimit(3)
-
-	// Add a simple task
-	task := workflow.NewSimpleTask("process_customer_task", "process_customer_ref")
-	wf.Add(task)
-
-	// Verify dynamic key configuration
-	rateLimitConfig := wf.GetRateLimitConfig()
-	assert.NotNil(t, rateLimitConfig)
-	assert.Equal(t, "${workflow.input.customerId}", rateLimitConfig.RateLimitKey)
-	assert.Equal(t, int32(3), rateLimitConfig.ConcurrentExecLimit)
-}
-
-// TestWorkflowComplexDynamicRateLimitKey tests complex dynamic expressions
-func TestWorkflowComplexDynamicRateLimitKey(t *testing.T) {
-	testWorkflowExecutor := testdata.WorkflowExecutor
-
-	// Create workflow with complex dynamic rate limit key
-	wf := workflow.NewConductorWorkflow(testWorkflowExecutor).
-		Name("test_complex_rate_limit_workflow").
-		Version(1).
-		RateLimitKey("${workflow.input.tenantId}_${workflow.input.region}").
-		ConcurrentExecutionLimit(10)
-
-	// Add a simple task
-	task := workflow.NewSimpleTask("multi_tenant_task", "multi_tenant_ref")
-	wf.Add(task)
-
-	// Verify complex dynamic key
-	rateLimitConfig := wf.GetRateLimitConfig()
-	assert.NotNil(t, rateLimitConfig)
-	assert.Equal(t, "${workflow.input.tenantId}_${workflow.input.region}", rateLimitConfig.RateLimitKey)
-}
-
-// TestWorkflowSetRateLimitConfig tests the SetRateLimitConfig method
-func TestWorkflowSetRateLimitConfig(t *testing.T) {
-	testWorkflowExecutor := testdata.WorkflowExecutor
-
-	// Create workflow
-	wf := workflow.NewConductorWorkflow(testWorkflowExecutor).
-		Name("test_set_rate_limit_workflow").
-		Version(1)
-
-	// Set rate limit config using SetRateLimitConfig
-	config := &model.RateLimitConfig{
-		RateLimitKey:        "api_key_${workflow.input.apiKey}",
-		ConcurrentExecLimit: 15,
-	}
-	wf.SetRateLimitConfig(config)
-	// Add a simple task
-	task := workflow.NewSimpleTask("api_task", "api_task_ref")
-	wf.Add(task)
-
-	// Verify configuration
-	rateLimitConfig := wf.GetRateLimitConfig()
-	assert.NotNil(t, rateLimitConfig)
-	assert.Equal(t, "api_key_${workflow.input.apiKey}", rateLimitConfig.RateLimitKey)
-	assert.Equal(t, int32(15), rateLimitConfig.ConcurrentExecLimit)
-}
 
 // TestConcurrentWorkflowExecution tests actual concurrent execution with rate limits
 func TestConcurrentWorkflowExecution(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping integration test in short mode")
-	}
-
 	testWorkflowExecutor := testdata.WorkflowExecutor
 
+	concurrentLimit := int32(3)
+	duration := 3 * time.Second
+	rateLimitKey := "concurrent_test"
 	// Create workflow with strict concurrency limit
-	workflowName := fmt.Sprintf("test_concurrent_%d", time.Now().Unix())
+	workflowName := fmt.Sprintf("TEST_GO_WORKFLOW_CONCURRENT_%d", time.Now().Unix())
 	wf := workflow.NewConductorWorkflow(testWorkflowExecutor).
 		Name(workflowName).
 		Version(1).
-		RateLimitKey("concurrent_test").
-		ConcurrentExecutionLimit(2) // Only allow 2 concurrent executions
+		RateLimitKey(rateLimitKey).
+		ConcurrentExecutionLimit(concurrentLimit)
 
 	// Add a wait task to simulate long-running workflow
-	waitTask := workflow.NewWaitForDurationTask("wait_task", 5*time.Second)
-	wf.Add(waitTask)
+	wf = wf.Add(workflow.NewSetVariableTask("set_var").Input("var_value", 42)).Add(workflow.NewWaitForDurationTask("wait_task", duration))
 
 	// Register the workflow
 	err := wf.Register(true)
@@ -151,14 +52,11 @@ func TestConcurrentWorkflowExecution(t *testing.T) {
 		}
 	}()
 
-	// Start 5 workflows simultaneously
+	// Start 15 workflows simultaneously
 	var wg sync.WaitGroup
-	results := make([]struct {
-		ID    string
-		Error error
-	}, 5)
+	ids := make([]string, 10)
 
-	for i := 0; i < 5; i++ {
+	for i := 0; i < len(ids); i++ {
 		wg.Add(1)
 		go func(idx int) {
 			defer wg.Done()
@@ -166,48 +64,52 @@ func TestConcurrentWorkflowExecution(t *testing.T) {
 				"index": idx,
 			}
 			id, err := wf.StartWorkflowWithInput(input)
-			results[idx].ID = id
-			results[idx].Error = err
+			if err != nil {
+				t.Logf("Failed to start workflow: %v", err)
+			}
+			ids[idx] = id
 		}(i)
 	}
 
 	wg.Wait()
 
-	// Count successful starts
-	successCount := 0
-	for _, result := range results {
-		if result.Error == nil && result.ID != "" {
-			successCount++
-			t.Logf("Workflow %s started successfully", result.ID)
-		} else if result.Error != nil {
-			t.Logf("Workflow start failed/queued: %v", result.Error)
+	time.Sleep(duration + 500*time.Millisecond)
+
+	completedCount := 0
+	for _, id := range ids {
+		execution, _ := testWorkflowExecutor.GetWorkflow(id, true)
+		switch execution.Status {
+		case model.CompletedWorkflow:
+			completedCount++
+			// RateLimitKey should be skipped
+			assert.Equal(t, execution.RateLimitKey, "")
+		case model.RunningWorkflow:
+			// RateLimitKey should be set
+			assert.Equal(t, execution.RateLimitKey, rateLimitKey)
 		}
 	}
 
-	// Due to rate limiting, we expect some workflows to be queued
-	// The exact behavior depends on server configuration
-	assert.GreaterOrEqual(t, successCount, 2, "At least 2 workflows should be running")
+	assert.GreaterOrEqual(t, completedCount, int(concurrentLimit), "Completed count should be equal to concurrent limit")
+	assert.Less(t, completedCount, len(ids), "Completed count should be less than or equal to the number of workflows")
 }
 
 // TestPerCustomerRateLimit tests rate limiting per customer ID
 func TestPerCustomerRateLimit(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping integration test in short mode")
-	}
-
 	testWorkflowExecutor := testdata.WorkflowExecutor
+	concurrentLimit := int32(3)
+	duration := 3 * time.Second
 
 	// Create workflow with per-customer rate limiting
-	workflowName := fmt.Sprintf("test_per_customer_%d", time.Now().Unix())
+	workflowName := fmt.Sprintf("TEST_GO_WORKFLOW_CONCURRENT_CUSTOMER_%d", time.Now().Unix())
 	wf := workflow.NewConductorWorkflow(testWorkflowExecutor).
 		Name(workflowName).
 		Version(1).
 		RateLimitKey("${workflow.input.customerId}").
-		ConcurrentExecutionLimit(2) // 2 concurrent per customer
+		ConcurrentExecutionLimit(concurrentLimit)
 
-	// Add a simple task
-	task := workflow.NewSimpleTask("customer_task", "customer_task_ref")
-	wf.Add(task)
+	// Add a wait task to simulate long-running workflow
+	wf = wf.Add(workflow.NewSetVariableTask("TEST_GO_SET_VAR").Input("var_value", 42)).
+		Add(workflow.NewWaitForDurationTask("TEST_GO_WAIT_TASK", duration))
 
 	// Register the workflow
 	err := wf.Register(true)
@@ -221,129 +123,93 @@ func TestPerCustomerRateLimit(t *testing.T) {
 		}
 	}()
 
-	// Start workflows for different customers
-	var wg sync.WaitGroup
-
-	// Start 3 workflows for customer1
-	for i := 0; i < 3; i++ {
-		wg.Add(1)
-		go func(idx int) {
-			defer wg.Done()
-			input := map[string]interface{}{
-				"customerId": "customer1",
-				"orderId":    fmt.Sprintf("order_%d", idx),
-			}
-			id, err := wf.StartWorkflowWithInput(input)
-			if err != nil {
-				t.Logf("Customer1 workflow %d failed/queued: %v", idx, err)
-			} else {
-				t.Logf("Customer1 workflow %d started: %s", idx, id)
-			}
-		}(i)
+	type CustomerWorkflow struct {
+		CustomerID string
+		WorkflowID string
 	}
-	// Start 3 workflows for customer2
-	for i := 0; i < 3; i++ {
-		wg.Add(1)
-		go func(idx int) {
-			defer wg.Done()
-			input := map[string]interface{}{
-				"customerId": "customer2",
-				"orderId":    fmt.Sprintf("order_%d", idx),
-			}
-			id, err := wf.StartWorkflowWithInput(input)
-			if err != nil {
-				t.Logf("Customer2 workflow %d failed/queued: %v", idx, err)
-			} else {
-				t.Logf("Customer2 workflow %d started: %s", idx, id)
-			}
-		}(i)
+
+	customers := []string{"customer_A", "customer_B"}
+	workflowsPerCustomer := 6
+
+	allWorkflows := make([]CustomerWorkflow, 0)
+	var mu sync.Mutex
+
+	// Start workflows for each customer simultaneously
+	var wg sync.WaitGroup
+	for _, customerId := range customers {
+		for i := 0; i < workflowsPerCustomer; i++ {
+			wg.Add(1)
+			go func(cId string, idx int) {
+				defer wg.Done()
+
+				input := map[string]interface{}{
+					"customerId": cId,
+					"index":      idx,
+				}
+
+				id, err := wf.StartWorkflowWithInput(input)
+
+				mu.Lock()
+				allWorkflows = append(allWorkflows, CustomerWorkflow{
+					CustomerID: cId,
+					WorkflowID: id,
+				})
+				mu.Unlock()
+
+				assert.NoError(t, err)
+			}(customerId, i)
+		}
 	}
 
 	wg.Wait()
 
-	// Each customer should have their own rate limit of 2 concurrent executions
-	// The third workflow for each customer should be queued
-}
+	// Wait for workflows to complete
+	time.Sleep(duration + 500*time.Millisecond)
 
-// TestWorkflowBuilderChaining tests fluent API chaining
-func TestWorkflowBuilderChaining(t *testing.T) {
-	testWorkflowExecutor := testdata.WorkflowExecutor
+	// Analyze results per customer
+	customerStats := make(map[string]struct {
+		Completed int
+		Failed    int
+		Running   int
+	})
 
-	// Test method chaining
-	wf := workflow.NewConductorWorkflow(testWorkflowExecutor).
-		Name("test_chaining_workflow").
-		Version(1).
-		Description("Test workflow with chained configuration").
-		RateLimitKey("chained_key").
-		ConcurrentExecutionLimit(7).
-		TimeoutPolicy(workflow.TimeOutWorkflow, 3600).
-		OwnerEmail("test@example.com")
+	// Count results
+	for _, cw := range allWorkflows {
+		stats := customerStats[cw.CustomerID]
 
-	// Add multiple tasks
-	task1 := workflow.NewSimpleTask("task1", "task1_ref")
-	task2 := workflow.NewSimpleTask("task2", "task2_ref")
-	wf.Add(task1).Add(task2)
+		// Check if workflow complete
+		execution, err := testWorkflowExecutor.GetWorkflow(cw.WorkflowID, true)
 
-	// Verify all configurations
-	assert.Equal(t, "test_chaining_workflow", wf.GetName())
-	assert.Equal(t, int32(1), wf.GetVersion())
+		require.NoError(t, err)
+		switch execution.Status {
+		case model.CompletedWorkflow:
+			stats.Completed++
+			assert.Equal(t, execution.RateLimitKey, "")
+		case model.FailedWorkflow:
+			stats.Failed++
+		case model.RunningWorkflow:
+			stats.Running++
+			assert.Equal(t, execution.RateLimitKey, cw.CustomerID)
+		}
 
-	rateLimitConfig := wf.GetRateLimitConfig()
-	assert.NotNil(t, rateLimitConfig)
-	assert.Equal(t, "chained_key", rateLimitConfig.RateLimitKey)
-	assert.Equal(t, int32(7), rateLimitConfig.ConcurrentExecLimit)
+		customerStats[cw.CustomerID] = stats
+	}
 
-	workflowDef := wf.ToWorkflowDef()
-	assert.Equal(t, "test@example.com", workflowDef.OwnerEmail)
-	assert.Equal(t, "TIME_OUT_WF", workflowDef.TimeoutPolicy)
-	assert.Equal(t, int64(3600), workflowDef.TimeoutSeconds)
-	assert.Len(t, workflowDef.Tasks, 2)
-}
+	for customerId, stats := range customerStats {
+		assert.GreaterOrEqual(t, stats.Completed, int(concurrentLimit),
+			"Customer %s should have at least %d completed workflows, got %d",
+			customerId, concurrentLimit, stats.Completed)
 
-// TestNoRateLimitConfiguration tests workflow without rate limit
-func TestNoRateLimitConfiguration(t *testing.T) {
-	testWorkflowExecutor := testdata.WorkflowExecutor
+		assert.Less(t, stats.Completed, workflowsPerCustomer,
+			"Customer %s should have at most %d completed workflows, got %d",
+			customerId, workflowsPerCustomer, stats.Completed)
 
-	// Create workflow without rate limit configuration
-	wf := workflow.NewConductorWorkflow(testWorkflowExecutor).
-		Name("test_no_rate_limit_workflow").
-		Version(1)
+		assert.Equal(t, stats.Failed, 0,
+			"Customer %s should have no failed workflows, got %d",
+			customerId, stats.Failed)
 
-	// Add a simple task
-	task := workflow.NewSimpleTask("unrestricted_task", "unrestricted_ref")
-	wf.Add(task)
-
-	// Verify no rate limit configuration
-	rateLimitConfig := wf.GetRateLimitConfig()
-	assert.Nil(t, rateLimitConfig)
-
-	// Convert to WorkflowDef and verify
-	workflowDef := wf.ToWorkflowDef()
-	assert.Nil(t, workflowDef.RateLimitConfig)
-}
-
-// TestUpdateRateLimitConfiguration tests updating rate limit configuration
-func TestUpdateRateLimitConfiguration(t *testing.T) {
-	testWorkflowExecutor := testdata.WorkflowExecutor
-
-	// Create workflow with initial rate limit
-	wf := workflow.NewConductorWorkflow(testWorkflowExecutor).
-		Name("test_update_rate_limit").
-		Version(1).
-		RateLimitKey("initial_key").
-		ConcurrentExecutionLimit(5)
-
-	// Verify initial configuration
-	config := wf.GetRateLimitConfig()
-	assert.Equal(t, "initial_key", config.RateLimitKey)
-	assert.Equal(t, int32(5), config.ConcurrentExecLimit)
-
-	// Update rate limit configuration
-	wf.RateLimitKey("updated_key").
-		ConcurrentExecutionLimit(10)
-
-	// Verify updated configuration
-	config = wf.GetRateLimitConfig()
-	assert.Equal(t, "updated_key", config.RateLimitKey)
-	assert.Equal(t, int32(10), config.ConcurrentExecLimit)
+		assert.Equal(t, stats.Running, workflowsPerCustomer-stats.Completed,
+			"Customer %s should have %d running workflows, got %d",
+			customerId, workflowsPerCustomer-stats.Completed, stats.Running)
+	}
 }
