@@ -1,6 +1,8 @@
 module examples
 
-go 1.17
+go 1.23
+
+toolchain go1.24.6
 
 require (
 	github.com/conductor-sdk/conductor-go v0.0.0
