@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/conductor-sdk/conductor-go/sdk/log"
-	"github.com/conductor-sdk/conductor-go/sdk/workflow/executor"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/conductor-sdk/conductor-go/sdk/log"
+	"github.com/conductor-sdk/conductor-go/sdk/workflow/executor"
 
 	"github.com/conductor-sdk/conductor-go/sdk/client"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
@@ -250,7 +251,8 @@ func TestRegisterWorkflowWithWaitSignal(t *testing.T) {
 	assert.Nil(t, err)
 
 	// Wait a moment for processing
-	time.Sleep(1 * time.Second)
+	err = waitForWorkflowCompletion(executor, workflowId, 10*time.Second)
+	assert.NoError(t, err)
 
 	// Get the workflow again to verify it's completed
 	workflow, err = executor.GetWorkflow(workflowId, true)
@@ -312,9 +314,6 @@ func TestSubWorkflowSignal(t *testing.T) {
 	assert.Nil(t, err)
 
 	t.Logf("Sent COMPLETED signal to workflow")
-
-	// Small delay to allow workflow to process
-	time.Sleep(2 * time.Second)
 
 	err = waitForWorkflowCompletion(executor, parentWorkflowId, 10*time.Second)
 	assert.NoError(t, err)
@@ -463,8 +462,8 @@ func TestSubWorkflowSignalWithDurableConsistency(t *testing.T) {
 
 	t.Logf("Sent COMPLETED signal to workflow")
 
-	// Small delay to allow workflow to process
-	time.Sleep(2 * time.Second)
+	err = waitForWorkflowCompletion(executor, parentWorkflowId, 10*time.Second)
+	assert.NoError(t, err)
 
 	// 4. Check if WF status is completed
 	workflowDetails, err := executor.GetWorkflow(parentWorkflowId, true)
@@ -681,7 +680,7 @@ func TestSignal_AllStrategies_Comprehensive(t *testing.T) {
 			t.Logf("Started complex workflow with ID: %s for strategy: %s, Consistency: %s", workflowId, tc.name, tc.consistency.String())
 
 			// Wait for workflow to execute the HTTP task and start the subworkflow
-			time.Sleep(20 * time.Millisecond)
+			time.Sleep(100 * time.Millisecond)
 
 			// 2. Get workflow and check its status
 			workflow, err := executor.GetWorkflow(workflowId, true)
