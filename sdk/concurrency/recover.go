@@ -10,9 +10,10 @@
 package concurrency
 
 import (
-	"github.com/conductor-sdk/conductor-go/sdk/metrics"
-	log "github.com/sirupsen/logrus"
 	"runtime/debug"
+
+	"github.com/conductor-sdk/conductor-go/sdk/log"
+	"github.com/conductor-sdk/conductor-go/sdk/metrics"
 )
 
 func HandlePanicError(message string) {
@@ -24,8 +25,8 @@ func HandlePanicError(message string) {
 
 	log.Error(
 		"Uncaught panic",
-		", message: ", message,
-		", error: ", err,
-		", stack: ", string(debug.Stack()),
+		"message", message,
+		"error", err,
+		"stack", string(debug.Stack()),
 	)
 }

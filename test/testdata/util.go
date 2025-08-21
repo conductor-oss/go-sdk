@@ -12,10 +12,11 @@ package testdata
 import (
 	"context"
 	"fmt"
-	"github.com/conductor-sdk/conductor-go/sdk/model/rbac"
 	"os"
 	"reflect"
 	"time"
+
+	"github.com/conductor-sdk/conductor-go/sdk/model/rbac"
 
 	"github.com/conductor-sdk/conductor-go/sdk/authentication"
 	"github.com/conductor-sdk/conductor-go/sdk/client"
@@ -24,7 +25,7 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/workflow"
 	"github.com/conductor-sdk/conductor-go/sdk/workflow/executor"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/conductor-sdk/conductor-go/sdk/log"
 )
 
 var (
@@ -65,12 +66,6 @@ var (
 var TaskRunner = worker.NewTaskRunnerWithApiClient(apiClient)
 
 var WorkflowExecutor = executor.NewWorkflowExecutor(apiClient)
-
-func init() {
-	log.SetFormatter(&log.JSONFormatter{})
-	log.SetOutput(os.Stdout)
-	log.SetLevel(log.ErrorLevel)
-}
 
 func ReadFile(path string) ([]byte, error) {
 	data, err := os.ReadFile(path)
@@ -123,8 +118,8 @@ func StartWorkflows(workflowQty int, workflowName string) ([]string, error) {
 		}
 		log.Debug(
 			"Started workflow",
-			", workflowName: ", workflowName,
-			", workflowId: ", workflowId,
+			"workflow_name", workflowName,
+			"workflow_id", workflowId,
 		)
 		workflowIdList[i] = workflowId
 	}
@@ -140,12 +135,12 @@ func ValidateWorkflow(conductorWorkflow *workflow.ConductorWorkflow, timeout tim
 	if err != nil {
 		return err
 	}
-	log.Debug("Started workflowId: ", workflowId)
+	log.Debug("Started workflowId", "workflow_id", workflowId)
 	workflowExecutionChannel, err := WorkflowExecutor.MonitorExecution(workflowId)
 	if err != nil {
 		return err
 	}
-	log.Debug("Generated workflowExecutionChannel for workflowId: ", workflowId)
+	log.Debug("Generated workflowExecutionChannel for workflowId", "workflow_id", workflowId)
 	workflow, err := executor.WaitForWorkflowCompletionUntilTimeout(
 		workflowExecutionChannel,
 		timeout,
@@ -153,7 +148,7 @@ func ValidateWorkflow(conductorWorkflow *workflow.ConductorWorkflow, timeout tim
 	if err != nil {
 		return err
 	}
-	log.Debug("Workflow completed, workflowId: ", workflowId)
+	log.Debug("Workflow completed", "workflow_id", workflowId)
 	if !isWorkflowCompleted(workflow, expectedStatus) {
 		return fmt.Errorf("workflow finished with unexpected status: %s", workflow.Status)
 	}
@@ -198,8 +193,9 @@ func ValidateTaskRegistration(taskDefs ...model.TaskDef) error {
 	)
 	if err != nil {
 		log.Debug(
-			"Failed to validate task registration. Reason: ", err.Error(),
-			", response: ", *response,
+			"Failed to validate task registration",
+			"reason", os.ErrClosed,
+			"response", *response,
 		)
 		return err
 	}

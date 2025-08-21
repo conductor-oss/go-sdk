@@ -4,14 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/antihax/optional"
-	"github.com/conductor-sdk/conductor-go/sdk/client"
-	"github.com/conductor-sdk/conductor-go/sdk/event/queue"
-	"github.com/conductor-sdk/conductor-go/sdk/model"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/antihax/optional"
+	"github.com/conductor-sdk/conductor-go/sdk/client"
+	"github.com/conductor-sdk/conductor-go/sdk/event/queue"
+	"github.com/conductor-sdk/conductor-go/sdk/log"
+	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
 func (e *WorkflowExecutor) RegisterWorkflowWithContext(ctx context.Context, overwrite bool, workflow *model.WorkflowDef) error {
@@ -317,7 +318,7 @@ func (e *WorkflowExecutor) TerminateWithContext(ctx context.Context, workflowId 
 
 	if strings.TrimSpace(workflowId) == "" {
 		err := errors.New("workflow id cannot be empty when calling terminate workflow API")
-		log.Error("Failed to terminate workflow: ", err.Error())
+		log.Error("Failed to terminate workflow", "error", err.Error())
 		return err
 	}
 	_, err := e.workflowClient.Terminate(ctx, workflowId,
@@ -334,7 +335,7 @@ func (e *WorkflowExecutor) TerminateWithContext(ctx context.Context, workflowId 
 func (e *WorkflowExecutor) TerminateWithFailureWithContext(ctx context.Context, workflowId string, reason string, triggerFailureWorkflow bool) error {
 	if strings.TrimSpace(workflowId) == "" {
 		err := errors.New("workflow id cannot be empty when calling terminate workflow API")
-		log.Error("Failed to terminate workflow: ", err.Error())
+		log.Error("Failed to terminate workflow", "error", err.Error())
 		return err
 	}
 	_, err := e.workflowClient.Terminate(ctx, workflowId,
@@ -591,21 +592,21 @@ func (e *WorkflowExecutor) executeWorkflowWithContext(ctx context.Context, workf
 	if err != nil {
 		log.Debug(
 			"Failed to start workflow",
-			", reason: ", err.Error(),
-			", name: ", request.Name,
-			", version: ", request.Version,
-			", input: ", request.Input,
-			", workflowId: ", workflowId,
-			", response: ", response,
+			"reason", err.Error(),
+			"name", request.Name,
+			"version", request.Version,
+			"input", request.Input,
+			"workflowId", workflowId,
+			"response", response,
 		)
 		return "", err
 	}
 	log.Debug(
 		"Started workflow",
-		", workflowId: ", workflowId,
-		", name: ", request.Name,
-		", version: ", request.Version,
-		", input: ", request.Input,
+		"workflowId", workflowId,
+		"name", request.Name,
+		"version", request.Version,
+		"input", request.Input,
 	)
 
 	return workflowId, err
