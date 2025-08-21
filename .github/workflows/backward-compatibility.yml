@@ -29,9 +29,9 @@ jobs:
           chmod +x run_compatibility.sh
           ./run_compatibility.sh
         env:
-          CONDUCTOR_SERVER_URL: ${{ secrets.CONDUCTOR_SERVER_URL }}
-          CONDUCTOR_AUTH_KEY: ${{ secrets.KEY }}
-          CONDUCTOR_AUTH_SECRET: ${{ secrets.SECRET }}
+          CONDUCTOR_SERVER_URL: ${{ vars.SERVER_URL }}
+          CONDUCTOR_AUTH_KEY: ${{ secrets.AUTH_KEY }}
+          CONDUCTOR_AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
 
       - name: Set PR Status to Failure
         if: ${{ failure() }}
