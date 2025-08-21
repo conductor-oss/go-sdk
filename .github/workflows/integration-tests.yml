@@ -12,6 +12,11 @@ on:
 jobs:
   integration-tests:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read       # minimal read access
+      checks: write        # needed for test report annotations
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
