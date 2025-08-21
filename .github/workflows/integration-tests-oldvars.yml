@@ -1,4 +1,4 @@
-name: Integration + Backward Compatibility Tests
+name: Integration + Backward Compatibility Tests (Old Vars)
 
 on:
   push:
@@ -10,12 +10,13 @@ on:
   workflow_dispatch:
 
 jobs:
-  integration-tests:
+  integration-tests-oldvars:
     runs-on: ubuntu-latest
+
     env:
-      CONDUCTOR_SERVER_URL: ${{ vars.SERVER_URL }}
-      CONDUCTOR_AUTH_KEY: ${{ secrets.AUTH_KEY }}
-      CONDUCTOR_AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+      CONDUCTOR_SERVER_URL: ${{ secrets.CONDUCTOR_SERVER_URL }}
+      CONDUCTOR_AUTH_KEY: ${{ secrets.KEY }}
+      CONDUCTOR_AUTH_SECRET: ${{ secrets.SECRET }}
 
     permissions:
       contents: read       # minimal read access
@@ -39,19 +40,19 @@ jobs:
       - name: Install gotestsum
         run: go install gotest.tools/gotestsum@v1.12.0
 
-      - name: Run Integration tests 
+      - name: Run Integration tests (Old Vars)
         run: |
           gotestsum --format testname  --junitfile report.xml -- -v ./test/integration_tests/...
 
-      - name: Publish test results
+      - name: Publish test results (Old Vars)
         if: always()
         uses: dorny/test-reporter@v1
         with:
-          name: Integration tests report
+          name: Integration tests report (Old Vars)
           path: report.xml
           reporter: java-junit
 
-      - name: Run Backward Compatibility Tests
+      - name: Run Backward Compatibility Tests (Old Vars)
         run: |
           echo "🚀 Starting Backward Compatibility Tests..."
           cd test/backward_compatibility
