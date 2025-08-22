@@ -9,6 +9,12 @@
 
 package model
 
+// RateLimitConfig is the configuration for rate limiting for a workflow.
+type RateLimitConfig struct {
+	RateLimitKey        string `json:"rateLimitKey"`
+	ConcurrentExecLimit int32  `json:"concurrentExecLimit"`
+}
+
 type WorkflowDef struct {
 	OwnerApp                      string                 `json:"ownerApp,omitempty"`
 	CreateTime                    int64                  `json:"createTime,omitempty"`
@@ -32,4 +38,5 @@ type WorkflowDef struct {
 	InputTemplate                 map[string]interface{} `json:"inputTemplate,omitempty"`
 	Tags                          []TagObject            `json:"tags,omitempty"`
 	OverwriteTags                 bool                   `json:"overwriteTags"`
+	RateLimitConfig               *RateLimitConfig       `json:"rateLimitConfig,omitempty"`
 }
