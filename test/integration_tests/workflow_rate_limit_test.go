@@ -77,7 +77,10 @@ func TestConcurrentWorkflowExecution(t *testing.T) {
 
 	completedCount := 0
 	for _, id := range ids {
-		execution, _ := testWorkflowExecutor.GetWorkflow(id, true)
+		execution, err := testWorkflowExecutor.GetWorkflow(id, true)
+		require.NoError(t, err)
+		require.NotNil(t, execution)
+
 		switch execution.Status {
 		case model.CompletedWorkflow:
 			completedCount++
@@ -148,6 +151,8 @@ func TestPerCustomerRateLimit(t *testing.T) {
 				}
 
 				id, err := wf.StartWorkflowWithInput(input)
+				require.NoError(t, err)
+				require.NotEmpty(t, id)
 
 				mu.Lock()
 				allWorkflows = append(allWorkflows, CustomerWorkflow{
@@ -155,8 +160,6 @@ func TestPerCustomerRateLimit(t *testing.T) {
 					WorkflowID: id,
 				})
 				mu.Unlock()
-
-				assert.NoError(t, err)
 			}(customerId, i)
 		}
 	}
@@ -179,8 +182,9 @@ func TestPerCustomerRateLimit(t *testing.T) {
 
 		// Check if workflow complete
 		execution, err := testWorkflowExecutor.GetWorkflow(cw.WorkflowID, true)
-
 		require.NoError(t, err)
+		require.NotNil(t, execution)
+
 		switch execution.Status {
 		case model.CompletedWorkflow:
 			stats.Completed++
