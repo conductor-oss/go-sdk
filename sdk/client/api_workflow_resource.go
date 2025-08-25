@@ -12,12 +12,13 @@ package client
 import (
 	"context"
 	"fmt"
-	"github.com/antihax/optional"
-	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/antihax/optional"
+	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
 // Linger please
@@ -209,7 +210,7 @@ func (a *WorkflowResourceApiService) GetWorkflows(ctx context.Context, body []st
 		queryParams.Add("includeTasks", parameterToString(opts.IncludeTasks.Value(), ""))
 	}
 
-	resp, err := a.Get(ctx, path, queryParams, &result)
+	resp, err := a.Get(ctx, path, queryParams, &result) // POST TODO TODO
 	if err != nil {
 		return nil, resp, err
 	}
@@ -253,9 +254,6 @@ type WorkflowResourceApiGetWorkflowsOpts struct {
 }
 
 func (a *WorkflowResourceApiService) GetWorkflowsByCorrelationId(ctx context.Context, name string, correlationId string, opts *WorkflowResourceApiGetWorkflowsOpts) ([]model.Workflow, *http.Response, error) {
-	return a.GetWorkflows1(ctx, name, correlationId, opts)
-}
-func (a *WorkflowResourceApiService) GetWorkflows1(ctx context.Context, name string, correlationId string, opts *WorkflowResourceApiGetWorkflowsOpts) ([]model.Workflow, *http.Response, error) {
 	var result []model.Workflow
 
 	localVarPath := fmt.Sprintf("/workflow/%s/correlated/%s", name, correlationId)
@@ -389,6 +387,8 @@ func (a *WorkflowResourceApiService) Retry(ctx context.Context, workflowId strin
 		queryParams.Add("resumeSubworkflowTasks", parameterToString(opts.ResumeSubworkflowTasks.Value(), ""))
 	}
 
+	// etryIfRetriedByParent TODO TODO
+
 	resp, err := a.PostWithParams(ctx, path, queryParams, nil, nil)
 	if err != nil {
 		return resp, err
@@ -415,6 +415,7 @@ type WorkflowResourceApiSearchOpts struct {
 	Sort     optional.String
 	FreeText optional.String
 	Query    optional.String
+	// skipCache TODO TODO
 }
 
 func (a *WorkflowResourceApiService) Search(ctx context.Context, opts *WorkflowResourceApiSearchOpts) (model.SearchResultWorkflowSummary, *http.Response, error) {
@@ -609,7 +610,7 @@ func (a *WorkflowResourceApiService) SkipTaskFromWorkflow(ctx context.Context, w
 	queryParams := url.Values{}
 	queryParams.Add("skipTaskRequest", parameterToString(skipTaskRequest, ""))
 
-	resp, err := a.PutWithParams(ctx, path, queryParams, nil, &model.SkipTaskRequest{})
+	resp, err := a.PutWithParams(ctx, path, queryParams, nil, &model.SkipTaskRequest{}) // check body TODO TODO
 	if err != nil {
 		return resp, err
 	}
@@ -1137,5 +1138,71 @@ func (a *WorkflowResourceApiService) TestWorkflow(ctx context.Context, body mode
 	if err != nil {
 		return model.Workflow{}, resp, err
 	}
+	return result, resp, nil
+}
+
+/*
+WorkflowResourceApiService Gets the workflow tasks by workflow (execution) id
+* @param ctx context.Context
+  - @param workflowId
+  - @param opts nil or *WorkflowResourceApiGetExecutionStatusTaskListOpts - Optional Parameters:
+  - @param "Start" (optional.Int32) -
+  - @param "Count" (optional.Int32) -
+  - @param "Status" (optional.Interface) -
+
+@return TaskListSearchResultSummary
+*/
+type WorkflowResourceApiGetExecutionStatusTaskListOpts struct {
+	Start  optional.Int32
+	Count  optional.Int32
+	Status optional.Interface
+}
+
+func (a *WorkflowResourceApiService) GetExecutionStatusTaskList(ctx context.Context, workflowId string, opts *WorkflowResourceApiGetExecutionStatusTaskListOpts) (model.TaskListSearchResultSummary, *http.Response, error) {
+	var result model.TaskListSearchResultSummary
+
+	// create path and map variables
+	path := fmt.Sprintf("/workflow/%s/tasks", workflowId)
+
+	// query params
+	queryParams := url.Values{}
+	if opts != nil && opts.Start.IsSet() {
+		queryParams.Add("start", parameterToString(opts.Start.Value(), ""))
+	}
+	if opts != nil && opts.Count.IsSet() {
+		queryParams.Add("count", parameterToString(opts.Count.Value(), ""))
+	}
+	if opts != nil && opts.Status.IsSet() {
+		queryParams.Add("status", parameterToString(opts.Status.Value(), "pipes"))
+	}
+
+	resp, err := a.Get(ctx, path, queryParams, &result)
+	if err != nil {
+		return result, resp, err
+	}
+
+	return result, resp, nil
+}
+
+/*
+WorkflowResourceApiService Update workflow variables
+	Updates the workflow variables and triggers evaluation.
+* @param ctx context.Context
+ * @param body
+ * @param workflowId
+@return Workflow
+*/
+
+func (a *WorkflowResourceApiService) UpdateWorkflowState(ctx context.Context, body map[string]interface{}, workflowId string) (model.Workflow, *http.Response, error) {
+	var result model.Workflow
+
+	// path
+	path := fmt.Sprintf("/workflow/%s/variables", workflowId)
+
+	resp, err := a.Post(ctx, path, body, &result)
+	if err != nil {
+		return result, resp, err
+	}
+
 	return result, resp, nil
 }
