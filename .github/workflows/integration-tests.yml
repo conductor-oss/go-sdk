@@ -5,11 +5,17 @@ on:
     workflows: ["Build"]
     types:
       - completed
+  workflow_dispatch:
 
 jobs:
   integration-tests:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    env:
+      CONDUCTOR_SERVER_URL: ${{ vars.SERVER_URL }}
+      CONDUCTOR_AUTH_KEY: ${{ secrets.AUTH_KEY }}
+      CONDUCTOR_AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+      
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -34,10 +40,6 @@ jobs:
       - name: Run Integration tests 
         run: |
           gotestsum --format testname  --junitfile report.xml -- -v ./test/integration_tests/...
-        env:
-          CONDUCTOR_SERVER_URL: ${{ secrets.CONDUCTOR_SERVER_URL }}
-          CONDUCTOR_AUTH_KEY: ${{ secrets.KEY }}
-          CONDUCTOR_AUTH_SECRET: ${{ secrets.SECRET }}
 
       - name: Run Backward Compatibility Tests
         run: |
@@ -45,10 +47,6 @@ jobs:
           cd test/backward_compatibility
           chmod +x run_compatibility.sh
           ./run_compatibility.sh
-        env:
-          CONDUCTOR_SERVER_URL: ${{ secrets.CONDUCTOR_SERVER_URL }}
-          CONDUCTOR_AUTH_KEY: ${{ secrets.KEY }}
-          CONDUCTOR_AUTH_SECRET: ${{ secrets.SECRET }}
 
       - name: Set PR Status to Failure
         if: ${{ failure() }}
