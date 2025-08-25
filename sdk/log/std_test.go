@@ -30,18 +30,18 @@ func TestStd_LevelsAndFilter(t *testing.T) {
 		expectPrint bool
 		wantPrefix  string
 	}{
-		{"Debug_pass", func(l Logger) { l.Debug("d") }, lvlDebug, true, "[DEBUG]"},
-		{"Debug_filtered", func(l Logger) { l.Debug("d") }, lvlInfo, false, ""},
-		{"Info_pass", func(l Logger) { l.Info("i") }, lvlInfo, true, "[INFO]"},
-		{"Warn_pass", func(l Logger) { l.Warn("w") }, lvlInfo, true, "[WARN]"},
-		{"Error_pass", func(l Logger) { l.Error("e") }, lvlInfo, true, "[ERROR]"},
+		{"Debug_pass", func(l Logger) { l.Debug("d") }, LvlDebug, true, "[DEBUG]"},
+		{"Debug_filtered", func(l Logger) { l.Debug("d") }, LvlInfo, false, ""},
+		{"Info_pass", func(l Logger) { l.Info("i") }, LvlInfo, true, "[INFO]"},
+		{"Warn_pass", func(l Logger) { l.Warn("w") }, LvlInfo, true, "[WARN]"},
+		{"Error_pass", func(l Logger) { l.Error("e") }, LvlInfo, true, "[ERROR]"},
 	}
 
 	for _, tc := range cases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			buf, goStd := capture()
-			l := NewStd(goStd).(*stdLogger)
+			l := NewStd(goStd)
 			l.SetLevel(tc.setLevel)
 
 			tc.logFn(l)

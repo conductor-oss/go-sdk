@@ -13,19 +13,19 @@ type stdLogger struct {
 }
 
 const (
-	lvlDebug = iota
-	lvlInfo
-	lvlWarn
-	lvlError
+	LvlDebug = iota
+	LvlInfo
+	LvlWarn
+	LvlError
 )
 
 func levelStr(l int) string {
 	switch l {
-	case lvlDebug:
+	case LvlDebug:
 		return "[DEBUG]"
-	case lvlInfo:
+	case LvlInfo:
 		return "[INFO]"
-	case lvlWarn:
+	case LvlWarn:
 		return "[WARN]"
 	default:
 		return "[ERROR]"
@@ -69,10 +69,10 @@ func (s *stdLogger) logf(lvl int, args ...interface{}) {
 	s.l.Printf("%s %s", levelStr(lvl), formatArgs(args...))
 }
 
-func (s *stdLogger) Debug(a ...interface{}) { s.logf(lvlDebug, a...) }
-func (s *stdLogger) Info(a ...interface{})  { s.logf(lvlInfo, a...) }
-func (s *stdLogger) Warn(a ...interface{})  { s.logf(lvlWarn, a...) }
-func (s *stdLogger) Error(a ...interface{}) { s.logf(lvlError, a...) }
+func (s *stdLogger) Debug(a ...interface{}) { s.logf(LvlDebug, a...) }
+func (s *stdLogger) Info(a ...interface{})  { s.logf(LvlInfo, a...) }
+func (s *stdLogger) Warn(a ...interface{})  { s.logf(LvlWarn, a...) }
+func (s *stdLogger) Error(a ...interface{}) { s.logf(LvlError, a...) }
 
 func (s *stdLogger) Fatal(a ...interface{}) {
 	s.l.Fatal(formatArgs(a...))
@@ -106,7 +106,7 @@ func (s *stdLogger) With(vals ...interface{}) Logger {
 }
 
 // NewStd creates a new Logger that wraps a log.Logger.
-func NewStd(l *log.Logger) Logger {
+func NewStd(l *log.Logger) *stdLogger {
 	if l == nil {
 		l = log.New(os.Stdout, "", log.LstdFlags)
 	}

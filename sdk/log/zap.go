@@ -12,7 +12,7 @@ type ZapLogger struct {
 }
 
 // NewZap creates a new ZapLogger that wraps a zap.Logger.
-func NewZap(l *zap.Logger) Logger {
+func NewZap(l *zap.Logger) *ZapLogger {
 	return &ZapLogger{l: l}
 }
 
