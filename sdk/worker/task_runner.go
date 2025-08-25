@@ -137,9 +137,9 @@ func (c *TaskRunner) StartWorker(taskName string, executeFunction model.ExecuteT
 // RegisterWorker registers a worker with this TaskRunner, applies its per-task configuration,
 // and starts or scales the underlying worker goroutines.
 //
-// It accepts any value implementing the Provider interface (for example, *Worker or *TypedWorker).
+// It accepts any value implementing the Worker interface (for example, *BaseWorker or *TypedWorker).
 //
-// Returns an error if the provider is nil, if it cannot produce a *Worker, or if applying
+// Returns an error if a Worker is nil, if it cannot produce a Worker, or if applying
 // configuration fails.
 func (c *TaskRunner) RegisterWorker(w Worker) error {
 	if w == nil {
