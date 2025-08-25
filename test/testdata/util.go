@@ -253,6 +253,7 @@ func isWorkflowCompleted(workflow *model.Workflow, expectedStatus model.Workflow
 // Common Test Tasks
 const (
 	WorkflowValidationTimeout = 7 * time.Second
+	ExtendedValidationTimeout = 15 * time.Second
 	WorkflowBulkQty           = 10
 )
 
@@ -318,3 +319,36 @@ var (
 		"EVENT_NAME",
 	)
 )
+
+func ValidateWorkflowWithOutput(conductorWorkflow *workflow.ConductorWorkflow, timeout time.Duration, expectedStatus model.WorkflowStatus, expectedOutput map[string]interface{}) error {
+	err := ValidateWorkflowRegistration(conductorWorkflow)
+	if err != nil {
+		return err
+	}
+	workflowId, err := conductorWorkflow.StartWorkflowWithInput(make(map[string]interface{}))
+	if err != nil {
+		return err
+	}
+	log.Debug("Started workflowId: ", workflowId)
+
+	workflowExecutionChannel, err := WorkflowExecutor.MonitorExecution(workflowId)
+	if err != nil {
+		return err
+	}
+	completed, err := executor.WaitForWorkflowCompletionUntilTimeout(workflowExecutionChannel, timeout)
+	if err != nil {
+		return err
+	}
+	if !isWorkflowCompleted(completed, expectedStatus) {
+		return fmt.Errorf("workflow finished with unexpected status: %s", completed.Status)
+	}
+
+	wf, _, err := WorkflowClient.GetExecutionStatus(context.Background(), workflowId, nil)
+	if err != nil {
+		return err
+	}
+	if !reflect.DeepEqual(wf.Output, expectedOutput) {
+		return fmt.Errorf("workflow output is different than expected, workflowId: %s, output: %+v", workflowId, wf.Output)
+	}
+	return nil
+}

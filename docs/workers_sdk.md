@@ -63,6 +63,97 @@ func LongRunningTaskWorker(t *model.Task) (interface{}, error) {
 }
 ```
 
+## Type-safe Worker API and contextual execution (Go 1.23+)
+
+The SDK includes a new worker API that adds:
+
+- Type-safe handlers via generics: `TypedWorker[TIn, TOut]`
+- Contextual execution: `TaskContext` with workflow/task metadata
+- Clear per-task configuration via options: `WithBatchSize`, `WithPollInterval`, `WithPollTimeout`, `WithDomain`, `WithBaseContext`
+- Unified registration using `RegisterWorker` / `RegisterWorkers`
+
+### Worker with options
+
+```go
+api := client.NewAPIClientFromEnv()
+runner := worker.NewTaskRunnerWithApiClient(api)
+
+w := worker.NewWorker(
+    "greet",
+    func(t *model.Task) (interface{}, error) {
+        name := fmt.Sprintf("%v", t.InputData["person_to_be_greated"]) // map input to your task
+        return map[string]any{"hello": "Hello, " + name}, nil
+    },
+    worker.WithBatchSize(2),
+    worker.WithPollInterval(250*time.Millisecond),
+    worker.WithPollTimeout(5*time.Second), // negative uses server default; zero leaves unchanged
+    worker.WithDomain("dev"),
+)
+
+if err := runner.RegisterWorker(w); err != nil {
+    panic(err)
+}
+
+runner.WaitWorkers()
+```
+
+### TypedWorker with structured I/O and TaskContext
+
+```go
+type GreetIn struct {
+    Name string `json:"person_to_be_greated"`
+}
+
+type GreetOut struct {
+    Hello string `json:"hello"`
+}
+
+api := client.NewAPIClientFromEnv()
+runner := worker.NewTaskRunnerWithApiClient(api)
+
+tw := worker.NewTypedWorker[GreetIn, GreetOut](
+    "greet",
+    func(ctx worker.TaskContext, in GreetIn) (GreetOut, error) {
+        // Access metadata when needed
+        _ = ctx.GetWorkflowInstanceID()
+        _ = ctx.GetTaskType()
+        return GreetOut{Hello: "Hello, " + in.Name}, nil
+    },
+    worker.WithBatchSize(1),
+    worker.WithPollInterval(100*time.Millisecond),
+)
+
+if err := runner.RegisterWorker(tw); err != nil {
+    panic(err)
+}
+
+runner.WaitWorkers()
+```
+
+Prefer `NewSimpleTypedWorker` if you want a `func(context.Context, TIn)` signature.
+
+### Register multiple workers
+
+```go
+err := runner.RegisterWorkers(
+    worker.NewWorker("a", func(t *model.Task) (interface{}, error) { return map[string]any{"ok": true}, nil }),
+    worker.NewTypedWorker[In, Out]("b", func(ctx worker.TaskContext, in In) (Out, error) { return Out{}, nil }),
+)
+if err != nil { panic(err) }
+```
+
+### TaskContext reference
+
+`TaskContext` extends `context.Context` and exposes:
+
+- `WorkflowInstanceID() string`
+- `WorkflowType() string`
+- `TaskID() string`
+- `TaskType() string`
+- `RetryCount() int`
+- `RetriedTaskID() string`
+- `PollCount() int`
+
 ## Starting Workers
 `TaskRunner` interface is used to start the workers, which takes care of polling server for the work, executing worker code and updating the results back to the server.
 

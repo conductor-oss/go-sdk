@@ -120,7 +120,6 @@ type WorkflowTask struct {
 }
 
 func DynamicForkWorker(t *model.Task) (output interface{}, err error) {
-	taskResult := model.NewTaskResultFromTask(t)
 	tasks := []WorkflowTask{
 		{
 			Name:              "simple_task",
@@ -153,13 +152,10 @@ func DynamicForkWorker(t *model.Task) (output interface{}, err error) {
 		},
 	}
 
-	taskResult.OutputData = map[string]interface{}{
+	return map[string]interface{}{
 		"forkedTasks":       tasks,
 		"forkedTasksInputs": inputs,
-	}
-	taskResult.Status = model.CompletedTask
-	err = nil
-	return taskResult, err
+	}, nil
 }
 
 func GetWorkflowWithComplexSwitchTask() *workflow.ConductorWorkflow {
