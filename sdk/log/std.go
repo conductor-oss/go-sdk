@@ -7,15 +7,20 @@ import (
 	"strings"
 )
 
-type stdLogger struct {
+// StdLogger is a logger that writes to the standard output
+type StdLogger struct {
 	l     *log.Logger
 	level int
 }
 
 const (
+	// LvlDebug is the debug level
 	LvlDebug = iota
+	// LvlInfo is the info level
 	LvlInfo
+	// LvlWarn is the warn level
 	LvlWarn
+	// LvlError is the error level
 	LvlError
 )
 
@@ -60,25 +65,35 @@ func formatArgs(args ...interface{}) string {
 	return b.String()
 }
 
-func (s *stdLogger) SetLevel(level int) { s.level = level }
+// SetLevel sets the level of the logger
+func (s *StdLogger) SetLevel(level int) { s.level = level }
 
-func (s *stdLogger) logf(lvl int, args ...interface{}) {
+func (s *StdLogger) logf(lvl int, args ...interface{}) {
 	if lvl < s.level {
 		return
 	}
 	s.l.Printf("%s %s", levelStr(lvl), formatArgs(args...))
 }
 
-func (s *stdLogger) Debug(a ...interface{}) { s.logf(LvlDebug, a...) }
-func (s *stdLogger) Info(a ...interface{})  { s.logf(LvlInfo, a...) }
-func (s *stdLogger) Warn(a ...interface{})  { s.logf(LvlWarn, a...) }
-func (s *stdLogger) Error(a ...interface{}) { s.logf(LvlError, a...) }
+// Debug logs a debug level message
+func (s *StdLogger) Debug(a ...interface{}) { s.logf(LvlDebug, a...) }
 
-func (s *stdLogger) Fatal(a ...interface{}) {
+// Info logs an info level message
+func (s *StdLogger) Info(a ...interface{}) { s.logf(LvlInfo, a...) }
+
+// Warn logs a warning level message
+func (s *StdLogger) Warn(a ...interface{}) { s.logf(LvlWarn, a...) }
+
+// Error logs an error level message
+func (s *StdLogger) Error(a ...interface{}) { s.logf(LvlError, a...) }
+
+// Fatal logs a fatal level message
+func (s *StdLogger) Fatal(a ...interface{}) {
 	s.l.Fatal(formatArgs(a...))
 }
 
-func (s *stdLogger) With(vals ...interface{}) Logger {
+// With returns a new Logger with the given values
+func (s *StdLogger) With(vals ...interface{}) Logger {
 	prefix := s.l.Prefix()
 
 	var b strings.Builder
@@ -102,13 +117,13 @@ func (s *stdLogger) With(vals ...interface{}) Logger {
 	}
 
 	child := log.New(s.l.Writer(), b.String(), s.l.Flags())
-	return &stdLogger{l: child, level: s.level}
+	return &StdLogger{l: child, level: s.level}
 }
 
-// NewStd creates a new Logger that wraps a log.Logger.
-func NewStd(l *log.Logger) *stdLogger {
+// NewStd creates a new StdLogger that wraps a log.Logger.
+func NewStd(l *log.Logger) *StdLogger {
 	if l == nil {
 		l = log.New(os.Stdout, "", log.LstdFlags)
 	}
-	return &stdLogger{l: l}
+	return &StdLogger{l: l}
 }
