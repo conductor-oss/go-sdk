@@ -14,6 +14,9 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"strconv"
+	"strings"
+	"testing"
 	"time"
 
 	"github.com/conductor-sdk/conductor-go/sdk/model/rbac"
@@ -28,27 +31,22 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/log"
 )
 
+const (
+	VersionResourceV41 = "4.1"
+	VersionResourceV52 = "5.2"
+)
+
 var (
 	apiClient = client.NewAPIClientWithTokenExpiration(
 		client.NewAuthenticationSettingsFromEnv(),
 		client.NewHttpSettingsFromEnv(),
 		authentication.NewTokenExpiration(3*time.Second, 30*time.Second),
 	)
-	MetadataClient = client.MetadataResourceApiService{
-		APIClient: apiClient,
-	}
-	TaskClient = client.TaskResourceApiService{
-		APIClient: apiClient,
-	}
-	WorkflowClient = client.WorkflowResourceApiService{
-		APIClient: apiClient,
-	}
-	EventClient = client.EventResourceApiService{
-		APIClient: apiClient,
-	}
-	TagsClient = client.TagsApiService{
-		APIClient: apiClient,
-	}
+	MetadataClient        = client.NewMetadataClient(apiClient)
+	TaskClient            = client.NewTaskClient(apiClient)
+	WorkflowClient        = client.NewWorkflowClient(apiClient)
+	EventHandlerClient    = client.NewEventHandlerClient(apiClient)
+	TagsClient            = client.NewTagsClient(apiClient)
 	ApplicationClient     = client.NewApplicationClient(apiClient)
 	AuthorizationClient   = client.NewAuthorizationClient(apiClient)
 	EnvironmentClient     = client.NewEnvironmentClient(apiClient)
@@ -61,11 +59,28 @@ var (
 	SecretClient          = client.NewSecretsClient(apiClient)
 	WebhookClient         = client.NewWebhooksConfigClient(apiClient)
 	ServiceRegistryClient = client.NewServiceRegistryClient(apiClient)
+	VersionResourceClient = client.NewVersionResourceClient(apiClient)
+	WorkflowBulkClient    = client.NewWorkflowBulkClient(apiClient)
+
+	VersionResource string
 )
 
 var TaskRunner = worker.NewTaskRunnerWithApiClient(apiClient)
 
 var WorkflowExecutor = executor.NewWorkflowExecutor(apiClient)
+
+func init() {
+	// log.SetFormatter(&log.JSONFormatter{})
+	// log.SetOutput(os.Stdout)
+	// log.SetLevel(log.ErrorLevel)
+
+	// version, _, err := VersionResourceClient.GetVersion(context.Background())
+	// if err != nil {
+	// 	log.Fatalf("Failed to get version: %v", err)
+	// }
+
+	// VersionResource = parseVersion(version)
+}
 
 func ReadFile(path string) ([]byte, error) {
 	data, err := os.ReadFile(path)
@@ -250,6 +265,113 @@ func isWorkflowCompleted(workflow *model.Workflow, expectedStatus model.Workflow
 	return workflow.Status == expectedStatus
 }
 
+// WaitForWorkflowStatus waits for a workflow to reach any of the specified statuses
+func WaitForWorkflowStatus(workflowId string, expectedStatuses []model.WorkflowStatus, timeout time.Duration) (*model.Workflow, error) {
+	deadline := time.Now().Add(timeout)
+
+	for time.Now().Before(deadline) {
+		workflow, err := WorkflowExecutor.GetWorkflow(workflowId, true)
+		if err != nil {
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+
+		// Check if workflow has reached any of the expected statuses
+		for _, expectedStatus := range expectedStatuses {
+			if workflow.Status == expectedStatus {
+				return workflow, nil
+			}
+		}
+
+		// Check for terminal failure states if not explicitly expected
+		isFailureExpected := false
+		for _, expectedStatus := range expectedStatuses {
+			if expectedStatus == model.FailedWorkflow || expectedStatus == model.TerminatedWorkflow {
+				isFailureExpected = true
+				break
+			}
+		}
+
+		if !isFailureExpected && (workflow.Status == model.FailedWorkflow || workflow.Status == model.TerminatedWorkflow) {
+			return workflow, fmt.Errorf("workflow %s failed with unexpected status: %s", workflowId, workflow.Status)
+		}
+
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	return nil, fmt.Errorf("workflow %s didn't reach any of the expected statuses %v within %v", workflowId, expectedStatuses, timeout)
+}
+
+// WaitForWorkflowCompletion waits specifically for workflow completion
+func WaitForWorkflowCompletion(workflowId string, timeout time.Duration) (*model.Workflow, error) {
+	return WaitForWorkflowStatus(workflowId, []model.WorkflowStatus{model.CompletedWorkflow}, timeout)
+}
+
+// WaitForWorkflowRunning waits for workflow to reach RUNNING status
+func WaitForWorkflowRunning(workflowId string, timeout time.Duration) (*model.Workflow, error) {
+	return WaitForWorkflowStatus(workflowId, []model.WorkflowStatus{model.RunningWorkflow}, timeout)
+}
+
+// WaitForMultipleWorkflowsCompletion waits for multiple workflows to complete
+func WaitForMultipleWorkflowsCompletion(workflowIds []string, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+
+	for time.Now().Before(deadline) {
+		allCompleted := true
+
+		for _, workflowId := range workflowIds {
+			workflow, err := WorkflowExecutor.GetWorkflow(workflowId, false)
+			if err != nil {
+				// Continue retrying on error
+				allCompleted = false
+				break
+			}
+
+			if workflow.Status == model.FailedWorkflow || workflow.Status == model.TerminatedWorkflow {
+				return fmt.Errorf("workflow %s failed with status: %s", workflowId, workflow.Status)
+			}
+
+			if workflow.Status != model.CompletedWorkflow {
+				allCompleted = false
+				break
+			}
+		}
+
+		if allCompleted {
+			return nil
+		}
+
+		time.Sleep(1 * time.Second)
+	}
+
+	return fmt.Errorf("not all workflows completed within %v", timeout)
+}
+
+// WaitForTaskInWorkflow waits for a specific task within a workflow to reach a certain status
+func WaitForTaskInWorkflow(workflowId, taskReferenceName string, expectedTaskStatus model.TaskResultStatus, timeout time.Duration) (*model.Task, error) {
+	deadline := time.Now().Add(timeout)
+
+	for time.Now().Before(deadline) {
+		workflow, err := WorkflowExecutor.GetWorkflow(workflowId, true) // Include tasks
+		if err != nil {
+			time.Sleep(1 * time.Second)
+			continue
+		}
+
+		// Look for the specific task
+		for _, task := range workflow.Tasks {
+			if task.ReferenceTaskName == taskReferenceName && task.Status == expectedTaskStatus {
+				return &task, nil
+			}
+		}
+
+		time.Sleep(1 * time.Second)
+	}
+
+	return nil, fmt.Errorf("task %s with status %s not found in workflow %s within %v",
+		taskReferenceName, expectedTaskStatus, workflowId, timeout)
+}
+
 // Common Test Tasks
 const (
 	WorkflowValidationTimeout = 7 * time.Second
@@ -351,4 +473,46 @@ func ValidateWorkflowWithOutput(conductorWorkflow *workflow.ConductorWorkflow, t
 		return fmt.Errorf("workflow output is different than expected, workflowId: %s, output: %+v", workflowId, wf.Output)
 	}
 	return nil
+
+}
+
+func parseVersion(version string) string {
+	parts := strings.Split(version, ".")
+	if len(parts) >= 2 {
+		return parts[0] + "." + parts[1]
+	}
+	return version
+}
+
+func RequireAtLeast(t *testing.T, min string) {
+	t.Helper()
+	have := VersionResource
+
+	if !isVersionAtLeast(have, min) {
+		t.Skipf("skip: requires >= %s, have %s", min, have)
+	}
+}
+
+func isVersionAtLeast(have, min string) bool {
+	haveParts := strings.Split(have, ".")
+	minParts := strings.Split(min, ".")
+
+	if len(haveParts) > 0 && len(minParts) > 0 {
+		haveMajor, _ := strconv.Atoi(haveParts[0])
+		minMajor, _ := strconv.Atoi(minParts[0])
+		if haveMajor < minMajor {
+			return false
+		}
+		if haveMajor > minMajor {
+			return true
+		}
+	}
+
+	if len(haveParts) > 1 && len(minParts) > 1 {
+		haveMinor, _ := strconv.Atoi(haveParts[1])
+		minMinor, _ := strconv.Atoi(minParts[1])
+		return haveMinor >= minMinor
+	}
+
+	return true
 }

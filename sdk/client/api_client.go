@@ -30,8 +30,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/conductor-sdk/conductor-go/sdk/authentication"
+	"github.com/conductor-sdk/conductor-go/sdk/generated/http/conductor"
+	"github.com/conductor-sdk/conductor-go/sdk/generated/http/orkes"
+	"github.com/conductor-sdk/conductor-go/sdk/generated/http/orkes_v4"
 	"github.com/conductor-sdk/conductor-go/sdk/log"
+
+	"github.com/conductor-sdk/conductor-go/sdk/authentication"
 	"github.com/conductor-sdk/conductor-go/sdk/settings"
 )
 
@@ -48,7 +52,12 @@ var (
 )
 
 type APIClient struct {
-	httpRequester *HttpRequester
+	http_orkes     *orkes.APIClient
+	http_conductor *conductor.APIClient
+	http_orkes_v4  *orkes_v4.APIClient
+	httpClient     *http.Client
+	tokenManager   authentication.TokenManager
+	httpSettings   *settings.HttpSettings
 }
 
 func NewAPIClient(
@@ -128,29 +137,120 @@ func newAPIClient(authenticationSettings *settings.AuthenticationSettings, httpS
 		Timeout:   30 * time.Second,
 		KeepAlive: 30 * time.Second,
 	}
-	netTransport := &http.Transport{
+	baseTransport := &http.Transport{
 		Proxy:               http.ProxyFromEnvironment,
 		DialContext:         baseDialer.DialContext,
 		MaxIdleConns:        100,
 		MaxIdleConnsPerHost: 100,
-		DisableCompression:  false,
+		DisableCompression:  false, // This ensures automatic gzip handling
 	}
-	client := http.Client{
-		Transport:     netTransport,
-		CheckRedirect: nil,
-		Jar:           nil,
-		Timeout:       httpTimeout,
+
+	// Wrap base transport with gzip handling
+	gzipTransport := &GzipTransport{
+		Transport: baseTransport,
 	}
+
+	// Create ONE HTTP client for token refresh (without auth to avoid recursion)
+	tokenRefreshClient := &http.Client{
+		Transport: baseTransport,
+		Timeout:   httpTimeout,
+	}
+
+	// Initialize token manager if not provided
+	if authenticationSettings != nil && !authenticationSettings.IsEmpty() {
+		if tokenManager == nil {
+			tokenManager = authentication.NewTokenManager(*authenticationSettings, tokenExpiration)
+		}
+	}
+
+	var finalTransport http.RoundTripper
+	// Wrap transport with auth if we have token manager
+	if tokenManager != nil {
+		finalTransport = &AuthTransport{
+			TokenManager:  tokenManager,
+			HttpSettings:  httpSettings,
+			HttpClient:    tokenRefreshClient, // Client for token refresh only
+			BaseTransport: gzipTransport,      // Use gzip transport as base
+		}
+	}
+
+	// Create THE SINGLE HTTP client with the final transport
+	httpClient := &http.Client{
+		Transport: finalTransport,
+		Timeout:   httpTimeout,
+	}
+
+	// Create configuration for orkes client
+	config := orkes.NewConfiguration()
+
+	// Set base URL properly
+	if httpSettings != nil && httpSettings.BaseUrl != "" {
+		baseUrl := httpSettings.BaseUrl
+		// Use the full URL as the server URL
+		config.Servers = orkes.ServerConfigurations{
+			{
+				URL:         baseUrl,
+				Description: "Configured server",
+			},
+		}
+	}
+
+	// Copy headers
+	config.DefaultHeader = make(map[string]string)
+	for key, value := range httpSettings.Headers {
+		config.DefaultHeader[key] = value
+	}
+
+	// Use THE SAME HTTP client for orkes API
+	config.HTTPClient = httpClient
+
+	// Create orkes API client
+	http_orkes := orkes.NewAPIClient(config)
+
+	// Create configuration for conductor client
+	conductorConfig := conductor.NewConfiguration()
+	// Convert server configurations
+	conductorServers := make(conductor.ServerConfigurations, len(config.Servers))
+	for i, server := range config.Servers {
+		conductorServers[i] = conductor.ServerConfiguration{
+			URL:         server.URL,
+			Description: server.Description,
+		}
+	}
+	conductorConfig.Servers = conductorServers
+	conductorConfig.DefaultHeader = config.DefaultHeader
+	conductorConfig.HTTPClient = httpClient
+	http_conductor := conductor.NewAPIClient(conductorConfig)
+
+	// Create configuration for orkes_v4 client
+	orkesV4Config := orkes_v4.NewConfiguration()
+	// Convert server configurations
+	orkesV4Servers := make(orkes_v4.ServerConfigurations, len(config.Servers))
+	for i, server := range config.Servers {
+		orkesV4Servers[i] = orkes_v4.ServerConfiguration{
+			URL:         server.URL,
+			Description: server.Description,
+		}
+	}
+	orkesV4Config.Servers = orkesV4Servers
+	orkesV4Config.DefaultHeader = config.DefaultHeader
+	orkesV4Config.HTTPClient = httpClient
+	http_orkes_v4 := orkes_v4.NewAPIClient(orkesV4Config)
+
+	// Save all necessary components in APIClient
 	return &APIClient{
-		httpRequester: NewHttpRequester(
-			authenticationSettings, httpSettings, &client, tokenExpiration, tokenManager,
-		),
+		http_orkes:     http_orkes,
+		http_conductor: http_conductor,
+		http_orkes_v4:  http_orkes_v4,
+		httpClient:     httpClient,
+		tokenManager:   tokenManager,
+		httpSettings:   httpSettings,
 	}
 }
 
 // callAPI do the request.
 func (c *APIClient) callAPI(request *http.Request) (*http.Response, error) {
-	return c.httpRequester.httpClient.Do(request)
+	return c.httpClient.Do(request)
 }
 
 func (c *APIClient) decode(v interface{}, b []byte, contentType string) (err error) {
@@ -197,9 +297,115 @@ func (c *APIClient) prepareRequest(
 	fileName string,
 	fileBytes []byte,
 ) (localVarRequest *http.Request, err error) {
-	return c.httpRequester.prepareRequest(
-		ctx, path, method, postBody, headerParams, queryParams, formParams, fileName, fileBytes,
-	)
+	var body *bytes.Buffer
+
+	// Detect postBody type and post.
+	if postBody != nil {
+		contentType := headerParams["Content-Type"]
+		if contentType == "" {
+			contentType = detectContentType(postBody)
+			headerParams["Content-Type"] = contentType
+		}
+
+		body, err = setBody(postBody, contentType)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// add form parameters and file if available.
+	if strings.HasPrefix(headerParams["Content-Type"], "multipart/form-data") && len(formParams) > 0 || (len(fileBytes) > 0 && fileName != "") {
+		if body != nil {
+			return nil, errors.New("cannot specify postBody and multipart form at the same time")
+		}
+		body = &bytes.Buffer{}
+		w := multipart.NewWriter(body)
+
+		for k, v := range formParams {
+			for _, iv := range v {
+				if strings.HasPrefix(k, "@") { // file
+					err = addFile(w, k[1:], iv)
+					if err != nil {
+						return nil, err
+					}
+				} else { // form value
+					w.WriteField(k, iv)
+				}
+			}
+		}
+		if len(fileBytes) > 0 && fileName != "" {
+			w.Boundary()
+			part, err := w.CreateFormFile("file", filepath.Base(fileName))
+			if err != nil {
+				return nil, err
+			}
+			_, err = part.Write(fileBytes)
+			if err != nil {
+				return nil, err
+			}
+			// Set the Boundary in the Content-Type
+			headerParams["Content-Type"] = w.FormDataContentType()
+		}
+
+		// Set Content-Length
+		headerParams["Content-Length"] = fmt.Sprintf("%d", body.Len())
+		w.Close()
+	}
+
+	if strings.HasPrefix(headerParams["Content-Type"], "application/x-www-form-urlencoded") && len(formParams) > 0 {
+		if body != nil {
+			return nil, errors.New("cannot specify postBody and x-www-form-urlencoded form at the same time")
+		}
+		body = &bytes.Buffer{}
+		body.WriteString(formParams.Encode())
+		// Set Content-Length
+		headerParams["Content-Length"] = fmt.Sprintf("%d", body.Len())
+	}
+
+	// Setup path and query parameters
+	urlStr, err := url.Parse(c.httpSettings.BaseUrl + path)
+	if err != nil {
+		return nil, err
+	}
+
+	// Adding Query Param
+	query := urlStr.Query()
+	for k, v := range queryParams {
+		for _, iv := range v {
+			query.Add(k, iv)
+		}
+	}
+
+	// Encode the parameters.
+	urlStr.RawQuery = query.Encode()
+
+	if body != nil {
+		localVarRequest, err = http.NewRequestWithContext(ctx, method, urlStr.String(), body)
+	} else {
+		localVarRequest, err = http.NewRequestWithContext(ctx, method, urlStr.String(), nil)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	// add header parameters, if any
+	if len(headerParams) > 0 {
+		headers := http.Header{}
+		for h, v := range headerParams {
+			headers.Set(h, v)
+		}
+		localVarRequest.Header = headers
+	}
+
+	// Add default headers from httpSettings
+	for header, value := range c.httpSettings.Headers {
+		localVarRequest.Header.Add(header, value)
+	}
+
+	// Note: Token is already handled by AuthTransport, no need to add it here
+
+	return localVarRequest, nil
 }
 
 // Ripped from https://github.com/gregjones/httpcache/blob/master/httpcache.go
@@ -249,27 +455,6 @@ func CacheExpires(r *http.Response) time.Time {
 		}
 	}
 	return expires
-}
-
-func parameterToString(obj interface{}, collectionFormat string) string {
-	var delimiter string
-
-	switch collectionFormat {
-	case "pipes":
-		delimiter = "|"
-	case "ssv":
-		delimiter = " "
-	case "tsv":
-		delimiter = "\t"
-	case "csv":
-		delimiter = ","
-	}
-
-	if reflect.TypeOf(obj).Kind() == reflect.Slice {
-		return strings.Trim(strings.Replace(fmt.Sprint(obj), " ", delimiter, -1), "[]")
-	}
-
-	return fmt.Sprintf("%v", obj)
 }
 
 func setBody(body interface{}, contentType string) (bodyBuf *bytes.Buffer, err error) {
@@ -388,13 +573,13 @@ func (c *APIClient) executeCall(ctx context.Context, method, path string, queryP
 	// Call the API
 	resp, err := c.callAPI(req)
 	if err != nil || resp == nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 
 	// Get response body
 	respBody, err := getDecompressedBody(resp)
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 
 	// Handle successful response
@@ -402,7 +587,7 @@ func (c *APIClient) executeCall(ctx context.Context, method, path string, queryP
 		if result != nil && len(respBody) > 0 {
 			err = c.decode(result, respBody, resp.Header.Get("Content-Type"))
 		}
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 
 	// Handle error response - create GenericSwaggerError with status code
@@ -410,51 +595,61 @@ func (c *APIClient) executeCall(ctx context.Context, method, path string, queryP
 	return resp, newErr
 }
 
+// Deprecated: use generated resource clients instead; this method will be removed.
 // Get performs a GET request
 func (c *APIClient) Get(ctx context.Context, path string, queryParams url.Values, result interface{}) (*http.Response, error) {
 	return c.executeCall(ctx, "GET", path, queryParams, nil, "", result)
 }
 
+// Deprecated: use generated resource clients instead; this method will be removed.
 // Post performs a POST request
 func (c *APIClient) Post(ctx context.Context, path string, body interface{}, result interface{}) (*http.Response, error) {
 	return c.executeCall(ctx, "POST", path, nil, body, "", result)
 }
 
+// Deprecated: use generated resource clients instead; this method will be removed.
 // PostWithContentType performs post with given content type
 func (c *APIClient) PostWithContentType(ctx context.Context, path string, body interface{}, contentType string, result interface{}) (*http.Response, error) {
 	return c.executeCall(ctx, "POST", path, nil, body, contentType, result)
 }
 
+// Deprecated: use generated resource clients instead; this method will be removed.
 // PostWithParams performs a POST request with query parameters
 func (c *APIClient) PostWithParams(ctx context.Context, path string, queryParams url.Values, body interface{}, result interface{}) (*http.Response, error) {
 	return c.executeCall(ctx, "POST", path, queryParams, body, "", result)
 }
 
+// Deprecated: use generated resource clients instead; this method will be removed.
 // Put performs a PUT request
 func (c *APIClient) Put(ctx context.Context, path string, body interface{}, result interface{}) (*http.Response, error) {
 	return c.executeCall(ctx, "PUT", path, nil, body, "", result)
 }
 
+// Deprecated: use generated resource clients instead; this method will be removed.
 // PutWithContentType performs a PUT request
 func (c *APIClient) PutWithContentType(ctx context.Context, path string, body interface{}, contentType string, result interface{}) (*http.Response, error) {
 	return c.executeCall(ctx, "PUT", path, nil, body, contentType, result)
 }
 
+// Deprecated: use generated resource clients instead; this method will be removed.
 // PutWithParams performs a PUT request with query parameters
 func (c *APIClient) PutWithParams(ctx context.Context, path string, queryParams url.Values, body interface{}, result interface{}) (*http.Response, error) {
 	return c.executeCall(ctx, "PUT", path, queryParams, body, "", result)
 }
 
+// Deprecated: use generated resource clients instead; this method will be removed.
 // Delete performs a DELETE request without a body
 func (c *APIClient) Delete(ctx context.Context, path string, queryParams url.Values, result interface{}) (*http.Response, error) {
 	return c.executeCall(ctx, "DELETE", path, queryParams, nil, "", result)
 }
 
+// Deprecated: use generated resource clients instead; this method will be removed.
 // DeleteWithBody performs a DELETE request with a body
 func (c *APIClient) DeleteWithBody(ctx context.Context, path string, body interface{}, result interface{}) (*http.Response, error) {
 	return c.executeCall(ctx, "DELETE", path, nil, body, "", result)
 }
 
+// Deprecated: use generated resource clients instead; this method will be removed.
 // Patch performs a PATCH request
 func (c *APIClient) Patch(ctx context.Context, path string, body interface{}, result interface{}) (*http.Response, error) {
 	return c.executeCall(ctx, "PATCH", path, nil, body, "", result)

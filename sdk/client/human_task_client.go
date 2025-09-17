@@ -25,7 +25,7 @@ type HumanTaskClient interface {
 	DeleteTemplateByName(ctx context.Context, name string) (*http.Response, error)
 	DeleteTemplatesByNameAndVersion(ctx context.Context, name string, version int32) (*http.Response, error)
 	GetAllTemplates(ctx context.Context, optionals *HumanTaskApiGetAllTemplatesOpts) ([]human.HumanTaskSearch, *http.Response, error)
-	GetTask1(ctx context.Context, taskId string, optionals *HumanTaskApiGetTask1Opts) (human.HumanTaskEntry, *http.Response, error)
+	GetTask(ctx context.Context, taskId string, optionals *HumanTaskApiGetTaskOpts) (human.HumanTaskEntry, *http.Response, error)
 	GetTaskDisplayNames(ctx context.Context, searchType string) ([]string, *http.Response, error)
 	GetTemplateByNameAndVersion(ctx context.Context, name string, version int32) (human.HumanTaskSearch, *http.Response, error)
 	GetTemplateByTaskId(ctx context.Context, humanTaskId string) (human.HumanTaskSearch, *http.Response, error)
@@ -40,5 +40,5 @@ type HumanTaskClient interface {
 }
 
 func NewHumanTaskClient(client *APIClient) HumanTaskClient {
-	return &HumanTaskApiService{client}
+	return NewHumanTaskApiService(client)
 }

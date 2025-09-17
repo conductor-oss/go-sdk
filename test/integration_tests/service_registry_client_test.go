@@ -2,14 +2,15 @@ package integration_tests
 
 import (
 	"context"
+	"testing"
+	"time"
+
 	"github.com/antihax/optional"
 	"github.com/conductor-sdk/conductor-go/sdk/client"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/test/testdata"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 )
 
 const (

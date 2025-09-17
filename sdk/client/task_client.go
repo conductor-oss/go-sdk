@@ -2,9 +2,10 @@ package client
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/antihax/optional"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
-	"net/http"
 )
 
 type TaskClient interface {
@@ -20,16 +21,15 @@ type TaskClient interface {
 	Poll(ctx context.Context, tasktype string, localVarOptionals *TaskResourceApiPollOpts) (model.Task, *http.Response, error)
 	RequeuePendingTask(ctx context.Context, taskType string) (string, *http.Response, error)
 	Search(ctx context.Context, localVarOptionals *TaskResourceApiSearch1Opts) (model.SearchResultTaskSummary, *http.Response, error)
-	SearchV2(ctx context.Context, localVarOptionals *TaskResourceApiSearchV21Opts) (model.SearchResultTask, *http.Response, error)
+	SearchV2(ctx context.Context, localVarOptionals *TaskResourceApiSearchV2Opts) (model.SearchResultTask, *http.Response, error)
 	Size(ctx context.Context, localVarOptionals *TaskResourceApiSizeOpts) (map[string]int32, *http.Response, error)
 	UpdateTask(ctx context.Context, taskResult *model.TaskResult) (string, *http.Response, error)
 	UpdateTaskByRefName(ctx context.Context, body map[string]interface{}, workflowId string, taskRefName string, status string) (string, *http.Response, error)
 	UpdateTaskByRefNameWithWorkerId(ctx context.Context, body map[string]interface{}, workflowId string, taskRefName string, status string, workerId optional.String) (string, *http.Response, error)
-	updateTaskByRefName(ctx context.Context, body map[string]interface{}, workflowId string, taskRefName string, status string, workerId optional.String) (string, *http.Response, error)
 	SignalAsync(ctx context.Context, body map[string]interface{}, workflowId string, status string) (*http.Response, error)
 	Signal(ctx context.Context, body map[string]interface{}, workflowID string, status model.WorkflowStatus, opts ...SignalTaskOpts) (*model.SignalResponse, error)
 }
 
 func NewTaskClient(apiClient *APIClient) TaskClient {
-	return &TaskResourceApiService{apiClient}
+	return NewTaskApiService(apiClient)
 }

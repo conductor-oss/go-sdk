@@ -11,8 +11,9 @@ package client
 
 import (
 	"context"
-	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"net/http"
+
+	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
 // Linger please
@@ -31,12 +32,12 @@ HealthCheckResourceApiService
 @return http_model.HealthCheckStatus
 */
 func (a *HealthCheckResourceApiService) DoCheck(ctx context.Context) (model.HealthCheckStatus, *http.Response, error) {
-	var result model.HealthCheckStatus
 
-	path := "/health"
-	resp, err := a.Get(ctx, path, nil, &result)
+	req := a.APIClient.http_orkes.HealthCheckResourceAPI.DoCheck(ctx)
+	result, resp, err := req.Execute()
 	if err != nil {
 		return model.HealthCheckStatus{}, resp, err
 	}
-	return result, resp, nil
+	// ORKES client returns map[string]interface{}; convert to domain
+	return toDomainHealthCheckStatusFromOrkes(result), resp, nil
 }

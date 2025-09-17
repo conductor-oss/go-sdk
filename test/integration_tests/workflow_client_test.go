@@ -2,13 +2,15 @@ package integration_tests
 
 import (
 	"context"
+	"net/http"
+	"testing"
+
 	"github.com/antihax/optional"
 	"github.com/conductor-sdk/conductor-go/sdk/client"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/sdk/workflow"
 	"github.com/conductor-sdk/conductor-go/test/testdata"
-	"net/http"
-	"testing"
+	"github.com/stretchr/testify/require"
 )
 
 func TestWorkflowTest(t *testing.T) {
@@ -93,12 +95,7 @@ func TestJumpToTask(t *testing.T) {
 		Add(workflow.NewHttpTask("http_ref_1", &input))
 
 	err := testdata.ValidateWorkflowRegistration(workflowDef)
-	if err != nil {
-		t.Fatal(
-			"Failed to register workflow. Reason: ", err.Error(),
-		)
-	}
-
+	require.NoError(t, err)
 	// Start a workflow instance
 	workflowInput := map[string]interface{}{
 		"testKey": "testValue",
@@ -111,25 +108,13 @@ func TestJumpToTask(t *testing.T) {
 	}
 
 	workflowId, err := testdata.WorkflowExecutor.StartWorkflow(startRequest)
-	if err != nil {
-		t.Fatal(
-			"Failed to start workflow. Reason: ", err.Error(),
-		)
-	}
+	require.NoError(t, err)
 
 	t.Logf("Started workflow with ID: %s", workflowId)
 
 	// Verify workflow is running
-	workflow, err := testdata.WorkflowExecutor.GetWorkflow(workflowId, true)
-	if err != nil {
-		t.Fatal(
-			"Failed to get workflow. Reason: ", err.Error(),
-		)
-	}
-
-	if workflow.Status != "RUNNING" {
-		t.Fatalf("Expected workflow status RUNNING, got %s", workflow.Status)
-	}
+	_, err = testdata.WaitForWorkflowStatus(workflowId, []model.WorkflowStatus{model.RunningWorkflow}, testdata.WorkflowValidationTimeout)
+	require.NoError(t, err)
 
 	// Define custom input for the task we're jumping to
 	jumpTaskInput := map[string]interface{}{
@@ -148,24 +133,13 @@ func TestJumpToTask(t *testing.T) {
 		workflowId,
 		opts,
 	)
+	require.NoError(t, err)
 
-	if err != nil {
-		t.Fatal(
-			"Failed to jump to task. Reason: ", err.Error(),
-		)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("Expected status code 200, got %d", resp.StatusCode)
-	}
+	require.Equal(t, http.StatusOK, resp.StatusCode)
 
 	// Get the updated workflow
-	updatedWorkflow, err := testdata.WorkflowExecutor.GetWorkflow(workflowId, true)
-	if err != nil {
-		t.Fatal(
-			"Failed to get updated workflow. Reason: ", err.Error(),
-		)
-	}
+	updatedWorkflow, err := testdata.WaitForWorkflowStatus(workflowId, []model.WorkflowStatus{model.RunningWorkflow, model.CompletedWorkflow}, testdata.WorkflowValidationTimeout)
+	require.NoError(t, err)
 
 	// Verify that the second task was skipped and the third task is being executed or completed
 	var firstTaskSkipped bool
@@ -185,13 +159,8 @@ func TestJumpToTask(t *testing.T) {
 		}
 	}
 
-	if !firstTaskSkipped {
-		t.Fatal("Expected the second task to be skipped")
-	}
-
-	if !secondTaskActive {
-		t.Fatal("Expected the third task to be active after jumping")
-	}
+	require.True(t, firstTaskSkipped)
+	require.True(t, secondTaskActive)
 
 	t.Log("Successfully tested jump to task functionality")
 }

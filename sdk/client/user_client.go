@@ -17,5 +17,5 @@ type UserClient interface {
 }
 
 func NewUserClient(apiClient *APIClient) UserClient {
-	return &UserResourceApiService{apiClient}
+	return NewUserResourceApiService(apiClient)
 }

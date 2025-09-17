@@ -11,7 +11,7 @@ package model
 
 type TagObject struct {
 	Key   string `json:"key,omitempty"`
-	Type_ string `json:"type,omitempty"`
+	Type  string `json:"type,omitempty"`
 	Value string `json:"value,omitempty"`
 }
 
@@ -20,7 +20,7 @@ func NewTagObject(metadataTag MetadataTag) TagObject {
 
 	return TagObject{
 		Key:   metadataTag.Key,
-		Type_: "METADATA",
+		Type:  "METADATA",
 		Value: value,
 	}
 }

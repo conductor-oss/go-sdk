@@ -20,6 +20,7 @@ type StartWorkflowRequest struct {
 	Priority                        int32               `json:"priority,omitempty"`
 	IdempotencyKey                  string              `json:"idempotencyKey,omitempty"`
 	IdempotencyStrategy             IdempotencyStrategy `json:"idempotencyStrategy,omitempty"`
+	CreatedBy                       string              `json:"createdBy,omitempty"`
 }
 
 func NewStartWorkflowRequest(name string, version int32, correlationId string, input interface{}) *StartWorkflowRequest {

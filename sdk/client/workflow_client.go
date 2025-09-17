@@ -2,8 +2,9 @@ package client
 
 import (
 	"context"
-	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"net/http"
+
+	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
 type WorkflowClient interface {
@@ -34,6 +35,12 @@ type WorkflowClient interface {
 	ExecuteAndGetBlockingWorkflow(ctx context.Context, body model.StartWorkflowRequest, requestId string, name string, version int32, waitUntilTask []string, waitForSeconds int, consistency string) (model.WorkflowRun, *http.Response, error)
 	ExecuteAndGetBlockingTask(ctx context.Context, body model.StartWorkflowRequest, requestId string, name string, version int32, waitUntilTask []string, waitForSeconds int, consistency string) (model.TaskRun, *http.Response, error)
 	ExecuteAndGetBlockingTaskInput(ctx context.Context, body model.StartWorkflowRequest, requestId string, name string, version int32, waitUntilTask []string, waitForSeconds int, consistency string) (model.TaskRun, *http.Response, error)
+	JumpToTask(ctx context.Context, body map[string]interface{}, workflowID string, optionals *WorkflowResourceApiJumpToTaskOpts) (*http.Response, error)
+	UpdateWorkflowAndTaskState(ctx context.Context, body model.WorkflowStateUpdate, requestID string, workflowID string, optionals *WorkflowResourceApiUpdateWorkflowAndTaskStateOpts) (model.WorkflowRun, *http.Response, error)
+	UpgradeRunningWorkflowToVersion(ctx context.Context, body model.UpgradeWorkflowRequest, workflowID string) (*http.Response, error)
+	TestWorkflow(ctx context.Context, body model.WorkflowTestRequest) (model.Workflow, *http.Response, error)
+	GetExecutionStatusTaskList(ctx context.Context, workflowID string, opts *WorkflowResourceAPIGetExecutionStatusTaskListOpts) (model.TaskListSearchResultSummary, *http.Response, error)
+	UpdateWorkflowState(ctx context.Context, body map[string]interface{}, workflowID string) (model.Workflow, *http.Response, error)
 	Terminate(ctx context.Context, workflowId string, localVarOptionals *WorkflowResourceApiTerminateOpts) (*http.Response, error)
 }
 

@@ -8,3 +8,7 @@ const (
 	ReturnBlockingTask      ReturnStrategy = "BLOCKING_TASK"
 	ReturnBlockingTaskInput ReturnStrategy = "BLOCKING_TASK_INPUT"
 )
+
+func (r ReturnStrategy) String() string {
+	return string(r)
+}

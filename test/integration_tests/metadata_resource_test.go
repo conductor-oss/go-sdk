@@ -16,6 +16,7 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/test/testdata"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const WorkflowName = "TestGoSDKWorkflowWithTags"
@@ -45,19 +46,12 @@ func TestRegisterWorkflowDef(t *testing.T) {
 	assert.Equal(t, 200, resp.StatusCode)
 
 	t.Cleanup(func() {
-		_, err := testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), WorkflowName, 1)
-
-		if err != nil {
-			t.Fatal(
-				"Failed to delete workflow. Reason: ", err.Error(),
-			)
-		}
+		_, err := testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), WorkflowName, workflowDef.Version)
+		assert.NoError(t, err)
 	})
 }
 
 func TestRegisterWorkflowDefWithTags(t *testing.T) {
-
-	_, _ = testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), WorkflowName, 1)
 	task := model.WorkflowTask{
 		Name:              "simple_task",
 		TaskReferenceName: "simple_task_ref",
@@ -80,17 +74,14 @@ func TestRegisterWorkflowDefWithTags(t *testing.T) {
 
 	metadataTags := []model.MetadataTag{tag0}
 
-	testdata.MetadataClient.RegisterWorkflowDefWithTags(context.Background(), true, workflowDef, metadataTags)
+	_, err := testdata.MetadataClient.RegisterWorkflowDefWithTags(context.Background(), true, workflowDef, metadataTags)
+	require.NoError(t, err)
 
 	tags, _, err2 := testdata.TagsClient.GetWorkflowTags(context.Background(), WorkflowName)
-
 	if err2 == nil {
-		assert.Equal(t, len(tags), 1)
+		require.Equal(t, len(tags), 1)
 		assert.Equal(t, tags[0].Key, tag0.Key)
 		assert.Equal(t, tags[0].Value, tag0.Value)
-
-	} else {
-		t.Fatal(err2)
 	}
 
 	tags2, err := testdata.MetadataClient.GetTagsForWorkflowDef(context.Background(), WorkflowName)
@@ -102,13 +93,8 @@ func TestRegisterWorkflowDefWithTags(t *testing.T) {
 	}
 
 	t.Cleanup(func() {
-		_, err := testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), WorkflowName, 1)
-
-		if err != nil {
-			t.Fatal(
-				"Failed to delete workflow. Reason: ", err.Error(),
-			)
-		}
+		_, err := testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), WorkflowName, workflowDef.Version)
+		require.NoError(t, err)
 	})
 }
 
@@ -173,7 +159,7 @@ func TestUpdateWorkflowDefWithTags(t *testing.T) {
 	}
 
 	t.Cleanup(func() {
-		_, err := testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), WorkflowName, 1)
+		_, err := testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), workflowDef.Name, workflowDef.Version)
 
 		if err != nil {
 			t.Fatal(

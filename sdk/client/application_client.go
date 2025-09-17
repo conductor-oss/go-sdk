@@ -35,6 +35,6 @@ type ApplicationClient interface {
 	UpdateApplication(ctx context.Context, body rbac.CreateOrUpdateApplicationRequest, id string) (*rbac.ConductorApplication, *http.Response, error)
 }
 
-func NewApplicationClient(apiClient *APIClient) *ApplicationResourceApiService {
-	return &ApplicationResourceApiService{apiClient}
+func NewApplicationClient(apiClient *APIClient) ApplicationClient {
+	return NewApplicationResourceApiService(apiClient)
 }

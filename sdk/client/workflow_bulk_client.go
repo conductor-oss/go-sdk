@@ -2,15 +2,17 @@ package client
 
 import (
 	"context"
-	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"net/http"
+
+	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
 type WorkflowBulkClient interface {
-	PauseWorkflow1(ctx context.Context, workflowIds []string) (model.BulkResponse, *http.Response, error)
-	Restart(ctx context.Context, workflowIds []string, opts *WorkflowBulkResourceApiRestart1Opts) (model.BulkResponse, *http.Response, error)
-	ResumeWorkflow(ctx context.Context, workflowIds []string) (model.BulkResponse, *http.Response, error)
-	Retry1(ctx context.Context, workflowIds []string) (model.BulkResponse, *http.Response, error)
+	Delete(ctx context.Context, workflowIDs []string) (model.BulkResponse, *http.Response, error)
+	Pause(ctx context.Context, workflowIds []string) (model.BulkResponse, *http.Response, error)
+	Restart(ctx context.Context, workflowIds []string, opts *WorkflowBulkResourceApiRestartOpts) (model.BulkResponse, *http.Response, error)
+	Resume(ctx context.Context, workflowIds []string) (model.BulkResponse, *http.Response, error)
+	Retry(ctx context.Context, workflowIds []string) (model.BulkResponse, *http.Response, error)
 	Terminate(ctx context.Context, workflowIds []string, opts *WorkflowBulkResourceApiTerminateOpts) (model.BulkResponse, *http.Response, error)
 }
 

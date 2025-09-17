@@ -44,3 +44,87 @@ type Workflow struct {
 	WorkflowName                     string                 `json:"workflowName,omitempty"`
 	WorkflowVersion                  int32                  `json:"workflowVersion,omitempty"`
 }
+
+// IsRunning returns true if the workflow is currently running.
+// status is RUNNING
+func (w *Workflow) IsRunning() bool {
+	return w.Status == RunningWorkflow
+}
+
+// IsPaused returns true if the workflow is currently paused.
+// status is PAUSED
+func (w *Workflow) IsPaused() bool {
+	return w.Status == PausedWorkflow
+}
+
+// IsFailed returns true if the workflow has failed.
+// status is FAILED
+func (w *Workflow) IsFailed() bool {
+	return w.Status == FailedWorkflow
+}
+
+// IsCompleted returns true if the workflow has completed successfully.
+// status is COMPLETED
+func (w *Workflow) IsCompleted() bool {
+	return w.Status == CompletedWorkflow
+}
+
+// IsTimedOut returns true if the workflow has timed out.
+// status is TIMED_OUT
+func (w *Workflow) IsTimedOut() bool {
+	return w.Status == TimedOutWorkflow
+}
+
+// IsTerminated returns true if the workflow has been terminated.
+// status is TERMINATED
+func (w *Workflow) IsTerminated() bool {
+	return w.Status == TerminatedWorkflow
+}
+
+// GetInProgressTasks returns all tasks that are currently in progress.
+// status is IN_PROGRESS
+func (w *Workflow) GetInProgressTasks() []Task {
+	return w.GetTasksByStatus(InProgressTask)
+}
+
+// GetFailedTasks returns all tasks that have failed.
+// status is FAILED or FAILED_WITH_TERMINAL_ERROR
+func (w *Workflow) GetFailedTasks() []Task {
+	return w.GetTasksByStatus(FailedTask, FailedWithTerminalErrorTask)
+}
+
+// GetCompletedTasks returns all tasks that have completed successfully.
+// status is COMPLETED
+func (w *Workflow) GetCompletedTasks() []Task {
+	return w.GetTasksByStatus(CompletedTask)
+}
+
+// GetScheduledTasks returns all tasks that are scheduled but not yet started.
+// status is SCHEDULED
+func (w *Workflow) GetScheduledTasks() []Task {
+	return w.GetTasksByStatus(ScheduledTask)
+}
+
+// GetTasksByStatus returns all tasks with the specified status(es).
+func (w *Workflow) GetTasksByStatus(statuses ...TaskResultStatus) []Task {
+	var filteredTasks []Task
+	for _, task := range w.Tasks {
+		for _, status := range statuses {
+			if task.Status == status {
+				filteredTasks = append(filteredTasks, task)
+				break
+			}
+		}
+	}
+	return filteredTasks
+}
+
+// GetTaskByReferenceName returns the task with the specified reference name.
+func (w *Workflow) GetTaskByReferenceName(referenceTaskName string) *Task {
+	for _, task := range w.Tasks {
+		if task.ReferenceTaskName == referenceTaskName {
+			return &task
+		}
+	}
+	return nil
+}

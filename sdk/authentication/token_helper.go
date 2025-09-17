@@ -282,23 +282,34 @@ func detectContentType(body interface{}) string {
 
 func getDecompressedBody(response *http.Response) ([]byte, error) {
 	defer response.Body.Close()
-	var reader io.ReadCloser
-	var err error
-	switch response.Header.Get("Content-Encoding") {
-	case "gzip":
-		reader, err = gzip.NewReader(response.Body)
+
+	raw, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+	if len(raw) == 0 {
+		return raw, nil
+	}
+
+	isHeaderGzip := strings.EqualFold(response.Header.Get("Content-Encoding"), "gzip")
+	isMagicGzip := len(raw) > 2 && raw[0] == 0x1f && raw[1] == 0x8b
+
+	if isHeaderGzip || isMagicGzip {
+		zr, err := gzip.NewReader(bytes.NewReader(raw))
 		if err != nil {
-			log.Error("Unable to decompress the response", "error", err.Error())
-			if err == io.EOF {
-				return nil, nil
-			}
+			// Return raw if cannot create gzip reader; server might have omitted header
+			return raw, nil
+		}
+		defer zr.Close()
+		decompressed, err := io.ReadAll(zr)
+		if err != nil {
+			log.Error("Unable to decompress the response", "error", err)
 			return nil, err
 		}
-	default:
-		reader = response.Body
+		return decompressed, nil
 	}
-	defer reader.Close()
-	return io.ReadAll(reader)
+
+	return raw, nil
 }
 
 func addFile(w *multipart.Writer, fieldName, path string) error {

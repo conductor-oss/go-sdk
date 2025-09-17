@@ -1,170 +1,166 @@
-// Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
-// the License. You may obtain a copy of the License at
+//  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+//  the License. You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
+//  http://www.apache.org/licenses/LICENSE-2.0
 //
-// Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
-// an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
-// specific language governing permissions and limitations under the License.
+//  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+//  an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+//  specific language governing permissions and limitations under the License.
 
 package client
 
 import (
 	"context"
-	"fmt"
+	"net/http"
+
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/sdk/model/integration"
-	"net/http"
-	"net/url"
 )
 
+// PromptResourceApiService wraps the generated client to maintain backward compatibility
 type PromptResourceApiService struct {
+	// Embedded for backward compatibility with helper methods
 	*APIClient
 }
 
-/*
-PromptResourceApiService Delete Template
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param name
-*/
+// NewPromptResourceApiService creates a service  PromptResourceApiService
+func NewPromptResourceApiService(apiClient *APIClient) *PromptResourceApiService {
+	if apiClient == nil {
+		return nil
+	}
+
+	return &PromptResourceApiService{
+		APIClient: apiClient,
+	}
+}
+
+// CreateMessageTemplates - Create message templates in bulk
+func (a *PromptResourceApiService) CreateMessageTemplates(ctx context.Context, templates []integration.PromptTemplate) (*http.Response, error) {
+	genTemplates := toGeneratedPromptTemplates(templates)
+	req := a.APIClient.http_orkes.PromptResourceAPI.CreateMessageTemplates(ctx).MessageTemplate(genTemplates)
+	resp, err := req.Execute()
+	if err != nil {
+		return resp, wrapGeneratedError(err, resp)
+	}
+	return resp, nil
+}
+
+// DeleteMessageTemplate - Delete a message template
 func (a *PromptResourceApiService) DeleteMessageTemplate(ctx context.Context, name string) (*http.Response, error) {
-	path := fmt.Sprintf("/prompts/%s", name)
-
-	resp, err := a.Delete(ctx, path, nil, nil)
+	req := a.APIClient.http_orkes.PromptResourceAPI.DeleteMessageTemplate(ctx, name)
+	resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
 
-/*
-PromptResourceApiService Delete a tag for Prompt Template
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-  - @param name
-*/
-func (a *PromptResourceApiService) DeleteTagForPromptTemplate(ctx context.Context, body []model.Tag, name string) (*http.Response, error) {
-	path := fmt.Sprintf("/prompts/%s/tags", name)
+// DeleteTagForPromptTemplate - Delete tags for a prompt template
+func (a *PromptResourceApiService) DeleteTagForPromptTemplate(ctx context.Context, tags []model.Tag, name string) (*http.Response, error) {
+	// Convert domain tags to generated tags
+	genTags := toGeneratedTags(tags)
 
-	resp, err := a.DeleteWithBody(ctx, path, body, nil)
+	req := a.APIClient.http_orkes.PromptResourceAPI.DeleteTagForPromptTemplate(ctx, name).Tag(genTags)
+
+	resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
 
-/*
-PromptResourceApiService Get Template
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param name
-    @return MessageTemplate
-*/
+// GetMessageTemplate - Get a message template by name
 func (a *PromptResourceApiService) GetMessageTemplate(ctx context.Context, name string) (*integration.PromptTemplate, *http.Response, error) {
-	var result integration.PromptTemplate
+	req := a.APIClient.http_orkes.PromptResourceAPI.GetMessageTemplate(ctx, name)
 
-	path := fmt.Sprintf("/prompts/%s", name)
-
-	resp, err := a.Get(ctx, path, nil, &result)
+	genTemplate, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
+
+	// Convert using mapper
+	result := toDomainPromptTemplate(genTemplate)
 	return &result, resp, nil
 }
 
-/*
-PromptResourceApiService Get Templates
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-    @return []MessageTemplate
-*/
+// GetMessageTemplates - Get all message templates
 func (a *PromptResourceApiService) GetMessageTemplates(ctx context.Context) ([]integration.PromptTemplate, *http.Response, error) {
-	var result []integration.PromptTemplate
-	path := "/prompts"
+	req := a.APIClient.http_orkes.PromptResourceAPI.GetMessageTemplates(ctx)
 
-	resp, err := a.Get(ctx, path, nil, &result)
+	genTemplates, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
+
+	// Convert using mapper
+	result := toDomainPromptTemplates(genTemplates)
 	return result, resp, nil
 }
 
-/*
-PromptResourceApiService Get tags by Prompt Template
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param name
-    @return []model.Tag
-*/
+// GetTagsForPromptTemplate - Get tags for a prompt template
 func (a *PromptResourceApiService) GetTagsForPromptTemplate(ctx context.Context, name string) ([]model.Tag, *http.Response, error) {
-	var result []model.Tag
-	path := fmt.Sprintf("/prompts/%s/tags", name)
+	req := a.APIClient.http_orkes.PromptResourceAPI.GetTagsForPromptTemplate(ctx, name)
 
-	resp, err := a.Get(ctx, path, nil, &result)
+	genTags, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
+
+	// Convert generated tags to domain tags
+	result := toDomainTags(genTags)
+
 	return result, resp, nil
 }
 
-/*
-PromptResourceApiService Put a tag to Prompt Template
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-  - @param name
-*/
-func (a *PromptResourceApiService) PutTagForPromptTemplate(ctx context.Context, body []model.Tag, name string) (*http.Response, error) {
-	path := fmt.Sprintf("/prompts/%s/tags", name)
+// PutTagForPromptTemplate - Update tags for a prompt template
+func (a *PromptResourceApiService) PutTagForPromptTemplate(ctx context.Context, tags []model.Tag, name string) (*http.Response, error) {
+	// Convert domain tags to generated tags
+	genTags := toGeneratedTags(tags)
 
-	resp, err := a.Put(ctx, path, body, nil)
+	req := a.APIClient.http_orkes.PromptResourceAPI.PutTagForPromptTemplate(ctx, name).Tag(genTags)
+
+	resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
-
 	return resp, nil
 }
 
-/*
-   PromptResourceApiService Create or Update Template
-   * @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-    * @param body
-    * @param description
-    * @param name
-    * @param optional nil or *PromptResourceApiSaveMessageTemplateOpts - Optional Parameters:
-        * @param "Models" (optional.Interface of []string) -
-
-*/
-
+// PromptResourceApiSaveMessageTemplateOpts - Optional parameters for SaveMessageTemplate
 type PromptResourceApiSaveMessageTemplateOpts struct {
 	Models []string
 }
 
-func (a *PromptResourceApiService) SaveMessageTemplate(ctx context.Context, body string, description string, name string, optionals *PromptResourceApiSaveMessageTemplateOpts) (*http.Response, error) {
-	path := fmt.Sprintf("/prompts/%s", name)
+// SaveMessageTemplate - Save a message template
+func (a *PromptResourceApiService) SaveMessageTemplate(ctx context.Context, templateText string, description string, name string, optionals *PromptResourceApiSaveMessageTemplateOpts) (*http.Response, error) {
+	// Use SaveMessageTemplate which has the correct method signature
+	req := a.APIClient.http_orkes.PromptResourceAPI.SaveMessageTemplate(ctx, name).
+		Description(description).
+		Body(templateText)
 
-	queryParams := url.Values{}
-	queryParams.Add("description", parameterToString(description, ""))
-	if optionals != nil {
-		queryParams.Add("models", parameterToString(optionals.Models, "multi"))
+	// Apply optional parameters if provided
+	if optionals != nil && len(optionals.Models) > 0 {
+		req = req.Models(optionals.Models)
 	}
-	resp, err := a.PostWithParams(ctx, path, queryParams, body, nil)
+
+	resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
 
-/*
-PromptResourceApiService Test Prompt Template
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-    @return string
-*/
-func (a *PromptResourceApiService) TestMessageTemplate(ctx context.Context, body model.PromptTemplateTestRequest) (string, *http.Response, error) {
-	var result string
+// TestMessageTemplate - Test a message template
+func (a *PromptResourceApiService) TestMessageTemplate(ctx context.Context, request model.PromptTemplateTestRequest) (string, *http.Response, error) {
+	// Convert domain model to generated model
+	genRequest := toGeneratedPromptTemplateTestRequest(&request)
 
-	path := "/prompts/test"
+	req := a.APIClient.http_orkes.PromptResourceAPI.TestMessageTemplate(ctx).PromptTemplateTestRequest(*genRequest)
 
-	resp, err := a.Post(ctx, path, body, &result)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return "", resp, err
+		return "", resp, wrapGeneratedError(err, resp)
 	}
+
 	return result, resp, nil
 }

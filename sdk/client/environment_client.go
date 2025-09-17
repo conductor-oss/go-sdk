@@ -27,5 +27,5 @@ type EnvironmentClient interface {
 }
 
 func NewEnvironmentClient(apiClient *APIClient) EnvironmentClient {
-	return &EnvironmentResourceApiService{apiClient}
+	return NewEnvironmentResourceApiService(apiClient)
 }

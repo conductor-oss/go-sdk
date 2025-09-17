@@ -3,11 +3,12 @@ package integration_tests
 import (
 	"context"
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/conductor-sdk/conductor-go/sdk/model/rbac"
 	"github.com/conductor-sdk/conductor-go/test/testdata"
 	"github.com/stretchr/testify/assert"
-	"testing"
-	"time"
 )
 
 func TestGroupResourceApiService(t *testing.T) {
@@ -73,11 +74,9 @@ func TestGroupResourceApiService(t *testing.T) {
 
 	// Again, exact assertion depends on your response structure
 	// This is a placeholder - adjust according to your actual response format
-	usersArray, ok := usersInGroup.([]interface{})
-	assert.True(t, ok)
 
 	var foundUser bool
-	for _, u := range usersArray {
+	for _, u := range usersInGroup {
 		user, ok := u.(map[string]interface{})
 		if ok && user["id"] == testUserId {
 			foundUser = true
@@ -103,7 +102,7 @@ func TestGroupResourceApiService(t *testing.T) {
 	assert.Equal(t, 200, resp.StatusCode)
 
 	// Test case 8: Check permissions for the group
-	permissions, resp, err := groupClient.GetGrantedPermissions1(ctx, groupId)
+	permissions, resp, err := groupClient.GetGrantedPermissions(ctx, groupId)
 	assert.Nil(t, err)
 	assert.Equal(t, 200, resp.StatusCode)
 	assert.NotNil(t, permissions)
@@ -125,9 +124,8 @@ func TestGroupResourceApiService(t *testing.T) {
 	assert.Equal(t, 200, resp.StatusCode)
 
 	// This assertion depends on how your API represents an empty group
-	emptyUsersArray, ok := usersInGroup.([]interface{})
 	assert.True(t, ok)
-	assert.Empty(t, emptyUsersArray, "Group should have no users")
+	assert.Empty(t, usersInGroup, "Group should have no users")
 
 	// Test case 12: Update the group
 	updatedRequest := rbac.UpsertGroupRequest{

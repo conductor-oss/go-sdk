@@ -13,6 +13,7 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/workflow"
 	"github.com/conductor-sdk/conductor-go/test/testdata"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const retryLimit = 5
@@ -35,39 +36,21 @@ func TestWorkflowCreation(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to register workflow: %s, reason: %s", workflow.GetName(), err.Error())
 	}
+
 	startWorkers()
 	run, err := executeWorkflowWithRetries(workflow, map[string]interface{}{
 		"key1": "input1",
 		"key2": 101,
 	})
-	if err != nil {
-		t.Fatalf("Failed to complete the workflow, reason: %s", err)
-	}
-
+	assert.NoError(t, err)
 	assert.NotEmpty(t, run, "Workflow is null", run)
 	workflowId := run.WorkflowId
-	timeout := time.After(60 * time.Second)
-	tick := time.Tick(1 * time.Second)
 
+	workflowUpdated, err := testdata.WaitForWorkflowCompletion(workflowId, 10*time.Second)
 	assert.NoError(t, err)
 
-	for {
-		select {
-		case <-timeout:
-			t.Fatalf("Timed out and workflow %s didn't complete", workflowId)
-		case <-tick:
-			wf, err := executor.GetWorkflow(workflowId, false)
-			assert.NoError(t, err)
-			if wf.Status == model.CompletedWorkflow {
-				// Success! Verify the workflow details
-				assert.Equal(t, model.CompletedWorkflow, wf.Status)
-				assert.Equal(t, "input1", run.Input["key1"])
-				return
-			} else if wf.Status == model.FailedWorkflow || wf.Status == model.TerminatedWorkflow {
-				t.Fatalf("Workflow failed with status: %s", wf.Status)
-			}
-		}
-	}
+	assert.Equal(t, model.CompletedWorkflow, workflowUpdated.Status)
+	assert.Equal(t, "input1", run.Input["key1"])
 }
 
 func TestRemoveWorkflow(t *testing.T) {
@@ -125,9 +108,20 @@ func TestExecuteWorkflow(t *testing.T) {
 	assert.NoError(t, err, "Failed to start workflow")
 	assert.Equal(t, string(model.CompletedWorkflow), run.Status)
 
-	execution, err := executor.GetWorkflow(run.WorkflowId, true)
+	execution, err := testdata.WaitForWorkflowStatus(run.WorkflowId, []model.WorkflowStatus{model.CompletedWorkflow}, 10*time.Second)
 	assert.NoError(t, err, "Failed to get workflow execution")
-	assert.Equal(t, model.CompletedWorkflow, execution.Status, "Workflow is not in the completed state")
+
+	got := execution.WorkflowDefinition
+	want := wf.ToWorkflowDef()
+	require.NotNil(t, got)
+
+	assert.Equal(t, want.Name, got.Name)
+	assert.Equal(t, want.Version, got.Version)
+	if assert.Len(t, got.Tasks, len(want.Tasks)) {
+		assert.Equal(t, want.Tasks[0].Name, got.Tasks[0].Name)
+		assert.Equal(t, want.Tasks[0].TaskReferenceName, got.Tasks[0].TaskReferenceName)
+		assert.Equal(t, want.Tasks[0].Type_, got.Tasks[0].Type_)
+	}
 
 	_, err = testdata.MetadataClient.UnregisterWorkflowDef(
 		context.Background(),
@@ -153,19 +147,16 @@ func TestExecuteWorkflowWithCorrelationIds(t *testing.T) {
 		Version(1).
 		Add(testdata.TestHttpTask)
 	_, err := httpTaskWorkflow1.StartWorkflow(&model.StartWorkflowRequest{CorrelationId: correlationId1})
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
+
 	_, err = httpTaskWorkflow2.StartWorkflow(&model.StartWorkflowRequest{CorrelationId: correlationId2})
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
+
 	time.Sleep(3 * time.Second)
 	workflows, err := executor.GetByCorrelationIdsAndNames(true, true,
 		[]string{correlationId1, correlationId2}, []string{httpTaskWorkflow1.GetName(), httpTaskWorkflow2.GetName()})
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
+
 	assert.Contains(t, workflows, correlationId1)
 	assert.Contains(t, workflows, correlationId2)
 	assert.NotEmpty(t, workflows[correlationId1])

@@ -2,6 +2,7 @@ module github.com/conductor-sdk/conductor-go
 
 go 1.23
 
+
 require (
 	github.com/antihax/optional v1.0.0
 	github.com/google/uuid v1.3.0

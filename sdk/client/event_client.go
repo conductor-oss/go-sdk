@@ -25,5 +25,5 @@ type EventHandlerClient interface {
 }
 
 func NewEventHandlerClient(client *APIClient) EventHandlerClient {
-	return &EventResourceApiService{client}
+	return NewEventResourceApiService(client)
 }

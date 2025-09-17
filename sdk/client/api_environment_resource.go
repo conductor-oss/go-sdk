@@ -1,135 +1,124 @@
-// Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
-// the License. You may obtain a copy of the License at
+//  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+//  the License. You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
+//  http://www.apache.org/licenses/LICENSE-2.0
 //
-// Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
-// an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
-// specific language governing permissions and limitations under the License.
+//  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+//  an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+//  specific language governing permissions and limitations under the License.
 
 package client
 
 import (
 	"context"
-	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"net/http"
 
-	"fmt"
+	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
+// EnvironmentResourceApiService wraps the generated client to maintain backward compatibility
 type EnvironmentResourceApiService struct {
+	// Embedded for backward compatibility with helper methods
 	*APIClient
 }
 
-/*
-EnvironmentResourceApiService Create or update an environment variable (requires metadata or admin role)
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-  - @param key
-*/
-func (a *EnvironmentResourceApiService) CreateOrUpdateEnvVariable(ctx context.Context, body string, key string) (*http.Response, error) {
-	path := fmt.Sprintf("/environment/%s", key)
+// NewEnvironmentResourceApiService creates a service from existing APIClient
+func NewEnvironmentResourceApiService(apiClient *APIClient) *EnvironmentResourceApiService {
+	if apiClient == nil {
+		return nil
+	}
 
-	resp, err := a.PutWithContentType(ctx, path, body, "text/plain", nil)
+	return &EnvironmentResourceApiService{
+		APIClient: apiClient,
+	}
+}
+
+// CreateOrUpdateEnvVariable - Create or update an environment variable
+func (a *EnvironmentResourceApiService) CreateOrUpdateEnvVariable(ctx context.Context, body string, key string) (*http.Response, error) {
+	req := a.APIClient.http_orkes.EnvironmentResourceAPI.CreateOrUpdateEnvVariable(ctx, key).Body(body)
+
+	resp, err := req.Execute()
 	if err != nil {
-		return nil, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
 
-/*
-EnvironmentResourceApiService Delete an environment variable (requires metadata or admin role)
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param key
-    @return string
-*/
+// DeleteEnvVariable - Delete an environment variable
 func (a *EnvironmentResourceApiService) DeleteEnvVariable(ctx context.Context, key string) (string, *http.Response, error) {
-	var result string
-	path := fmt.Sprintf("/environment/%s", key)
+	req := a.APIClient.http_orkes.EnvironmentResourceAPI.DeleteEnvVariable(ctx, key)
 
-	resp, err := a.Delete(ctx, path, nil, &result)
-
+	result, resp, err := req.Execute()
 	if err != nil {
-		return "", resp, err
+		return "", resp, wrapGeneratedError(err, resp)
 	}
-
 	return result, resp, nil
 }
 
-/*
-EnvironmentResourceApiService Delete a tag for environment variable name
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-  - @param name
-*/
+// DeleteTagForEnvVar - Delete tags for environment variable
 func (a *EnvironmentResourceApiService) DeleteTagForEnvVar(ctx context.Context, body []model.Tag, name string) (*http.Response, error) {
-	path := fmt.Sprintf("/environment/%s/tags", name)
-	resp, err := a.DeleteWithBody(ctx, path, body, nil)
-	return resp, err
+	// Convert domain tags to generated tags
+	genTags := toGeneratedTags(body)
+
+	req := a.APIClient.http_orkes.EnvironmentResourceAPI.DeleteTagForEnvVar(ctx, name).Tag(genTags)
+
+	resp, err := req.Execute()
+	if err != nil {
+		return resp, wrapGeneratedError(err, resp)
+	}
+	return resp, nil
 }
 
-/*
-EnvironmentResourceApiService Get the environment value by key
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param key
-    @return string
-*/
+// Get - Get the environment value by key
 func (a *EnvironmentResourceApiService) Get(ctx context.Context, key string) (string, *http.Response, error) {
-	var result string
-	path := fmt.Sprintf("/environment/%s", key)
+	req := a.APIClient.http_orkes.EnvironmentResourceAPI.Get3(ctx, key)
 
-	resp, err := a.APIClient.Get(ctx, path, nil, &result)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return "", resp, err
+		return "", resp, wrapGeneratedError(err, resp)
 	}
 	return result, resp, nil
 }
 
-/*
-EnvironmentResourceApiService List all the environment variables
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-    @return []model.EnvironmentVariable
-*/
+// GetAll - List all the environment variables
 func (a *EnvironmentResourceApiService) GetAll(ctx context.Context) ([]model.EnvironmentVariable, *http.Response, error) {
-	var result []model.EnvironmentVariable
-	resp, err := a.APIClient.Get(ctx, "/environment", nil, &result)
+	req := a.APIClient.http_orkes.EnvironmentResourceAPI.GetAll(ctx)
 
+	genEnvVars, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
 
+	// Convert using mapper
+	result := toDomainEnvironmentVariables(genEnvVars)
 	return result, resp, nil
 }
 
-/*
-EnvironmentResourceApiService Get tags by environment variable name
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param name
-    @return []Tag
-*/
+// GetTagsForEnvVar - Get tags by environment variable name
 func (a *EnvironmentResourceApiService) GetTagsForEnvVar(ctx context.Context, name string) ([]model.Tag, *http.Response, error) {
-	var result []model.Tag
-	path := fmt.Sprintf("/environment/%s/tags", name)
-	resp, err := a.APIClient.Get(ctx, path, nil, &result)
+	req := a.APIClient.http_orkes.EnvironmentResourceAPI.GetTagsForEnvVar(ctx, name)
 
+	genTags, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
+
+	// Convert generated tags to domain tags
+	result := toDomainTags(genTags)
 
 	return result, resp, nil
 }
 
-/*
-EnvironmentResourceApiService Put a tag to environment variable name
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-  - @param name
-*/
+// PutTagForEnvVar - Update tags for environment variable
 func (a *EnvironmentResourceApiService) PutTagForEnvVar(ctx context.Context, body []model.Tag, name string) (*http.Response, error) {
-	path := fmt.Sprintf("/environment/%s/tags", name)
-	resp, err := a.Put(ctx, path, body, nil)
+	// Convert domain tags to generated tags
+	genTags := toGeneratedTags(body)
+
+	req := a.APIClient.http_orkes.EnvironmentResourceAPI.PutTagForEnvVar(ctx, name).Tag(genTags)
+
+	resp, err := req.Execute()
 	if err != nil {
-		return nil, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }

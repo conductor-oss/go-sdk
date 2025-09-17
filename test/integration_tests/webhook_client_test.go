@@ -3,11 +3,12 @@ package integration_tests
 import (
 	"context"
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/test/testdata"
 	"github.com/stretchr/testify/assert"
-	"testing"
-	"time"
 )
 
 func TestWebhooksConfigResourceApiService(t *testing.T) {
@@ -73,12 +74,12 @@ func TestWebhooksConfigResourceApiService(t *testing.T) {
 		{
 			Key:   "environment",
 			Value: "test",
-			Type_: "metadata",
+			Type:  "metadata",
 		},
 		{
 			Key:   "owner",
 			Value: "integration-test",
-			Type_: "ownership",
+			Type:  "ownership",
 		},
 	}
 

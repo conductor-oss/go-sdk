@@ -1,0 +1,36 @@
+{
+  "name": "PopulationMinMax",
+  "description": "Simple population workflow for testing",
+  "version": 0,
+  "tasks": [
+    {
+      "name": "simple_task",
+      "taskReferenceName": "population_task",
+      "inputParameters": {},
+      "type": "SIMPLE",
+      "decisionCases": {},
+      "defaultCase": [],
+      "forkTasks": [],
+      "startDelay": 0,
+      "joinOn": [],
+      "optional": false,
+      "defaultExclusiveJoinTask": [],
+      "asyncComplete": false,
+      "loopOver": [],
+      "onStateChange": {},
+      "permissive": false
+    }
+  ],
+  "inputParameters": [],
+  "outputParameters": {},
+  "failureWorkflow": "",
+  "schemaVersion": 2,
+  "restartable": true,
+  "workflowStatusListenerEnabled": false,
+  "ownerEmail": "test@orkes.io",
+  "timeoutPolicy": "ALERT_ONLY",
+  "timeoutSeconds": 0,
+  "variables": {},
+  "inputTemplate": {},
+  "enforceSchema": true
+}

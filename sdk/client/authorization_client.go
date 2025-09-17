@@ -23,5 +23,5 @@ type AuthorizationClient interface {
 }
 
 func NewAuthorizationClient(client *APIClient) AuthorizationClient {
-	return &AuthorizationResourceApiService{client}
+	return NewAuthorizationResourceApiService(client)
 }
