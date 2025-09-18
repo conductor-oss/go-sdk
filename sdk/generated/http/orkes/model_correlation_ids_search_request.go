@@ -12,7 +12,6 @@ package orkes
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 // checks if the CorrelationIdsSearchRequest type satisfies the MappedNullable interface at compile time
@@ -109,39 +108,18 @@ func (o CorrelationIdsSearchRequest) ToMap() (map[string]interface{}, error) {
 }
 
 func (o *CorrelationIdsSearchRequest) UnmarshalJSON(bytes []byte) (err error) {
-	// This validates that all required properties are included in the JSON object
-	// by unmarshalling the object into a generic map with string keys and checking
-	// that every required field exists as a key in the generic map.
-	requiredProperties := []string{
-		"correlationIds",
-		"workflowNames",
-	}
+	varObj := _CorrelationIdsSearchRequest{}
 
-	allProperties := make(map[string]interface{})
-
-	err = json.Unmarshal(bytes, &allProperties)
+	err = json.Unmarshal(bytes, &varObj)
 
 	if err != nil {
 		return err
 	}
 
-	for _, requiredProperty := range requiredProperties {
-		if _, exists := allProperties[requiredProperty]; !exists {
-			return fmt.Errorf("no value given for required property %v", requiredProperty)
-		}
-	}
-
-	varCorrelationIdsSearchRequest := _CorrelationIdsSearchRequest{}
-
-	err = json.Unmarshal(bytes, &varCorrelationIdsSearchRequest)
-
-	if err != nil {
-		return err
-	}
-
-	*o = CorrelationIdsSearchRequest(varCorrelationIdsSearchRequest)
+	*o = CorrelationIdsSearchRequest(varObj)
 
 	return err
+
 }
 
 type NullableCorrelationIdsSearchRequest struct {

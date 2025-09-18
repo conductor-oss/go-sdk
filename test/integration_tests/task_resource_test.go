@@ -20,6 +20,7 @@ import (
 )
 
 func TestUpdateTaskRefByName(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	simpleTaskWorkflow := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).
 		Name("TEST_GO_WORKFLOW_UPDATE_TASK").
 		Version(1).

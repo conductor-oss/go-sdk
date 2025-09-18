@@ -275,7 +275,6 @@ func WaitForWorkflowStatus(workflowId string, expectedStatuses []model.WorkflowS
 			time.Sleep(500 * time.Millisecond)
 			continue
 		}
-
 		// Check if workflow has reached any of the expected statuses
 		for _, expectedStatus := range expectedStatuses {
 			if workflow.Status == expectedStatus {
@@ -376,7 +375,7 @@ func WaitForTaskInWorkflow(workflowId, taskReferenceName string, expectedTaskSta
 const (
 	WorkflowValidationTimeout = 7 * time.Second
 	ExtendedValidationTimeout = 15 * time.Second
-	WorkflowBulkQty           = 10
+	WorkflowBulkQty           = 15
 )
 
 var (

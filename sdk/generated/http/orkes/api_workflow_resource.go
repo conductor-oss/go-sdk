@@ -190,10 +190,9 @@ type WorkflowResourceAPI interface {
 
 		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 		@param workflowId
-		@param taskReferenceName
 		@return WorkflowResourceAPIJumpToTaskRequest
 	*/
-	JumpToTask(ctx context.Context, workflowId string, taskReferenceName string) WorkflowResourceAPIJumpToTaskRequest
+	JumpToTask(ctx context.Context, workflowId string) WorkflowResourceAPIJumpToTaskRequest
 
 	// JumpToTaskExecute executes the request
 	JumpToTaskExecute(r WorkflowResourceAPIJumpToTaskRequest) (*http.Response, error)
@@ -2208,8 +2207,13 @@ type WorkflowResourceAPIJumpToTaskRequest struct {
 	ctx               context.Context
 	ApiService        WorkflowResourceAPI
 	workflowId        string
-	taskReferenceName string
+	taskReferenceName *string
 	requestBody       *map[string]interface{}
+}
+
+func (r WorkflowResourceAPIJumpToTaskRequest) TaskReferenceName(taskReferenceName string) WorkflowResourceAPIJumpToTaskRequest {
+	r.taskReferenceName = &taskReferenceName
+	return r
 }
 
 func (r WorkflowResourceAPIJumpToTaskRequest) RequestBody(requestBody map[string]interface{}) WorkflowResourceAPIJumpToTaskRequest {
@@ -2228,15 +2232,13 @@ Jump workflow execution to given task.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param workflowId
-	@param taskReferenceName
 	@return WorkflowResourceAPIJumpToTaskRequest
 */
-func (a *WorkflowResourceAPIService) JumpToTask(ctx context.Context, workflowId string, taskReferenceName string) WorkflowResourceAPIJumpToTaskRequest {
+func (a *WorkflowResourceAPIService) JumpToTask(ctx context.Context, workflowId string) WorkflowResourceAPIJumpToTaskRequest {
 	return WorkflowResourceAPIJumpToTaskRequest{
-		ApiService:        a,
-		ctx:               ctx,
-		workflowId:        workflowId,
-		taskReferenceName: taskReferenceName,
+		ApiService: a,
+		ctx:        ctx,
+		workflowId: workflowId,
 	}
 }
 
@@ -2255,15 +2257,18 @@ func (a *WorkflowResourceAPIService) JumpToTaskExecute(r WorkflowResourceAPIJump
 
 	localVarPath := localBasePath + "/workflow/{workflowId}/jump/{taskReferenceName}"
 	localVarPath = strings.Replace(localVarPath, "{"+"workflowId"+"}", url.PathEscape(parameterValueToString(r.workflowId, "workflowId")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"taskReferenceName"+"}", url.PathEscape(parameterValueToString(r.taskReferenceName, "taskReferenceName")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
+	if r.taskReferenceName == nil {
+		return nil, reportError("taskReferenceName is required and must be specified")
+	}
 	if r.requestBody == nil {
 		return nil, reportError("requestBody is required and must be specified")
 	}
 
+	parameterAddToHeaderOrQuery(localVarQueryParams, "taskReferenceName", r.taskReferenceName, "")
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{"application/json"}
 

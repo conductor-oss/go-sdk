@@ -26,6 +26,7 @@ const (
 )
 
 func TestRetryNotFound(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	executor := testdata.WorkflowExecutor
 
 	err := executor.Retry(notFoundWorkflowId, true)
@@ -39,6 +40,7 @@ func TestRetryNotFound(t *testing.T) {
 }
 
 func TestRegisterWorkflow(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	executor := testdata.WorkflowExecutor
 
 	wf := workflow.ConductorWorkflow{}
@@ -68,6 +70,7 @@ func TestRegisterWorkflow(t *testing.T) {
 }
 
 func TestRegisterWorkflowWithTags(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	executor := testdata.WorkflowExecutor
 
 	wf := workflow.NewConductorWorkflow(executor)
@@ -140,6 +143,7 @@ func TestRegisterWorkflowWithTags(t *testing.T) {
 }
 
 func TestGetWorkflow(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	executor := testdata.WorkflowExecutor
 
 	wf, err := executor.GetWorkflow(notFoundWorkflowId, false)
@@ -150,6 +154,7 @@ func TestGetWorkflow(t *testing.T) {
 }
 
 func TestUpdateTaskByRefName(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	executor := testdata.WorkflowExecutor
 	err := executor.UpdateTaskByRefName("task_ref", notFoundWorkflowId, model.CompletedTask, map[string]interface{}{})
 	assert.Error(t, err, "UpdateTaskByRefName is expected to return an error")
@@ -161,6 +166,7 @@ func TestUpdateTaskByRefName(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	executor := testdata.WorkflowExecutor
 	err := executor.UpdateTask(notFoundTaskId, notFoundWorkflowId, model.CompletedTask, map[string]interface{}{})
 	assert.Error(t, err, "UpdateTask is expected to return an error")
@@ -172,6 +178,7 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestStartWorkflowWithContext(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	executor := testdata.WorkflowExecutor
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -224,6 +231,7 @@ func getSubWorkflow(t *testing.T) workflow.ConductorWorkflow {
 }
 
 func TestRegisterWorkflowWithWaitSignal(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
 	executor := testdata.WorkflowExecutor
 	wf := getSubWorkflow(t)
 
@@ -261,6 +269,7 @@ func TestRegisterWorkflowWithWaitSignal(t *testing.T) {
 }
 
 func TestSubWorkflowSignal(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
 	executor := testdata.WorkflowExecutor
 
 	subWf := getSubWorkflow(t)
@@ -349,6 +358,7 @@ func waitForWorkflowCompletion(executor *executor.WorkflowExecutor, workflowId s
 }
 
 func TestSubWorkflowSignalWithSyncConsistency(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
 	executor := testdata.WorkflowExecutor
 
 	// First, make sure the wait_signal_test workflow is registered
@@ -426,6 +436,7 @@ func TestSubWorkflowSignalWithSyncConsistency(t *testing.T) {
 }
 
 func TestSubWorkflowSignalWithDurableConsistency(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
 	executor := testdata.WorkflowExecutor
 
 	// Create the workflow start request
@@ -551,6 +562,7 @@ func getWorkflowDef(filename string) (*model.WorkflowDef, error) {
 }
 
 func TestSignal_AllStrategies_Comprehensive(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
 	registerComplexWorkflows()
 	testCases := []struct {
 		name                         string
@@ -861,6 +873,7 @@ func TestSignal_AllStrategies_Comprehensive(t *testing.T) {
 
 // Add a separate test for default strategy to ensure it behaves like TARGET_WORKFLOW
 func TestSignal_DefaultStrategy_IsTargetWorkflow(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
 	// Setup workflow (same setup code as in your original test)
 	executor := testdata.WorkflowExecutor
 	registerComplexWorkflows()
@@ -912,6 +925,7 @@ func TestSignal_DefaultStrategy_IsTargetWorkflow(t *testing.T) {
 
 // Add a separate test for mixed strategy
 func TestSignal_MixedStrategy(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
 	// Setup workflow (same setup code as in your original test)
 	executor := testdata.WorkflowExecutor
 	registerComplexWorkflows()
@@ -967,6 +981,7 @@ func TestSignal_MixedStrategy(t *testing.T) {
 }
 
 func TestWfExecutionWithWaitForSec_Success(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	executor := testdata.WorkflowExecutor
 
 	wf := workflow.ConductorWorkflow{}
@@ -1001,6 +1016,7 @@ func TestWfExecutionWithWaitForSec_Success(t *testing.T) {
 }
 
 func TestWfExecutionWithWaitForSec_ContextTimeout(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	wfClient := testdata.WorkflowClient
 	executor := testdata.WorkflowExecutor
 	// Create a very short context timeout

@@ -12,7 +12,6 @@ package orkes
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 // checks if the SubjectRef type satisfies the MappedNullable interface at compile time
@@ -119,38 +118,18 @@ func (o SubjectRef) ToMap() (map[string]interface{}, error) {
 }
 
 func (o *SubjectRef) UnmarshalJSON(bytes []byte) (err error) {
-	// This validates that all required properties are included in the JSON object
-	// by unmarshalling the object into a generic map with string keys and checking
-	// that every required field exists as a key in the generic map.
-	requiredProperties := []string{
-		"id",
-	}
+	varObj := _SubjectRef{}
 
-	allProperties := make(map[string]interface{})
-
-	err = json.Unmarshal(bytes, &allProperties)
+	err = json.Unmarshal(bytes, &varObj)
 
 	if err != nil {
 		return err
 	}
 
-	for _, requiredProperty := range requiredProperties {
-		if _, exists := allProperties[requiredProperty]; !exists {
-			return fmt.Errorf("no value given for required property %v", requiredProperty)
-		}
-	}
-
-	varSubjectRef := _SubjectRef{}
-
-	err = json.Unmarshal(bytes, &varSubjectRef)
-
-	if err != nil {
-		return err
-	}
-
-	*o = SubjectRef(varSubjectRef)
+	*o = SubjectRef(varObj)
 
 	return err
+
 }
 
 type NullableSubjectRef struct {

@@ -20,6 +20,7 @@ import (
 )
 
 func TestHttpTask(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	httpTaskWorkflow := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).
 		Name("TEST_GO_WORKFLOW_HTTP").
 		OwnerEmail("test@orkes.io").
@@ -44,6 +45,7 @@ func TestHttpTask(t *testing.T) {
 }
 
 func SimpleTask(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	err := testdata.ValidateTaskRegistration(*testdata.TestSimpleTask.ToTaskDef())
 	if err != nil {
 		t.Fatal(err)
@@ -86,6 +88,7 @@ func SimpleTask(t *testing.T) {
 }
 
 func SimpleTaskWithoutRetryCount(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	taskToRegister := testdata.TestSimpleTask.ToTaskDef()
 	taskToRegister.RetryCount = 0
 	err := testdata.ValidateTaskRegistration(*taskToRegister)
@@ -130,6 +133,7 @@ func SimpleTaskWithoutRetryCount(t *testing.T) {
 }
 
 func TestInlineTask(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	inlineTaskWorkflow := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).
 		Name("TEST_GO_WORKFLOW_INLINE_TASK").
 		Version(1).
@@ -152,6 +156,7 @@ func TestInlineTask(t *testing.T) {
 }
 
 func TestSqsEventTask(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	workflow := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).
 		Name("TEST_GO_WORKFLOW_EVENT_SQS").
 		Version(1).
@@ -170,6 +175,7 @@ func TestSqsEventTask(t *testing.T) {
 }
 
 func TestConductorEventTask(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	workflow := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).
 		Name("TEST_GO_WORKFLOW_EVENT_CONDUCTOR").
 		Version(1).
@@ -188,6 +194,7 @@ func TestConductorEventTask(t *testing.T) {
 }
 
 func TestKafkaPublishTask(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	workflow := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).
 		Name("TEST_GO_WORKFLOW_KAFKA_PUBLISH").
 		Version(1).
@@ -210,6 +217,7 @@ func TestDoWhileTask(t *testing.T) {
 }
 
 func TestTerminateTask(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	workflow := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).
 		Name("TEST_GO_WORKFLOW_TERMINATE").
 		Version(1).
@@ -228,6 +236,7 @@ func TestTerminateTask(t *testing.T) {
 }
 
 func TestSwitchTask(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	workflow := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).
 		Name("TEST_GO_WORKFLOW_SWITCH").
 		Version(1).
@@ -246,6 +255,7 @@ func TestSwitchTask(t *testing.T) {
 }
 
 func TestDynamicForkWorkflow(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	wf := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).
 		Name("dynamic_workflow_array_sub_workflow").
 		Version(1).
@@ -284,6 +294,7 @@ func createDynamicForkTask() *workflow.DynamicForkTask {
 }
 
 func TestComplexSwitchWorkflow(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	wf := testdata.GetWorkflowWithComplexSwitchTask()
 	err := testdata.ValidateWorkflowRegistration(wf)
 	if err != nil {

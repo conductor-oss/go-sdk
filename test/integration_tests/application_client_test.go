@@ -12,7 +12,7 @@ import (
 )
 
 func TestApplicationLifecycle(t *testing.T) {
-
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	appClient := testdata.ApplicationClient
 
 	// Create an application
@@ -40,7 +40,7 @@ func TestApplicationLifecycle(t *testing.T) {
 }
 
 func TestRoleManagementForApplicationUser(t *testing.T) {
-
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	appClient := testdata.ApplicationClient
 
 	// Create an application to use in the test
@@ -63,6 +63,7 @@ func TestRoleManagementForApplicationUser(t *testing.T) {
 }
 
 func TestAuthorizationResourcePermissions(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	// Setup
 	appClient := testdata.ApplicationClient
 	authClient := testdata.AuthorizationClient
@@ -122,6 +123,7 @@ func TestAuthorizationResourcePermissions(t *testing.T) {
 }
 
 func TestAccessKeyLifecycle(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	appClient := testdata.ApplicationClient
 
 	// Create an application to use in the test
@@ -144,7 +146,7 @@ func TestAccessKeyLifecycle(t *testing.T) {
 }
 
 func TestGetTagsForApplication(t *testing.T) {
-
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	appClient := testdata.ApplicationClient
 
 	// Create an application to use in the test
@@ -166,6 +168,7 @@ func TestGetTagsForApplication(t *testing.T) {
 }
 
 func TestApplicationClientIntegration(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	// Initialize ApplicationClient
 	appClient := testdata.ApplicationClient
 
@@ -225,6 +228,7 @@ func TestApplicationClientIntegration(t *testing.T) {
 }
 
 func TestApplicationClientErrorHandling(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	// Initialize ApplicationClient
 	appClient := testdata.ApplicationClient
 
@@ -277,6 +281,7 @@ func TestApplicationClientErrorHandling(t *testing.T) {
 }
 
 func TestGetAccessKeys(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	// Initialize ApplicationClient
 	appClient := testdata.ApplicationClient
 

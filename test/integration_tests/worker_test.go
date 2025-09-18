@@ -19,6 +19,7 @@ import (
 )
 
 func TestWorkerBatchSize(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	simpleTaskWorkflow := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).
 		Name("TEST_GO_WORKFLOW_SIMPLE").
 		Version(1).
@@ -69,6 +70,7 @@ func TestWorkerBatchSize(t *testing.T) {
 }
 
 func TestFaultyWorker(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	taskName := "TEST_GO_FAULTY_TASK"
 	wf := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).
 		Name("TEST_GO_FAULTY_WORKFLOW").
@@ -94,6 +96,7 @@ func TestFaultyWorker(t *testing.T) {
 }
 
 func TestWorkerWithNonRetryableError(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	taskName := "TEST_GO_NON_RETRYABLE_ERROR_TASK"
 	wf := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).
 		Name("TEST_GO_NON_RETRYABLE_ERROR_WF").

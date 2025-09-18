@@ -193,9 +193,8 @@ func Test_orkes_WorkflowResourceAPIService(t *testing.T) {
 		t.Skip("skip test") // remove to run test
 
 		var workflowId string
-		var taskReferenceName string
 
-		httpRes, err := apiClient.WorkflowResourceAPI.JumpToTask(context.Background(), workflowId, taskReferenceName).Execute()
+		httpRes, err := apiClient.WorkflowResourceAPI.JumpToTask(context.Background(), workflowId).Execute()
 
 		require.Nil(t, err)
 		assert.Equal(t, 200, httpRes.StatusCode)

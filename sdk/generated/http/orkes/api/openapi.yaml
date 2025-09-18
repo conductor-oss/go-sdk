@@ -6770,13 +6770,13 @@ paths:
         schema:
           type: string
         style: simple
-      - explode: false
-        in: path
+      - explode: true
+        in: query
         name: taskReferenceName
         required: true
         schema:
           type: string
-        style: simple
+        style: form
       requestBody:
         content:
           application/json:

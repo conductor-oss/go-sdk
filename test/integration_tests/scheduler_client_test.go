@@ -14,6 +14,7 @@ import (
 )
 
 func TestSchedulerResourceApiService(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	// Setup
 	const WorkflowName = "TestGoSDKWorkflowForSchedulerClient"
 	schedulerClient := testdata.SchedulerClient // Assuming this exists in your testdata package

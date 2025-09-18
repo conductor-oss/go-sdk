@@ -489,6 +489,37 @@ def fix_bulk_response_success_list(file_path, *, verbose=False, dry_run=False):
             print(f"  ❌ Error processing {file_path}: {e}")
         return False
 
+def fix_remove_unused_fmt_import(file_path, *, verbose=False, dry_run=False):
+    """Remove unused import \"fmt\" from Go files when no fmt. references remain."""
+    try:
+        p = Path(file_path)
+        if p.suffix != '.go':
+            return False
+        content = p.read_text(encoding='utf-8')
+        if '"fmt"' not in content:
+            return False
+        # If fmt is referenced, keep
+        if re.search(r'\bfmt\.', content):
+            return False
+        # Remove fmt from single-line import or multi-line block
+        new_content = content
+        # Case 1: standalone import line
+        new_content = re.sub(r'(?m)^\s*"fmt"\s*\n', '', new_content)
+        # Case 2: inside block, handle trailing commas and empty lines
+        new_content = re.sub(r'(?m)^\s*"fmt"\s*,?\s*\n', '', new_content)
+        # Clean potential empty import blocks like: import ()
+        new_content = re.sub(r'(?m)^import\s*\(\s*\)\s*\n', '', new_content)
+        if new_content != content:
+            _write_file(p, new_content, dry_run=dry_run, backup=True, verbose=verbose)
+            if verbose:
+                print(f"  ✓ Removed unused fmt in {file_path}")
+            return True
+        return False
+    except Exception as e:
+        if verbose:
+            print(f"  ❌ Error processing {file_path}: {e}")
+        return False
+
 def fix_generated_code_in_file(file_path, *, verbose=False, dry_run=False, only: Set[str] = None):
     """Исправляет сгенерированный код в одном файле."""
     fixes_applied = 0
@@ -500,6 +531,12 @@ def fix_generated_code_in_file(file_path, *, verbose=False, dry_run=False, only:
     run_bulk = (only is None) or ('bulk_response' in only)
     run_wfdef_req = (only is None) or ('workflowdef_required' in only)
     run_access_keys = (only is None) or ('get_access_keys' in only)
+    # Allow relaxing required checks for specific models
+    run_relax_required = (only is None) or ('relax_required' in only)
+    # Global relax: replace any UnmarshalJSON that contains requiredProperties preamble
+    run_relax_required_global = (only is None) or ('relax_required_global' in only)
+    # Remove unused fmt imports
+    run_fmt = (only is None) or ('rm_unused_fmt' in only)
 
     if run_users and fix_get_users_in_group(file_path, verbose=verbose, dry_run=dry_run):
         fixes_applied += 1
@@ -525,7 +562,160 @@ def fix_generated_code_in_file(file_path, *, verbose=False, dry_run=False, only:
     if run_access_keys and fix_get_access_keys(file_path, verbose=verbose, dry_run=dry_run):
         fixes_applied += 1
 
+    # Remove requiredProperties validation blocks from UnmarshalJSON for selected models
+    if run_relax_required and fix_remove_required_properties_check(file_path, verbose=verbose, dry_run=dry_run):
+        fixes_applied += 1
+
+    if run_relax_required_global and fix_remove_required_properties_check_global(file_path, verbose=verbose, dry_run=dry_run):
+        fixes_applied += 1
+
+    if run_fmt and fix_remove_unused_fmt_import(file_path, verbose=verbose, dry_run=dry_run):
+        fixes_applied += 1
+
     return fixes_applied
+
+
+def fix_remove_required_properties_check(file_path, *, verbose=False, dry_run=False):
+    """Remove requiredProperties validation inside UnmarshalJSON for specific models only.
+
+    Targeted models:
+      - WorkflowDef (model_workflow_def.go)
+      - ExtendedWorkflowDef (model_extended_workflow_def.go)
+      - StartWorkflowRequest (model_start_workflow_request.go)
+
+    We carefully remove only the validation preamble that checks requiredProperties and leave
+    the actual json.Unmarshal into the typed alias intact.
+    """
+    try:
+        p = Path(file_path)
+        fname = p.name
+        if fname not in (
+            'model_workflow_def.go',
+            'model_extended_workflow_def.go',
+            'model_start_workflow_request.go',
+        ):
+            return False
+
+        content = p.read_text(encoding='utf-8')
+        original = content
+
+        # Decide alias type by file name
+        if fname == 'model_workflow_def.go':
+            struct_name = 'WorkflowDef'
+            alias_name = '_WorkflowDef'
+        elif fname == 'model_extended_workflow_def.go':
+            struct_name = 'ExtendedWorkflowDef'
+            alias_name = '_ExtendedWorkflowDef'
+        else:  # model_start_workflow_request.go
+            struct_name = 'StartWorkflowRequest'
+            alias_name = '_StartWorkflowRequest'
+
+        # Replace entire UnmarshalJSON function with a minimal implementation (no required checks)
+        func_pattern = re.compile(
+            rf"func \\(o \\*{struct_name}\\) UnmarshalJSON\\(bytes \\[\\]byte\\) \\(err error\\) \\{{[\\s\\S]*?\\}}\n",
+            re.MULTILINE
+        )
+
+        replacement = (
+            f"func (o *{struct_name}) UnmarshalJSON(bytes []byte) (err error) {{\n"
+            f"\tvarObj := {alias_name}{{}}\n\n"
+            f"\terr = json.Unmarshal(bytes, &varObj)\n\n"
+            f"\tif err != nil {{\n"
+            f"\t\treturn err\n"
+            f"\t}}\n\n"
+            f"\t*o = {struct_name}(varObj)\n\n"
+            f"\treturn err\n"
+            f"}}\n"
+        )
+
+        new_content, n = func_pattern.subn(replacement, content)
+
+        if n > 0 and new_content != original:
+            _write_file(p, new_content, dry_run=dry_run, backup=True, verbose=verbose)
+            if verbose:
+                print(f"  ✅ Replaced UnmarshalJSON (no required checks) in {file_path}")
+            return True
+
+        return False
+
+    except Exception as e:
+        if verbose:
+            print(f"  ❌ Error processing {file_path}: {e}")
+        return False
+
+
+def fix_remove_required_properties_check_global(file_path, *, verbose=False, dry_run=False):
+    """Globally replace any UnmarshalJSON function that contains requiredProperties validation
+    with a minimal implementation that just unmarshals into the alias type and assigns back.
+
+    This is safe because openapi-generator always uses the pattern:
+      type _X X
+      func (o *X) UnmarshalJSON(bytes []byte) (err error) {
+          // requiredProperties preamble...
+          varX := _X{}
+          err = json.Unmarshal(bytes, &varX)
+          ...
+          *o = X(varX)
+          return err
+      }
+    We detect functions that include 'requiredProperties :=' and reconstruct them.
+    """
+    try:
+        p = Path(file_path)
+        if p.suffix != '.go':
+            return False
+
+        content = p.read_text(encoding='utf-8')
+        original = content
+
+        # Find each UnmarshalJSON function block
+        func_re = re.compile(
+            r'(func\s*\(o\s*\*([A-Za-z_][\w]*)\)\s*UnmarshalJSON\(bytes\s*\[\]\s*byte\)\s*\(err\s*error\)\s*\{)([\s\S]*?)(\n\})',
+            re.MULTILINE
+        )
+
+        changed = False
+
+        def repl(m: re.Match) -> str:
+            nonlocal changed
+            header = m.group(1)
+            body = m.group(3)
+            footer = m.group(4)
+            struct_name = m.group(2)
+            if 'requiredProperties :=' not in body:
+                return m.group(0)
+            # Attempt to detect alias name used later (e.g., _WorkflowDef)
+            alias_match = re.search(r'var\s*[A-Za-z_][\w]*\s*:=\s*(_[A-Za-z_][\w]*)\{\}', body)
+            if alias_match:
+                alias_name = alias_match.group(1)
+            else:
+                # Fallback alias based on struct name
+                alias_name = f'_{struct_name}'
+            minimal = (
+                f"{header}\n"
+                f"\tvarObj := {alias_name}{{}}\n\n"
+                f"\terr = json.Unmarshal(bytes, &varObj)\n\n"
+                f"\tif err != nil {{\n\t\treturn err\n\t}}\n\n"
+                f"\t*o = {struct_name}(varObj)\n\n"
+                f"\treturn err\n"
+                f"{footer}"
+            )
+            changed = True
+            return minimal
+
+        new_content = func_re.sub(repl, content)
+
+        if changed and new_content != original:
+            _write_file(p, new_content, dry_run=dry_run, backup=True, verbose=verbose)
+            if verbose:
+                print(f"  ✅ Globally relaxed required checks in {file_path}")
+            return True
+        return False
+
+    except Exception as e:
+        if verbose:
+            print(f"  ❌ Error processing {file_path}: {e}")
+        return False
 
 
 def fix_generated_code_in_directory(directory_path, verbose=False, dry_run=False, only: Set[str] = None):

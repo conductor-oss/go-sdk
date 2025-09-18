@@ -14,6 +14,7 @@ import (
 )
 
 func TestIntegrationClient(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	ctx := context.Background()
 
 	// Instantiate the IntegrationClient

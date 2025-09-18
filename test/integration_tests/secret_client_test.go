@@ -12,6 +12,7 @@ import (
 )
 
 func TestSecretResourceApiService(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	// Setup
 	secretClient := testdata.SecretClient // Assuming this exists in your testdata package
 	ctx := context.Background()

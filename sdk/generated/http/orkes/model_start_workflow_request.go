@@ -12,7 +12,6 @@ package orkes
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 // checks if the StartWorkflowRequest type satisfies the MappedNullable interface at compile time
@@ -442,38 +441,18 @@ func (o StartWorkflowRequest) ToMap() (map[string]interface{}, error) {
 }
 
 func (o *StartWorkflowRequest) UnmarshalJSON(bytes []byte) (err error) {
-	// This validates that all required properties are included in the JSON object
-	// by unmarshalling the object into a generic map with string keys and checking
-	// that every required field exists as a key in the generic map.
-	requiredProperties := []string{
-		"name",
-	}
+	varObj := _StartWorkflowRequest{}
 
-	allProperties := make(map[string]interface{})
-
-	err = json.Unmarshal(bytes, &allProperties)
+	err = json.Unmarshal(bytes, &varObj)
 
 	if err != nil {
 		return err
 	}
 
-	for _, requiredProperty := range requiredProperties {
-		if _, exists := allProperties[requiredProperty]; !exists {
-			return fmt.Errorf("no value given for required property %v", requiredProperty)
-		}
-	}
-
-	varStartWorkflowRequest := _StartWorkflowRequest{}
-
-	err = json.Unmarshal(bytes, &varStartWorkflowRequest)
-
-	if err != nil {
-		return err
-	}
-
-	*o = StartWorkflowRequest(varStartWorkflowRequest)
+	*o = StartWorkflowRequest(varObj)
 
 	return err
+
 }
 
 type NullableStartWorkflowRequest struct {

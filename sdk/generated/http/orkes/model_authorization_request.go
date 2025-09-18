@@ -12,7 +12,6 @@ package orkes
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 // checks if the AuthorizationRequest type satisfies the MappedNullable interface at compile time
@@ -137,40 +136,18 @@ func (o AuthorizationRequest) ToMap() (map[string]interface{}, error) {
 }
 
 func (o *AuthorizationRequest) UnmarshalJSON(bytes []byte) (err error) {
-	// This validates that all required properties are included in the JSON object
-	// by unmarshalling the object into a generic map with string keys and checking
-	// that every required field exists as a key in the generic map.
-	requiredProperties := []string{
-		"access",
-		"subject",
-		"target",
-	}
+	varObj := _AuthorizationRequest{}
 
-	allProperties := make(map[string]interface{})
-
-	err = json.Unmarshal(bytes, &allProperties)
+	err = json.Unmarshal(bytes, &varObj)
 
 	if err != nil {
 		return err
 	}
 
-	for _, requiredProperty := range requiredProperties {
-		if _, exists := allProperties[requiredProperty]; !exists {
-			return fmt.Errorf("no value given for required property %v", requiredProperty)
-		}
-	}
-
-	varAuthorizationRequest := _AuthorizationRequest{}
-
-	err = json.Unmarshal(bytes, &varAuthorizationRequest)
-
-	if err != nil {
-		return err
-	}
-
-	*o = AuthorizationRequest(varAuthorizationRequest)
+	*o = AuthorizationRequest(varObj)
 
 	return err
+
 }
 
 type NullableAuthorizationRequest struct {

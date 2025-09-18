@@ -12,7 +12,6 @@ package orkes
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 // checks if the GenerateTokenRequest type satisfies the MappedNullable interface at compile time
@@ -145,39 +144,18 @@ func (o GenerateTokenRequest) ToMap() (map[string]interface{}, error) {
 }
 
 func (o *GenerateTokenRequest) UnmarshalJSON(bytes []byte) (err error) {
-	// This validates that all required properties are included in the JSON object
-	// by unmarshalling the object into a generic map with string keys and checking
-	// that every required field exists as a key in the generic map.
-	requiredProperties := []string{
-		"keyId",
-		"keySecret",
-	}
+	varObj := _GenerateTokenRequest{}
 
-	allProperties := make(map[string]interface{})
-
-	err = json.Unmarshal(bytes, &allProperties)
+	err = json.Unmarshal(bytes, &varObj)
 
 	if err != nil {
 		return err
 	}
 
-	for _, requiredProperty := range requiredProperties {
-		if _, exists := allProperties[requiredProperty]; !exists {
-			return fmt.Errorf("no value given for required property %v", requiredProperty)
-		}
-	}
-
-	varGenerateTokenRequest := _GenerateTokenRequest{}
-
-	err = json.Unmarshal(bytes, &varGenerateTokenRequest)
-
-	if err != nil {
-		return err
-	}
-
-	*o = GenerateTokenRequest(varGenerateTokenRequest)
+	*o = GenerateTokenRequest(varObj)
 
 	return err
+
 }
 
 type NullableGenerateTokenRequest struct {

@@ -12,7 +12,6 @@ package orkes
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 // checks if the SchemaDef type satisfies the MappedNullable interface at compile time
@@ -388,40 +387,18 @@ func (o SchemaDef) ToMap() (map[string]interface{}, error) {
 }
 
 func (o *SchemaDef) UnmarshalJSON(bytes []byte) (err error) {
-	// This validates that all required properties are included in the JSON object
-	// by unmarshalling the object into a generic map with string keys and checking
-	// that every required field exists as a key in the generic map.
-	requiredProperties := []string{
-		"name",
-		"type",
-		"version",
-	}
+	varObj := _SchemaDef{}
 
-	allProperties := make(map[string]interface{})
-
-	err = json.Unmarshal(bytes, &allProperties)
+	err = json.Unmarshal(bytes, &varObj)
 
 	if err != nil {
 		return err
 	}
 
-	for _, requiredProperty := range requiredProperties {
-		if _, exists := allProperties[requiredProperty]; !exists {
-			return fmt.Errorf("no value given for required property %v", requiredProperty)
-		}
-	}
-
-	varSchemaDef := _SchemaDef{}
-
-	err = json.Unmarshal(bytes, &varSchemaDef)
-
-	if err != nil {
-		return err
-	}
-
-	*o = SchemaDef(varSchemaDef)
+	*o = SchemaDef(varObj)
 
 	return err
+
 }
 
 type NullableSchemaDef struct {

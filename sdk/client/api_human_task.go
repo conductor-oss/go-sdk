@@ -80,7 +80,7 @@ func (a *HumanTaskApiService) Search(ctx context.Context, body human.HumanTaskSe
 
 	genResult, resp, err := search.Execute()
 	if err != nil {
-		return human.HumanTaskSearchResult{}, resp, err
+		return human.HumanTaskSearchResult{}, resp, wrapGeneratedError(err, resp)
 	}
 
 	// Convert to domain HumanTaskSearchResult
@@ -95,7 +95,7 @@ func (a *HumanTaskApiService) GetTaskDisplayNames(ctx context.Context, searchTyp
 		SearchType(searchType).
 		Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
 	return result, resp, nil
 }
@@ -116,7 +116,7 @@ func (a *HumanTaskApiService) AssignAndClaim(ctx context.Context, taskId string,
 
 	genResult, resp, err := req.Execute()
 	if err != nil {
-		return human.HumanTaskEntry{}, resp, err
+		return human.HumanTaskEntry{}, resp, wrapGeneratedError(err, resp)
 	}
 
 	// Convert to domain HumanTaskEntry
@@ -146,7 +146,7 @@ func (a *HumanTaskApiService) ClaimTask(ctx context.Context, taskId string, opti
 
 	genResult, resp, err := req.Execute()
 	if err != nil {
-		return human.HumanTaskEntry{}, resp, err
+		return human.HumanTaskEntry{}, resp, wrapGeneratedError(err, resp)
 	}
 
 	// Convert to domain HumanTaskEntry
@@ -163,7 +163,7 @@ func (a *HumanTaskApiService) GetTask(ctx context.Context, taskId string, option
 	}
 	genResult, resp, err := req.Execute()
 	if err != nil {
-		return human.HumanTaskEntry{}, resp, err
+		return human.HumanTaskEntry{}, resp, wrapGeneratedError(err, resp)
 	}
 
 	// Convert to domain HumanTaskEntry
@@ -176,7 +176,7 @@ func (a *HumanTaskApiService) GetConductorTaskById(ctx context.Context, taskId s
 	// Use Orkes generated client
 	genResult, resp, err := a.apiClient.http_orkes.HumanTaskResourceAPI.GetConductorTaskById(ctx, taskId).Execute()
 	if err != nil {
-		return model.Task{}, resp, err
+		return model.Task{}, resp, wrapGeneratedError(err, resp)
 	}
 
 	// Convert using existing mapper
@@ -197,7 +197,7 @@ func (a *HumanTaskApiService) UpdateTaskOutput(ctx context.Context, body map[str
 
 	resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
@@ -223,7 +223,7 @@ func (a *HumanTaskApiService) UpdateTaskOutputByRef(ctx context.Context, body ma
 
 	resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
@@ -254,7 +254,7 @@ func (a *HumanTaskApiService) ReassignTask(ctx context.Context, body []human.Hum
 	req := a.apiClient.http_orkes.HumanTaskAPI.ReassignTask(ctx, taskId).HumanTaskAssignment(assignments)
 	resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
@@ -272,7 +272,7 @@ func (a *HumanTaskApiService) SkipTask(ctx context.Context, taskId string, optio
 
 	resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
@@ -282,7 +282,7 @@ func (a *HumanTaskApiService) DeleteTaskFromHumanTaskRecords(ctx context.Context
 	req := a.apiClient.http_orkes.HumanTaskAPI.DeleteTaskFromHumanTaskRecords(ctx).RequestBody(taskIds)
 	resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
@@ -291,13 +291,13 @@ func (a *HumanTaskApiService) DeleteTaskFromHumanTaskRecords(ctx context.Context
 func (a *HumanTaskApiService) DeleteTaskFromHumanTaskRecordsByTaskId(ctx context.Context, taskId string) (*http.Response, error) {
 	resp, err := a.apiClient.http_orkes.HumanTaskAPI.DeleteTaskFromHumanTaskRecords1(ctx, taskId).Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
 
-// DeleteTaskFromHumanTaskRecords1 deletes single task from human task records
-func (a *HumanTaskApiService) DeleteTaskFromHumanTaskRecords1(ctx context.Context, taskId string) (*http.Response, error) {
+// DeleteTaskFromHumanTaskRecords deletes single task from human task records
+func (a *HumanTaskApiService) DeleteTaskFromHumanTaskRecord(ctx context.Context, taskId string) (*http.Response, error) {
 	return a.DeleteTaskFromHumanTaskRecordsByTaskId(ctx, taskId)
 }
 
@@ -305,7 +305,7 @@ func (a *HumanTaskApiService) DeleteTaskFromHumanTaskRecords1(ctx context.Contex
 func (a *HumanTaskApiService) DeleteTemplateByName(ctx context.Context, name string) (*http.Response, error) {
 	resp, err := a.apiClient.http_orkes.HumanTaskAPI.DeleteTemplateByName(ctx, name).Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
@@ -314,7 +314,7 @@ func (a *HumanTaskApiService) DeleteTemplateByName(ctx context.Context, name str
 func (a *HumanTaskApiService) DeleteTemplatesByNameAndVersion(ctx context.Context, name string, version int32) (*http.Response, error) {
 	resp, err := a.apiClient.http_orkes.HumanTaskAPI.DeleteTemplatesByNameAndVersion(ctx, name, version).Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
@@ -335,7 +335,7 @@ func (a *HumanTaskApiService) GetAllTemplates(ctx context.Context, optionals *Hu
 
 	genResult, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
 
 	// Convert to domain HumanTaskSearch slice using mapper
@@ -348,7 +348,7 @@ func (a *HumanTaskApiService) GetTemplateByNameAndVersion(ctx context.Context, n
 	// Use Orkes generated client
 	genResult, resp, err := a.apiClient.http_orkes.HumanTaskAPI.GetTemplateByNameAndVersion(ctx, name, version).Execute()
 	if err != nil {
-		return human.HumanTaskSearch{}, resp, err
+		return human.HumanTaskSearch{}, resp, wrapGeneratedError(err, resp)
 	}
 
 	// Convert to domain HumanTaskSearch using proper mapper
@@ -361,7 +361,7 @@ func (a *HumanTaskApiService) GetTemplateByTaskId(ctx context.Context, humanTask
 	// Use Orkes generated client
 	genResult, resp, err := a.apiClient.http_orkes.HumanTaskAPI.GetTemplateByTaskId(ctx, humanTaskId).Execute()
 	if err != nil {
-		return human.HumanTaskSearch{}, resp, err
+		return human.HumanTaskSearch{}, resp, wrapGeneratedError(err, resp)
 	}
 
 	// Convert to domain HumanTaskSearch using proper mapper
@@ -385,7 +385,7 @@ func (a *HumanTaskApiService) SaveTemplate(ctx context.Context, body human.Human
 
 	genResult, resp, err := req.Execute()
 	if err != nil {
-		return human.HumanTaskSearch{}, resp, err
+		return human.HumanTaskSearch{}, resp, wrapGeneratedError(err, resp)
 	}
 
 	// Convert result back to domain HumanTaskSearch using proper mapper
@@ -412,7 +412,7 @@ func (a *HumanTaskApiService) SaveTemplates(ctx context.Context, body []human.Hu
 
 	genResult, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
 
 	// Convert result back to domain HumanTaskSearch slice using proper mapper
@@ -425,7 +425,7 @@ func (a *HumanTaskApiService) BackPopulateFullTextIndex(ctx context.Context, var
 	// Use Orkes generated client
 	genResult, resp, err := a.apiClient.http_orkes.HumanTaskAPI.BackPopulateFullTextIndex(ctx).Var100(var100).Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
 
 	return genResult, resp, nil

@@ -21,7 +21,7 @@ type HumanTaskClient interface {
 	BackPopulateFullTextIndex(ctx context.Context, var100 int32) (map[string]interface{}, *http.Response, error)
 	ClaimTask(ctx context.Context, taskId string, optionals *HumanTaskApiClaimTaskOpts) (human.HumanTaskEntry, *http.Response, error)
 	DeleteTaskFromHumanTaskRecords(ctx context.Context, body []string) (*http.Response, error)
-	DeleteTaskFromHumanTaskRecords1(ctx context.Context, taskId string) (*http.Response, error)
+	DeleteTaskFromHumanTaskRecord(ctx context.Context, taskId string) (*http.Response, error)
 	DeleteTemplateByName(ctx context.Context, name string) (*http.Response, error)
 	DeleteTemplatesByNameAndVersion(ctx context.Context, name string, version int32) (*http.Response, error)
 	GetAllTemplates(ctx context.Context, optionals *HumanTaskApiGetAllTemplatesOpts) ([]human.HumanTaskSearch, *http.Response, error)

@@ -12,6 +12,7 @@ import (
 )
 
 func TestWebhooksConfigResourceApiService(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	// Setup
 	webhookClient := testdata.WebhookClient // Assuming this exists in your testdata package
 	ctx := context.Background()

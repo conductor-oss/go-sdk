@@ -311,6 +311,7 @@ func (a *WorkflowResourceApiService) Terminate(ctx context.Context, workflowId s
 
 type WorkflowResourceApiRetryOpts struct {
 	ResumeSubworkflowTasks optional.Bool
+	RetryIfRetriedByParent optional.Bool
 }
 
 // Retry - Retries the last failed task
@@ -319,6 +320,9 @@ func (a *WorkflowResourceApiService) Retry(ctx context.Context, workflowId strin
 
 	if opts != nil && opts.ResumeSubworkflowTasks.IsSet() {
 		req = req.ResumeSubworkflowTasks(opts.ResumeSubworkflowTasks.Value())
+	}
+	if opts != nil && opts.RetryIfRetriedByParent.IsSet() {
+		req = req.RetryIfRetriedByParent(opts.RetryIfRetriedByParent.Value())
 	}
 
 	resp, err := req.Execute()
@@ -532,6 +536,7 @@ func (a *WorkflowResourceApiService) GetWorkflowsBatch(ctx context.Context, body
 	return result, resp, nil
 }
 
+// WorkflowResourceApiGetWorkflowsOpts contains optional parameters for GetWorkflows
 type WorkflowResourceApiGetWorkflowsOpts struct {
 	IncludeClosed optional.Bool
 	IncludeTasks  optional.Bool
@@ -586,6 +591,7 @@ func (a *WorkflowResourceApiService) ResetWorkflow(ctx context.Context, workflow
 	return resp, nil
 }
 
+// WorkflowResourceApiSearchWorkflowsByTasksOpts contains optional parameters for SearchWorkflowsByTasks
 type WorkflowResourceApiSearchWorkflowsByTasksOpts struct {
 	Start    optional.Int32
 	Size     optional.Int32
@@ -733,12 +739,20 @@ func (a *WorkflowResourceApiService) ExecuteAndGetBlockingTaskInput(ctx context.
 	return signal.GetTaskRun(), resp, nil
 }
 
+// WorkflowResourceApiJumpToTaskOpts contains optional parameters for JumpToTask
 type WorkflowResourceApiJumpToTaskOpts struct {
 	TaskReferenceName optional.String
 }
 
 func (a *WorkflowResourceApiService) JumpToTask(ctx context.Context, body map[string]interface{}, workflowId string, optionals *WorkflowResourceApiJumpToTaskOpts) (*http.Response, error) {
-	req := a.APIClient.http_orkes.WorkflowResourceAPI.JumpToTask(ctx, workflowId, optionals.TaskReferenceName.Value())
+	// Build request with required body and path parameter
+	req := a.APIClient.http_orkes.WorkflowResourceAPI.
+		JumpToTask(ctx, workflowId).
+		RequestBody(body)
+
+	if optionals != nil && optionals.TaskReferenceName.IsSet() {
+		req = req.TaskReferenceName(optionals.TaskReferenceName.Value())
+	}
 
 	resp, err := req.Execute()
 	if err != nil {
@@ -820,7 +834,25 @@ func (a *WorkflowResourceApiService) GetExecutionStatusTaskList(ctx context.Cont
 	}
 
 	if opts != nil && opts.Status.IsSet() {
-		req = req.Status(opts.Status.Value().([]string))
+		// Accept string or []string and convert to []string for the generated client
+		switch v := opts.Status.Value().(type) {
+		case []string:
+			req = req.Status(v)
+		case string:
+			req = req.Status([]string{v})
+		case []interface{}:
+			var ss []string
+			for _, it := range v {
+				if s, ok := it.(string); ok {
+					ss = append(ss, s)
+				}
+			}
+			if len(ss) > 0 {
+				req = req.Status(ss)
+			}
+		default:
+			// ignore unsupported types
+		}
 	}
 
 	resp, httpResp, err := req.Execute()

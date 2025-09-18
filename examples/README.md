@@ -33,7 +33,6 @@ go run main.go
 ---
 
 ### **Dynamic Workflow Generation** (`workflow/dynamic_workflows/`)
-**Runtime workflow creation equivalent to Python SDK dynamic workflow example**
 
 Demonstrates how to create workflows dynamically at runtime by adding tasks programmatically.
 
