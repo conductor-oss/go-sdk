@@ -27,6 +27,14 @@ linters:
         - shadow
     gocyclo:
       min-complexity: 15
+    revive:
+      rules:
+        - name: var-naming
+          disabled: true
+        - name: package-comments
+          disabled: true
+        - name: exported
+          disabled: true
 
   exclusions:
     paths:

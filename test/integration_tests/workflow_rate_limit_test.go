@@ -52,7 +52,7 @@ func TestConcurrentWorkflowExecution(t *testing.T) {
 		}
 	}()
 
-	// Start 15 workflows simultaneously
+	// Start 10 workflows simultaneously
 	var wg sync.WaitGroup
 	ids := make([]string, 10)
 

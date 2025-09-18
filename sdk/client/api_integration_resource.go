@@ -11,6 +11,7 @@ package client
 
 import (
 	"context"
+	"math"
 	"net/http"
 
 	"github.com/antihax/optional"
@@ -44,7 +45,7 @@ type GetIntegrationProvidersOpts struct {
 
 // GetIntegrationProviders - Get all integration providers
 func (a *IntegrationResourceApiService) GetIntegrationProviders(ctx context.Context, opts *GetIntegrationProvidersOpts) ([]integration.Integration, *http.Response, error) {
-	req := a.APIClient.http_orkes.IntegrationResourceAPI.GetIntegrationProviders(ctx)
+	req := a.http_orkes.IntegrationResourceAPI.GetIntegrationProviders(ctx)
 	if opts != nil {
 		if opts.Category.IsSet() {
 			req = req.Category(opts.Category.Value())
@@ -69,7 +70,7 @@ func (a *IntegrationResourceApiService) GetIntegrationProviders(ctx context.Cont
 
 // GetIntegrationProvider - Get integration provider by name
 func (a *IntegrationResourceApiService) GetIntegrationProvider(ctx context.Context, name string) (integration.Integration, *http.Response, error) {
-	req := a.APIClient.http_orkes.IntegrationResourceAPI.GetIntegrationProvider(ctx, name)
+	req := a.http_orkes.IntegrationResourceAPI.GetIntegrationProvider(ctx, name)
 
 	genIntegration, resp, err := req.Execute()
 	if err != nil {
@@ -86,7 +87,7 @@ func (a *IntegrationResourceApiService) SaveIntegrationProvider(ctx context.Cont
 	// Convert domain model to generated model using mapper
 	genUpdate := toGeneratedIntegrationUpdate(update)
 
-	req := a.APIClient.http_orkes.IntegrationResourceAPI.SaveIntegrationProvider(ctx, name).IntegrationUpdate(genUpdate)
+	req := a.http_orkes.IntegrationResourceAPI.SaveIntegrationProvider(ctx, name).IntegrationUpdate(genUpdate)
 
 	resp, err := req.Execute()
 	if err != nil {
@@ -97,7 +98,7 @@ func (a *IntegrationResourceApiService) SaveIntegrationProvider(ctx context.Cont
 
 // DeleteIntegrationProvider - Delete integration provider
 func (a *IntegrationResourceApiService) DeleteIntegrationProvider(ctx context.Context, name string) (*http.Response, error) {
-	req := a.APIClient.http_orkes.IntegrationResourceAPI.DeleteIntegrationProvider(ctx, name)
+	req := a.http_orkes.IntegrationResourceAPI.DeleteIntegrationProvider(ctx, name)
 
 	resp, err := req.Execute()
 	if err != nil {
@@ -108,7 +109,7 @@ func (a *IntegrationResourceApiService) DeleteIntegrationProvider(ctx context.Co
 
 // GetIntegrationProviderDefs - Get all integration provider definitions
 func (a *IntegrationResourceApiService) GetIntegrationProviderDefs(ctx context.Context) ([]model.IntegrationDef, *http.Response, error) {
-	req := a.APIClient.http_orkes.IntegrationResourceAPI.GetIntegrationProviderDefs(ctx)
+	req := a.http_orkes.IntegrationResourceAPI.GetIntegrationProviderDefs(ctx)
 
 	genDefs, resp, err := req.Execute()
 	if err != nil {
@@ -127,7 +128,7 @@ func (a *IntegrationResourceApiService) GetIntegrationProviderDefs(ctx context.C
 
 // GetTagsForIntegrationProvider - Get tags for integration provider
 func (a *IntegrationResourceApiService) GetTagsForIntegrationProvider(ctx context.Context, name string) ([]model.TagObject, *http.Response, error) {
-	req := a.APIClient.http_orkes.IntegrationResourceAPI.GetTagsForIntegrationProvider(ctx, name)
+	req := a.http_orkes.IntegrationResourceAPI.GetTagsForIntegrationProvider(ctx, name)
 
 	tags, resp, err := req.Execute()
 	if err != nil {
@@ -158,7 +159,7 @@ func (a *IntegrationResourceApiService) UpdateTagForIntegrationProvider(ctx cont
 		}
 	}
 
-	req := a.APIClient.http_orkes.IntegrationResourceAPI.PutTagForIntegrationProvider(ctx, name).Tag(genTags)
+	req := a.http_orkes.IntegrationResourceAPI.PutTagForIntegrationProvider(ctx, name).Tag(genTags)
 
 	resp, err := req.Execute()
 	if err != nil {
@@ -179,7 +180,7 @@ func (a *IntegrationResourceApiService) DeleteTagForIntegrationProvider(ctx cont
 		}
 	}
 
-	req := a.APIClient.http_orkes.IntegrationResourceAPI.DeleteTagForIntegrationProvider(ctx, name).Tag(genTags)
+	req := a.http_orkes.IntegrationResourceAPI.DeleteTagForIntegrationProvider(ctx, name).Tag(genTags)
 
 	resp, err := req.Execute()
 	if err != nil {
@@ -190,7 +191,7 @@ func (a *IntegrationResourceApiService) DeleteTagForIntegrationProvider(ctx cont
 
 // GetTagsForIntegration - Get tags for integration
 func (a *IntegrationResourceApiService) GetTagsForIntegration(ctx context.Context, name string, modelName string) ([]model.TagObject, *http.Response, error) {
-	req := a.APIClient.http_orkes.IntegrationResourceAPI.GetTagsForIntegration(ctx, name, modelName)
+	req := a.http_orkes.IntegrationResourceAPI.GetTagsForIntegration(ctx, name, modelName)
 
 	tags, resp, err := req.Execute()
 	if err != nil {
@@ -220,7 +221,7 @@ func (a *IntegrationResourceApiService) UpdateTagForIntegration(ctx context.Cont
 		}
 	}
 
-	req := a.APIClient.http_orkes.IntegrationResourceAPI.PutTagForIntegration(ctx, name, modelName).Tag(genTags)
+	req := a.http_orkes.IntegrationResourceAPI.PutTagForIntegration(ctx, name, modelName).Tag(genTags)
 
 	resp, err := req.Execute()
 	if err != nil {
@@ -241,7 +242,7 @@ func (a *IntegrationResourceApiService) DeleteTagForIntegration(ctx context.Cont
 		}
 	}
 
-	req := a.APIClient.http_orkes.IntegrationResourceAPI.DeleteTagForIntegration(ctx, name, modelName).Tag(genTags)
+	req := a.http_orkes.IntegrationResourceAPI.DeleteTagForIntegration(ctx, name, modelName).Tag(genTags)
 
 	resp, err := req.Execute()
 	if err != nil {
@@ -252,7 +253,7 @@ func (a *IntegrationResourceApiService) DeleteTagForIntegration(ctx context.Cont
 
 // GetIntegrationApis - Get integration APIs
 func (a *IntegrationResourceApiService) GetIntegrationApis(ctx context.Context, name string, activeOnly optional.Bool) ([]integration.IntegrationApi, *http.Response, error) {
-	req := a.APIClient.http_orkes.IntegrationResourceAPI.GetIntegrationApis(ctx, name)
+	req := a.http_orkes.IntegrationResourceAPI.GetIntegrationApis(ctx, name)
 
 	if activeOnly.IsSet() {
 		req = req.ActiveOnly(activeOnly.Value())
@@ -270,7 +271,7 @@ func (a *IntegrationResourceApiService) GetIntegrationApis(ctx context.Context, 
 
 // GetIntegrationApi - Get integration API by name and model
 func (a *IntegrationResourceApiService) GetIntegrationApi(ctx context.Context, name string, modelName string) (integration.IntegrationApi, *http.Response, error) {
-	req := a.APIClient.http_orkes.IntegrationResourceAPI.GetIntegrationApi(ctx, name, modelName)
+	req := a.http_orkes.IntegrationResourceAPI.GetIntegrationApi(ctx, name, modelName)
 
 	genApi, resp, err := req.Execute()
 	if err != nil {
@@ -287,7 +288,7 @@ func (a *IntegrationResourceApiService) SaveIntegrationApi(ctx context.Context, 
 	// Convert domain model to generated model using mapper
 	genUpdate := toGeneratedIntegrationApiUpdate(update)
 
-	req := a.APIClient.http_orkes.IntegrationResourceAPI.SaveIntegrationApi(ctx, name, modelName).IntegrationApiUpdate(genUpdate)
+	req := a.http_orkes.IntegrationResourceAPI.SaveIntegrationApi(ctx, name, modelName).IntegrationApiUpdate(genUpdate)
 
 	resp, err := req.Execute()
 	if err != nil {
@@ -298,7 +299,7 @@ func (a *IntegrationResourceApiService) SaveIntegrationApi(ctx context.Context, 
 
 // DeleteIntegrationApi - Delete integration API
 func (a *IntegrationResourceApiService) DeleteIntegrationApi(ctx context.Context, name string, modelName string) (*http.Response, error) {
-	req := a.APIClient.http_orkes.IntegrationResourceAPI.DeleteIntegrationApi(ctx, name, modelName)
+	req := a.http_orkes.IntegrationResourceAPI.DeleteIntegrationApi(ctx, name, modelName)
 
 	resp, err := req.Execute()
 	if err != nil {
@@ -309,7 +310,7 @@ func (a *IntegrationResourceApiService) DeleteIntegrationApi(ctx context.Context
 
 // GetPromptsWithIntegration - Get prompts associated with integration
 func (a *IntegrationResourceApiService) GetPromptsWithIntegration(ctx context.Context, integrationName string, modelName string) ([]integration.PromptTemplate, *http.Response, error) {
-	req := a.APIClient.http_orkes.IntegrationResourceAPI.GetPromptsWithIntegration(ctx, integrationName, modelName)
+	req := a.http_orkes.IntegrationResourceAPI.GetPromptsWithIntegration(ctx, integrationName, modelName)
 
 	genTemplates, resp, err := req.Execute()
 	if err != nil {
@@ -323,7 +324,7 @@ func (a *IntegrationResourceApiService) GetPromptsWithIntegration(ctx context.Co
 
 // AssociatePromptWithIntegration - Associate prompt with integration
 func (a *IntegrationResourceApiService) AssociatePromptWithIntegration(ctx context.Context, integrationName string, modelName string, promptName string) (*http.Response, error) {
-	req := a.APIClient.http_orkes.IntegrationResourceAPI.AssociatePromptWithIntegration(ctx, integrationName, modelName, promptName)
+	req := a.http_orkes.IntegrationResourceAPI.AssociatePromptWithIntegration(ctx, integrationName, modelName, promptName)
 
 	resp, err := req.Execute()
 	if err != nil {
@@ -334,7 +335,7 @@ func (a *IntegrationResourceApiService) AssociatePromptWithIntegration(ctx conte
 
 // GetTokenUsageForIntegration - Get token usage for integration
 func (a *IntegrationResourceApiService) GetTokenUsageForIntegration(ctx context.Context, integrationName string, modelName string) (int32, *http.Response, error) {
-	req := a.APIClient.http_orkes_v4.IntegrationResourceAPI.GetTokenUsageForIntegration(ctx, integrationName, modelName)
+	req := a.http_orkes_v4.IntegrationResourceAPI.GetTokenUsageForIntegration(ctx, integrationName, modelName)
 
 	usage, resp, err := req.Execute()
 	if err != nil {
@@ -346,7 +347,7 @@ func (a *IntegrationResourceApiService) GetTokenUsageForIntegration(ctx context.
 
 // GetTokenUsageForIntegrationProvider - Get token usage for integration provider
 func (a *IntegrationResourceApiService) GetTokenUsageForIntegrationProvider(ctx context.Context, name string) (map[string]string, *http.Response, error) {
-	req := a.APIClient.http_orkes_v4.IntegrationResourceAPI.GetTokenUsageForIntegrationProvider(ctx, name)
+	req := a.http_orkes_v4.IntegrationResourceAPI.GetTokenUsageForIntegrationProvider(ctx, name)
 
 	usage, resp, err := req.Execute()
 	if err != nil {
@@ -364,7 +365,7 @@ type IntegrationResourceApiGetAllIntegrationsOpts struct {
 
 // GetAllIntegrations - Get all integrations
 func (a *IntegrationResourceApiService) GetAllIntegrations(ctx context.Context, optionals *IntegrationResourceApiGetAllIntegrationsOpts) ([]model.Integration, *http.Response, error) {
-	req := a.APIClient.http_orkes.IntegrationResourceAPI.GetAllIntegrations(ctx)
+	req := a.http_orkes.IntegrationResourceAPI.GetAllIntegrations(ctx)
 
 	// Apply optional parameters if provided
 	if optionals != nil {
@@ -391,7 +392,7 @@ func (a *IntegrationResourceApiService) RecordEventStats(ctx context.Context, bo
 	// Convert domain EventLog to generated EventLog using mapper
 	genEventLogs := toGeneratedEventLogs(body)
 
-	req := a.APIClient.http_orkes.IntegrationResourceAPI.RecordEventStats(ctx, eventType).EventLog(genEventLogs)
+	req := a.http_orkes.IntegrationResourceAPI.RecordEventStats(ctx, eventType).EventLog(genEventLogs)
 
 	resp, err := req.Execute()
 	if err != nil {
@@ -403,7 +404,7 @@ func (a *IntegrationResourceApiService) RecordEventStats(ctx context.Context, bo
 
 // GetIntegrationAvailableApis - Get available APIs for integration
 func (a *IntegrationResourceApiService) GetIntegrationAvailableApis(ctx context.Context, integrationProvider string) ([]string, *http.Response, error) {
-	req := a.APIClient.http_orkes.IntegrationResourceAPI.GetIntegrationAvailableApis(ctx, integrationProvider)
+	req := a.http_orkes.IntegrationResourceAPI.GetIntegrationAvailableApis(ctx, integrationProvider)
 
 	result, resp, err := req.Execute()
 	if err != nil {
@@ -415,7 +416,7 @@ func (a *IntegrationResourceApiService) GetIntegrationAvailableApis(ctx context.
 
 // GetProvidersAndIntegrations - Get all providers and their integrations
 func (a *IntegrationResourceApiService) GetProvidersAndIntegrations(ctx context.Context) ([]string, *http.Response, error) {
-	req := a.APIClient.http_orkes.IntegrationResourceAPI.GetProvidersAndIntegrations(ctx)
+	req := a.http_orkes.IntegrationResourceAPI.GetProvidersAndIntegrations(ctx)
 
 	result, resp, err := req.Execute()
 	if err != nil {
@@ -433,11 +434,14 @@ func (a *IntegrationResourceApiService) RegisterTokenUsage(ctx context.Context, 
 		if usage, ok := body.(int32); ok {
 			tokenUsage = usage
 		} else if usage, ok := body.(int); ok {
-			tokenUsage = int32(usage)
+			// Check for overflow before conversion
+			if usage >= math.MinInt32 && usage <= math.MaxInt32 {
+				tokenUsage = int32(usage)
+			}
 		}
 	}
 
-	req := a.APIClient.http_orkes_v4.IntegrationResourceAPI.RegisterTokenUsage(ctx, integrationName, modelName).Body(tokenUsage)
+	req := a.http_orkes_v4.IntegrationResourceAPI.RegisterTokenUsage(ctx, integrationName, modelName).Body(tokenUsage)
 
 	resp, err := req.Execute()
 	if err != nil {
@@ -471,7 +475,7 @@ func (a *IntegrationResourceApiService) SaveAllIntegrations(ctx context.Context,
 		}
 	}
 
-	req := a.APIClient.http_orkes.IntegrationResourceAPI.SaveAllIntegrations(ctx).Integration(genIntegrations)
+	req := a.http_orkes.IntegrationResourceAPI.SaveAllIntegrations(ctx).Integration(genIntegrations)
 
 	resp, err := req.Execute()
 	if err != nil {

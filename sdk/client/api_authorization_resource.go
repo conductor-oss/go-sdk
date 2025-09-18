@@ -27,7 +27,7 @@ func NewAuthorizationResourceApiService(client *APIClient) *AuthorizationResourc
 
 // GetPermissions Get the access that have been granted over the given object
 func (a *AuthorizationResourceApiService) GetPermissions(ctx context.Context, type_ string, id string) (interface{}, *http.Response, error) {
-	result, resp, err := a.APIClient.http_orkes.AuthorizationResourceAPI.GetPermissions(ctx, type_, id).Execute()
+	result, resp, err := a.http_orkes.AuthorizationResourceAPI.GetPermissions(ctx, type_, id).Execute()
 	if err != nil {
 		return nil, resp, wrapGeneratedError(err, resp)
 	}
@@ -37,13 +37,13 @@ func (a *AuthorizationResourceApiService) GetPermissions(ctx context.Context, ty
 // GrantPermissions Grant access to a user over the target
 func (a *AuthorizationResourceApiService) GrantPermissions(ctx context.Context, body rbac.AuthorizationRequest) (*http.Response, error) {
 	genRequest := toGeneratedAuthorizationRequest(body)
-	_, resp, err := a.APIClient.http_orkes.AuthorizationResourceAPI.GrantPermissions(ctx).AuthorizationRequest(genRequest).Execute()
+	_, resp, err := a.http_orkes.AuthorizationResourceAPI.GrantPermissions(ctx).AuthorizationRequest(genRequest).Execute()
 	return resp, wrapGeneratedError(err, resp)
 }
 
 // RemovePermissions Remove user's access over the target
 func (a *AuthorizationResourceApiService) RemovePermissions(ctx context.Context, body rbac.AuthorizationRequest) (*http.Response, error) {
 	genRequest := toGeneratedAuthorizationRequest(body)
-	_, resp, err := a.APIClient.http_orkes.AuthorizationResourceAPI.RemovePermissions(ctx).AuthorizationRequest(genRequest).Execute()
+	_, resp, err := a.http_orkes.AuthorizationResourceAPI.RemovePermissions(ctx).AuthorizationRequest(genRequest).Execute()
 	return resp, wrapGeneratedError(err, resp)
 }

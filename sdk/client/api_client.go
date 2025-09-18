@@ -329,19 +329,21 @@ func (c *APIClient) prepareRequest(
 						return nil, err
 					}
 				} else { // form value
-					w.WriteField(k, iv)
+					if writeErr := w.WriteField(k, iv); writeErr != nil {
+						return nil, writeErr
+					}
 				}
 			}
 		}
 		if len(fileBytes) > 0 && fileName != "" {
 			w.Boundary()
-			part, err := w.CreateFormFile("file", filepath.Base(fileName))
-			if err != nil {
-				return nil, err
+			part, createErr := w.CreateFormFile("file", filepath.Base(fileName))
+			if createErr != nil {
+				return nil, createErr
 			}
-			_, err = part.Write(fileBytes)
-			if err != nil {
-				return nil, err
+			_, writeErr := part.Write(fileBytes)
+			if writeErr != nil {
+				return nil, writeErr
 			}
 			// Set the Boundary in the Content-Type
 			headerParams["Content-Type"] = w.FormDataContentType()
@@ -349,7 +351,9 @@ func (c *APIClient) prepareRequest(
 
 		// Set Content-Length
 		headerParams["Content-Length"] = fmt.Sprintf("%d", body.Len())
-		w.Close()
+		if closeErr := w.Close(); closeErr != nil {
+			return nil, closeErr
+		}
 	}
 
 	if strings.HasPrefix(headerParams["Content-Type"], "application/x-www-form-urlencoded") && len(formParams) > 0 {

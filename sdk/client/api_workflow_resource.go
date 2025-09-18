@@ -12,6 +12,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/http"
 	"strings"
 	"time"
@@ -40,7 +41,7 @@ func NewWorkflowResourceApiServiceFromClient(apiClient *APIClient) *WorkflowReso
 
 // Decide - Starts the decision task for a workflow
 func (a *WorkflowResourceApiService) Decide(ctx context.Context, workflowId string) (*http.Response, error) {
-	req := a.APIClient.http_orkes.WorkflowResourceAPI.Decide(ctx, workflowId)
+	req := a.http_orkes.WorkflowResourceAPI.Decide(ctx, workflowId)
 	resp, err := req.Execute()
 	if err != nil {
 		return resp, wrapGeneratedError(err, resp)
@@ -55,7 +56,7 @@ type WorkflowResourceApiDeleteOpts struct {
 
 // Delete - Removes the workflow from the system
 func (a *WorkflowResourceApiService) Delete(ctx context.Context, workflowId string, opts *WorkflowResourceApiDeleteOpts) (*http.Response, error) {
-	req := a.APIClient.http_orkes.WorkflowResourceAPI.Delete1(ctx, workflowId)
+	req := a.http_orkes.WorkflowResourceAPI.Delete1(ctx, workflowId)
 
 	if opts != nil && opts.ArchiveWorkflow.IsSet() {
 		req = req.ArchiveWorkflow(opts.ArchiveWorkflow.Value())
@@ -76,7 +77,7 @@ type WorkflowResourceApiGetExecutionStatusOpts struct {
 func (a *WorkflowResourceApiService) GetExecutionStatus(ctx context.Context, workflowId string, opts *WorkflowResourceApiGetExecutionStatusOpts) (model.Workflow, *http.Response, error) {
 
 	// Use conductor client instead of orkes client to avoid JSON unmarshaling issues
-	req := a.APIClient.http_orkes.WorkflowResourceAPI.GetExecutionStatus(ctx, workflowId)
+	req := a.http_orkes.WorkflowResourceAPI.GetExecutionStatus(ctx, workflowId)
 
 	if opts != nil && opts.IncludeTasks.IsSet() {
 		req = req.IncludeTasks(opts.IncludeTasks.Value())
@@ -101,7 +102,7 @@ type WorkflowResourceApiStartWorkflowOpts struct {
 
 // StartWorkflow - Start a new workflow
 func (a *WorkflowResourceApiService) StartWorkflow(ctx context.Context, body map[string]interface{}, name string, opts *WorkflowResourceApiStartWorkflowOpts) (string, *http.Response, error) {
-	req := a.APIClient.http_orkes.WorkflowResourceAPI.StartWorkflow1(ctx, name).RequestBody(body)
+	req := a.http_orkes.WorkflowResourceAPI.StartWorkflow1(ctx, name).RequestBody(body)
 
 	if opts != nil {
 		if opts.Version.IsSet() {
@@ -127,7 +128,7 @@ func (a *WorkflowResourceApiService) StartWorkflowWithRequest(ctx context.Contex
 	// Convert model to generated model using mapper
 	genBody := toGeneratedStartWorkflowRequestForExecute(&body)
 
-	req := a.APIClient.http_orkes.WorkflowResourceAPI.StartWorkflow(ctx).StartWorkflowRequest(genBody)
+	req := a.http_orkes.WorkflowResourceAPI.StartWorkflow(ctx).StartWorkflowRequest(genBody)
 	result, resp, err := req.Execute()
 	if err != nil {
 		return "", resp, wrapGeneratedError(err, resp)
@@ -219,7 +220,7 @@ func (a *WorkflowResourceApiService) executeWorkflowWithReturnStrategy(
 
 	// Create a new context with timeout
 	var cancelFunc context.CancelFunc
-	var effectiveCtx context.Context = ctx
+	effectiveCtx := ctx
 	if opts.WaitForSeconds > 0 {
 		// Add buffer time for HTTP overhead
 		bufferSeconds := 10
@@ -229,7 +230,7 @@ func (a *WorkflowResourceApiService) executeWorkflowWithReturnStrategy(
 	}
 
 	// Use orkes generated client
-	req := a.APIClient.http_orkes.WorkflowResourceAPI.ExecuteWorkflow(effectiveCtx, body.Name, int32(body.Version))
+	req := a.http_orkes.WorkflowResourceAPI.ExecuteWorkflow(effectiveCtx, body.Name, int32(body.Version))
 
 	// Set required requestId
 	requestId := opts.RequestID
@@ -248,7 +249,10 @@ func (a *WorkflowResourceApiService) executeWorkflowWithReturnStrategy(
 		req = req.WaitUntilTaskRef(strings.Join(opts.WaitUntilTaskRef, ","))
 	}
 	if opts.WaitForSeconds > 0 {
-		req = req.WaitForSeconds(int32(opts.WaitForSeconds))
+		// Check for overflow before conversion
+		if opts.WaitForSeconds <= math.MaxInt32 {
+			req = req.WaitForSeconds(int32(opts.WaitForSeconds))
+		}
 	}
 
 	// Execute the request
@@ -265,7 +269,7 @@ func (a *WorkflowResourceApiService) executeWorkflowWithReturnStrategy(
 
 // PauseWorkflow - Pauses the workflow
 func (a *WorkflowResourceApiService) PauseWorkflow(ctx context.Context, workflowId string) (*http.Response, error) {
-	req := a.APIClient.http_orkes.WorkflowResourceAPI.PauseWorkflow(ctx, workflowId)
+	req := a.http_orkes.WorkflowResourceAPI.PauseWorkflow(ctx, workflowId)
 	resp, err := req.Execute()
 	if err != nil {
 		return resp, wrapGeneratedError(err, resp)
@@ -275,7 +279,7 @@ func (a *WorkflowResourceApiService) PauseWorkflow(ctx context.Context, workflow
 
 // ResumeWorkflow - Resumes the workflow
 func (a *WorkflowResourceApiService) ResumeWorkflow(ctx context.Context, workflowId string) (*http.Response, error) {
-	req := a.APIClient.http_orkes.WorkflowResourceAPI.ResumeWorkflow(ctx, workflowId)
+	req := a.http_orkes.WorkflowResourceAPI.ResumeWorkflow(ctx, workflowId)
 	resp, err := req.Execute()
 	if err != nil {
 		return resp, wrapGeneratedError(err, resp)
@@ -291,7 +295,7 @@ type WorkflowResourceApiTerminateOpts struct {
 
 // Terminate - Terminate workflow execution
 func (a *WorkflowResourceApiService) Terminate(ctx context.Context, workflowId string, opts *WorkflowResourceApiTerminateOpts) (*http.Response, error) {
-	req := a.APIClient.http_orkes.WorkflowResourceAPI.Terminate1(ctx, workflowId)
+	req := a.http_orkes.WorkflowResourceAPI.Terminate1(ctx, workflowId)
 
 	if opts != nil {
 		if opts.Reason.IsSet() {
@@ -316,7 +320,7 @@ type WorkflowResourceApiRetryOpts struct {
 
 // Retry - Retries the last failed task
 func (a *WorkflowResourceApiService) Retry(ctx context.Context, workflowId string, opts *WorkflowResourceApiRetryOpts) (*http.Response, error) {
-	req := a.APIClient.http_orkes.WorkflowResourceAPI.Retry(ctx, workflowId)
+	req := a.http_orkes.WorkflowResourceAPI.Retry(ctx, workflowId)
 
 	if opts != nil && opts.ResumeSubworkflowTasks.IsSet() {
 		req = req.ResumeSubworkflowTasks(opts.ResumeSubworkflowTasks.Value())
@@ -338,7 +342,7 @@ type WorkflowResourceApiRestartOpts struct {
 
 // Restart - Restarts a completed workflow
 func (a *WorkflowResourceApiService) Restart(ctx context.Context, workflowId string, opts *WorkflowResourceApiRestartOpts) (*http.Response, error) {
-	req := a.APIClient.http_orkes.WorkflowResourceAPI.Restart(ctx, workflowId)
+	req := a.http_orkes.WorkflowResourceAPI.Restart(ctx, workflowId)
 
 	if opts != nil && opts.UseLatestDefinitions.IsSet() {
 		req = req.UseLatestDefinitions(opts.UseLatestDefinitions.Value())
@@ -362,7 +366,7 @@ type WorkflowResourceApiSearchOpts struct {
 
 // Search - Search for workflows
 func (a *WorkflowResourceApiService) Search(ctx context.Context, opts *WorkflowResourceApiSearchOpts) (model.SearchResultWorkflowSummary, *http.Response, error) {
-	req := a.APIClient.http_orkes.WorkflowResourceAPI.Search1(ctx)
+	req := a.http_orkes.WorkflowResourceAPI.Search1(ctx)
 
 	if opts != nil {
 		if opts.Start.IsSet() {
@@ -397,7 +401,7 @@ func (a *WorkflowResourceApiService) Search(ctx context.Context, opts *WorkflowR
 
 // GetWorkflowState - Get workflow state
 func (a *WorkflowResourceApiService) GetWorkflowState(ctx context.Context, workflowId string, includeOutput bool, includeVariables bool) (model.WorkflowState, *http.Response, error) {
-	req := a.APIClient.http_orkes.WorkflowResourceAPI.GetWorkflowStatusSummary(ctx, workflowId).
+	req := a.http_orkes.WorkflowResourceAPI.GetWorkflowStatusSummary(ctx, workflowId).
 		IncludeOutput(includeOutput).
 		IncludeVariables(includeVariables)
 
@@ -414,7 +418,7 @@ func (a *WorkflowResourceApiService) GetWorkflowState(ctx context.Context, workf
 // GetExternalStorageLocation - Get external storage location // TODO: check if this endpoint exists
 func (a *WorkflowResourceApiService) GetExternalStorageLocation(ctx context.Context, path string, operation string, payloadType string) (model.ExternalStorageLocation, *http.Response, error) {
 	// Use conductor generated client
-	req := a.APIClient.http_conductor.WorkflowResourceAPI.GetExternalStorageLocation1(ctx)
+	req := a.http_conductor.WorkflowResourceAPI.GetExternalStorageLocation1(ctx)
 	req = req.Path(path).Operation(operation).PayloadType(payloadType)
 
 	conductorLoc, resp, err := req.Execute()
@@ -429,7 +433,7 @@ func (a *WorkflowResourceApiService) GetExternalStorageLocation(ctx context.Cont
 
 // GetRunningWorkflow - Get running workflows (backward compatible)
 func (a *WorkflowResourceApiService) GetRunningWorkflow(ctx context.Context, name string, opts *WorkflowResourceApiGetRunningWorkflowOpts) ([]string, *http.Response, error) {
-	req := a.APIClient.http_orkes.WorkflowResourceAPI.GetRunningWorkflow(ctx, name)
+	req := a.http_orkes.WorkflowResourceAPI.GetRunningWorkflow(ctx, name)
 
 	if opts != nil {
 		if opts.Version.IsSet() {
@@ -458,7 +462,7 @@ type WorkflowResourceApiGetRunningWorkflowOpts struct {
 
 // GetWorkflows - Get workflows by correlation IDs (backward compatible)
 func (a *WorkflowResourceApiService) GetWorkflows(ctx context.Context, body []string, name string, opts *WorkflowResourceApiGetWorkflowsOpts) (map[string][]model.Workflow, *http.Response, error) {
-	req := a.APIClient.http_orkes.WorkflowResourceAPI.GetWorkflows(ctx, name).RequestBody(body)
+	req := a.http_orkes.WorkflowResourceAPI.GetWorkflows(ctx, name).RequestBody(body)
 
 	if opts != nil {
 		if opts.IncludeClosed.IsSet() {
@@ -501,7 +505,7 @@ func (a *WorkflowResourceApiService) GetWorkflowsBatch(ctx context.Context, body
 		WorkflowNames:  body["workflowNames"],
 	}
 
-	req := a.APIClient.http_orkes.WorkflowResourceAPI.GetWorkflows1(ctx).CorrelationIdsSearchRequest(genBody)
+	req := a.http_orkes.WorkflowResourceAPI.GetWorkflows1(ctx).CorrelationIdsSearchRequest(genBody)
 
 	if opts != nil {
 		if opts.IncludeClosed.IsSet() {
@@ -544,7 +548,7 @@ type WorkflowResourceApiGetWorkflowsOpts struct {
 
 // GetWorkflowsByCorrelationId - Get workflows by correlation ID
 func (a *WorkflowResourceApiService) GetWorkflowsByCorrelationId(ctx context.Context, name string, correlationId string, opts *WorkflowResourceApiGetWorkflowsOpts) ([]model.Workflow, *http.Response, error) {
-	req := a.APIClient.http_orkes.WorkflowResourceAPI.GetWorkflows2(ctx, name, correlationId)
+	req := a.http_orkes.WorkflowResourceAPI.GetWorkflows2(ctx, name, correlationId)
 
 	if opts != nil {
 		if opts.IncludeClosed.IsSet() {
@@ -573,7 +577,7 @@ func (a *WorkflowResourceApiService) Rerun(ctx context.Context, body model.Rerun
 	// Convert model using mapper
 	genBody := toGeneratedRerunWorkflowRequest(&body)
 
-	req := a.APIClient.http_orkes.WorkflowResourceAPI.Rerun(ctx, workflowId).RerunWorkflowRequest(genBody)
+	req := a.http_orkes.WorkflowResourceAPI.Rerun(ctx, workflowId).RerunWorkflowRequest(genBody)
 	result, resp, err := req.Execute()
 	if err != nil {
 		return "", resp, wrapGeneratedError(err, resp)
@@ -583,7 +587,7 @@ func (a *WorkflowResourceApiService) Rerun(ctx context.Context, body model.Rerun
 
 // ResetWorkflow - Reset callback times
 func (a *WorkflowResourceApiService) ResetWorkflow(ctx context.Context, workflowId string) (*http.Response, error) {
-	req := a.APIClient.http_orkes.WorkflowResourceAPI.ResetWorkflow(ctx, workflowId)
+	req := a.http_orkes.WorkflowResourceAPI.ResetWorkflow(ctx, workflowId)
 	resp, err := req.Execute()
 	if err != nil {
 		return resp, wrapGeneratedError(err, resp)
@@ -602,7 +606,7 @@ type WorkflowResourceApiSearchWorkflowsByTasksOpts struct {
 
 // SearchWorkflowsByTasks - Search workflows by tasks
 func (a *WorkflowResourceApiService) SearchWorkflowsByTasks(ctx context.Context, opts *WorkflowResourceApiSearchWorkflowsByTasksOpts) (model.SearchResultWorkflowSummary, *http.Response, error) {
-	req := a.APIClient.http_conductor.WorkflowResourceAPI.SearchWorkflowsByTasks(ctx)
+	req := a.http_conductor.WorkflowResourceAPI.SearchWorkflowsByTasks(ctx)
 
 	if opts != nil {
 		req = req.Start(opts.Start.Value())
@@ -631,7 +635,7 @@ type WorkflowResourceApiSearchWorkflowsByTasksV2Opts struct {
 
 // SearchWorkflowsByTasksV2 - Search workflows by tasks V2
 func (a *WorkflowResourceApiService) SearchWorkflowsByTasksV2(ctx context.Context, opts *WorkflowResourceApiSearchWorkflowsByTasksV2Opts) (model.SearchResultWorkflow, *http.Response, error) {
-	req := a.APIClient.http_conductor.WorkflowResourceAPI.SearchWorkflowsByTasksV2(ctx)
+	req := a.http_conductor.WorkflowResourceAPI.SearchWorkflowsByTasksV2(ctx)
 
 	if opts != nil {
 		req = req.Start(opts.Start.Value())
@@ -655,7 +659,7 @@ func (a *WorkflowResourceApiService) SkipTaskFromWorkflow(ctx context.Context, w
 	// Convert model using mapper
 	genBody := toGeneratedSkipTaskRequest(&skipTaskRequest)
 
-	req := a.APIClient.http_orkes.WorkflowResourceAPI.SkipTaskFromWorkflow(ctx, workflowId, taskReferenceName).SkipTaskRequest(genBody)
+	req := a.http_orkes.WorkflowResourceAPI.SkipTaskFromWorkflow(ctx, workflowId, taskReferenceName).SkipTaskRequest(genBody)
 	resp, err := req.Execute()
 	if err != nil {
 		return resp, wrapGeneratedError(err, resp)
@@ -746,7 +750,7 @@ type WorkflowResourceApiJumpToTaskOpts struct {
 
 func (a *WorkflowResourceApiService) JumpToTask(ctx context.Context, body map[string]interface{}, workflowId string, optionals *WorkflowResourceApiJumpToTaskOpts) (*http.Response, error) {
 	// Build request with required body and path parameter
-	req := a.APIClient.http_orkes.WorkflowResourceAPI.
+	req := a.http_orkes.WorkflowResourceAPI.
 		JumpToTask(ctx, workflowId).
 		RequestBody(body)
 
@@ -772,7 +776,7 @@ type WorkflowResourceApiUpdateWorkflowAndTaskStateOpts struct {
 func (a *WorkflowResourceApiService) UpdateWorkflowAndTaskState(ctx context.Context, body model.WorkflowStateUpdate, requestId string, workflowId string, optionals *WorkflowResourceApiUpdateWorkflowAndTaskStateOpts) (model.WorkflowRun, *http.Response, error) {
 	genBody := toGeneratedWorkflowStateUpdate(&body)
 
-	req := a.APIClient.http_orkes.WorkflowResourceAPI.UpdateWorkflowAndTaskState(ctx, workflowId)
+	req := a.http_orkes.WorkflowResourceAPI.UpdateWorkflowAndTaskState(ctx, workflowId)
 	req = req.WorkflowStateUpdate(genBody)
 	req = req.RequestId(requestId)
 
@@ -798,7 +802,7 @@ func (a *WorkflowResourceApiService) UpdateWorkflowAndTaskState(ctx context.Cont
 func (a *WorkflowResourceApiService) UpgradeRunningWorkflowToVersion(ctx context.Context, body model.UpgradeWorkflowRequest, workflowID string) (*http.Response, error) {
 	genBody := toGeneratedUpgradeWorkflowRequest(&body)
 
-	resp, err := a.APIClient.http_orkes.WorkflowResourceAPI.UpgradeRunningWorkflowToVersion(ctx, workflowID).UpgradeWorkflowRequest(genBody).Execute()
+	resp, err := a.http_orkes.WorkflowResourceAPI.UpgradeRunningWorkflowToVersion(ctx, workflowID).UpgradeWorkflowRequest(genBody).Execute()
 	if err != nil {
 		return nil, wrapGeneratedError(err, resp)
 	}
@@ -809,7 +813,7 @@ func (a *WorkflowResourceApiService) UpgradeRunningWorkflowToVersion(ctx context
 func (a *WorkflowResourceApiService) TestWorkflow(ctx context.Context, body model.WorkflowTestRequest) (model.Workflow, *http.Response, error) {
 	genBody := toGeneratedWorkflowTestRequest(&body)
 
-	resp, httpResp, err := a.APIClient.http_orkes.WorkflowResourceAPI.TestWorkflow(ctx).WorkflowTestRequest(genBody).Execute()
+	resp, httpResp, err := a.http_orkes.WorkflowResourceAPI.TestWorkflow(ctx).WorkflowTestRequest(genBody).Execute()
 	if err != nil {
 		return model.Workflow{}, httpResp, wrapGeneratedError(err, httpResp)
 	}
@@ -824,7 +828,7 @@ type WorkflowResourceAPIGetExecutionStatusTaskListOpts struct {
 }
 
 func (a *WorkflowResourceApiService) GetExecutionStatusTaskList(ctx context.Context, workflowID string, opts *WorkflowResourceAPIGetExecutionStatusTaskListOpts) (model.TaskListSearchResultSummary, *http.Response, error) {
-	req := a.APIClient.http_orkes.WorkflowResourceAPI.GetExecutionStatusTaskList(ctx, workflowID)
+	req := a.http_orkes.WorkflowResourceAPI.GetExecutionStatusTaskList(ctx, workflowID)
 
 	if opts != nil && opts.Start.IsSet() {
 		req = req.Start(opts.Start.Value())
@@ -864,7 +868,7 @@ func (a *WorkflowResourceApiService) GetExecutionStatusTaskList(ctx context.Cont
 }
 
 func (a *WorkflowResourceApiService) UpdateWorkflowState(ctx context.Context, body map[string]interface{}, workflowID string) (model.Workflow, *http.Response, error) {
-	req := a.APIClient.http_orkes.WorkflowResourceAPI.UpdateWorkflowState(ctx, workflowID)
+	req := a.http_orkes.WorkflowResourceAPI.UpdateWorkflowState(ctx, workflowID)
 	req = req.RequestBody(body)
 
 	resp, httpResp, err := req.Execute()

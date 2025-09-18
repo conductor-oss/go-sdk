@@ -33,7 +33,7 @@ HealthCheckResourceApiService
 */
 func (a *HealthCheckResourceApiService) DoCheck(ctx context.Context) (model.HealthCheckStatus, *http.Response, error) {
 
-	req := a.APIClient.http_orkes.HealthCheckResourceAPI.DoCheck(ctx)
+	req := a.http_orkes.HealthCheckResourceAPI.DoCheck(ctx)
 	result, resp, err := req.Execute()
 	if err != nil {
 		return model.HealthCheckStatus{}, resp, err

@@ -27,7 +27,7 @@ func NewGroupResourceApiService(apiClient *APIClient) *GroupResourceApiService {
 
 // AddUserToGroup Add user to group
 func (a *GroupResourceApiService) AddUserToGroup(ctx context.Context, groupId string, userId string) (interface{}, *http.Response, error) {
-	result, resp, err := a.APIClient.http_orkes.GroupResourceAPI.AddUserToGroup(ctx, groupId, userId).Execute()
+	result, resp, err := a.http_orkes.GroupResourceAPI.AddUserToGroup(ctx, groupId, userId).Execute()
 	if err != nil {
 		return nil, resp, wrapGeneratedError(err, resp)
 	}
@@ -36,19 +36,19 @@ func (a *GroupResourceApiService) AddUserToGroup(ctx context.Context, groupId st
 
 // AddUsersToGroup Add users to group
 func (a *GroupResourceApiService) AddUsersToGroup(ctx context.Context, body []string, groupId string) (*http.Response, error) {
-	resp, err := a.APIClient.http_orkes.GroupResourceAPI.AddUsersToGroup(ctx, groupId).RequestBody(body).Execute()
+	resp, err := a.http_orkes.GroupResourceAPI.AddUsersToGroup(ctx, groupId).RequestBody(body).Execute()
 	return resp, wrapGeneratedError(err, resp)
 }
 
 // DeleteGroup Delete a group
 func (a *GroupResourceApiService) DeleteGroup(ctx context.Context, id string) (*http.Response, error) {
-	_, resp, err := a.APIClient.http_orkes.GroupResourceAPI.DeleteGroup(ctx, id).Execute()
+	_, resp, err := a.http_orkes.GroupResourceAPI.DeleteGroup(ctx, id).Execute()
 	return resp, wrapGeneratedError(err, resp)
 }
 
 // GetGrantedPermissions1 Get the permissions this group has over workflows and tasks
 func (a *GroupResourceApiService) GetGrantedPermissions(ctx context.Context, groupId string) (rbac.GrantedAccessResponse, *http.Response, error) {
-	genResult, resp, err := a.APIClient.http_orkes.GroupResourceAPI.GetGrantedPermissions1(ctx, groupId).Execute()
+	genResult, resp, err := a.http_orkes.GroupResourceAPI.GetGrantedPermissions1(ctx, groupId).Execute()
 	if err != nil {
 		return rbac.GrantedAccessResponse{}, resp, wrapGeneratedError(err, resp)
 	}
@@ -59,7 +59,7 @@ func (a *GroupResourceApiService) GetGrantedPermissions(ctx context.Context, gro
 
 // GetGroup Get a group by id
 func (a *GroupResourceApiService) GetGroup(ctx context.Context, id string) (interface{}, *http.Response, error) {
-	result, resp, err := a.APIClient.http_orkes.GroupResourceAPI.GetGroup(ctx, id).Execute()
+	result, resp, err := a.http_orkes.GroupResourceAPI.GetGroup(ctx, id).Execute()
 	if err != nil {
 		return nil, resp, wrapGeneratedError(err, resp)
 	}
@@ -68,13 +68,13 @@ func (a *GroupResourceApiService) GetGroup(ctx context.Context, id string) (inte
 
 // GetUsersInGroup Get all users in group
 func (a *GroupResourceApiService) GetUsersInGroup(ctx context.Context, id string) ([]interface{}, *http.Response, error) {
-	res, resp, err := a.APIClient.http_orkes.GroupResourceAPI.GetUsersInGroup(ctx, id).Execute()
+	res, resp, err := a.http_orkes.GroupResourceAPI.GetUsersInGroup(ctx, id).Execute()
 	return res, resp, err
 }
 
 // ListGroups Get all groups
 func (a *GroupResourceApiService) ListGroups(ctx context.Context) ([]rbac.Group, *http.Response, error) {
-	genResult, resp, err := a.APIClient.http_orkes.GroupResourceAPI.ListGroups(ctx).Execute()
+	genResult, resp, err := a.http_orkes.GroupResourceAPI.ListGroups(ctx).Execute()
 	if err != nil {
 		return nil, resp, wrapGeneratedError(err, resp)
 	}
@@ -85,7 +85,7 @@ func (a *GroupResourceApiService) ListGroups(ctx context.Context) ([]rbac.Group,
 
 // RemoveUserFromGroup Remove user from group
 func (a *GroupResourceApiService) RemoveUserFromGroup(ctx context.Context, groupId string, userId string) (interface{}, *http.Response, error) {
-	result, resp, err := a.APIClient.http_orkes.GroupResourceAPI.RemoveUserFromGroup(ctx, groupId, userId).Execute()
+	result, resp, err := a.http_orkes.GroupResourceAPI.RemoveUserFromGroup(ctx, groupId, userId).Execute()
 	if err != nil {
 		return nil, resp, wrapGeneratedError(err, resp)
 	}
@@ -94,14 +94,14 @@ func (a *GroupResourceApiService) RemoveUserFromGroup(ctx context.Context, group
 
 // RemoveUsersFromGroup Remove users from group
 func (a *GroupResourceApiService) RemoveUsersFromGroup(ctx context.Context, body []string, groupId string) (*http.Response, error) {
-	resp, err := a.APIClient.http_orkes.GroupResourceAPI.RemoveUsersFromGroup(ctx, groupId).RequestBody(body).Execute()
+	resp, err := a.http_orkes.GroupResourceAPI.RemoveUsersFromGroup(ctx, groupId).RequestBody(body).Execute()
 	return resp, wrapGeneratedError(err, resp)
 }
 
 // UpsertGroup Create or update a group
 func (a *GroupResourceApiService) UpsertGroup(ctx context.Context, body rbac.UpsertGroupRequest, id string) (interface{}, *http.Response, error) {
 	genRequest := toGeneratedUpsertGroupRequest(body)
-	result, resp, err := a.APIClient.http_orkes.GroupResourceAPI.UpsertGroup(ctx, id).UpsertGroupRequest(genRequest).Execute()
+	result, resp, err := a.http_orkes.GroupResourceAPI.UpsertGroup(ctx, id).UpsertGroupRequest(genRequest).Execute()
 	if err != nil {
 		return nil, resp, wrapGeneratedError(err, resp)
 	}

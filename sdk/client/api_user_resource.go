@@ -41,7 +41,7 @@ type UserResourceApiListUsersOpts struct {
 
 // CheckPermissions - Get the permissions this user has over workflows and tasks
 func (a *UserResourceApiService) CheckPermissions(ctx context.Context, userId string, type_ string, id string) (map[string]interface{}, *http.Response, error) {
-	req := a.APIClient.http_orkes.UserResourceAPI.CheckPermissions(ctx, userId).
+	req := a.http_orkes.UserResourceAPI.CheckPermissions(ctx, userId).
 		Type_(type_).
 		Id(id)
 
@@ -54,7 +54,7 @@ func (a *UserResourceApiService) CheckPermissions(ctx context.Context, userId st
 
 // DeleteUser - Delete a user
 func (a *UserResourceApiService) DeleteUser(ctx context.Context, id string) (*http.Response, error) {
-	req := a.APIClient.http_orkes.UserResourceAPI.DeleteUser(ctx, id)
+	req := a.http_orkes.UserResourceAPI.DeleteUser(ctx, id)
 
 	_, resp, err := req.Execute()
 	if err != nil {
@@ -66,7 +66,7 @@ func (a *UserResourceApiService) DeleteUser(ctx context.Context, id string) (*ht
 
 // GetGrantedPermissions - Get the list of access which was granted over workflows and tasks
 func (a *UserResourceApiService) GetGrantedPermissions(ctx context.Context, userId string) (rbac.GrantedAccessResponse, *http.Response, error) {
-	req := a.APIClient.http_orkes.UserResourceAPI.GetGrantedPermissions(ctx, userId)
+	req := a.http_orkes.UserResourceAPI.GetGrantedPermissions(ctx, userId)
 
 	genResult, resp, err := req.Execute()
 	if err != nil {
@@ -80,7 +80,7 @@ func (a *UserResourceApiService) GetGrantedPermissions(ctx context.Context, user
 
 // GetUser - Get the user by id
 func (a *UserResourceApiService) GetUser(ctx context.Context, id string) (*rbac.ConductorUser, *http.Response, error) {
-	req := a.APIClient.http_orkes.UserResourceAPI.GetUser(ctx, id)
+	req := a.http_orkes.UserResourceAPI.GetUser(ctx, id)
 
 	genUser, resp, err := req.Execute()
 	if err != nil {
@@ -94,7 +94,7 @@ func (a *UserResourceApiService) GetUser(ctx context.Context, id string) (*rbac.
 
 // ListUsers - Get all users
 func (a *UserResourceApiService) ListUsers(ctx context.Context, optionals *UserResourceApiListUsersOpts) ([]rbac.ConductorUser, *http.Response, error) {
-	req := a.APIClient.http_orkes.UserResourceAPI.ListUsers(ctx)
+	req := a.http_orkes.UserResourceAPI.ListUsers(ctx)
 
 	if optionals != nil && optionals.Apps.IsSet() {
 		req = req.Apps(optionals.Apps.Value())
@@ -115,7 +115,7 @@ func (a *UserResourceApiService) UpsertUser(ctx context.Context, body rbac.Upser
 	// Convert domain model to generated model
 	genBody := toGeneratedUpsertUserRequest(body)
 
-	req := a.APIClient.http_orkes.UserResourceAPI.UpsertUser(ctx, id).UpsertUserRequest(genBody)
+	req := a.http_orkes.UserResourceAPI.UpsertUser(ctx, id).UpsertUserRequest(genBody)
 
 	genUser, resp, err := req.Execute()
 	if err != nil {

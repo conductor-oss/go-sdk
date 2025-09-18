@@ -330,7 +330,7 @@ func (a *SchedulerResourceApiService) GetSchedule(ctx context.Context, name stri
 // RequeueAllExecutionRecords requeues all execution records
 func (a *SchedulerResourceApiService) RequeueAllExecutionRecords(ctx context.Context) (map[string]interface{}, *http.Response, error) {
 	// Use Orkes generated client RequeueAllExecutionRecords method
-	genResult, resp, err := a.APIClient.http_orkes.SchedulerResourceAPI.RequeueAllExecutionRecords(ctx).Execute()
+	genResult, resp, err := a.http_orkes.SchedulerResourceAPI.RequeueAllExecutionRecords(ctx).Execute()
 	if err != nil {
 		return nil, resp, wrapGeneratedError(err, resp)
 	}

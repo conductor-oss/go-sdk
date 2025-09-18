@@ -60,7 +60,7 @@ func (a *MetadataResourceApiService) RegisterWorkflowDefWithTags(ctx context.Con
 	// Convert domain model to extended workflow def with tags
 	extDef := toExtendedWorkflowDefWithTags(&body, tags, true)
 
-	req := a.APIClient.http_orkes.MetadataResourceAPI.Create(ctx).Overwrite(overwrite).ExtendedWorkflowDef(extDef)
+	req := a.http_orkes.MetadataResourceAPI.Create(ctx).Overwrite(overwrite).ExtendedWorkflowDef(extDef)
 
 	_, resp, err := req.Execute()
 	if err != nil {
@@ -75,7 +75,7 @@ func (a *MetadataResourceApiService) RegisterTaskDefWithTags(ctx context.Context
 	// Convert domain model to extended task def with tags
 	extDef := toExtendedTaskDefWithTags(&body, tags, true)
 
-	req := a.APIClient.http_orkes.MetadataResourceAPI.RegisterTaskDef(ctx).ExtendedTaskDef([]orkes.ExtendedTaskDef{extDef})
+	req := a.http_orkes.MetadataResourceAPI.RegisterTaskDef(ctx).ExtendedTaskDef([]orkes.ExtendedTaskDef{extDef})
 
 	_, resp, err := req.Execute()
 	if err != nil {
@@ -90,7 +90,7 @@ func (a *MetadataResourceApiService) UpdateTaskDefWithTags(ctx context.Context, 
 	// Convert domain model to extended task def with tags
 	extDef := toExtendedTaskDefWithTags(&body, tags, overwriteTags)
 
-	req := a.APIClient.http_orkes.MetadataResourceAPI.UpdateTaskDef(ctx).ExtendedTaskDef(extDef)
+	req := a.http_orkes.MetadataResourceAPI.UpdateTaskDef(ctx).ExtendedTaskDef(extDef)
 
 	_, resp, err := req.Execute()
 	if err != nil {
@@ -105,7 +105,7 @@ func (a *MetadataResourceApiService) UpdateWorkflowDefWithTags(ctx context.Conte
 	// Convert domain model to extended workflow def with tags
 	extDef := toExtendedWorkflowDefWithTags(&body, tags, overwriteTags)
 
-	req := a.APIClient.http_orkes.MetadataResourceAPI.Update(ctx).ExtendedWorkflowDef([]orkes.ExtendedWorkflowDef{extDef})
+	req := a.http_orkes.MetadataResourceAPI.Update(ctx).ExtendedWorkflowDef([]orkes.ExtendedWorkflowDef{extDef})
 
 	_, resp, err := req.Execute()
 	if err != nil {
@@ -117,7 +117,7 @@ func (a *MetadataResourceApiService) UpdateWorkflowDefWithTags(ctx context.Conte
 
 // GetTagsForWorkflowDef gets tags for workflow definition
 func (a *MetadataResourceApiService) GetTagsForWorkflowDef(ctx context.Context, name string) ([]model.MetadataTag, error) {
-	req := a.APIClient.http_orkes.TagsAPI.GetWorkflowTags(ctx, name)
+	req := a.http_orkes.TagsAPI.GetWorkflowTags(ctx, name)
 
 	genTags, resp, err := req.Execute()
 	if err != nil {
@@ -131,7 +131,7 @@ func (a *MetadataResourceApiService) GetTagsForWorkflowDef(ctx context.Context, 
 
 // GetTagsForTaskDef gets tags for task definition
 func (a *MetadataResourceApiService) GetTagsForTaskDef(ctx context.Context, tasktype string) ([]model.MetadataTag, error) {
-	req := a.APIClient.http_orkes.TagsAPI.GetTaskTags(ctx, tasktype)
+	req := a.http_orkes.TagsAPI.GetTaskTags(ctx, tasktype)
 
 	genTags, resp, err := req.Execute()
 	if err != nil {
@@ -147,7 +147,7 @@ func (a *MetadataResourceApiService) GetTagsForTaskDef(ctx context.Context, task
 func (a *MetadataResourceApiService) SetTaskTags(ctx context.Context, taskName string, tags []model.MetadataTag) (*http.Response, error) {
 	genTags := toGeneratedTagsFromMetadataTags(tags)
 
-	req := a.APIClient.http_orkes.TagsAPI.SetTaskTags(ctx, taskName).Tag(genTags)
+	req := a.http_orkes.TagsAPI.SetTaskTags(ctx, taskName).Tag(genTags)
 
 	_, resp, err := req.Execute()
 	if err != nil {
@@ -309,13 +309,11 @@ func (a *MetadataResourceApiService) GetWorkflowNamesAndVersions(ctx context.Con
 	result := make(map[string][]int32)
 	for workflowName, versionMap := range genResult {
 		var versions []int32
-		if versionMap != nil {
-			// Extract version numbers from the map
-			for versionStr := range versionMap {
-				// Try to convert version string to int32
-				if version, ok := versionMap[versionStr].(float64); ok {
-					versions = append(versions, int32(version))
-				}
+		// Extract version numbers from the map
+		for versionStr := range versionMap {
+			// Try to convert version string to int32
+			if version, ok := versionMap[versionStr].(float64); ok {
+				versions = append(versions, int32(version))
 			}
 		}
 		result[workflowName] = versions

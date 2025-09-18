@@ -70,16 +70,17 @@ var TaskRunner = worker.NewTaskRunnerWithApiClient(apiClient)
 var WorkflowExecutor = executor.NewWorkflowExecutor(apiClient)
 
 func init() {
-	// log.SetFormatter(&log.JSONFormatter{})
-	// log.SetOutput(os.Stdout)
-	// log.SetLevel(log.ErrorLevel)
+	logger := log.NewStd(nil)
 
-	// version, _, err := VersionResourceClient.GetVersion(context.Background())
-	// if err != nil {
-	// 	log.Fatalf("Failed to get version: %v", err)
-	// }
+	logger.SetLevel(log.LvlError)
+	log.SetLogger(logger)
 
-	// VersionResource = parseVersion(version)
+	version, _, err := VersionResourceClient.GetVersion(context.Background())
+	if err != nil {
+		log.Fatal("Failed to get version", "error", err)
+	}
+
+	VersionResource = parseVersion(version)
 }
 
 func ReadFile(path string) ([]byte, error) {

@@ -37,7 +37,7 @@ func NewPromptResourceApiService(apiClient *APIClient) *PromptResourceApiService
 // CreateMessageTemplates - Create message templates in bulk
 func (a *PromptResourceApiService) CreateMessageTemplates(ctx context.Context, templates []integration.PromptTemplate) (*http.Response, error) {
 	genTemplates := toGeneratedPromptTemplates(templates)
-	req := a.APIClient.http_orkes.PromptResourceAPI.CreateMessageTemplates(ctx).MessageTemplate(genTemplates)
+	req := a.http_orkes.PromptResourceAPI.CreateMessageTemplates(ctx).MessageTemplate(genTemplates)
 	resp, err := req.Execute()
 	if err != nil {
 		return resp, wrapGeneratedError(err, resp)
@@ -47,7 +47,7 @@ func (a *PromptResourceApiService) CreateMessageTemplates(ctx context.Context, t
 
 // DeleteMessageTemplate - Delete a message template
 func (a *PromptResourceApiService) DeleteMessageTemplate(ctx context.Context, name string) (*http.Response, error) {
-	req := a.APIClient.http_orkes.PromptResourceAPI.DeleteMessageTemplate(ctx, name)
+	req := a.http_orkes.PromptResourceAPI.DeleteMessageTemplate(ctx, name)
 	resp, err := req.Execute()
 	if err != nil {
 		return resp, wrapGeneratedError(err, resp)
@@ -60,7 +60,7 @@ func (a *PromptResourceApiService) DeleteTagForPromptTemplate(ctx context.Contex
 	// Convert domain tags to generated tags
 	genTags := toGeneratedTags(tags)
 
-	req := a.APIClient.http_orkes.PromptResourceAPI.DeleteTagForPromptTemplate(ctx, name).Tag(genTags)
+	req := a.http_orkes.PromptResourceAPI.DeleteTagForPromptTemplate(ctx, name).Tag(genTags)
 
 	resp, err := req.Execute()
 	if err != nil {
@@ -71,7 +71,7 @@ func (a *PromptResourceApiService) DeleteTagForPromptTemplate(ctx context.Contex
 
 // GetMessageTemplate - Get a message template by name
 func (a *PromptResourceApiService) GetMessageTemplate(ctx context.Context, name string) (*integration.PromptTemplate, *http.Response, error) {
-	req := a.APIClient.http_orkes.PromptResourceAPI.GetMessageTemplate(ctx, name)
+	req := a.http_orkes.PromptResourceAPI.GetMessageTemplate(ctx, name)
 
 	genTemplate, resp, err := req.Execute()
 	if err != nil {
@@ -85,7 +85,7 @@ func (a *PromptResourceApiService) GetMessageTemplate(ctx context.Context, name 
 
 // GetMessageTemplates - Get all message templates
 func (a *PromptResourceApiService) GetMessageTemplates(ctx context.Context) ([]integration.PromptTemplate, *http.Response, error) {
-	req := a.APIClient.http_orkes.PromptResourceAPI.GetMessageTemplates(ctx)
+	req := a.http_orkes.PromptResourceAPI.GetMessageTemplates(ctx)
 
 	genTemplates, resp, err := req.Execute()
 	if err != nil {
@@ -99,7 +99,7 @@ func (a *PromptResourceApiService) GetMessageTemplates(ctx context.Context) ([]i
 
 // GetTagsForPromptTemplate - Get tags for a prompt template
 func (a *PromptResourceApiService) GetTagsForPromptTemplate(ctx context.Context, name string) ([]model.Tag, *http.Response, error) {
-	req := a.APIClient.http_orkes.PromptResourceAPI.GetTagsForPromptTemplate(ctx, name)
+	req := a.http_orkes.PromptResourceAPI.GetTagsForPromptTemplate(ctx, name)
 
 	genTags, resp, err := req.Execute()
 	if err != nil {
@@ -117,7 +117,7 @@ func (a *PromptResourceApiService) PutTagForPromptTemplate(ctx context.Context, 
 	// Convert domain tags to generated tags
 	genTags := toGeneratedTags(tags)
 
-	req := a.APIClient.http_orkes.PromptResourceAPI.PutTagForPromptTemplate(ctx, name).Tag(genTags)
+	req := a.http_orkes.PromptResourceAPI.PutTagForPromptTemplate(ctx, name).Tag(genTags)
 
 	resp, err := req.Execute()
 	if err != nil {
@@ -134,7 +134,7 @@ type PromptResourceApiSaveMessageTemplateOpts struct {
 // SaveMessageTemplate - Save a message template
 func (a *PromptResourceApiService) SaveMessageTemplate(ctx context.Context, templateText string, description string, name string, optionals *PromptResourceApiSaveMessageTemplateOpts) (*http.Response, error) {
 	// Use SaveMessageTemplate which has the correct method signature
-	req := a.APIClient.http_orkes.PromptResourceAPI.SaveMessageTemplate(ctx, name).
+	req := a.http_orkes.PromptResourceAPI.SaveMessageTemplate(ctx, name).
 		Description(description).
 		Body(templateText)
 
@@ -155,7 +155,7 @@ func (a *PromptResourceApiService) TestMessageTemplate(ctx context.Context, requ
 	// Convert domain model to generated model
 	genRequest := toGeneratedPromptTemplateTestRequest(&request)
 
-	req := a.APIClient.http_orkes.PromptResourceAPI.TestMessageTemplate(ctx).PromptTemplateTestRequest(*genRequest)
+	req := a.http_orkes.PromptResourceAPI.TestMessageTemplate(ctx).PromptTemplateTestRequest(*genRequest)
 
 	result, resp, err := req.Execute()
 	if err != nil {

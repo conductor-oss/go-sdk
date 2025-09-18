@@ -67,6 +67,8 @@ func GetInputAsMap(input interface{}) map[string]interface{} {
 		return nil
 	}
 	var parsedInput map[string]interface{}
-	json.Unmarshal(data, &parsedInput)
+	if err := json.Unmarshal(data, &parsedInput); err != nil {
+		return nil
+	}
 	return parsedInput
 }

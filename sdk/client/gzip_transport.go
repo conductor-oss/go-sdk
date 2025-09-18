@@ -34,7 +34,9 @@ func (g *GzipTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		// Create gzip reader
 		reader, err := gzip.NewReader(resp.Body)
 		if err != nil {
-			resp.Body.Close()
+			if err = resp.Body.Close(); err != nil {
+				return nil, err
+			}
 			return nil, err
 		}
 
@@ -65,7 +67,9 @@ func (g *gzipReadCloser) Read(p []byte) (n int, err error) {
 
 func (g *gzipReadCloser) Close() error {
 	if gzipReader, ok := g.Reader.(*gzip.Reader); ok {
-		gzipReader.Close()
+		if err := gzipReader.Close(); err != nil {
+			return err
+		}
 	}
 	return g.Closer.Close()
 }

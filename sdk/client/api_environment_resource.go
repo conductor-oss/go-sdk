@@ -35,7 +35,7 @@ func NewEnvironmentResourceApiService(apiClient *APIClient) *EnvironmentResource
 
 // CreateOrUpdateEnvVariable - Create or update an environment variable
 func (a *EnvironmentResourceApiService) CreateOrUpdateEnvVariable(ctx context.Context, body string, key string) (*http.Response, error) {
-	req := a.APIClient.http_orkes.EnvironmentResourceAPI.CreateOrUpdateEnvVariable(ctx, key).Body(body)
+	req := a.http_orkes.EnvironmentResourceAPI.CreateOrUpdateEnvVariable(ctx, key).Body(body)
 
 	resp, err := req.Execute()
 	if err != nil {
@@ -46,7 +46,7 @@ func (a *EnvironmentResourceApiService) CreateOrUpdateEnvVariable(ctx context.Co
 
 // DeleteEnvVariable - Delete an environment variable
 func (a *EnvironmentResourceApiService) DeleteEnvVariable(ctx context.Context, key string) (string, *http.Response, error) {
-	req := a.APIClient.http_orkes.EnvironmentResourceAPI.DeleteEnvVariable(ctx, key)
+	req := a.http_orkes.EnvironmentResourceAPI.DeleteEnvVariable(ctx, key)
 
 	result, resp, err := req.Execute()
 	if err != nil {
@@ -60,7 +60,7 @@ func (a *EnvironmentResourceApiService) DeleteTagForEnvVar(ctx context.Context, 
 	// Convert domain tags to generated tags
 	genTags := toGeneratedTags(body)
 
-	req := a.APIClient.http_orkes.EnvironmentResourceAPI.DeleteTagForEnvVar(ctx, name).Tag(genTags)
+	req := a.http_orkes.EnvironmentResourceAPI.DeleteTagForEnvVar(ctx, name).Tag(genTags)
 
 	resp, err := req.Execute()
 	if err != nil {
@@ -71,7 +71,7 @@ func (a *EnvironmentResourceApiService) DeleteTagForEnvVar(ctx context.Context, 
 
 // Get - Get the environment value by key
 func (a *EnvironmentResourceApiService) Get(ctx context.Context, key string) (string, *http.Response, error) {
-	req := a.APIClient.http_orkes.EnvironmentResourceAPI.Get3(ctx, key)
+	req := a.http_orkes.EnvironmentResourceAPI.Get3(ctx, key)
 
 	result, resp, err := req.Execute()
 	if err != nil {
@@ -82,7 +82,7 @@ func (a *EnvironmentResourceApiService) Get(ctx context.Context, key string) (st
 
 // GetAll - List all the environment variables
 func (a *EnvironmentResourceApiService) GetAll(ctx context.Context) ([]model.EnvironmentVariable, *http.Response, error) {
-	req := a.APIClient.http_orkes.EnvironmentResourceAPI.GetAll(ctx)
+	req := a.http_orkes.EnvironmentResourceAPI.GetAll(ctx)
 
 	genEnvVars, resp, err := req.Execute()
 	if err != nil {
@@ -96,7 +96,7 @@ func (a *EnvironmentResourceApiService) GetAll(ctx context.Context) ([]model.Env
 
 // GetTagsForEnvVar - Get tags by environment variable name
 func (a *EnvironmentResourceApiService) GetTagsForEnvVar(ctx context.Context, name string) ([]model.Tag, *http.Response, error) {
-	req := a.APIClient.http_orkes.EnvironmentResourceAPI.GetTagsForEnvVar(ctx, name)
+	req := a.http_orkes.EnvironmentResourceAPI.GetTagsForEnvVar(ctx, name)
 
 	genTags, resp, err := req.Execute()
 	if err != nil {
@@ -114,7 +114,7 @@ func (a *EnvironmentResourceApiService) PutTagForEnvVar(ctx context.Context, bod
 	// Convert domain tags to generated tags
 	genTags := toGeneratedTags(body)
 
-	req := a.APIClient.http_orkes.EnvironmentResourceAPI.PutTagForEnvVar(ctx, name).Tag(genTags)
+	req := a.http_orkes.EnvironmentResourceAPI.PutTagForEnvVar(ctx, name).Tag(genTags)
 
 	resp, err := req.Execute()
 	if err != nil {

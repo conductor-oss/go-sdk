@@ -300,7 +300,11 @@ func getDecompressedBody(response *http.Response) ([]byte, error) {
 			// Return raw if cannot create gzip reader; server might have omitted header
 			return raw, nil
 		}
-		defer zr.Close()
+		defer func() {
+			if closeErr := zr.Close(); closeErr != nil {
+				log.Error("Error closing gzip reader", "error", closeErr)
+			}
+		}()
 		decompressed, err := io.ReadAll(zr)
 		if err != nil {
 			log.Error("Unable to decompress the response", "error", err)

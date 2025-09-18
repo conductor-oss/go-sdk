@@ -36,7 +36,7 @@ func NewEventResourceApiService(apiClient *APIClient) *EventResourceApiService {
 
 // AddEventHandler adds a new event handler
 func (a *EventResourceApiService) AddEventHandler(ctx context.Context, body model.EventHandler) (*http.Response, error) {
-	req := a.APIClient.http_orkes.EventResourceAPI.AddEventHandler(ctx)
+	req := a.http_orkes.EventResourceAPI.AddEventHandler(ctx)
 
 	// Convert domain model to orkes model using mapper
 	orkesHandler := toGeneratedEventHandlerForOrkes(body)
@@ -51,7 +51,7 @@ func (a *EventResourceApiService) AddEventHandler(ctx context.Context, body mode
 
 // DeleteQueueConfig deletes queue configuration
 func (a *EventResourceApiService) DeleteQueueConfig(ctx context.Context, queueType string, queueName string) (*http.Response, error) {
-	req := a.APIClient.http_orkes.EventResourceAPI.DeleteQueueConfig(ctx, queueType, queueName)
+	req := a.http_orkes.EventResourceAPI.DeleteQueueConfig(ctx, queueType, queueName)
 	resp, err := req.Execute()
 	if err != nil {
 		return resp, wrapGeneratedError(err, resp)
@@ -61,7 +61,7 @@ func (a *EventResourceApiService) DeleteQueueConfig(ctx context.Context, queueTy
 
 // GetEventHandlers gets all event handlers
 func (a *EventResourceApiService) GetEventHandlers(ctx context.Context) ([]model.EventHandler, *http.Response, error) {
-	req := a.APIClient.http_orkes.EventResourceAPI.GetEventHandlers(ctx)
+	req := a.http_orkes.EventResourceAPI.GetEventHandlers(ctx)
 	orkesHandlers, resp, err := req.Execute()
 	if err != nil {
 		return nil, resp, wrapGeneratedError(err, resp)
@@ -79,7 +79,7 @@ type EventResourceApiGetEventHandlersForEventOpts struct {
 
 // GetEventHandlersForEvent gets event handlers for a specific event
 func (a *EventResourceApiService) GetEventHandlersForEvent(ctx context.Context, event string, opts *EventResourceApiGetEventHandlersForEventOpts) ([]model.EventHandler, *http.Response, error) {
-	req := a.APIClient.http_orkes.EventResourceAPI.GetEventHandlersForEvent(ctx, event)
+	req := a.http_orkes.EventResourceAPI.GetEventHandlersForEvent(ctx, event)
 
 	// Apply optional parameters
 	if opts != nil && opts.ActiveOnly.IsSet() {
@@ -99,7 +99,7 @@ func (a *EventResourceApiService) GetEventHandlersForEvent(ctx context.Context, 
 // GetQueueConfig gets queue configuration
 func (a *EventResourceApiService) GetQueueConfig(ctx context.Context, queueType string, queueName string) (map[string]interface{}, *http.Response, error) {
 	// Use orkes generated client
-	req := a.APIClient.http_orkes.EventResourceAPI.GetQueueConfig(ctx, queueType, queueName)
+	req := a.http_orkes.EventResourceAPI.GetQueueConfig(ctx, queueType, queueName)
 	result, resp, err := req.Execute()
 	if err != nil {
 		return nil, resp, wrapGeneratedError(err, resp)
@@ -116,7 +116,7 @@ func (a *EventResourceApiService) GetQueueConfig(ctx context.Context, queueType 
 
 // GetQueueNames gets all queue names
 func (a *EventResourceApiService) GetQueueNames(ctx context.Context) (map[string]interface{}, *http.Response, error) {
-	req := a.APIClient.http_orkes.EventResourceAPI.GetQueueNames(ctx)
+	req := a.http_orkes.EventResourceAPI.GetQueueNames(ctx)
 	result, resp, err := req.Execute()
 	if err != nil {
 		return nil, resp, wrapGeneratedError(err, resp)
@@ -133,7 +133,7 @@ func (a *EventResourceApiService) GetQueueNames(ctx context.Context) (map[string
 
 // PutQueueConfig puts queue configuration
 func (a *EventResourceApiService) PutQueueConfig(ctx context.Context, body string, queueType string, queueName string) (*http.Response, error) {
-	req := a.APIClient.http_orkes.EventResourceAPI.PutQueueConfig(ctx, queueType, queueName)
+	req := a.http_orkes.EventResourceAPI.PutQueueConfig(ctx, queueType, queueName)
 	req = req.Body(body)
 	resp, err := req.Execute()
 	if err != nil {
@@ -144,7 +144,7 @@ func (a *EventResourceApiService) PutQueueConfig(ctx context.Context, body strin
 
 // RemoveEventHandlerStatus removes event handler
 func (a *EventResourceApiService) RemoveEventHandlerStatus(ctx context.Context, name string) (*http.Response, error) {
-	req := a.APIClient.http_orkes.EventResourceAPI.RemoveEventHandlerStatus(ctx, name)
+	req := a.http_orkes.EventResourceAPI.RemoveEventHandlerStatus(ctx, name)
 	resp, err := req.Execute()
 	if err != nil {
 		return resp, wrapGeneratedError(err, resp)
@@ -159,7 +159,7 @@ func (a *EventResourceApiService) RemoveEventHandler(ctx context.Context, name s
 
 // UpdateEventHandler updates event handler
 func (a *EventResourceApiService) UpdateEventHandler(ctx context.Context, body model.EventHandler) (*http.Response, error) {
-	req := a.APIClient.http_orkes.EventResourceAPI.UpdateEventHandler(ctx)
+	req := a.http_orkes.EventResourceAPI.UpdateEventHandler(ctx)
 
 	// Convert domain model to orkes model using mapper
 	orkesHandler := toGeneratedEventHandlerForOrkes(body)
