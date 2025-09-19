@@ -19,7 +19,7 @@ var _ MappedNullable = &FieldDescriptorProtoOrBuilder{}
 
 // FieldDescriptorProtoOrBuilder struct for FieldDescriptorProtoOrBuilder
 type FieldDescriptorProtoOrBuilder struct {
-	AllFields map[string]map[string]interface{} `json:"allFields,omitempty"`
+	AllFields map[string]interface{} `json:"allFields,omitempty"`
 	// Simplified schema for Message (original had circular references)
 	DefaultInstanceForType map[string]interface{} `json:"defaultInstanceForType,omitempty"`
 	DefaultValue           *string                `json:"defaultValue,omitempty"`
@@ -64,9 +64,9 @@ func NewFieldDescriptorProtoOrBuilderWithDefaults() *FieldDescriptorProtoOrBuild
 }
 
 // GetAllFields returns the AllFields field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *FieldDescriptorProtoOrBuilder) GetAllFields() map[string]map[string]interface{} {
+func (o *FieldDescriptorProtoOrBuilder) GetAllFields() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.AllFields
@@ -75,7 +75,7 @@ func (o *FieldDescriptorProtoOrBuilder) GetAllFields() map[string]map[string]int
 // GetAllFieldsOk returns a tuple with the AllFields field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *FieldDescriptorProtoOrBuilder) GetAllFieldsOk() (*map[string]map[string]interface{}, bool) {
+func (o *FieldDescriptorProtoOrBuilder) GetAllFieldsOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.AllFields) {
 		return nil, false
 	}
@@ -91,8 +91,8 @@ func (o *FieldDescriptorProtoOrBuilder) HasAllFields() bool {
 	return false
 }
 
-// SetAllFields gets a reference to the given map[string]map[string]interface{} and assigns it to the AllFields field.
-func (o *FieldDescriptorProtoOrBuilder) SetAllFields(v map[string]map[string]interface{}) {
+// SetAllFields gets a reference to the given map[string]interface{} and assigns it to the AllFields field.
+func (o *FieldDescriptorProtoOrBuilder) SetAllFields(v map[string]interface{}) {
 	o.AllFields = v
 }
 

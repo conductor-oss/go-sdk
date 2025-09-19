@@ -32,7 +32,7 @@ type ApplicationResourceAPI interface {
 	AddRoleToApplicationUser(ctx context.Context, applicationId string, role string) ApplicationResourceAPIAddRoleToApplicationUserRequest
 
 	// AddRoleToApplicationUserExecute executes the request
-	//  @return []interface{}
+	//  @return map[string]interface{}
 	AddRoleToApplicationUserExecute(r ApplicationResourceAPIAddRoleToApplicationUserRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
@@ -45,7 +45,7 @@ type ApplicationResourceAPI interface {
 	CreateAccessKey(ctx context.Context, id string) ApplicationResourceAPICreateAccessKeyRequest
 
 	// CreateAccessKeyExecute executes the request
-	//  @return []interface{}
+	//  @return map[string]interface{}
 	CreateAccessKeyExecute(r ApplicationResourceAPICreateAccessKeyRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
@@ -57,7 +57,7 @@ type ApplicationResourceAPI interface {
 	CreateApplication(ctx context.Context) ApplicationResourceAPICreateApplicationRequest
 
 	// CreateApplicationExecute executes the request
-	//  @return []interface{}
+	//  @return map[string]interface{}
 	CreateApplicationExecute(r ApplicationResourceAPICreateApplicationRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
@@ -71,7 +71,7 @@ type ApplicationResourceAPI interface {
 	DeleteAccessKey(ctx context.Context, applicationId string, keyId string) ApplicationResourceAPIDeleteAccessKeyRequest
 
 	// DeleteAccessKeyExecute executes the request
-	//  @return []interface{}
+	//  @return map[string]interface{}
 	DeleteAccessKeyExecute(r ApplicationResourceAPIDeleteAccessKeyRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
@@ -84,7 +84,7 @@ type ApplicationResourceAPI interface {
 	DeleteApplication(ctx context.Context, id string) ApplicationResourceAPIDeleteApplicationRequest
 
 	// DeleteApplicationExecute executes the request
-	//  @return []interface{}
+	//  @return map[string]interface{}
 	DeleteApplicationExecute(r ApplicationResourceAPIDeleteApplicationRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
@@ -109,7 +109,7 @@ type ApplicationResourceAPI interface {
 	GetAccessKeys(ctx context.Context, id string) ApplicationResourceAPIGetAccessKeysRequest
 
 	// GetAccessKeysExecute executes the request
-	//  @return []interface{}
+	//  @return map[string]interface{}
 	GetAccessKeysExecute(r ApplicationResourceAPIGetAccessKeysRequest) ([]interface{}, *http.Response, error)
 
 	/*
@@ -122,7 +122,7 @@ type ApplicationResourceAPI interface {
 	GetAppByAccessKeyId(ctx context.Context, accessKeyId string) ApplicationResourceAPIGetAppByAccessKeyIdRequest
 
 	// GetAppByAccessKeyIdExecute executes the request
-	//  @return []interface{}
+	//  @return map[string]interface{}
 	GetAppByAccessKeyIdExecute(r ApplicationResourceAPIGetAppByAccessKeyIdRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
@@ -135,7 +135,7 @@ type ApplicationResourceAPI interface {
 	GetApplication(ctx context.Context, id string) ApplicationResourceAPIGetApplicationRequest
 
 	// GetApplicationExecute executes the request
-	//  @return []interface{}
+	//  @return map[string]interface{}
 	GetApplicationExecute(r ApplicationResourceAPIGetApplicationRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
@@ -186,7 +186,7 @@ type ApplicationResourceAPI interface {
 	RemoveRoleFromApplicationUser(ctx context.Context, applicationId string, role string) ApplicationResourceAPIRemoveRoleFromApplicationUserRequest
 
 	// RemoveRoleFromApplicationUserExecute executes the request
-	//  @return []interface{}
+	//  @return map[string]interface{}
 	RemoveRoleFromApplicationUserExecute(r ApplicationResourceAPIRemoveRoleFromApplicationUserRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
@@ -200,7 +200,7 @@ type ApplicationResourceAPI interface {
 	ToggleAccessKeyStatus(ctx context.Context, applicationId string, keyId string) ApplicationResourceAPIToggleAccessKeyStatusRequest
 
 	// ToggleAccessKeyStatusExecute executes the request
-	//  @return []interface{}
+	//  @return map[string]interface{}
 	ToggleAccessKeyStatusExecute(r ApplicationResourceAPIToggleAccessKeyStatusRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
@@ -213,7 +213,7 @@ type ApplicationResourceAPI interface {
 	UpdateApplication(ctx context.Context, id string) ApplicationResourceAPIUpdateApplicationRequest
 
 	// UpdateApplicationExecute executes the request
-	//  @return []interface{}
+	//  @return map[string]interface{}
 	UpdateApplicationExecute(r ApplicationResourceAPIUpdateApplicationRequest) (map[string]interface{}, *http.Response, error)
 }
 
@@ -250,7 +250,7 @@ func (a *ApplicationResourceAPIService) AddRoleToApplicationUser(ctx context.Con
 
 // Execute executes the request
 //
-//	@return []interface{}
+//	@return map[string]interface{}
 func (a *ApplicationResourceAPIService) AddRoleToApplicationUserExecute(r ApplicationResourceAPIAddRoleToApplicationUserRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -367,7 +367,7 @@ func (a *ApplicationResourceAPIService) CreateAccessKey(ctx context.Context, id 
 
 // Execute executes the request
 //
-//	@return []interface{}
+//	@return map[string]interface{}
 func (a *ApplicationResourceAPIService) CreateAccessKeyExecute(r ApplicationResourceAPICreateAccessKeyRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -486,7 +486,7 @@ func (a *ApplicationResourceAPIService) CreateApplication(ctx context.Context) A
 
 // Execute executes the request
 //
-//	@return []interface{}
+//	@return map[string]interface{}
 func (a *ApplicationResourceAPIService) CreateApplicationExecute(r ApplicationResourceAPICreateApplicationRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -609,7 +609,7 @@ func (a *ApplicationResourceAPIService) DeleteAccessKey(ctx context.Context, app
 
 // Execute executes the request
 //
-//	@return []interface{}
+//	@return map[string]interface{}
 func (a *ApplicationResourceAPIService) DeleteAccessKeyExecute(r ApplicationResourceAPIDeleteAccessKeyRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -726,7 +726,7 @@ func (a *ApplicationResourceAPIService) DeleteApplication(ctx context.Context, i
 
 // Execute executes the request
 //
-//	@return []interface{}
+//	@return map[string]interface{}
 func (a *ApplicationResourceAPIService) DeleteApplicationExecute(r ApplicationResourceAPIDeleteApplicationRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -960,7 +960,7 @@ func (a *ApplicationResourceAPIService) GetAccessKeys(ctx context.Context, id st
 
 // Execute executes the request
 //
-//	@return []interface{}
+//	@return map[string]interface{}
 func (a *ApplicationResourceAPIService) GetAccessKeysExecute(r ApplicationResourceAPIGetAccessKeysRequest) ([]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -1076,7 +1076,7 @@ func (a *ApplicationResourceAPIService) GetAppByAccessKeyId(ctx context.Context,
 
 // Execute executes the request
 //
-//	@return []interface{}
+//	@return map[string]interface{}
 func (a *ApplicationResourceAPIService) GetAppByAccessKeyIdExecute(r ApplicationResourceAPIGetAppByAccessKeyIdRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -1195,7 +1195,7 @@ func (a *ApplicationResourceAPIService) GetApplication(ctx context.Context, id s
 
 // Execute executes the request
 //
-//	@return []interface{}
+//	@return map[string]interface{}
 func (a *ApplicationResourceAPIService) GetApplicationExecute(r ApplicationResourceAPIGetApplicationRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -1663,7 +1663,7 @@ func (a *ApplicationResourceAPIService) RemoveRoleFromApplicationUser(ctx contex
 
 // Execute executes the request
 //
-//	@return []interface{}
+//	@return map[string]interface{}
 func (a *ApplicationResourceAPIService) RemoveRoleFromApplicationUserExecute(r ApplicationResourceAPIRemoveRoleFromApplicationUserRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -1783,7 +1783,7 @@ func (a *ApplicationResourceAPIService) ToggleAccessKeyStatus(ctx context.Contex
 
 // Execute executes the request
 //
-//	@return []interface{}
+//	@return map[string]interface{}
 func (a *ApplicationResourceAPIService) ToggleAccessKeyStatusExecute(r ApplicationResourceAPIToggleAccessKeyStatusRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -1906,7 +1906,7 @@ func (a *ApplicationResourceAPIService) UpdateApplication(ctx context.Context, i
 
 // Execute executes the request
 //
-//	@return []interface{}
+//	@return map[string]interface{}
 func (a *ApplicationResourceAPIService) UpdateApplicationExecute(r ApplicationResourceAPIUpdateApplicationRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPut

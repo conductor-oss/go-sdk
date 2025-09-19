@@ -2,8 +2,9 @@ package client
 
 import (
 	"context"
-	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"net/http"
+
+	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
 type SecretsClient interface {
@@ -22,5 +23,5 @@ type SecretsClient interface {
 }
 
 func NewSecretsClient(client *APIClient) SecretsClient {
-	return &SecretResourceApiService{client}
+	return NewSecretResourceApiService(client)
 }

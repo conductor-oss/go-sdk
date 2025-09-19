@@ -30,8 +30,8 @@ type AdminResourceAPI interface {
 	GetAllConfig(ctx context.Context) AdminResourceAPIGetAllConfigRequest
 
 	// GetAllConfigExecute executes the request
-	//  @return map[string]map[string]interface{}
-	GetAllConfigExecute(r AdminResourceAPIGetAllConfigRequest) (map[string]map[string]interface{}, *http.Response, error)
+	//  @return map[string]interface{}
+	GetAllConfigExecute(r AdminResourceAPIGetAllConfigRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
 		GetEventQueues Get registered queues
@@ -42,8 +42,8 @@ type AdminResourceAPI interface {
 	GetEventQueues(ctx context.Context) AdminResourceAPIGetEventQueuesRequest
 
 	// GetEventQueuesExecute executes the request
-	//  @return map[string]map[string]interface{}
-	GetEventQueuesExecute(r AdminResourceAPIGetEventQueuesRequest) (map[string]map[string]interface{}, *http.Response, error)
+	//  @return map[string]interface{}
+	GetEventQueuesExecute(r AdminResourceAPIGetEventQueuesRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
 		RequeueSweep Queue up all the running workflows for sweep
@@ -93,7 +93,7 @@ type AdminResourceAPIGetAllConfigRequest struct {
 	ApiService AdminResourceAPI
 }
 
-func (r AdminResourceAPIGetAllConfigRequest) Execute() (map[string]map[string]interface{}, *http.Response, error) {
+func (r AdminResourceAPIGetAllConfigRequest) Execute() (map[string]interface{}, *http.Response, error) {
 	return r.ApiService.GetAllConfigExecute(r)
 }
 
@@ -112,13 +112,13 @@ func (a *AdminResourceAPIService) GetAllConfig(ctx context.Context) AdminResourc
 
 // Execute executes the request
 //
-//	@return map[string]map[string]interface{}
-func (a *AdminResourceAPIService) GetAllConfigExecute(r AdminResourceAPIGetAllConfigRequest) (map[string]map[string]interface{}, *http.Response, error) {
+//	@return map[string]interface{}
+func (a *AdminResourceAPIService) GetAllConfigExecute(r AdminResourceAPIGetAllConfigRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
 		localVarPostBody    interface{}
 		formFiles           []formFile
-		localVarReturnValue map[string]map[string]interface{}
+		localVarReturnValue map[string]interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AdminResourceAPIService.GetAllConfig")
@@ -197,7 +197,7 @@ func (r AdminResourceAPIGetEventQueuesRequest) Verbose(verbose bool) AdminResour
 	return r
 }
 
-func (r AdminResourceAPIGetEventQueuesRequest) Execute() (map[string]map[string]interface{}, *http.Response, error) {
+func (r AdminResourceAPIGetEventQueuesRequest) Execute() (map[string]interface{}, *http.Response, error) {
 	return r.ApiService.GetEventQueuesExecute(r)
 }
 
@@ -216,13 +216,13 @@ func (a *AdminResourceAPIService) GetEventQueues(ctx context.Context) AdminResou
 
 // Execute executes the request
 //
-//	@return map[string]map[string]interface{}
-func (a *AdminResourceAPIService) GetEventQueuesExecute(r AdminResourceAPIGetEventQueuesRequest) (map[string]map[string]interface{}, *http.Response, error) {
+//	@return map[string]interface{}
+func (a *AdminResourceAPIService) GetEventQueuesExecute(r AdminResourceAPIGetEventQueuesRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
 		localVarPostBody    interface{}
 		formFiles           []formFile
-		localVarReturnValue map[string]map[string]interface{}
+		localVarReturnValue map[string]interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AdminResourceAPIService.GetEventQueues")

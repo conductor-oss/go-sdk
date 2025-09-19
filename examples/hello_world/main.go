@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/conductor-sdk/conductor-go/sdk/log"
+	"go.uber.org/zap"
 
 	"github.com/conductor-sdk/conductor-go/sdk/client"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
@@ -20,6 +21,12 @@ var (
 )
 
 func main() {
+	logger := zap.Must(zap.NewProduction())
+	defer logger.Sync()
+
+	// Set SDK logger
+	log.SetLogger(log.NewZap(logger))
+
 	// Start the Greet Worker. This worker will process "greet" tasks.
 	taskRunner.StartWorker("greet", hello_world.Greet, 1, time.Millisecond*100)
 

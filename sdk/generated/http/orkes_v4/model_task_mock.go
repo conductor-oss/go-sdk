@@ -19,10 +19,10 @@ var _ MappedNullable = &TaskMock{}
 
 // TaskMock struct for TaskMock
 type TaskMock struct {
-	ExecutionTime *int64                            `json:"executionTime,omitempty"`
-	Output        map[string]map[string]interface{} `json:"output,omitempty"`
-	QueueWaitTime *int64                            `json:"queueWaitTime,omitempty"`
-	Status        *string                           `json:"status,omitempty"`
+	ExecutionTime *int64                 `json:"executionTime,omitempty"`
+	Output        map[string]interface{} `json:"output,omitempty"`
+	QueueWaitTime *int64                 `json:"queueWaitTime,omitempty"`
+	Status        *string                `json:"status,omitempty"`
 }
 
 // NewTaskMock instantiates a new TaskMock object
@@ -75,9 +75,9 @@ func (o *TaskMock) SetExecutionTime(v int64) {
 }
 
 // GetOutput returns the Output field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *TaskMock) GetOutput() map[string]map[string]interface{} {
+func (o *TaskMock) GetOutput() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.Output
@@ -86,7 +86,7 @@ func (o *TaskMock) GetOutput() map[string]map[string]interface{} {
 // GetOutputOk returns a tuple with the Output field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *TaskMock) GetOutputOk() (*map[string]map[string]interface{}, bool) {
+func (o *TaskMock) GetOutputOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.Output) {
 		return nil, false
 	}
@@ -102,8 +102,8 @@ func (o *TaskMock) HasOutput() bool {
 	return false
 }
 
-// SetOutput gets a reference to the given map[string]map[string]interface{} and assigns it to the Output field.
-func (o *TaskMock) SetOutput(v map[string]map[string]interface{}) {
+// SetOutput gets a reference to the given map[string]interface{} and assigns it to the Output field.
+func (o *TaskMock) SetOutput(v map[string]interface{}) {
 	o.Output = v
 }
 

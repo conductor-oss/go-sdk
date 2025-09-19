@@ -2,9 +2,10 @@ package client
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/sdk/model/integration"
-	"net/http"
 )
 
 type PromptClient interface {
@@ -19,5 +20,5 @@ type PromptClient interface {
 }
 
 func NewPromptClient(apiClient *APIClient) PromptClient {
-	return &PromptResourceApiService{apiClient}
+	return NewPromptResourceApiService(apiClient)
 }

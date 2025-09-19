@@ -84,25 +84,6 @@ go run .
 
 ---
 
-### **Jump to Task** (`workflow/jump_to_task/`)
-**Workflow navigation and task jumping capabilities**
-
-Demonstrates how to manipulate workflow execution by jumping to specific tasks during runtime.
-
-**Features:**
-- **Task Jumping** - Navigate to specific tasks in running workflows
-- **Workflow Control** - Advanced execution flow management
-- **Worker Management** - Multiple task types and workers
-- **Execution Monitoring** - Track task jumps and workflow state changes
-
-**Run:**
-```bash
-cd workflow/jump_to_task
-go run .
-```
-
----
-
 ### **Testing & Mocking** (`workflow/test_mock/`)
 **Workflow testing patterns with mocked task outputs**
 
@@ -171,3 +152,32 @@ When running examples successfully, you'll see structured logs showing:
 
 4. **Authentication errors**
    - Verify CONDUCTOR_AUTH_KEY and CONDUCTOR_AUTH_SECRET if using authenticated setup
+
+---
+
+## Orkes-Specific Examples
+
+The following examples are specifically designed for Orkes Conductor Cloud and require Orkes-specific features.
+
+### **Jump to Task** (`workflow/orkes/jump_to_task/`)
+**Orkes-specific workflow navigation and task jumping capabilities**
+
+Demonstrates how to manipulate workflow execution by jumping to specific tasks during runtime using Orkes Conductor Cloud features.
+
+**Features:**
+- **Task Jumping** - Navigate to specific tasks in running workflows (Orkes-specific)
+- **Workflow Control** - Advanced execution flow management
+- **Worker Management** - Multiple task types and workers
+- **Execution Monitoring** - Track task jumps and workflow state changes
+- **Orkes Integration** - Uses Orkes-specific API endpoints and features
+
+**Prerequisites:**
+- Orkes Conductor Cloud account
+- Orkes-specific authentication setup
+- Orkes API access
+
+**Run:**
+```bash
+cd workflow/orkes/jump_to_task
+go run .
+```

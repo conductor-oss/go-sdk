@@ -19,9 +19,9 @@ var _ MappedNullable = &WorkflowStateUpdate{}
 
 // WorkflowStateUpdate struct for WorkflowStateUpdate
 type WorkflowStateUpdate struct {
-	TaskReferenceName *string                           `json:"taskReferenceName,omitempty"`
-	TaskResult        *TaskResult                       `json:"taskResult,omitempty"`
-	Variables         map[string]map[string]interface{} `json:"variables,omitempty"`
+	TaskReferenceName *string                `json:"taskReferenceName,omitempty"`
+	TaskResult        *TaskResult            `json:"taskResult,omitempty"`
+	Variables         map[string]interface{} `json:"variables,omitempty"`
 }
 
 // NewWorkflowStateUpdate instantiates a new WorkflowStateUpdate object
@@ -106,9 +106,9 @@ func (o *WorkflowStateUpdate) SetTaskResult(v TaskResult) {
 }
 
 // GetVariables returns the Variables field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *WorkflowStateUpdate) GetVariables() map[string]map[string]interface{} {
+func (o *WorkflowStateUpdate) GetVariables() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.Variables
@@ -117,7 +117,7 @@ func (o *WorkflowStateUpdate) GetVariables() map[string]map[string]interface{} {
 // GetVariablesOk returns a tuple with the Variables field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *WorkflowStateUpdate) GetVariablesOk() (*map[string]map[string]interface{}, bool) {
+func (o *WorkflowStateUpdate) GetVariablesOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.Variables) {
 		return nil, false
 	}
@@ -133,8 +133,8 @@ func (o *WorkflowStateUpdate) HasVariables() bool {
 	return false
 }
 
-// SetVariables gets a reference to the given map[string]map[string]interface{} and assigns it to the Variables field.
-func (o *WorkflowStateUpdate) SetVariables(v map[string]map[string]interface{}) {
+// SetVariables gets a reference to the given map[string]interface{} and assigns it to the Variables field.
+func (o *WorkflowStateUpdate) SetVariables(v map[string]interface{}) {
 	o.Variables = v
 }
 

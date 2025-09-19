@@ -19,17 +19,17 @@ var _ MappedNullable = &IntegrationApi{}
 
 // IntegrationApi struct for IntegrationApi
 type IntegrationApi struct {
-	Api             *string                           `json:"api,omitempty"`
-	Configuration   map[string]map[string]interface{} `json:"configuration,omitempty"`
-	CreateTime      *int64                            `json:"createTime,omitempty"`
-	CreatedBy       *string                           `json:"createdBy,omitempty"`
-	Description     *string                           `json:"description,omitempty"`
-	Enabled         *bool                             `json:"enabled,omitempty"`
-	IntegrationName *string                           `json:"integrationName,omitempty"`
-	OwnerApp        *string                           `json:"ownerApp,omitempty"`
-	Tags            []Tag                             `json:"tags,omitempty"`
-	UpdateTime      *int64                            `json:"updateTime,omitempty"`
-	UpdatedBy       *string                           `json:"updatedBy,omitempty"`
+	Api             *string                `json:"api,omitempty"`
+	Configuration   map[string]interface{} `json:"configuration,omitempty"`
+	CreateTime      *int64                 `json:"createTime,omitempty"`
+	CreatedBy       *string                `json:"createdBy,omitempty"`
+	Description     *string                `json:"description,omitempty"`
+	Enabled         *bool                  `json:"enabled,omitempty"`
+	IntegrationName *string                `json:"integrationName,omitempty"`
+	OwnerApp        *string                `json:"ownerApp,omitempty"`
+	Tags            []Tag                  `json:"tags,omitempty"`
+	UpdateTime      *int64                 `json:"updateTime,omitempty"`
+	UpdatedBy       *string                `json:"updatedBy,omitempty"`
 }
 
 // NewIntegrationApi instantiates a new IntegrationApi object
@@ -82,9 +82,9 @@ func (o *IntegrationApi) SetApi(v string) {
 }
 
 // GetConfiguration returns the Configuration field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *IntegrationApi) GetConfiguration() map[string]map[string]interface{} {
+func (o *IntegrationApi) GetConfiguration() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.Configuration
@@ -93,7 +93,7 @@ func (o *IntegrationApi) GetConfiguration() map[string]map[string]interface{} {
 // GetConfigurationOk returns a tuple with the Configuration field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *IntegrationApi) GetConfigurationOk() (*map[string]map[string]interface{}, bool) {
+func (o *IntegrationApi) GetConfigurationOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.Configuration) {
 		return nil, false
 	}
@@ -109,8 +109,8 @@ func (o *IntegrationApi) HasConfiguration() bool {
 	return false
 }
 
-// SetConfiguration gets a reference to the given map[string]map[string]interface{} and assigns it to the Configuration field.
-func (o *IntegrationApi) SetConfiguration(v map[string]map[string]interface{}) {
+// SetConfiguration gets a reference to the given map[string]interface{} and assigns it to the Configuration field.
+func (o *IntegrationApi) SetConfiguration(v map[string]interface{}) {
 	o.Configuration = v
 }
 

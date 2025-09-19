@@ -19,49 +19,49 @@ var _ MappedNullable = &Task{}
 
 // Task struct for Task
 type Task struct {
-	CallbackAfterSeconds             *int64                            `json:"callbackAfterSeconds,omitempty"`
-	CallbackFromWorker               *bool                             `json:"callbackFromWorker,omitempty"`
-	CorrelationId                    *string                           `json:"correlationId,omitempty"`
-	Domain                           *string                           `json:"domain,omitempty"`
-	EndTime                          *int64                            `json:"endTime,omitempty"`
-	Executed                         *bool                             `json:"executed,omitempty"`
-	ExecutionNameSpace               *string                           `json:"executionNameSpace,omitempty"`
-	ExternalInputPayloadStoragePath  *string                           `json:"externalInputPayloadStoragePath,omitempty"`
-	ExternalOutputPayloadStoragePath *string                           `json:"externalOutputPayloadStoragePath,omitempty"`
-	FirstStartTime                   *int64                            `json:"firstStartTime,omitempty"`
-	InputData                        map[string]map[string]interface{} `json:"inputData,omitempty"`
-	IsolationGroupId                 *string                           `json:"isolationGroupId,omitempty"`
-	Iteration                        *int32                            `json:"iteration,omitempty"`
-	LoopOverTask                     *bool                             `json:"loopOverTask,omitempty"`
-	OutputData                       map[string]map[string]interface{} `json:"outputData,omitempty"`
-	ParentTaskId                     *string                           `json:"parentTaskId,omitempty"`
-	PollCount                        *int32                            `json:"pollCount,omitempty"`
-	QueueWaitTime                    *int64                            `json:"queueWaitTime,omitempty"`
-	RateLimitFrequencyInSeconds      *int32                            `json:"rateLimitFrequencyInSeconds,omitempty"`
-	RateLimitPerFrequency            *int32                            `json:"rateLimitPerFrequency,omitempty"`
-	ReasonForIncompletion            *string                           `json:"reasonForIncompletion,omitempty"`
-	ReferenceTaskName                *string                           `json:"referenceTaskName,omitempty"`
-	ResponseTimeoutSeconds           *int64                            `json:"responseTimeoutSeconds,omitempty"`
-	Retried                          *bool                             `json:"retried,omitempty"`
-	RetriedTaskId                    *string                           `json:"retriedTaskId,omitempty"`
-	RetryCount                       *int32                            `json:"retryCount,omitempty"`
-	ScheduledTime                    *int64                            `json:"scheduledTime,omitempty"`
-	Seq                              *int32                            `json:"seq,omitempty"`
-	StartDelayInSeconds              *int32                            `json:"startDelayInSeconds,omitempty"`
-	StartTime                        *int64                            `json:"startTime,omitempty"`
-	Status                           *string                           `json:"status,omitempty"`
-	SubWorkflowId                    *string                           `json:"subWorkflowId,omitempty"`
-	SubworkflowChanged               *bool                             `json:"subworkflowChanged,omitempty"`
-	TaskDefName                      *string                           `json:"taskDefName,omitempty"`
-	TaskDefinition                   *TaskDef                          `json:"taskDefinition,omitempty"`
-	TaskId                           *string                           `json:"taskId,omitempty"`
-	TaskType                         *string                           `json:"taskType,omitempty"`
-	UpdateTime                       *int64                            `json:"updateTime,omitempty"`
-	WorkerId                         *string                           `json:"workerId,omitempty"`
-	WorkflowInstanceId               *string                           `json:"workflowInstanceId,omitempty"`
-	WorkflowPriority                 *int32                            `json:"workflowPriority,omitempty"`
-	WorkflowTask                     *WorkflowTask                     `json:"workflowTask,omitempty"`
-	WorkflowType                     *string                           `json:"workflowType,omitempty"`
+	CallbackAfterSeconds             *int64                 `json:"callbackAfterSeconds,omitempty"`
+	CallbackFromWorker               *bool                  `json:"callbackFromWorker,omitempty"`
+	CorrelationId                    *string                `json:"correlationId,omitempty"`
+	Domain                           *string                `json:"domain,omitempty"`
+	EndTime                          *int64                 `json:"endTime,omitempty"`
+	Executed                         *bool                  `json:"executed,omitempty"`
+	ExecutionNameSpace               *string                `json:"executionNameSpace,omitempty"`
+	ExternalInputPayloadStoragePath  *string                `json:"externalInputPayloadStoragePath,omitempty"`
+	ExternalOutputPayloadStoragePath *string                `json:"externalOutputPayloadStoragePath,omitempty"`
+	FirstStartTime                   *int64                 `json:"firstStartTime,omitempty"`
+	InputData                        map[string]interface{} `json:"inputData,omitempty"`
+	IsolationGroupId                 *string                `json:"isolationGroupId,omitempty"`
+	Iteration                        *int32                 `json:"iteration,omitempty"`
+	LoopOverTask                     *bool                  `json:"loopOverTask,omitempty"`
+	OutputData                       map[string]interface{} `json:"outputData,omitempty"`
+	ParentTaskId                     *string                `json:"parentTaskId,omitempty"`
+	PollCount                        *int32                 `json:"pollCount,omitempty"`
+	QueueWaitTime                    *int64                 `json:"queueWaitTime,omitempty"`
+	RateLimitFrequencyInSeconds      *int32                 `json:"rateLimitFrequencyInSeconds,omitempty"`
+	RateLimitPerFrequency            *int32                 `json:"rateLimitPerFrequency,omitempty"`
+	ReasonForIncompletion            *string                `json:"reasonForIncompletion,omitempty"`
+	ReferenceTaskName                *string                `json:"referenceTaskName,omitempty"`
+	ResponseTimeoutSeconds           *int64                 `json:"responseTimeoutSeconds,omitempty"`
+	Retried                          *bool                  `json:"retried,omitempty"`
+	RetriedTaskId                    *string                `json:"retriedTaskId,omitempty"`
+	RetryCount                       *int32                 `json:"retryCount,omitempty"`
+	ScheduledTime                    *int64                 `json:"scheduledTime,omitempty"`
+	Seq                              *int32                 `json:"seq,omitempty"`
+	StartDelayInSeconds              *int32                 `json:"startDelayInSeconds,omitempty"`
+	StartTime                        *int64                 `json:"startTime,omitempty"`
+	Status                           *string                `json:"status,omitempty"`
+	SubWorkflowId                    *string                `json:"subWorkflowId,omitempty"`
+	SubworkflowChanged               *bool                  `json:"subworkflowChanged,omitempty"`
+	TaskDefName                      *string                `json:"taskDefName,omitempty"`
+	TaskDefinition                   *TaskDef               `json:"taskDefinition,omitempty"`
+	TaskId                           *string                `json:"taskId,omitempty"`
+	TaskType                         *string                `json:"taskType,omitempty"`
+	UpdateTime                       *int64                 `json:"updateTime,omitempty"`
+	WorkerId                         *string                `json:"workerId,omitempty"`
+	WorkflowInstanceId               *string                `json:"workflowInstanceId,omitempty"`
+	WorkflowPriority                 *int32                 `json:"workflowPriority,omitempty"`
+	WorkflowTask                     *WorkflowTask          `json:"workflowTask,omitempty"`
+	WorkflowType                     *string                `json:"workflowType,omitempty"`
 }
 
 // NewTask instantiates a new Task object
@@ -402,9 +402,9 @@ func (o *Task) SetFirstStartTime(v int64) {
 }
 
 // GetInputData returns the InputData field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *Task) GetInputData() map[string]map[string]interface{} {
+func (o *Task) GetInputData() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.InputData
@@ -413,7 +413,7 @@ func (o *Task) GetInputData() map[string]map[string]interface{} {
 // GetInputDataOk returns a tuple with the InputData field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *Task) GetInputDataOk() (*map[string]map[string]interface{}, bool) {
+func (o *Task) GetInputDataOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.InputData) {
 		return nil, false
 	}
@@ -429,8 +429,8 @@ func (o *Task) HasInputData() bool {
 	return false
 }
 
-// SetInputData gets a reference to the given map[string]map[string]interface{} and assigns it to the InputData field.
-func (o *Task) SetInputData(v map[string]map[string]interface{}) {
+// SetInputData gets a reference to the given map[string]interface{} and assigns it to the InputData field.
+func (o *Task) SetInputData(v map[string]interface{}) {
 	o.InputData = v
 }
 
@@ -531,9 +531,9 @@ func (o *Task) SetLoopOverTask(v bool) {
 }
 
 // GetOutputData returns the OutputData field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *Task) GetOutputData() map[string]map[string]interface{} {
+func (o *Task) GetOutputData() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.OutputData
@@ -542,7 +542,7 @@ func (o *Task) GetOutputData() map[string]map[string]interface{} {
 // GetOutputDataOk returns a tuple with the OutputData field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *Task) GetOutputDataOk() (*map[string]map[string]interface{}, bool) {
+func (o *Task) GetOutputDataOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.OutputData) {
 		return nil, false
 	}
@@ -558,8 +558,8 @@ func (o *Task) HasOutputData() bool {
 	return false
 }
 
-// SetOutputData gets a reference to the given map[string]map[string]interface{} and assigns it to the OutputData field.
-func (o *Task) SetOutputData(v map[string]map[string]interface{}) {
+// SetOutputData gets a reference to the given map[string]interface{} and assigns it to the OutputData field.
+func (o *Task) SetOutputData(v map[string]interface{}) {
 	o.OutputData = v
 }
 

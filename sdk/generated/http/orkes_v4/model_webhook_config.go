@@ -19,22 +19,22 @@ var _ MappedNullable = &WebhookConfig{}
 
 // WebhookConfig struct for WebhookConfig
 type WebhookConfig struct {
-	CreatedBy                       *string                           `json:"createdBy,omitempty"`
-	EvaluatorType                   *string                           `json:"evaluatorType,omitempty"`
-	Expression                      *string                           `json:"expression,omitempty"`
-	HeaderKey                       *string                           `json:"headerKey,omitempty"`
-	Headers                         map[string]string                 `json:"headers,omitempty"`
-	Id                              *string                           `json:"id,omitempty"`
-	Name                            *string                           `json:"name,omitempty"`
-	ReceiverWorkflowNamesToVersions map[string]int32                  `json:"receiverWorkflowNamesToVersions,omitempty"`
-	SecretKey                       *string                           `json:"secretKey,omitempty"`
-	SecretValue                     *string                           `json:"secretValue,omitempty"`
-	SourcePlatform                  *string                           `json:"sourcePlatform,omitempty"`
-	Tags                            []Tag                             `json:"tags,omitempty"`
-	UrlVerified                     *bool                             `json:"urlVerified,omitempty"`
-	Verifier                        *string                           `json:"verifier,omitempty"`
-	WebhookExecutionHistory         []WebhookExecutionHistory         `json:"webhookExecutionHistory,omitempty"`
-	WorkflowsToStart                map[string]map[string]interface{} `json:"workflowsToStart,omitempty"`
+	CreatedBy                       *string                   `json:"createdBy,omitempty"`
+	EvaluatorType                   *string                   `json:"evaluatorType,omitempty"`
+	Expression                      *string                   `json:"expression,omitempty"`
+	HeaderKey                       *string                   `json:"headerKey,omitempty"`
+	Headers                         map[string]string         `json:"headers,omitempty"`
+	Id                              *string                   `json:"id,omitempty"`
+	Name                            *string                   `json:"name,omitempty"`
+	ReceiverWorkflowNamesToVersions map[string]int32          `json:"receiverWorkflowNamesToVersions,omitempty"`
+	SecretKey                       *string                   `json:"secretKey,omitempty"`
+	SecretValue                     *string                   `json:"secretValue,omitempty"`
+	SourcePlatform                  *string                   `json:"sourcePlatform,omitempty"`
+	Tags                            []Tag                     `json:"tags,omitempty"`
+	UrlVerified                     *bool                     `json:"urlVerified,omitempty"`
+	Verifier                        *string                   `json:"verifier,omitempty"`
+	WebhookExecutionHistory         []WebhookExecutionHistory `json:"webhookExecutionHistory,omitempty"`
+	WorkflowsToStart                map[string]interface{}    `json:"workflowsToStart,omitempty"`
 }
 
 // NewWebhookConfig instantiates a new WebhookConfig object
@@ -537,9 +537,9 @@ func (o *WebhookConfig) SetWebhookExecutionHistory(v []WebhookExecutionHistory) 
 }
 
 // GetWorkflowsToStart returns the WorkflowsToStart field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *WebhookConfig) GetWorkflowsToStart() map[string]map[string]interface{} {
+func (o *WebhookConfig) GetWorkflowsToStart() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.WorkflowsToStart
@@ -548,7 +548,7 @@ func (o *WebhookConfig) GetWorkflowsToStart() map[string]map[string]interface{} 
 // GetWorkflowsToStartOk returns a tuple with the WorkflowsToStart field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *WebhookConfig) GetWorkflowsToStartOk() (*map[string]map[string]interface{}, bool) {
+func (o *WebhookConfig) GetWorkflowsToStartOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.WorkflowsToStart) {
 		return nil, false
 	}
@@ -564,8 +564,8 @@ func (o *WebhookConfig) HasWorkflowsToStart() bool {
 	return false
 }
 
-// SetWorkflowsToStart gets a reference to the given map[string]map[string]interface{} and assigns it to the WorkflowsToStart field.
-func (o *WebhookConfig) SetWorkflowsToStart(v map[string]map[string]interface{}) {
+// SetWorkflowsToStart gets a reference to the given map[string]interface{} and assigns it to the WorkflowsToStart field.
+func (o *WebhookConfig) SetWorkflowsToStart(v map[string]interface{}) {
 	o.WorkflowsToStart = v
 }
 

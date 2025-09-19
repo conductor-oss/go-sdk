@@ -43,6 +43,16 @@ func runLifecycleDemo() error {
 		return err
 	}
 
+	defer func() {
+		logger.Info("Unregistering workflows")
+		if err := workflowExecutor.UnRegisterWorkflow(workflow.FailureWorkflowName, 1); err != nil {
+			logger.Error("Failed to unregister failure workflow", zap.Error(err))
+		}
+		if err := workflowExecutor.UnRegisterWorkflow(workflow.LifecycleWorkflowName, 1); err != nil {
+			logger.Error("Failed to unregister lifecycle workflow", zap.Error(err))
+		}
+	}()
+
 	// Run comprehensive lifecycle demo
 	ctx := context.Background()
 	correlationId := fmt.Sprintf("lifecycle_demo_%d", time.Now().Unix())
@@ -386,6 +396,7 @@ func runLifecycleDemo() error {
 }
 
 func registerWorkflows(workflowExecutor *executor.WorkflowExecutor) error {
+
 	// Register failure workflow
 	failureWf := workflow.CreateFailureWorkflow(workflowExecutor)
 	if err := failureWf.Register(true); err != nil {

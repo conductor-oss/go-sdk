@@ -2,8 +2,9 @@ package client
 
 import (
 	"context"
-	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"net/http"
+
+	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
 type ServiceRegistryClient interface {
@@ -24,5 +25,5 @@ type ServiceRegistryClient interface {
 }
 
 func NewServiceRegistryClient(apiClient *APIClient) ServiceRegistryClient {
-	return &ServiceRegistryResourceApiService{apiClient}
+	return NewServiceRegistryResourceApiService(apiClient)
 }

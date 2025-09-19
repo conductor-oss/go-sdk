@@ -17,8 +17,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-
-	"github.com/conductor-sdk/conductor-go/sdk/log"
 )
 
 type MetadataResourceAPI interface {
@@ -236,25 +234,6 @@ func (a *MetadataResourceAPIService) CreateExecute(r MetadataResourceAPICreateRe
 	localVarFormParams := url.Values{}
 	if r.extendedWorkflowDef == nil {
 		return localVarReturnValue, nil, reportError("extendedWorkflowDef is required and must be specified")
-	}
-
-	// Log rate limit config for debugging
-	if r.extendedWorkflowDef.RateLimitConfig != nil {
-		concurrentLimit := int32(0)
-		rateLimitKey := ""
-		if r.extendedWorkflowDef.RateLimitConfig.ConcurrentExecLimit != nil {
-			concurrentLimit = *r.extendedWorkflowDef.RateLimitConfig.ConcurrentExecLimit
-		}
-		if r.extendedWorkflowDef.RateLimitConfig.RateLimitKey != nil {
-			rateLimitKey = *r.extendedWorkflowDef.RateLimitConfig.RateLimitKey
-		}
-		log.Error("API: Registering workflow with rate limit",
-			"name", r.extendedWorkflowDef.Name,
-			"concurrentLimit", concurrentLimit,
-			"rateLimitKey", rateLimitKey,
-			"rateLimitConfig", r.extendedWorkflowDef.RateLimitConfig)
-	} else {
-		log.Error("API: Registering workflow without rate limit", "name", r.extendedWorkflowDef.Name)
 	}
 
 	if r.overwrite != nil {

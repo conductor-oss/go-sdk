@@ -32,10 +32,10 @@ type FeatureSet struct {
 	Initialized               *bool                  `json:"initialized,omitempty"`
 	InitializationErrorString *string                `json:"initializationErrorString,omitempty"`
 	// Simplified schema for Descriptor (original had circular references)
-	DescriptorForType      map[string]interface{}            `json:"descriptorForType,omitempty"`
-	AllFields              map[string]map[string]interface{} `json:"allFields,omitempty"`
-	AllFieldsRaw           map[string]map[string]interface{} `json:"allFieldsRaw,omitempty"`
-	MemoizedSerializedSize *int32                            `json:"memoizedSerializedSize,omitempty"`
+	DescriptorForType      map[string]interface{} `json:"descriptorForType,omitempty"`
+	AllFields              map[string]interface{} `json:"allFields,omitempty"`
+	AllFieldsRaw           map[string]interface{} `json:"allFieldsRaw,omitempty"`
+	MemoizedSerializedSize *int32                 `json:"memoizedSerializedSize,omitempty"`
 }
 
 // NewFeatureSet instantiates a new FeatureSet object
@@ -472,9 +472,9 @@ func (o *FeatureSet) SetDescriptorForType(v map[string]interface{}) {
 }
 
 // GetAllFields returns the AllFields field value if set, zero value otherwise.
-func (o *FeatureSet) GetAllFields() map[string]map[string]interface{} {
+func (o *FeatureSet) GetAllFields() map[string]interface{} {
 	if o == nil || IsNil(o.AllFields) {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.AllFields
@@ -482,9 +482,9 @@ func (o *FeatureSet) GetAllFields() map[string]map[string]interface{} {
 
 // GetAllFieldsOk returns a tuple with the AllFields field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *FeatureSet) GetAllFieldsOk() (map[string]map[string]interface{}, bool) {
+func (o *FeatureSet) GetAllFieldsOk() (map[string]interface{}, bool) {
 	if o == nil || IsNil(o.AllFields) {
-		return map[string]map[string]interface{}{}, false
+		return map[string]interface{}{}, false
 	}
 	return o.AllFields, true
 }
@@ -498,15 +498,15 @@ func (o *FeatureSet) HasAllFields() bool {
 	return false
 }
 
-// SetAllFields gets a reference to the given map[string]map[string]interface{} and assigns it to the AllFields field.
-func (o *FeatureSet) SetAllFields(v map[string]map[string]interface{}) {
+// SetAllFields gets a reference to the given map[string]interface{} and assigns it to the AllFields field.
+func (o *FeatureSet) SetAllFields(v map[string]interface{}) {
 	o.AllFields = v
 }
 
 // GetAllFieldsRaw returns the AllFieldsRaw field value if set, zero value otherwise.
-func (o *FeatureSet) GetAllFieldsRaw() map[string]map[string]interface{} {
+func (o *FeatureSet) GetAllFieldsRaw() map[string]interface{} {
 	if o == nil || IsNil(o.AllFieldsRaw) {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.AllFieldsRaw
@@ -514,9 +514,9 @@ func (o *FeatureSet) GetAllFieldsRaw() map[string]map[string]interface{} {
 
 // GetAllFieldsRawOk returns a tuple with the AllFieldsRaw field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *FeatureSet) GetAllFieldsRawOk() (map[string]map[string]interface{}, bool) {
+func (o *FeatureSet) GetAllFieldsRawOk() (map[string]interface{}, bool) {
 	if o == nil || IsNil(o.AllFieldsRaw) {
-		return map[string]map[string]interface{}{}, false
+		return map[string]interface{}{}, false
 	}
 	return o.AllFieldsRaw, true
 }
@@ -530,8 +530,8 @@ func (o *FeatureSet) HasAllFieldsRaw() bool {
 	return false
 }
 
-// SetAllFieldsRaw gets a reference to the given map[string]map[string]interface{} and assigns it to the AllFieldsRaw field.
-func (o *FeatureSet) SetAllFieldsRaw(v map[string]map[string]interface{}) {
+// SetAllFieldsRaw gets a reference to the given map[string]interface{} and assigns it to the AllFieldsRaw field.
+func (o *FeatureSet) SetAllFieldsRaw(v map[string]interface{}) {
 	o.AllFieldsRaw = v
 }
 

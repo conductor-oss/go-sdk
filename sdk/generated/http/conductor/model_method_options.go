@@ -33,10 +33,10 @@ type MethodOptions struct {
 	Initialized                      *bool                    `json:"initialized,omitempty"`
 	InitializationErrorString        *string                  `json:"initializationErrorString,omitempty"`
 	// Simplified schema for Descriptor (original had circular references)
-	DescriptorForType      map[string]interface{}            `json:"descriptorForType,omitempty"`
-	AllFields              map[string]map[string]interface{} `json:"allFields,omitempty"`
-	AllFieldsRaw           map[string]map[string]interface{} `json:"allFieldsRaw,omitempty"`
-	MemoizedSerializedSize *int32                            `json:"memoizedSerializedSize,omitempty"`
+	DescriptorForType      map[string]interface{} `json:"descriptorForType,omitempty"`
+	AllFields              map[string]interface{} `json:"allFields,omitempty"`
+	AllFieldsRaw           map[string]interface{} `json:"allFieldsRaw,omitempty"`
+	MemoizedSerializedSize *int32                 `json:"memoizedSerializedSize,omitempty"`
 }
 
 // NewMethodOptions instantiates a new MethodOptions object
@@ -505,9 +505,9 @@ func (o *MethodOptions) SetDescriptorForType(v map[string]interface{}) {
 }
 
 // GetAllFields returns the AllFields field value if set, zero value otherwise.
-func (o *MethodOptions) GetAllFields() map[string]map[string]interface{} {
+func (o *MethodOptions) GetAllFields() map[string]interface{} {
 	if o == nil || IsNil(o.AllFields) {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.AllFields
@@ -515,9 +515,9 @@ func (o *MethodOptions) GetAllFields() map[string]map[string]interface{} {
 
 // GetAllFieldsOk returns a tuple with the AllFields field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *MethodOptions) GetAllFieldsOk() (map[string]map[string]interface{}, bool) {
+func (o *MethodOptions) GetAllFieldsOk() (map[string]interface{}, bool) {
 	if o == nil || IsNil(o.AllFields) {
-		return map[string]map[string]interface{}{}, false
+		return map[string]interface{}{}, false
 	}
 	return o.AllFields, true
 }
@@ -531,15 +531,15 @@ func (o *MethodOptions) HasAllFields() bool {
 	return false
 }
 
-// SetAllFields gets a reference to the given map[string]map[string]interface{} and assigns it to the AllFields field.
-func (o *MethodOptions) SetAllFields(v map[string]map[string]interface{}) {
+// SetAllFields gets a reference to the given map[string]interface{} and assigns it to the AllFields field.
+func (o *MethodOptions) SetAllFields(v map[string]interface{}) {
 	o.AllFields = v
 }
 
 // GetAllFieldsRaw returns the AllFieldsRaw field value if set, zero value otherwise.
-func (o *MethodOptions) GetAllFieldsRaw() map[string]map[string]interface{} {
+func (o *MethodOptions) GetAllFieldsRaw() map[string]interface{} {
 	if o == nil || IsNil(o.AllFieldsRaw) {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.AllFieldsRaw
@@ -547,9 +547,9 @@ func (o *MethodOptions) GetAllFieldsRaw() map[string]map[string]interface{} {
 
 // GetAllFieldsRawOk returns a tuple with the AllFieldsRaw field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *MethodOptions) GetAllFieldsRawOk() (map[string]map[string]interface{}, bool) {
+func (o *MethodOptions) GetAllFieldsRawOk() (map[string]interface{}, bool) {
 	if o == nil || IsNil(o.AllFieldsRaw) {
-		return map[string]map[string]interface{}{}, false
+		return map[string]interface{}{}, false
 	}
 	return o.AllFieldsRaw, true
 }
@@ -563,8 +563,8 @@ func (o *MethodOptions) HasAllFieldsRaw() bool {
 	return false
 }
 
-// SetAllFieldsRaw gets a reference to the given map[string]map[string]interface{} and assigns it to the AllFieldsRaw field.
-func (o *MethodOptions) SetAllFieldsRaw(v map[string]map[string]interface{}) {
+// SetAllFieldsRaw gets a reference to the given map[string]interface{} and assigns it to the AllFieldsRaw field.
+func (o *MethodOptions) SetAllFieldsRaw(v map[string]interface{}) {
 	o.AllFieldsRaw = v
 }
 

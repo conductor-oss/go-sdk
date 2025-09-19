@@ -33,8 +33,8 @@ type MetricsResourceAPI interface {
 	PrometheusTaskMetrics(ctx context.Context, taskName string) MetricsResourceAPIPrometheusTaskMetricsRequest
 
 	// PrometheusTaskMetricsExecute executes the request
-	//  @return map[string]map[string]interface{}
-	PrometheusTaskMetricsExecute(r MetricsResourceAPIPrometheusTaskMetricsRequest) (map[string]map[string]interface{}, *http.Response, error)
+	//  @return map[string]interface{}
+	PrometheusTaskMetricsExecute(r MetricsResourceAPIPrometheusTaskMetricsRequest) (map[string]interface{}, *http.Response, error)
 }
 
 // MetricsResourceAPIService MetricsResourceAPI service
@@ -64,7 +64,7 @@ func (r MetricsResourceAPIPrometheusTaskMetricsRequest) Step(step string) Metric
 	return r
 }
 
-func (r MetricsResourceAPIPrometheusTaskMetricsRequest) Execute() (map[string]map[string]interface{}, *http.Response, error) {
+func (r MetricsResourceAPIPrometheusTaskMetricsRequest) Execute() (map[string]interface{}, *http.Response, error) {
 	return r.ApiService.PrometheusTaskMetricsExecute(r)
 }
 
@@ -87,13 +87,13 @@ func (a *MetricsResourceAPIService) PrometheusTaskMetrics(ctx context.Context, t
 
 // Execute executes the request
 //
-//	@return map[string]map[string]interface{}
-func (a *MetricsResourceAPIService) PrometheusTaskMetricsExecute(r MetricsResourceAPIPrometheusTaskMetricsRequest) (map[string]map[string]interface{}, *http.Response, error) {
+//	@return map[string]interface{}
+func (a *MetricsResourceAPIService) PrometheusTaskMetricsExecute(r MetricsResourceAPIPrometheusTaskMetricsRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
 		localVarPostBody    interface{}
 		formFiles           []formFile
-		localVarReturnValue map[string]map[string]interface{}
+		localVarReturnValue map[string]interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MetricsResourceAPIService.PrometheusTaskMetrics")

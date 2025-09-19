@@ -19,8 +19,8 @@ var _ MappedNullable = &BulkResponse{}
 
 // BulkResponse struct for BulkResponse
 type BulkResponse struct {
-	BulkErrorResults      map[string]string        `json:"bulkErrorResults,omitempty"`
-	BulkSuccessfulResults []map[string]interface{} `json:"bulkSuccessfulResults,omitempty"`
+	BulkErrorResults      map[string]string `json:"bulkErrorResults,omitempty"`
+	BulkSuccessfulResults []string          `json:"bulkSuccessfulResults,omitempty"`
 }
 
 // NewBulkResponse instantiates a new BulkResponse object
@@ -74,9 +74,9 @@ func (o *BulkResponse) SetBulkErrorResults(v map[string]string) {
 }
 
 // GetBulkSuccessfulResults returns the BulkSuccessfulResults field value if set, zero value otherwise.
-func (o *BulkResponse) GetBulkSuccessfulResults() []map[string]interface{} {
+func (o *BulkResponse) GetBulkSuccessfulResults() []string {
 	if o == nil || IsNil(o.BulkSuccessfulResults) {
-		var ret []map[string]interface{}
+		var ret []string
 		return ret
 	}
 	return o.BulkSuccessfulResults
@@ -84,7 +84,7 @@ func (o *BulkResponse) GetBulkSuccessfulResults() []map[string]interface{} {
 
 // GetBulkSuccessfulResultsOk returns a tuple with the BulkSuccessfulResults field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *BulkResponse) GetBulkSuccessfulResultsOk() ([]map[string]interface{}, bool) {
+func (o *BulkResponse) GetBulkSuccessfulResultsOk() ([]string, bool) {
 	if o == nil || IsNil(o.BulkSuccessfulResults) {
 		return nil, false
 	}
@@ -101,7 +101,7 @@ func (o *BulkResponse) HasBulkSuccessfulResults() bool {
 }
 
 // SetBulkSuccessfulResults gets a reference to the given []map[string]interface{} and assigns it to the BulkSuccessfulResults field.
-func (o *BulkResponse) SetBulkSuccessfulResults(v []map[string]interface{}) {
+func (o *BulkResponse) SetBulkSuccessfulResults(v []string) {
 	o.BulkSuccessfulResults = v
 }
 

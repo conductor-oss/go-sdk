@@ -33,7 +33,7 @@ func CreateFailureWorkflow(executor *executor.WorkflowExecutor) *workflow.Conduc
 	// This gives time to detect it as "running"
 	observableWait := workflow.NewWaitForDurationTask("failure_handler_wait", 5*time.Second)
 
-	wf.Add(logFailure).Add(notifyFailure).Add(observableWait)
+	wf.Add(logFailure).Add(notifyFailure).Add(observableWait).OwnerEmail("owner@example.com")
 
 	return wf
 }
@@ -77,7 +77,8 @@ func CreateLifecycleWorkflow(executor *executor.WorkflowExecutor) *workflow.Cond
 		Add(waitForSignal).
 		Add(httpCall).
 		Add(pauseCheckpoint).
-		Add(finalTask)
+		Add(finalTask).
+		OwnerEmail("owner@example.com")
 
 	return wf
 }

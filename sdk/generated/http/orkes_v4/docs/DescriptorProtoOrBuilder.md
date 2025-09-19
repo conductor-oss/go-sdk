@@ -24,6 +24,7 @@ Name | Type | Description | Notes
 **Name** | Pointer to **string** |  | [optional] 
 **NameBytes** | Pointer to [**ByteString**](ByteString.md) |  | [optional] 
 **NestedTypeCount** | Pointer to **int32** |  | [optional] 
+**NestedTypeList** | Pointer to **[]map[string]interface{}** |  | [optional] 
 **OneofDeclCount** | Pointer to **int32** |  | [optional] 
 **OneofDeclList** | Pointer to **[]map[string]interface{}** |  | [optional] 
 **OneofDeclOrBuilderList** | Pointer to [**[]OneofDescriptorProtoOrBuilder**](OneofDescriptorProtoOrBuilder.md) |  | [optional] 
@@ -594,6 +595,31 @@ SetNestedTypeCount sets NestedTypeCount field to given value.
 `func (o *DescriptorProtoOrBuilder) HasNestedTypeCount() bool`
 
 HasNestedTypeCount returns a boolean if a field has been set.
+
+### GetNestedTypeList
+
+`func (o *DescriptorProtoOrBuilder) GetNestedTypeList() []map[string]interface{}`
+
+GetNestedTypeList returns the NestedTypeList field if non-nil, zero value otherwise.
+
+### GetNestedTypeListOk
+
+`func (o *DescriptorProtoOrBuilder) GetNestedTypeListOk() (*[]map[string]interface{}, bool)`
+
+GetNestedTypeListOk returns a tuple with the NestedTypeList field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetNestedTypeList
+
+`func (o *DescriptorProtoOrBuilder) SetNestedTypeList(v []map[string]interface{})`
+
+SetNestedTypeList sets NestedTypeList field to given value.
+
+### HasNestedTypeList
+
+`func (o *DescriptorProtoOrBuilder) HasNestedTypeList() bool`
+
+HasNestedTypeList returns a boolean if a field has been set.
 
 ### GetOneofDeclCount
 

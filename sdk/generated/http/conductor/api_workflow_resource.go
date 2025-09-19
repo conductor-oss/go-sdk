@@ -2710,13 +2710,13 @@ type WorkflowResourceAPIStartWorkflow1Request struct {
 	ctx           context.Context
 	ApiService    WorkflowResourceAPI
 	name          string
-	requestBody   *map[string]map[string]interface{}
+	requestBody   *map[string]interface{}
 	version       *int32
 	correlationId *string
 	priority      *int32
 }
 
-func (r WorkflowResourceAPIStartWorkflow1Request) RequestBody(requestBody map[string]map[string]interface{}) WorkflowResourceAPIStartWorkflow1Request {
+func (r WorkflowResourceAPIStartWorkflow1Request) RequestBody(requestBody map[string]interface{}) WorkflowResourceAPIStartWorkflow1Request {
 	r.requestBody = &requestBody
 	return r
 }

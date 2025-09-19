@@ -19,11 +19,11 @@ var _ MappedNullable = &FileOptionsOrBuilder{}
 
 // FileOptionsOrBuilder struct for FileOptionsOrBuilder
 type FileOptionsOrBuilder struct {
-	AllFields            map[string]map[string]interface{} `json:"allFields,omitempty"`
-	CcEnableArenas       *bool                             `json:"ccEnableArenas,omitempty"`
-	CcGenericServices    *bool                             `json:"ccGenericServices,omitempty"`
-	CsharpNamespace      *string                           `json:"csharpNamespace,omitempty"`
-	CsharpNamespaceBytes *ByteString                       `json:"csharpNamespaceBytes,omitempty"`
+	AllFields            map[string]interface{} `json:"allFields,omitempty"`
+	CcEnableArenas       *bool                  `json:"ccEnableArenas,omitempty"`
+	CcGenericServices    *bool                  `json:"ccGenericServices,omitempty"`
+	CsharpNamespace      *string                `json:"csharpNamespace,omitempty"`
+	CsharpNamespaceBytes *ByteString            `json:"csharpNamespaceBytes,omitempty"`
 	// Simplified schema for Message (original had circular references)
 	DefaultInstanceForType map[string]interface{} `json:"defaultInstanceForType,omitempty"`
 	Deprecated             *bool                  `json:"deprecated,omitempty"`
@@ -83,9 +83,9 @@ func NewFileOptionsOrBuilderWithDefaults() *FileOptionsOrBuilder {
 }
 
 // GetAllFields returns the AllFields field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *FileOptionsOrBuilder) GetAllFields() map[string]map[string]interface{} {
+func (o *FileOptionsOrBuilder) GetAllFields() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.AllFields
@@ -94,7 +94,7 @@ func (o *FileOptionsOrBuilder) GetAllFields() map[string]map[string]interface{} 
 // GetAllFieldsOk returns a tuple with the AllFields field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *FileOptionsOrBuilder) GetAllFieldsOk() (*map[string]map[string]interface{}, bool) {
+func (o *FileOptionsOrBuilder) GetAllFieldsOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.AllFields) {
 		return nil, false
 	}
@@ -110,8 +110,8 @@ func (o *FileOptionsOrBuilder) HasAllFields() bool {
 	return false
 }
 
-// SetAllFields gets a reference to the given map[string]map[string]interface{} and assigns it to the AllFields field.
-func (o *FileOptionsOrBuilder) SetAllFields(v map[string]map[string]interface{}) {
+// SetAllFields gets a reference to the given map[string]interface{} and assigns it to the AllFields field.
+func (o *FileOptionsOrBuilder) SetAllFields(v map[string]interface{}) {
 	o.AllFields = v
 }
 

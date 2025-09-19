@@ -19,15 +19,16 @@ import (
 	"strings"
 )
 
+
 type ApplicationResourceAPI interface {
 
 	/*
-		AddRoleToApplicationUser Method for AddRoleToApplicationUser
+	AddRoleToApplicationUser Method for AddRoleToApplicationUser
 
-		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-		@param applicationId
-		@param role
-		@return ApplicationResourceAPIAddRoleToApplicationUserRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param applicationId
+	@param role
+	@return ApplicationResourceAPIAddRoleToApplicationUserRequest
 	*/
 	AddRoleToApplicationUser(ctx context.Context, applicationId string, role string) ApplicationResourceAPIAddRoleToApplicationUserRequest
 
@@ -36,11 +37,11 @@ type ApplicationResourceAPI interface {
 	AddRoleToApplicationUserExecute(r ApplicationResourceAPIAddRoleToApplicationUserRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
-		CreateAccessKey Create an access key for an application
+	CreateAccessKey Create an access key for an application
 
-		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-		@param id
-		@return ApplicationResourceAPICreateAccessKeyRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApplicationResourceAPICreateAccessKeyRequest
 	*/
 	CreateAccessKey(ctx context.Context, id string) ApplicationResourceAPICreateAccessKeyRequest
 
@@ -49,10 +50,10 @@ type ApplicationResourceAPI interface {
 	CreateAccessKeyExecute(r ApplicationResourceAPICreateAccessKeyRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
-		CreateApplication Create an application
+	CreateApplication Create an application
 
-		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-		@return ApplicationResourceAPICreateApplicationRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApplicationResourceAPICreateApplicationRequest
 	*/
 	CreateApplication(ctx context.Context) ApplicationResourceAPICreateApplicationRequest
 
@@ -61,12 +62,12 @@ type ApplicationResourceAPI interface {
 	CreateApplicationExecute(r ApplicationResourceAPICreateApplicationRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
-		DeleteAccessKey Delete an access key
+	DeleteAccessKey Delete an access key
 
-		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-		@param applicationId
-		@param keyId
-		@return ApplicationResourceAPIDeleteAccessKeyRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param applicationId
+	@param keyId
+	@return ApplicationResourceAPIDeleteAccessKeyRequest
 	*/
 	DeleteAccessKey(ctx context.Context, applicationId string, keyId string) ApplicationResourceAPIDeleteAccessKeyRequest
 
@@ -75,11 +76,11 @@ type ApplicationResourceAPI interface {
 	DeleteAccessKeyExecute(r ApplicationResourceAPIDeleteAccessKeyRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
-		DeleteApplication Delete an application
+	DeleteApplication Delete an application
 
-		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-		@param id
-		@return ApplicationResourceAPIDeleteApplicationRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApplicationResourceAPIDeleteApplicationRequest
 	*/
 	DeleteApplication(ctx context.Context, id string) ApplicationResourceAPIDeleteApplicationRequest
 
@@ -88,11 +89,11 @@ type ApplicationResourceAPI interface {
 	DeleteApplicationExecute(r ApplicationResourceAPIDeleteApplicationRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
-		DeleteTagForApplication Delete a tag for application
+	DeleteTagForApplication Delete a tag for application
 
-		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-		@param id
-		@return ApplicationResourceAPIDeleteTagForApplicationRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApplicationResourceAPIDeleteTagForApplicationRequest
 	*/
 	DeleteTagForApplication(ctx context.Context, id string) ApplicationResourceAPIDeleteTagForApplicationRequest
 
@@ -100,11 +101,11 @@ type ApplicationResourceAPI interface {
 	DeleteTagForApplicationExecute(r ApplicationResourceAPIDeleteTagForApplicationRequest) (*http.Response, error)
 
 	/*
-		GetAccessKeys Get application's access keys
+	GetAccessKeys Get application's access keys
 
-		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-		@param id
-		@return ApplicationResourceAPIGetAccessKeysRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApplicationResourceAPIGetAccessKeysRequest
 	*/
 	GetAccessKeys(ctx context.Context, id string) ApplicationResourceAPIGetAccessKeysRequest
 
@@ -113,11 +114,11 @@ type ApplicationResourceAPI interface {
 	GetAccessKeysExecute(r ApplicationResourceAPIGetAccessKeysRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
-		GetAppByAccessKeyId Get application id by access key id
+	GetAppByAccessKeyId Get application id by access key id
 
-		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-		@param accessKeyId
-		@return ApplicationResourceAPIGetAppByAccessKeyIdRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param accessKeyId
+	@return ApplicationResourceAPIGetAppByAccessKeyIdRequest
 	*/
 	GetAppByAccessKeyId(ctx context.Context, accessKeyId string) ApplicationResourceAPIGetAppByAccessKeyIdRequest
 
@@ -126,11 +127,11 @@ type ApplicationResourceAPI interface {
 	GetAppByAccessKeyIdExecute(r ApplicationResourceAPIGetAppByAccessKeyIdRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
-		GetApplication Get an application by id
+	GetApplication Get an application by id
 
-		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-		@param id
-		@return ApplicationResourceAPIGetApplicationRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApplicationResourceAPIGetApplicationRequest
 	*/
 	GetApplication(ctx context.Context, id string) ApplicationResourceAPIGetApplicationRequest
 
@@ -139,11 +140,11 @@ type ApplicationResourceAPI interface {
 	GetApplicationExecute(r ApplicationResourceAPIGetApplicationRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
-		GetTagsForApplication Get tags by application
+	GetTagsForApplication Get tags by application
 
-		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-		@param id
-		@return ApplicationResourceAPIGetTagsForApplicationRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApplicationResourceAPIGetTagsForApplicationRequest
 	*/
 	GetTagsForApplication(ctx context.Context, id string) ApplicationResourceAPIGetTagsForApplicationRequest
 
@@ -152,10 +153,10 @@ type ApplicationResourceAPI interface {
 	GetTagsForApplicationExecute(r ApplicationResourceAPIGetTagsForApplicationRequest) ([]Tag, *http.Response, error)
 
 	/*
-		ListApplications Get all applications
+	ListApplications Get all applications
 
-		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-		@return ApplicationResourceAPIListApplicationsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApplicationResourceAPIListApplicationsRequest
 	*/
 	ListApplications(ctx context.Context) ApplicationResourceAPIListApplicationsRequest
 
@@ -164,11 +165,11 @@ type ApplicationResourceAPI interface {
 	ListApplicationsExecute(r ApplicationResourceAPIListApplicationsRequest) ([]ExtendedConductorApplication, *http.Response, error)
 
 	/*
-		PutTagForApplication Put a tag to application
+	PutTagForApplication Put a tag to application
 
-		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-		@param id
-		@return ApplicationResourceAPIPutTagForApplicationRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApplicationResourceAPIPutTagForApplicationRequest
 	*/
 	PutTagForApplication(ctx context.Context, id string) ApplicationResourceAPIPutTagForApplicationRequest
 
@@ -176,12 +177,12 @@ type ApplicationResourceAPI interface {
 	PutTagForApplicationExecute(r ApplicationResourceAPIPutTagForApplicationRequest) (*http.Response, error)
 
 	/*
-		RemoveRoleFromApplicationUser Method for RemoveRoleFromApplicationUser
+	RemoveRoleFromApplicationUser Method for RemoveRoleFromApplicationUser
 
-		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-		@param applicationId
-		@param role
-		@return ApplicationResourceAPIRemoveRoleFromApplicationUserRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param applicationId
+	@param role
+	@return ApplicationResourceAPIRemoveRoleFromApplicationUserRequest
 	*/
 	RemoveRoleFromApplicationUser(ctx context.Context, applicationId string, role string) ApplicationResourceAPIRemoveRoleFromApplicationUserRequest
 
@@ -190,12 +191,12 @@ type ApplicationResourceAPI interface {
 	RemoveRoleFromApplicationUserExecute(r ApplicationResourceAPIRemoveRoleFromApplicationUserRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
-		ToggleAccessKeyStatus Toggle the status of an access key
+	ToggleAccessKeyStatus Toggle the status of an access key
 
-		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-		@param applicationId
-		@param keyId
-		@return ApplicationResourceAPIToggleAccessKeyStatusRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param applicationId
+	@param keyId
+	@return ApplicationResourceAPIToggleAccessKeyStatusRequest
 	*/
 	ToggleAccessKeyStatus(ctx context.Context, applicationId string, keyId string) ApplicationResourceAPIToggleAccessKeyStatusRequest
 
@@ -204,11 +205,11 @@ type ApplicationResourceAPI interface {
 	ToggleAccessKeyStatusExecute(r ApplicationResourceAPIToggleAccessKeyStatusRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
-		UpdateApplication Update an application
+	UpdateApplication Update an application
 
-		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-		@param id
-		@return ApplicationResourceAPIUpdateApplicationRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param id
+	@return ApplicationResourceAPIUpdateApplicationRequest
 	*/
 	UpdateApplication(ctx context.Context, id string) ApplicationResourceAPIUpdateApplicationRequest
 
@@ -221,10 +222,10 @@ type ApplicationResourceAPI interface {
 type ApplicationResourceAPIService service
 
 type ApplicationResourceAPIAddRoleToApplicationUserRequest struct {
-	ctx           context.Context
-	ApiService    ApplicationResourceAPI
+	ctx context.Context
+	ApiService ApplicationResourceAPI
 	applicationId string
-	role          string
+	role string
 }
 
 func (r ApplicationResourceAPIAddRoleToApplicationUserRequest) Execute() (map[string]interface{}, *http.Response, error) {
@@ -234,29 +235,28 @@ func (r ApplicationResourceAPIAddRoleToApplicationUserRequest) Execute() (map[st
 /*
 AddRoleToApplicationUser Method for AddRoleToApplicationUser
 
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param applicationId
-	@param role
-	@return ApplicationResourceAPIAddRoleToApplicationUserRequest
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param applicationId
+ @param role
+ @return ApplicationResourceAPIAddRoleToApplicationUserRequest
 */
 func (a *ApplicationResourceAPIService) AddRoleToApplicationUser(ctx context.Context, applicationId string, role string) ApplicationResourceAPIAddRoleToApplicationUserRequest {
 	return ApplicationResourceAPIAddRoleToApplicationUserRequest{
-		ApiService:    a,
-		ctx:           ctx,
+		ApiService: a,
+		ctx: ctx,
 		applicationId: applicationId,
-		role:          role,
+		role: role,
 	}
 }
 
 // Execute executes the request
-//
-//	@return map[string]interface{}
+//  @return map[string]interface{}
 func (a *ApplicationResourceAPIService) AddRoleToApplicationUserExecute(r ApplicationResourceAPIAddRoleToApplicationUserRequest) (map[string]interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod  = http.MethodPost
-		localVarPostBody    interface{}
-		formFiles           []formFile
-		localVarReturnValue map[string]interface{}
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  map[string]interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ApplicationResourceAPIService.AddRoleToApplicationUser")
@@ -341,9 +341,9 @@ func (a *ApplicationResourceAPIService) AddRoleToApplicationUserExecute(r Applic
 }
 
 type ApplicationResourceAPICreateAccessKeyRequest struct {
-	ctx        context.Context
+	ctx context.Context
 	ApiService ApplicationResourceAPI
-	id         string
+	id string
 }
 
 func (r ApplicationResourceAPICreateAccessKeyRequest) Execute() (map[string]interface{}, *http.Response, error) {
@@ -353,27 +353,26 @@ func (r ApplicationResourceAPICreateAccessKeyRequest) Execute() (map[string]inte
 /*
 CreateAccessKey Create an access key for an application
 
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param id
-	@return ApplicationResourceAPICreateAccessKeyRequest
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param id
+ @return ApplicationResourceAPICreateAccessKeyRequest
 */
 func (a *ApplicationResourceAPIService) CreateAccessKey(ctx context.Context, id string) ApplicationResourceAPICreateAccessKeyRequest {
 	return ApplicationResourceAPICreateAccessKeyRequest{
 		ApiService: a,
-		ctx:        ctx,
-		id:         id,
+		ctx: ctx,
+		id: id,
 	}
 }
 
 // Execute executes the request
-//
-//	@return map[string]interface{}
+//  @return map[string]interface{}
 func (a *ApplicationResourceAPIService) CreateAccessKeyExecute(r ApplicationResourceAPICreateAccessKeyRequest) (map[string]interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod  = http.MethodPost
-		localVarPostBody    interface{}
-		formFiles           []formFile
-		localVarReturnValue map[string]interface{}
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  map[string]interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ApplicationResourceAPIService.CreateAccessKey")
@@ -457,8 +456,8 @@ func (a *ApplicationResourceAPIService) CreateAccessKeyExecute(r ApplicationReso
 }
 
 type ApplicationResourceAPICreateApplicationRequest struct {
-	ctx                              context.Context
-	ApiService                       ApplicationResourceAPI
+	ctx context.Context
+	ApiService ApplicationResourceAPI
 	createOrUpdateApplicationRequest *CreateOrUpdateApplicationRequest
 }
 
@@ -474,25 +473,24 @@ func (r ApplicationResourceAPICreateApplicationRequest) Execute() (map[string]in
 /*
 CreateApplication Create an application
 
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@return ApplicationResourceAPICreateApplicationRequest
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return ApplicationResourceAPICreateApplicationRequest
 */
 func (a *ApplicationResourceAPIService) CreateApplication(ctx context.Context) ApplicationResourceAPICreateApplicationRequest {
 	return ApplicationResourceAPICreateApplicationRequest{
 		ApiService: a,
-		ctx:        ctx,
+		ctx: ctx,
 	}
 }
 
 // Execute executes the request
-//
-//	@return map[string]interface{}
+//  @return map[string]interface{}
 func (a *ApplicationResourceAPIService) CreateApplicationExecute(r ApplicationResourceAPICreateApplicationRequest) (map[string]interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod  = http.MethodPost
-		localVarPostBody    interface{}
-		formFiles           []formFile
-		localVarReturnValue map[string]interface{}
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  map[string]interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ApplicationResourceAPIService.CreateApplication")
@@ -580,10 +578,10 @@ func (a *ApplicationResourceAPIService) CreateApplicationExecute(r ApplicationRe
 }
 
 type ApplicationResourceAPIDeleteAccessKeyRequest struct {
-	ctx           context.Context
-	ApiService    ApplicationResourceAPI
+	ctx context.Context
+	ApiService ApplicationResourceAPI
 	applicationId string
-	keyId         string
+	keyId string
 }
 
 func (r ApplicationResourceAPIDeleteAccessKeyRequest) Execute() (map[string]interface{}, *http.Response, error) {
@@ -593,29 +591,28 @@ func (r ApplicationResourceAPIDeleteAccessKeyRequest) Execute() (map[string]inte
 /*
 DeleteAccessKey Delete an access key
 
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param applicationId
-	@param keyId
-	@return ApplicationResourceAPIDeleteAccessKeyRequest
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param applicationId
+ @param keyId
+ @return ApplicationResourceAPIDeleteAccessKeyRequest
 */
 func (a *ApplicationResourceAPIService) DeleteAccessKey(ctx context.Context, applicationId string, keyId string) ApplicationResourceAPIDeleteAccessKeyRequest {
 	return ApplicationResourceAPIDeleteAccessKeyRequest{
-		ApiService:    a,
-		ctx:           ctx,
+		ApiService: a,
+		ctx: ctx,
 		applicationId: applicationId,
-		keyId:         keyId,
+		keyId: keyId,
 	}
 }
 
 // Execute executes the request
-//
-//	@return map[string]interface{}
+//  @return map[string]interface{}
 func (a *ApplicationResourceAPIService) DeleteAccessKeyExecute(r ApplicationResourceAPIDeleteAccessKeyRequest) (map[string]interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod  = http.MethodDelete
-		localVarPostBody    interface{}
-		formFiles           []formFile
-		localVarReturnValue map[string]interface{}
+		localVarHTTPMethod   = http.MethodDelete
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  map[string]interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ApplicationResourceAPIService.DeleteAccessKey")
@@ -700,9 +697,9 @@ func (a *ApplicationResourceAPIService) DeleteAccessKeyExecute(r ApplicationReso
 }
 
 type ApplicationResourceAPIDeleteApplicationRequest struct {
-	ctx        context.Context
+	ctx context.Context
 	ApiService ApplicationResourceAPI
-	id         string
+	id string
 }
 
 func (r ApplicationResourceAPIDeleteApplicationRequest) Execute() (map[string]interface{}, *http.Response, error) {
@@ -712,27 +709,26 @@ func (r ApplicationResourceAPIDeleteApplicationRequest) Execute() (map[string]in
 /*
 DeleteApplication Delete an application
 
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param id
-	@return ApplicationResourceAPIDeleteApplicationRequest
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param id
+ @return ApplicationResourceAPIDeleteApplicationRequest
 */
 func (a *ApplicationResourceAPIService) DeleteApplication(ctx context.Context, id string) ApplicationResourceAPIDeleteApplicationRequest {
 	return ApplicationResourceAPIDeleteApplicationRequest{
 		ApiService: a,
-		ctx:        ctx,
-		id:         id,
+		ctx: ctx,
+		id: id,
 	}
 }
 
 // Execute executes the request
-//
-//	@return map[string]interface{}
+//  @return map[string]interface{}
 func (a *ApplicationResourceAPIService) DeleteApplicationExecute(r ApplicationResourceAPIDeleteApplicationRequest) (map[string]interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod  = http.MethodDelete
-		localVarPostBody    interface{}
-		formFiles           []formFile
-		localVarReturnValue map[string]interface{}
+		localVarHTTPMethod   = http.MethodDelete
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  map[string]interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ApplicationResourceAPIService.DeleteApplication")
@@ -816,10 +812,10 @@ func (a *ApplicationResourceAPIService) DeleteApplicationExecute(r ApplicationRe
 }
 
 type ApplicationResourceAPIDeleteTagForApplicationRequest struct {
-	ctx        context.Context
+	ctx context.Context
 	ApiService ApplicationResourceAPI
-	id         string
-	tag        *[]Tag
+	id string
+	tag *[]Tag
 }
 
 func (r ApplicationResourceAPIDeleteTagForApplicationRequest) Tag(tag []Tag) ApplicationResourceAPIDeleteTagForApplicationRequest {
@@ -834,24 +830,24 @@ func (r ApplicationResourceAPIDeleteTagForApplicationRequest) Execute() (*http.R
 /*
 DeleteTagForApplication Delete a tag for application
 
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param id
-	@return ApplicationResourceAPIDeleteTagForApplicationRequest
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param id
+ @return ApplicationResourceAPIDeleteTagForApplicationRequest
 */
 func (a *ApplicationResourceAPIService) DeleteTagForApplication(ctx context.Context, id string) ApplicationResourceAPIDeleteTagForApplicationRequest {
 	return ApplicationResourceAPIDeleteTagForApplicationRequest{
 		ApiService: a,
-		ctx:        ctx,
-		id:         id,
+		ctx: ctx,
+		id: id,
 	}
 }
 
 // Execute executes the request
 func (a *ApplicationResourceAPIService) DeleteTagForApplicationExecute(r ApplicationResourceAPIDeleteTagForApplicationRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod = http.MethodDelete
-		localVarPostBody   interface{}
-		formFiles          []formFile
+		localVarHTTPMethod   = http.MethodDelete
+		localVarPostBody     interface{}
+		formFiles            []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ApplicationResourceAPIService.DeleteTagForApplication")
@@ -934,9 +930,9 @@ func (a *ApplicationResourceAPIService) DeleteTagForApplicationExecute(r Applica
 }
 
 type ApplicationResourceAPIGetAccessKeysRequest struct {
-	ctx        context.Context
+	ctx context.Context
 	ApiService ApplicationResourceAPI
-	id         string
+	id string
 }
 
 func (r ApplicationResourceAPIGetAccessKeysRequest) Execute() (map[string]interface{}, *http.Response, error) {
@@ -946,27 +942,26 @@ func (r ApplicationResourceAPIGetAccessKeysRequest) Execute() (map[string]interf
 /*
 GetAccessKeys Get application's access keys
 
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param id
-	@return ApplicationResourceAPIGetAccessKeysRequest
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param id
+ @return ApplicationResourceAPIGetAccessKeysRequest
 */
 func (a *ApplicationResourceAPIService) GetAccessKeys(ctx context.Context, id string) ApplicationResourceAPIGetAccessKeysRequest {
 	return ApplicationResourceAPIGetAccessKeysRequest{
 		ApiService: a,
-		ctx:        ctx,
-		id:         id,
+		ctx: ctx,
+		id: id,
 	}
 }
 
 // Execute executes the request
-//
-//	@return map[string]interface{}
+//  @return map[string]interface{}
 func (a *ApplicationResourceAPIService) GetAccessKeysExecute(r ApplicationResourceAPIGetAccessKeysRequest) (map[string]interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod  = http.MethodGet
-		localVarPostBody    interface{}
-		formFiles           []formFile
-		localVarReturnValue map[string]interface{}
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  map[string]interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ApplicationResourceAPIService.GetAccessKeys")
@@ -1050,8 +1045,8 @@ func (a *ApplicationResourceAPIService) GetAccessKeysExecute(r ApplicationResour
 }
 
 type ApplicationResourceAPIGetAppByAccessKeyIdRequest struct {
-	ctx         context.Context
-	ApiService  ApplicationResourceAPI
+	ctx context.Context
+	ApiService ApplicationResourceAPI
 	accessKeyId string
 }
 
@@ -1062,27 +1057,26 @@ func (r ApplicationResourceAPIGetAppByAccessKeyIdRequest) Execute() (map[string]
 /*
 GetAppByAccessKeyId Get application id by access key id
 
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param accessKeyId
-	@return ApplicationResourceAPIGetAppByAccessKeyIdRequest
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param accessKeyId
+ @return ApplicationResourceAPIGetAppByAccessKeyIdRequest
 */
 func (a *ApplicationResourceAPIService) GetAppByAccessKeyId(ctx context.Context, accessKeyId string) ApplicationResourceAPIGetAppByAccessKeyIdRequest {
 	return ApplicationResourceAPIGetAppByAccessKeyIdRequest{
-		ApiService:  a,
-		ctx:         ctx,
+		ApiService: a,
+		ctx: ctx,
 		accessKeyId: accessKeyId,
 	}
 }
 
 // Execute executes the request
-//
-//	@return map[string]interface{}
+//  @return map[string]interface{}
 func (a *ApplicationResourceAPIService) GetAppByAccessKeyIdExecute(r ApplicationResourceAPIGetAppByAccessKeyIdRequest) (map[string]interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod  = http.MethodGet
-		localVarPostBody    interface{}
-		formFiles           []formFile
-		localVarReturnValue map[string]interface{}
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  map[string]interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ApplicationResourceAPIService.GetAppByAccessKeyId")
@@ -1169,9 +1163,9 @@ func (a *ApplicationResourceAPIService) GetAppByAccessKeyIdExecute(r Application
 }
 
 type ApplicationResourceAPIGetApplicationRequest struct {
-	ctx        context.Context
+	ctx context.Context
 	ApiService ApplicationResourceAPI
-	id         string
+	id string
 }
 
 func (r ApplicationResourceAPIGetApplicationRequest) Execute() (map[string]interface{}, *http.Response, error) {
@@ -1181,27 +1175,26 @@ func (r ApplicationResourceAPIGetApplicationRequest) Execute() (map[string]inter
 /*
 GetApplication Get an application by id
 
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param id
-	@return ApplicationResourceAPIGetApplicationRequest
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param id
+ @return ApplicationResourceAPIGetApplicationRequest
 */
 func (a *ApplicationResourceAPIService) GetApplication(ctx context.Context, id string) ApplicationResourceAPIGetApplicationRequest {
 	return ApplicationResourceAPIGetApplicationRequest{
 		ApiService: a,
-		ctx:        ctx,
-		id:         id,
+		ctx: ctx,
+		id: id,
 	}
 }
 
 // Execute executes the request
-//
-//	@return map[string]interface{}
+//  @return map[string]interface{}
 func (a *ApplicationResourceAPIService) GetApplicationExecute(r ApplicationResourceAPIGetApplicationRequest) (map[string]interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod  = http.MethodGet
-		localVarPostBody    interface{}
-		formFiles           []formFile
-		localVarReturnValue map[string]interface{}
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  map[string]interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ApplicationResourceAPIService.GetApplication")
@@ -1285,9 +1278,9 @@ func (a *ApplicationResourceAPIService) GetApplicationExecute(r ApplicationResou
 }
 
 type ApplicationResourceAPIGetTagsForApplicationRequest struct {
-	ctx        context.Context
+	ctx context.Context
 	ApiService ApplicationResourceAPI
-	id         string
+	id string
 }
 
 func (r ApplicationResourceAPIGetTagsForApplicationRequest) Execute() ([]Tag, *http.Response, error) {
@@ -1297,27 +1290,26 @@ func (r ApplicationResourceAPIGetTagsForApplicationRequest) Execute() ([]Tag, *h
 /*
 GetTagsForApplication Get tags by application
 
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param id
-	@return ApplicationResourceAPIGetTagsForApplicationRequest
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param id
+ @return ApplicationResourceAPIGetTagsForApplicationRequest
 */
 func (a *ApplicationResourceAPIService) GetTagsForApplication(ctx context.Context, id string) ApplicationResourceAPIGetTagsForApplicationRequest {
 	return ApplicationResourceAPIGetTagsForApplicationRequest{
 		ApiService: a,
-		ctx:        ctx,
-		id:         id,
+		ctx: ctx,
+		id: id,
 	}
 }
 
 // Execute executes the request
-//
-//	@return []Tag
+//  @return []Tag
 func (a *ApplicationResourceAPIService) GetTagsForApplicationExecute(r ApplicationResourceAPIGetTagsForApplicationRequest) ([]Tag, *http.Response, error) {
 	var (
-		localVarHTTPMethod  = http.MethodGet
-		localVarPostBody    interface{}
-		formFiles           []formFile
-		localVarReturnValue []Tag
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  []Tag
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ApplicationResourceAPIService.GetTagsForApplication")
@@ -1404,7 +1396,7 @@ func (a *ApplicationResourceAPIService) GetTagsForApplicationExecute(r Applicati
 }
 
 type ApplicationResourceAPIListApplicationsRequest struct {
-	ctx        context.Context
+	ctx context.Context
 	ApiService ApplicationResourceAPI
 }
 
@@ -1415,25 +1407,24 @@ func (r ApplicationResourceAPIListApplicationsRequest) Execute() ([]ExtendedCond
 /*
 ListApplications Get all applications
 
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@return ApplicationResourceAPIListApplicationsRequest
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return ApplicationResourceAPIListApplicationsRequest
 */
 func (a *ApplicationResourceAPIService) ListApplications(ctx context.Context) ApplicationResourceAPIListApplicationsRequest {
 	return ApplicationResourceAPIListApplicationsRequest{
 		ApiService: a,
-		ctx:        ctx,
+		ctx: ctx,
 	}
 }
 
 // Execute executes the request
-//
-//	@return []ExtendedConductorApplication
+//  @return []ExtendedConductorApplication
 func (a *ApplicationResourceAPIService) ListApplicationsExecute(r ApplicationResourceAPIListApplicationsRequest) ([]ExtendedConductorApplication, *http.Response, error) {
 	var (
-		localVarHTTPMethod  = http.MethodGet
-		localVarPostBody    interface{}
-		formFiles           []formFile
-		localVarReturnValue []ExtendedConductorApplication
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  []ExtendedConductorApplication
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ApplicationResourceAPIService.ListApplications")
@@ -1516,10 +1507,10 @@ func (a *ApplicationResourceAPIService) ListApplicationsExecute(r ApplicationRes
 }
 
 type ApplicationResourceAPIPutTagForApplicationRequest struct {
-	ctx        context.Context
+	ctx context.Context
 	ApiService ApplicationResourceAPI
-	id         string
-	tag        *[]Tag
+	id string
+	tag *[]Tag
 }
 
 func (r ApplicationResourceAPIPutTagForApplicationRequest) Tag(tag []Tag) ApplicationResourceAPIPutTagForApplicationRequest {
@@ -1534,24 +1525,24 @@ func (r ApplicationResourceAPIPutTagForApplicationRequest) Execute() (*http.Resp
 /*
 PutTagForApplication Put a tag to application
 
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param id
-	@return ApplicationResourceAPIPutTagForApplicationRequest
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param id
+ @return ApplicationResourceAPIPutTagForApplicationRequest
 */
 func (a *ApplicationResourceAPIService) PutTagForApplication(ctx context.Context, id string) ApplicationResourceAPIPutTagForApplicationRequest {
 	return ApplicationResourceAPIPutTagForApplicationRequest{
 		ApiService: a,
-		ctx:        ctx,
-		id:         id,
+		ctx: ctx,
+		id: id,
 	}
 }
 
 // Execute executes the request
 func (a *ApplicationResourceAPIService) PutTagForApplicationExecute(r ApplicationResourceAPIPutTagForApplicationRequest) (*http.Response, error) {
 	var (
-		localVarHTTPMethod = http.MethodPut
-		localVarPostBody   interface{}
-		formFiles          []formFile
+		localVarHTTPMethod   = http.MethodPut
+		localVarPostBody     interface{}
+		formFiles            []formFile
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ApplicationResourceAPIService.PutTagForApplication")
@@ -1634,10 +1625,10 @@ func (a *ApplicationResourceAPIService) PutTagForApplicationExecute(r Applicatio
 }
 
 type ApplicationResourceAPIRemoveRoleFromApplicationUserRequest struct {
-	ctx           context.Context
-	ApiService    ApplicationResourceAPI
+	ctx context.Context
+	ApiService ApplicationResourceAPI
 	applicationId string
-	role          string
+	role string
 }
 
 func (r ApplicationResourceAPIRemoveRoleFromApplicationUserRequest) Execute() (map[string]interface{}, *http.Response, error) {
@@ -1647,29 +1638,28 @@ func (r ApplicationResourceAPIRemoveRoleFromApplicationUserRequest) Execute() (m
 /*
 RemoveRoleFromApplicationUser Method for RemoveRoleFromApplicationUser
 
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param applicationId
-	@param role
-	@return ApplicationResourceAPIRemoveRoleFromApplicationUserRequest
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param applicationId
+ @param role
+ @return ApplicationResourceAPIRemoveRoleFromApplicationUserRequest
 */
 func (a *ApplicationResourceAPIService) RemoveRoleFromApplicationUser(ctx context.Context, applicationId string, role string) ApplicationResourceAPIRemoveRoleFromApplicationUserRequest {
 	return ApplicationResourceAPIRemoveRoleFromApplicationUserRequest{
-		ApiService:    a,
-		ctx:           ctx,
+		ApiService: a,
+		ctx: ctx,
 		applicationId: applicationId,
-		role:          role,
+		role: role,
 	}
 }
 
 // Execute executes the request
-//
-//	@return map[string]interface{}
+//  @return map[string]interface{}
 func (a *ApplicationResourceAPIService) RemoveRoleFromApplicationUserExecute(r ApplicationResourceAPIRemoveRoleFromApplicationUserRequest) (map[string]interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod  = http.MethodDelete
-		localVarPostBody    interface{}
-		formFiles           []formFile
-		localVarReturnValue map[string]interface{}
+		localVarHTTPMethod   = http.MethodDelete
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  map[string]interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ApplicationResourceAPIService.RemoveRoleFromApplicationUser")
@@ -1754,10 +1744,10 @@ func (a *ApplicationResourceAPIService) RemoveRoleFromApplicationUserExecute(r A
 }
 
 type ApplicationResourceAPIToggleAccessKeyStatusRequest struct {
-	ctx           context.Context
-	ApiService    ApplicationResourceAPI
+	ctx context.Context
+	ApiService ApplicationResourceAPI
 	applicationId string
-	keyId         string
+	keyId string
 }
 
 func (r ApplicationResourceAPIToggleAccessKeyStatusRequest) Execute() (map[string]interface{}, *http.Response, error) {
@@ -1767,29 +1757,28 @@ func (r ApplicationResourceAPIToggleAccessKeyStatusRequest) Execute() (map[strin
 /*
 ToggleAccessKeyStatus Toggle the status of an access key
 
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param applicationId
-	@param keyId
-	@return ApplicationResourceAPIToggleAccessKeyStatusRequest
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param applicationId
+ @param keyId
+ @return ApplicationResourceAPIToggleAccessKeyStatusRequest
 */
 func (a *ApplicationResourceAPIService) ToggleAccessKeyStatus(ctx context.Context, applicationId string, keyId string) ApplicationResourceAPIToggleAccessKeyStatusRequest {
 	return ApplicationResourceAPIToggleAccessKeyStatusRequest{
-		ApiService:    a,
-		ctx:           ctx,
+		ApiService: a,
+		ctx: ctx,
 		applicationId: applicationId,
-		keyId:         keyId,
+		keyId: keyId,
 	}
 }
 
 // Execute executes the request
-//
-//	@return map[string]interface{}
+//  @return map[string]interface{}
 func (a *ApplicationResourceAPIService) ToggleAccessKeyStatusExecute(r ApplicationResourceAPIToggleAccessKeyStatusRequest) (map[string]interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod  = http.MethodPost
-		localVarPostBody    interface{}
-		formFiles           []formFile
-		localVarReturnValue map[string]interface{}
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  map[string]interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ApplicationResourceAPIService.ToggleAccessKeyStatus")
@@ -1874,9 +1863,9 @@ func (a *ApplicationResourceAPIService) ToggleAccessKeyStatusExecute(r Applicati
 }
 
 type ApplicationResourceAPIUpdateApplicationRequest struct {
-	ctx                              context.Context
-	ApiService                       ApplicationResourceAPI
-	id                               string
+	ctx context.Context
+	ApiService ApplicationResourceAPI
+	id string
 	createOrUpdateApplicationRequest *CreateOrUpdateApplicationRequest
 }
 
@@ -1892,27 +1881,26 @@ func (r ApplicationResourceAPIUpdateApplicationRequest) Execute() (map[string]in
 /*
 UpdateApplication Update an application
 
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@param id
-	@return ApplicationResourceAPIUpdateApplicationRequest
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param id
+ @return ApplicationResourceAPIUpdateApplicationRequest
 */
 func (a *ApplicationResourceAPIService) UpdateApplication(ctx context.Context, id string) ApplicationResourceAPIUpdateApplicationRequest {
 	return ApplicationResourceAPIUpdateApplicationRequest{
 		ApiService: a,
-		ctx:        ctx,
-		id:         id,
+		ctx: ctx,
+		id: id,
 	}
 }
 
 // Execute executes the request
-//
-//	@return map[string]interface{}
+//  @return map[string]interface{}
 func (a *ApplicationResourceAPIService) UpdateApplicationExecute(r ApplicationResourceAPIUpdateApplicationRequest) (map[string]interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod  = http.MethodPut
-		localVarPostBody    interface{}
-		formFiles           []formFile
-		localVarReturnValue map[string]interface{}
+		localVarHTTPMethod   = http.MethodPut
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  map[string]interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ApplicationResourceAPIService.UpdateApplication")

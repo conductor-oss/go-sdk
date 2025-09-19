@@ -40,6 +40,8 @@ func runDynamicWorkflowDemo(logger *zap.Logger) error {
 	logger.Info("=== Scenario 1: Simple workflow ===")
 	simpleWf := workflow.CreateEmptyDynamicWorkflow(conductorService.WorkflowExecutor)
 
+	simpleWf.OwnerEmail("owner@example.com")
+
 	// Add tasks directly in main function
 	getUserEmail := sdkworkflow.NewSimpleTask("get_user_email", "get_user_email_ref").
 		Input("userid", "${workflow.input.userid}")
@@ -62,6 +64,8 @@ func runDynamicWorkflowDemo(logger *zap.Logger) error {
 	// Scenario 2: Complex workflow with HTTP task
 	logger.Info("=== Scenario 2: Complex with HTTP task ===")
 	complexWf := workflow.CreateEmptyDynamicWorkflow(conductorService.WorkflowExecutor)
+
+	complexWf.OwnerEmail("owner@example.com")
 
 	// Add tasks one by one in main function
 	getUserEmail2 := sdkworkflow.NewSimpleTask("get_user_email", "get_user_email_ref").
@@ -94,6 +98,8 @@ func runDynamicWorkflowDemo(logger *zap.Logger) error {
 	// Scenario 3: Conditional task addition based on runtime decision
 	logger.Info("=== Scenario 3: Conditional task addition ===")
 	conditionalWf := workflow.CreateEmptyDynamicWorkflow(conductorService.WorkflowExecutor)
+
+	conditionalWf.OwnerEmail("owner@example.com")
 
 	// Always add user email
 	getUserEmail3 := sdkworkflow.NewSimpleTask("get_user_email", "get_user_email_ref").
@@ -143,6 +149,16 @@ func executeWorkflow(conductorService *service.ConductorService, wf *sdkworkflow
 	}
 	conductorService.Logger.Info("Successfully registered dynamic workflow",
 		zap.String("scenario", scenarioName))
+
+	defer func() {
+		conductorService.Logger.Info("Unregistering dynamic workflow",
+			zap.String("scenario", scenarioName))
+		if err := wf.UnRegister(); err != nil {
+			conductorService.Logger.Error("Failed to unregister dynamic workflow",
+				zap.String("scenario", scenarioName),
+				zap.Error(err))
+		}
+	}()
 
 	// Execute the workflow
 	workflowId, err := conductorService.WorkflowExecutor.StartWorkflow(&model.StartWorkflowRequest{

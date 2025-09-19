@@ -30,10 +30,6 @@ import (
 // - toGenerated* : Domain models -> Generated models
 // ============================================================================
 
-// ============================================================================
-// User/RBAC Model Mappers
-// ============================================================================
-
 // toGeneratedAuthorizationRequest converts rbac.AuthorizationRequest to orkes.AuthorizationRequest
 func toGeneratedAuthorizationRequest(domainReq rbac.AuthorizationRequest) orkes.AuthorizationRequest {
 	return orkes.AuthorizationRequest{
@@ -55,7 +51,6 @@ func toDomainConductorUser(genUser map[string]interface{}) *rbac.ConductorUser {
 		return nil
 	}
 
-	// Comprehensive field-by-field mapping from map[string]interface{} to rbac.ConductorUser
 	domain := &rbac.ConductorUser{}
 
 	// Map boolean fields
@@ -436,14 +431,12 @@ func toGeneratedTagFromTagObject(domainTag model.TagObject) orkes.Tag {
 
 // toGeneratedWorkflowTask converts model.WorkflowTask to orkes.WorkflowTask
 func toGeneratedWorkflowTask(domain model.WorkflowTask) orkes.WorkflowTask {
-	// Comprehensive field-by-field mapping from model.WorkflowTask to orkes.WorkflowTask
 	gen := orkes.WorkflowTask{}
 
 	// Map required fields
 	gen.Name = domain.Name
 	gen.TaskReferenceName = domain.TaskReferenceName
 
-	// Map string fields (values to pointers) - only fields that exist in orkes.WorkflowTask
 	gen.Description = ToPointer(domain.Description)
 	gen.Type = ToPointer(domain.Type_)
 	gen.DynamicTaskNameParam = ToPointer(domain.DynamicTaskNameParam)
@@ -502,15 +495,12 @@ func toGeneratedWorkflowTask(domain model.WorkflowTask) orkes.WorkflowTask {
 		gen.TaskDefinition = &genTaskDef
 	}
 
-	// Map input parameters - convert from map[string]interface{} to map[string]map[string]interface{}
 	if domain.InputParameters != nil {
 		gen.InputParameters = domain.InputParameters
 	}
 
-	// Map other fields that exist in orkes.WorkflowTask
 	gen.DefaultExclusiveJoinTask = domain.DefaultExclusiveJoinTask
 
-	// Map loop fields for DO_WHILE tasks
 	gen.LoopCondition = ToPointer(domain.LoopCondition)
 	if domain.LoopOver != nil {
 		genLoopOver := make([]orkes.WorkflowTask, len(domain.LoopOver))
@@ -535,7 +525,6 @@ func toGeneratedSubWorkflowParams(domain *model.SubWorkflowParams) orkes.SubWork
 		TaskToDomain: &domain.TaskToDomain,
 	}
 
-	// Include inline workflow definition when present
 	if domain.WorkflowDefinition != nil {
 		gen.WorkflowDefinition = toMapFromWorkflowDef(domain.WorkflowDefinition)
 	}
@@ -549,7 +538,6 @@ func toGeneratedTaskDef(domain *model.TaskDef) orkes.TaskDef {
 		return orkes.TaskDef{}
 	}
 
-	// Only set RetryLogic and TimeoutPolicy if they're not empty to avoid JSON parse errors
 	var retryLogicPtr *string
 	if domain.RetryLogic != "" {
 		retryLogicPtr = &domain.RetryLogic
@@ -560,7 +548,6 @@ func toGeneratedTaskDef(domain *model.TaskDef) orkes.TaskDef {
 		timeoutPolicyPtr = &domain.TimeoutPolicy
 	}
 
-	// Set default values for required fields
 	responseTimeoutSeconds := domain.ResponseTimeoutSeconds
 	if responseTimeoutSeconds == 0 {
 		responseTimeoutSeconds = 1 // Minimum required by server
@@ -700,12 +687,10 @@ func toGeneratedWebhookConfig(domainConfig model.WebhookConfig) orkes.WebhookCon
 		gen.Headers = &domainConfig.Headers
 	}
 
-	// Convert ReceiverWorkflowNamesToVersions map
 	if domainConfig.ReceiverWorkflowNamesToVersions != nil {
 		gen.ReceiverWorkflowNamesToVersions = &domainConfig.ReceiverWorkflowNamesToVersions
 	}
 
-	// Convert WorkflowsToStart from map[string]int32 to map[string]map[string]interface{}
 	if domainConfig.WorkflowsToStart != nil {
 		gen.WorkflowsToStart = make(map[string]interface{})
 		for k, v := range domainConfig.WorkflowsToStart {
@@ -778,11 +763,9 @@ func toDomainWebhookConfigFromGenerated(genConfig orkes.WebhookConfig) model.Web
 		domain.ReceiverWorkflowNamesToVersions = *genConfig.ReceiverWorkflowNamesToVersions
 	}
 
-	// Convert WorkflowsToStart from map[string]map[string]interface{} to map[string]int32
 	if genConfig.WorkflowsToStart != nil {
 		domain.WorkflowsToStart = make(map[string]int32)
 		for k, v := range genConfig.WorkflowsToStart {
-			// Handle both int32 and float64 (from JSON unmarshaling)
 			switch val := v.(type) {
 			case int32:
 				domain.WorkflowsToStart[k] = val
@@ -863,20 +846,12 @@ func toDomainWorkflowStateFromGenerated(genStatus orkes.WorkflowStatus) model.Wo
 	domain.CorrelationId = GetPointerValue(genStatus.CorrelationId, "")
 	domain.Status = GetPointerValue(genStatus.Status, "")
 
-	// Convert Output from map[string]map[string]interface{} to map[string]interface{}
 	if genStatus.Output != nil {
-		domain.Output = make(map[string]interface{})
-		for k, v := range genStatus.Output {
-			domain.Output[k] = v
-		}
+		domain.Output = genStatus.Output
 	}
 
-	// Convert Variables from map[string]map[string]interface{} to map[string]interface{}
 	if genStatus.Variables != nil {
-		domain.Variables = make(map[string]interface{})
-		for k, v := range genStatus.Variables {
-			domain.Variables[k] = v
-		}
+		domain.Variables = genStatus.Variables
 	}
 
 	return domain
@@ -945,7 +920,7 @@ func toDomainIntegration(genIntegration orkes.Integration) integration.Integrati
 	return result
 }
 
-// toDomainIntegrationsFromGenerated converts []orkes.Integration to []model.Integration using field-by-field mapping
+// toDomainIntegrationsFromGenerated converts []orkes.Integration to []model.Integration
 //
 //nolint:gocognit,gocyclo // Generated mapper function with high complexity
 func toDomainIntegrationsFromGenerated(genIntegrations []orkes.Integration) []model.Integration {
@@ -957,7 +932,6 @@ func toDomainIntegrationsFromGenerated(genIntegrations []orkes.Integration) []mo
 		gen := genIntegrations[i]
 		m := model.Integration{}
 
-		// Simple pointer fields
 		if gen.Category != nil {
 			m.Category = *gen.Category
 		}
@@ -994,7 +968,6 @@ func toDomainIntegrationsFromGenerated(genIntegrations []orkes.Integration) []mo
 
 		// Maps and slices
 		if gen.Configuration != nil {
-			// Shallow copy map[string]interface{}
 			conf := make(map[string]interface{}, len(gen.Configuration))
 			for k, v := range gen.Configuration {
 				conf[k] = v
@@ -1020,11 +993,7 @@ func toDomainIntegrationApi(genApi orkes.IntegrationApi) integration.Integration
 		res.Api = *genApi.Api
 	}
 	if genApi.Configuration != nil {
-		conf := make(map[string]interface{}, len(genApi.Configuration))
-		for k, v := range genApi.Configuration {
-			conf[k] = v
-		}
-		res.Configuration = conf
+		res.Configuration = genApi.Configuration
 	}
 	if genApi.CreatedBy != nil {
 		res.CreatedBy = *genApi.CreatedBy
@@ -1083,11 +1052,7 @@ func toDomainModelIntegrationApiFromGenerated(gen *orkes.IntegrationApi) model.I
 		m.Api = *gen.Api
 	}
 	if gen.Configuration != nil {
-		conf := make(map[string]interface{}, len(gen.Configuration))
-		for k, v := range gen.Configuration {
-			conf[k] = v
-		}
-		m.Configuration = conf
+		m.Configuration = gen.Configuration
 	}
 	if gen.CreateTime != nil {
 		m.CreateTime = *gen.CreateTime
@@ -1467,7 +1432,6 @@ func toDomainTaskListSearchResultSummaryFromConductorGenerated(gen *orkes.TaskLi
 		return model.TaskListSearchResultSummary{}
 	}
 
-	// Comprehensive field-by-field mapping from orkes.TaskListSearchResultSummary to model.TaskListSearchResultSummary
 	domain := model.TaskListSearchResultSummary{}
 
 	// Map Results: []orkes.Task -> []model.Task
@@ -1617,25 +1581,18 @@ func toGeneratedUpgradeWorkflowRequest(request *model.UpgradeWorkflowRequest) or
 		return orkes.UpgradeWorkflowRequest{}
 	}
 
-	// Comprehensive field-by-field mapping from model.UpgradeWorkflowRequest to orkes.UpgradeWorkflowRequest
 	genRequest := orkes.UpgradeWorkflowRequest{}
 
-	// Map Name: string -> string (required field)
 	genRequest.Name = request.Name
 
-	// Map Version: int32 -> *int32 (optional field with pointer conversion)
 	if request.Version != 0 {
 		genRequest.Version = &request.Version
 	}
 
-	// Map TaskOutput: map[string]interface{}
-	// Convert flat map to nested map structure
 	if request.TaskOutput != nil {
 		genRequest.TaskOutput = request.TaskOutput
 	}
 
-	// Map WorkflowInput: map[string]interface{}
-	// Convert flat map to nested map structure
 	if request.WorkflowInput != nil {
 		genRequest.WorkflowInput = request.WorkflowInput
 	}
@@ -1649,21 +1606,16 @@ func toGeneratedWorkflowStateUpdate(update *model.WorkflowStateUpdate) orkes.Wor
 		return orkes.WorkflowStateUpdate{}
 	}
 
-	// Comprehensive field-by-field mapping from model.WorkflowStateUpdate to orkes.WorkflowStateUpdate
 	genUpdate := orkes.WorkflowStateUpdate{}
 
-	// Map TaskReferenceName: string -> *string
 	if update.TaskReferenceName != "" {
 		genUpdate.TaskReferenceName = &update.TaskReferenceName
 	}
 
-	// Map TaskResult: *model.TaskResult -> *orkes.TaskResult
 	if update.TaskResult != nil {
 		genUpdate.TaskResult = toGeneratedTaskResult(update.TaskResult)
 	}
 
-	// Map Variables: map[string]interface{} -> map[string]map[string]interface{}
-	// Convert flat map to nested map structure
 	if update.Variables != nil {
 		genUpdate.Variables = update.Variables
 	}
@@ -1786,11 +1738,9 @@ func toDomainEventHandlerFromOrkes(orkesHandler orkes.EventHandler) model.EventH
 		domainHandler.Active = *orkesHandler.Active
 	}
 
-	// Map actions field-by-field
 	if len(orkesHandler.Actions) > 0 {
 		domainHandler.Actions = make([]model.Action, len(orkesHandler.Actions))
 		for i := range orkesHandler.Actions {
-			// Inline mapping from orkes.Action to domain action (no separate helper to avoid top-of-file function issues)
 			oa := orkesHandler.Actions[i]
 			act := model.Action{}
 			if oa.Action != nil {
@@ -1889,69 +1839,56 @@ func toDomainWorkflow(orkesWorkflow *orkes.Workflow) model.Workflow {
 
 	domainWorkflow := model.Workflow{}
 
-	if orkesWorkflow != nil {
-		if orkesWorkflow.WorkflowId != nil {
-			domainWorkflow.WorkflowId = *orkesWorkflow.WorkflowId
-		}
-		if orkesWorkflow.CorrelationId != nil {
-			domainWorkflow.CorrelationId = *orkesWorkflow.CorrelationId
-		}
-		if orkesWorkflow.Status != nil {
-			domainWorkflow.Status = model.WorkflowStatus(*orkesWorkflow.Status)
-		}
-		if orkesWorkflow.StartTime != nil {
-			domainWorkflow.StartTime = *orkesWorkflow.StartTime
-		}
-		if orkesWorkflow.EndTime != nil {
-			domainWorkflow.EndTime = *orkesWorkflow.EndTime
-		}
-		if orkesWorkflow.CreateTime != nil {
-			domainWorkflow.CreateTime = *orkesWorkflow.CreateTime
-		}
-		if orkesWorkflow.UpdateTime != nil {
-			domainWorkflow.UpdateTime = *orkesWorkflow.UpdateTime
-		}
-		if orkesWorkflow.CreatedBy != nil {
-			domainWorkflow.CreatedBy = *orkesWorkflow.CreatedBy
-		}
-		if orkesWorkflow.Priority != nil {
-			domainWorkflow.Priority = *orkesWorkflow.Priority
-		}
+	if orkesWorkflow.WorkflowId != nil {
+		domainWorkflow.WorkflowId = *orkesWorkflow.WorkflowId
+	}
+	if orkesWorkflow.CorrelationId != nil {
+		domainWorkflow.CorrelationId = *orkesWorkflow.CorrelationId
+	}
+	if orkesWorkflow.Status != nil {
+		domainWorkflow.Status = model.WorkflowStatus(*orkesWorkflow.Status)
+	}
+	if orkesWorkflow.StartTime != nil {
+		domainWorkflow.StartTime = *orkesWorkflow.StartTime
+	}
+	if orkesWorkflow.EndTime != nil {
+		domainWorkflow.EndTime = *orkesWorkflow.EndTime
+	}
+	if orkesWorkflow.CreateTime != nil {
+		domainWorkflow.CreateTime = *orkesWorkflow.CreateTime
+	}
+	if orkesWorkflow.UpdateTime != nil {
+		domainWorkflow.UpdateTime = *orkesWorkflow.UpdateTime
+	}
+	if orkesWorkflow.CreatedBy != nil {
+		domainWorkflow.CreatedBy = *orkesWorkflow.CreatedBy
+	}
+	if orkesWorkflow.Priority != nil {
+		domainWorkflow.Priority = *orkesWorkflow.Priority
+	}
 
-		// Map input - convert from map[string]map[string]interface{} to map[string]interface{}
-		if orkesWorkflow.Input != nil {
-			domainWorkflow.Input = make(map[string]interface{})
-			for k, v := range orkesWorkflow.Input {
-				domainWorkflow.Input[k] = v
-			}
-		}
+	if orkesWorkflow.Input != nil {
+		domainWorkflow.Input = orkesWorkflow.Input
+	}
 
-		// Map output - convert from map[string]map[string]interface{} to map[string]interface{}
-		if orkesWorkflow.Output != nil {
-			domainWorkflow.Output = make(map[string]interface{})
-			for k, v := range orkesWorkflow.Output {
-				domainWorkflow.Output[k] = v
-			}
-		}
+	if orkesWorkflow.Output != nil {
+		domainWorkflow.Output = orkesWorkflow.Output
+	}
 
-		// Map variables
-		if orkesWorkflow.Variables != nil {
-			domainWorkflow.Variables = make(map[string]interface{})
-			for k, v := range orkesWorkflow.Variables {
-				domainWorkflow.Variables[k] = v
-			}
-		}
+	// Map variables
+	if orkesWorkflow.Variables != nil {
+		domainWorkflow.Variables = orkesWorkflow.Variables
+	}
 
-		// Map tasks
-		if len(orkesWorkflow.Tasks) > 0 {
-			domainWorkflow.Tasks = toDomainTasksFromGenerated(orkesWorkflow.Tasks)
-		}
+	// Map tasks
+	if len(orkesWorkflow.Tasks) > 0 {
+		domainWorkflow.Tasks = toDomainTasksFromGenerated(orkesWorkflow.Tasks)
+	}
 
-		// Map workflow definition when provided by API
-		if orkesWorkflow.WorkflowDefinition != nil {
-			wfDef := toDomainWorkflowDefFromGenerated(orkesWorkflow.WorkflowDefinition)
-			domainWorkflow.WorkflowDefinition = &wfDef
-		}
+	// Map workflow definition when provided by API
+	if orkesWorkflow.WorkflowDefinition != nil {
+		wfDef := toDomainWorkflowDefFromGenerated(orkesWorkflow.WorkflowDefinition)
+		domainWorkflow.WorkflowDefinition = &wfDef
 	}
 
 	return domainWorkflow
@@ -1984,20 +1921,12 @@ func toDomainWorkflowRun(orkesRun *orkes.WorkflowRun) model.WorkflowRun {
 			domainRun.CreatedBy = *orkesRun.CreatedBy
 		}
 
-		// Map input - convert from map[string]map[string]interface{} to map[string]interface{}
 		if orkesRun.Input != nil {
-			domainRun.Input = make(map[string]interface{})
-			for k, v := range orkesRun.Input {
-				domainRun.Input[k] = v
-			}
+			domainRun.Input = orkesRun.Input
 		}
 
-		// Map output - convert from map[string]map[string]interface{} to map[string]interface{}
 		if orkesRun.Output != nil {
-			domainRun.Output = make(map[string]interface{})
-			for k, v := range orkesRun.Output {
-				domainRun.Output[k] = v
-			}
+			domainRun.Output = orkesRun.Output
 		}
 
 		// Map tasks
@@ -2049,12 +1978,7 @@ func toDomainStartWorkflowRequestFromGenerated(genRequest orkes.StartWorkflowReq
 
 	// Map input
 	if genRequest.Input != nil {
-		// Convert map[string]map[string]interface{} to map[string]interface{}
-		inputMap := make(map[string]interface{})
-		for k, v := range genRequest.Input {
-			inputMap[k] = v
-		}
-		result.Input = inputMap
+		result.Input = genRequest.Input
 	}
 
 	// Map task to domain mapping
@@ -2148,12 +2072,10 @@ func toGeneratedSkipTaskRequest(domainRequest *model.SkipTaskRequest) orkes.Skip
 
 	orkesRequest := orkes.SkipTaskRequest{}
 
-	// Convert TaskInput from map[string]interface{} to map[string]map[string]interface{}
 	if domainRequest.TaskInput != nil {
 		orkesRequest.TaskInput = domainRequest.TaskInput
 	}
 
-	// Convert TaskOutput from map[string]interface{} to map[string]map[string]interface{}
 	if domainRequest.TaskOutput != nil {
 		orkesRequest.TaskOutput = domainRequest.TaskOutput
 	}
@@ -2251,7 +2173,6 @@ func toDomainWorkflowTaskFromGenerated(gen *orkes.WorkflowTask) model.WorkflowTa
 		return model.WorkflowTask{}
 	}
 
-	// Comprehensive field-by-field mapping from orkes.WorkflowTask to model.WorkflowTask
 	domain := model.WorkflowTask{}
 
 	// Map required fields
@@ -2385,25 +2306,20 @@ func toDomainSubWorkflowParamsFromGenerated(gen *orkes.SubWorkflowParams) *model
 		return nil
 	}
 
-	// Comprehensive field-by-field mapping from orkes.SubWorkflowParams to model.SubWorkflowParams
 	domain := &model.SubWorkflowParams{}
 
-	// Map required fields
 	if gen.Name != nil {
 		domain.Name = *gen.Name
 	}
 
-	// Map optional fields
 	if gen.Version != nil {
 		domain.Version = *gen.Version
 	}
 
-	// Map TaskToDomain
 	if gen.TaskToDomain != nil {
 		domain.TaskToDomain = *gen.TaskToDomain
 	}
 
-	// Map WorkflowDefinition (map[string]interface{} to *WorkflowDef) using targeted extraction
 	if gen.WorkflowDefinition != nil {
 		domain.WorkflowDefinition = fromMapToWorkflowDef(gen.WorkflowDefinition)
 	}
@@ -2419,10 +2335,8 @@ func toDomainTaskDefFromGenerated(gen *orkes.TaskDef) *model.TaskDef {
 		return nil
 	}
 
-	// Comprehensive field-by-field mapping from orkes.TaskDef to model.TaskDef
 	domain := &model.TaskDef{}
 
-	// Map required fields
 	domain.Name = gen.Name
 	domain.TimeoutSeconds = gen.TimeoutSeconds
 	if gen.RetryCount != nil {
@@ -2511,15 +2425,12 @@ func toDomainCacheConfigFromGenerated(gen *orkes.CacheConfig) *model.CacheConfig
 		return nil
 	}
 
-	// Comprehensive field-by-field mapping from orkes.CacheConfig to model.CacheConfig
 	domain := &model.CacheConfig{}
 
-	// Map string fields (pointers to values)
 	if gen.Key != nil {
 		domain.Key = *gen.Key
 	}
 
-	// Map numeric fields (pointers to values)
 	if gen.TtlInSecond != nil {
 		domain.TtlInSeconds = int(*gen.TtlInSecond)
 	}
@@ -2535,10 +2446,8 @@ func toDomainWorkflowDefFromGenerated(gen *orkes.WorkflowDef) model.WorkflowDef 
 		return model.WorkflowDef{}
 	}
 
-	// Comprehensive field-by-field mapping from orkes.WorkflowDef to model.WorkflowDef
 	domain := model.WorkflowDef{}
 
-	// Map required fields
 	domain.Name = gen.Name
 	domain.TimeoutSeconds = gen.TimeoutSeconds
 
@@ -2609,27 +2518,13 @@ func toDomainWorkflowDefFromGenerated(gen *orkes.WorkflowDef) model.WorkflowDef 
 		domain.InputTemplate = gen.InputTemplate
 	}
 
-	// Note: Fields present in orkes.WorkflowDef but not in model.WorkflowDef:
-	// - CacheConfig
-	// - EnforceSchema
-	// - InputSchema
-	// - MaskedFields
-	// - Metadata
-	// - OutputSchema
-	// - RateLimitConfig
-	// - WorkflowStatusListenerSink
-	// - Tags (different structure)
-	// - OverwriteTags
-
 	return domain
 }
 
 // toGeneratedTagFromTagString converts model.TagString to orkes.Tag
 func toGeneratedTagFromTagString(domain model.TagString) orkes.Tag {
-	// Comprehensive field-by-field mapping from model.TagString to orkes.Tag
 	gen := orkes.Tag{}
 
-	// Map string fields (values to pointers)
 	if domain.Key != "" {
 		gen.Key = &domain.Key
 	}
@@ -2662,10 +2557,8 @@ func toDomainTagObjectFromGenerated(gen *orkes.Tag) model.TagObject {
 		return model.TagObject{}
 	}
 
-	// Comprehensive field-by-field mapping from orkes.Tag to model.TagObject
 	domain := model.TagObject{}
 
-	// Map string fields (pointers to values)
 	if gen.Key != nil {
 		domain.Key = *gen.Key
 	}
@@ -3032,17 +2925,6 @@ func toDomainHumanTaskSearchResult(gen *orkes.HumanTaskSearchResult) human.Human
 			}
 		}
 
-		// Convert nested maps to simple maps
-		var input map[string]interface{}
-		if entry.Input != nil {
-			input = entry.Input
-		}
-
-		var output map[string]interface{}
-		if entry.Output != nil {
-			output = entry.Output
-		}
-
 		results = append(results, human.HumanTaskEntry{
 			TaskId:         GetPointerValue(entry.TaskId, ""),
 			TaskRefName:    GetPointerValue(entry.TaskRefName, ""),
@@ -3051,8 +2933,8 @@ func toDomainHumanTaskSearchResult(gen *orkes.HumanTaskSearchResult) human.Human
 			State:          GetPointerValue(entry.State, ""),
 			Assignee:       assignee,
 			Claimant:       claimant,
-			Input:          input,
-			Output:         output,
+			Input:          entry.Input,
+			Output:         entry.Output,
 			DefinitionName: GetPointerValue(entry.DefinitionName, ""),
 		})
 	}
@@ -3087,17 +2969,6 @@ func toDomainHumanTaskEntry(gen *orkes.HumanTaskEntry) human.HumanTaskEntry {
 		}
 	}
 
-	// Convert nested maps to simple maps
-	var input map[string]interface{}
-	if gen.Input != nil {
-		input = gen.Input
-	}
-
-	var output map[string]interface{}
-	if gen.Output != nil {
-		output = gen.Output
-	}
-
 	return human.HumanTaskEntry{
 		TaskId:         GetPointerValue(gen.TaskId, ""),
 		TaskRefName:    GetPointerValue(gen.TaskRefName, ""),
@@ -3106,8 +2977,8 @@ func toDomainHumanTaskEntry(gen *orkes.HumanTaskEntry) human.HumanTaskEntry {
 		State:          GetPointerValue(gen.State, ""),
 		Assignee:       assignee,
 		Claimant:       claimant,
-		Input:          input,
-		Output:         output,
+		Input:          gen.Input,
+		Output:         gen.Output,
 		DefinitionName: GetPointerValue(gen.DefinitionName, ""),
 	}
 }
@@ -3397,12 +3268,7 @@ func toGeneratedIntegrationApiUpdate(update integration.IntegrationApiUpdate) or
 	}
 
 	if update.Configuration != nil {
-		// Convert map[string]interface{} to map[string]interface{}
-		config := make(map[string]interface{})
-		for k, v := range update.Configuration {
-			config[k] = v
-		}
-		genUpdate.Configuration = config
+		genUpdate.Configuration = update.Configuration
 	}
 
 	return genUpdate
@@ -3998,7 +3864,6 @@ func toDomainWorkflowScheduleFromSaveRequest(saveRequest *model.SaveScheduleRequ
 //
 //nolint:gocognit,gocyclo // Generated mapper function with high complexity
 func toGeneratedWorkflowDefForConductor(domainWorkflow model.WorkflowDef) conductor.WorkflowDef {
-	// Field-by-field mapping from domain WorkflowDef to conductor.WorkflowDef
 	result := conductor.WorkflowDef{}
 
 	// Required
@@ -4051,37 +3916,13 @@ func toGeneratedWorkflowDefForConductor(domainWorkflow model.WorkflowDef) conduc
 
 	// Maps: convert map[string]interface{} -> map[string]map[string]interface{}
 	if domainWorkflow.OutputParameters != nil {
-		nested := make(map[string]map[string]interface{}, len(domainWorkflow.OutputParameters))
-		for k, v := range domainWorkflow.OutputParameters {
-			if vm, ok := v.(map[string]interface{}); ok {
-				nested[k] = vm
-			} else {
-				nested[k] = map[string]interface{}{"value": v}
-			}
-		}
-		result.OutputParameters = nested
+		result.OutputParameters = domainWorkflow.OutputParameters
 	}
 	if domainWorkflow.Variables != nil {
-		nested := make(map[string]map[string]interface{}, len(domainWorkflow.Variables))
-		for k, v := range domainWorkflow.Variables {
-			if vm, ok := v.(map[string]interface{}); ok {
-				nested[k] = vm
-			} else {
-				nested[k] = map[string]interface{}{"value": v}
-			}
-		}
-		result.Variables = nested
+		result.Variables = domainWorkflow.Variables
 	}
 	if domainWorkflow.InputTemplate != nil {
-		nested := make(map[string]map[string]interface{}, len(domainWorkflow.InputTemplate))
-		for k, v := range domainWorkflow.InputTemplate {
-			if vm, ok := v.(map[string]interface{}); ok {
-				nested[k] = vm
-			} else {
-				nested[k] = map[string]interface{}{"value": v}
-			}
-		}
-		result.InputTemplate = nested
+		result.InputTemplate = domainWorkflow.InputTemplate
 	}
 
 	// Tasks
@@ -4109,17 +3950,8 @@ func toGeneratedWorkflowTasksForConductor(tasks []model.WorkflowTask) []conducto
 		if t.Description != "" {
 			wt.Description = &t.Description
 		}
-		// InputParameters map[string]interface{} -> map[string]map[string]interface{}
 		if t.InputParameters != nil {
-			nested := make(map[string]map[string]interface{}, len(t.InputParameters))
-			for k, v := range t.InputParameters {
-				if vm, ok := v.(map[string]interface{}); ok {
-					nested[k] = vm
-				} else {
-					nested[k] = map[string]interface{}{"value": v}
-				}
-			}
-			wt.InputParameters = nested
+			wt.InputParameters = t.InputParameters
 		}
 		if t.Type_ != "" {
 			wt.Type = &t.Type_
@@ -4223,15 +4055,7 @@ func toGeneratedWorkflowTasksForConductor(tasks []model.WorkflowTask) []conducto
 				td.ConcurrentExecLimit = &t.TaskDefinition.ConcurrentExecLimit
 			}
 			if t.TaskDefinition.InputTemplate != nil {
-				nested := make(map[string]map[string]interface{}, len(t.TaskDefinition.InputTemplate))
-				for k, v := range t.TaskDefinition.InputTemplate {
-					if vm, ok := v.(map[string]interface{}); ok {
-						nested[k] = vm
-					} else {
-						nested[k] = map[string]interface{}{"value": v}
-					}
-				}
-				td.InputTemplate = nested
+				td.InputTemplate = t.TaskDefinition.InputTemplate
 			}
 			if t.TaskDefinition.RateLimitPerFrequency != 0 {
 				td.RateLimitPerFrequency = &t.TaskDefinition.RateLimitPerFrequency
@@ -4300,8 +4124,12 @@ func toGeneratedWorkflowDef(domain *model.WorkflowDef) *orkes.WorkflowDef {
 	gen := &orkes.WorkflowDef{}
 
 	// Required fields
-	gen.Name = domain.Name
-	gen.TimeoutSeconds = domain.TimeoutSeconds
+	if domain.Name != "" {
+		gen.Name = domain.Name
+	}
+	if domain.TimeoutSeconds != 0 {
+		gen.TimeoutSeconds = domain.TimeoutSeconds
+	}
 
 	// Convert Tasks: []model.WorkflowTask -> []orkes.WorkflowTask
 	if domain.Tasks != nil {
@@ -4518,8 +4346,8 @@ func toDomainWorkflowFromConductorGenerated(gen *conductor.Workflow) model.Workf
 		StartTime:                        GetPointerValue(gen.StartTime, int64(0)),
 		EndTime:                          GetPointerValue(gen.EndTime, int64(0)),
 		Priority:                         GetPointerValue(gen.Priority, int32(0)),
-		Input:                            convertFromNestedMapInterface(gen.Input),
-		Output:                           convertFromNestedMapInterface(gen.Output),
+		Input:                            gen.Input,
+		Output:                           gen.Output,
 		ReasonForIncompletion:            GetPointerValue(gen.ReasonForIncompletion, ""),
 		Event:                            GetPointerValue(gen.Event, ""),
 		FailedReferenceTaskNames:         gen.FailedReferenceTaskNames,
@@ -4541,7 +4369,7 @@ func toDomainWorkflowFromConductorGenerated(gen *conductor.Workflow) model.Workf
 		WorkflowVersion:      GetPointerValue(gen.WorkflowVersion, int32(0)),
 		LastRetriedTime:      GetPointerValue(gen.LastRetriedTime, int64(0)),
 		FailedTaskNames:      gen.FailedTaskNames,
-		Variables:            convertFromNestedMapInterface(gen.Variables),
+		Variables:            gen.Variables,
 		TaskToDomain:         GetPointerValue(gen.TaskToDomain, map[string]string{}),
 		// Convert Tasks using existing mapper
 		Tasks: toDomainTasksFromConductor(gen.Tasks),
@@ -4619,13 +4447,13 @@ func toDomainWorkflowDefFromConductorGenerated(gen *conductor.WorkflowDef) *mode
 
 	// Map fields that need conversion from nested to flat
 	if gen.OutputParameters != nil {
-		result.OutputParameters = convertFromNestedMapInterface(gen.OutputParameters)
+		result.OutputParameters = gen.OutputParameters
 	}
 	if gen.Variables != nil {
-		result.Variables = convertFromNestedMapInterface(gen.Variables)
+		result.Variables = gen.Variables
 	}
 	if gen.InputTemplate != nil {
-		result.InputTemplate = convertFromNestedMapInterface(gen.InputTemplate)
+		result.InputTemplate = gen.InputTemplate
 	}
 
 	if gen.Tasks != nil {
@@ -4792,16 +4620,10 @@ func toDomainSignalResponseFromGenerated(gen *orkes.SignalResponse) model.Signal
 
 	// Input/Output flatten
 	if gen.Input != nil {
-		resp.Input = make(map[string]interface{})
-		for k, v := range gen.Input {
-			resp.Input[k] = v
-		}
+		resp.Input = gen.Input
 	}
 	if gen.Output != nil {
-		resp.Output = make(map[string]interface{})
-		for k, v := range gen.Output {
-			resp.Output[k] = v
-		}
+		resp.Output = gen.Output
 	}
 
 	// Map additional fields that were added to the generated SignalResponse
@@ -4810,10 +4632,8 @@ func toDomainSignalResponseFromGenerated(gen *orkes.SignalResponse) model.Signal
 
 	// Map Tasks field
 	if gen.Tasks != nil {
-		// Convert []interface{} to []model.Task
 		resp.Tasks = make([]model.Task, len(gen.Tasks))
 		for i, taskInterface := range gen.Tasks {
-			// Convert interface{} to model.Task using JSON marshal/unmarshal
 			if taskData, err := json.Marshal(taskInterface); err == nil {
 				var task model.Task
 				if err := json.Unmarshal(taskData, &task); err == nil {
@@ -5086,8 +4906,6 @@ func toDomainTaskFromConductor(gen *conductor.Task) model.Task {
 		t := toDomainTaskDefPtrFromConductor(td)
 		domain.TaskDefinition = &t
 	}
-
-	// Fields present in conductor but not in domain are intentionally ignored (e.g., FirstStartTime, ParentTaskId, SubWorkflowId, SubworkflowChanged, LoopOverTask)
 
 	return domain
 }
@@ -5367,7 +5185,6 @@ func toGeneratedWorkflowTestRequest(domain *model.WorkflowTestRequest) orkes.Wor
 		gen.IdempotencyStrategy = &domain.IdempotencyStrategy
 	}
 
-	// Input map: map[string]interface{} -> map[string]map[string]interface{}
 	if domain.Input != nil {
 		gen.Input = domain.Input
 	}
@@ -5497,9 +5314,7 @@ func toDomainHealthFromAny(v interface{}) model.Health {
 			d.ErrorMessage = s
 		}
 	}
-	// details (object or map)
 	if dv, ok := m["details"]; ok {
-		// may be map[string]interface{} or map[string]map[string]interface{}
 		switch dm := dv.(type) {
 		case map[string]interface{}:
 			d.Details = dm
@@ -5571,25 +5386,74 @@ func toMapFromWorkflowDef(domain *model.WorkflowDef) map[string]interface{} {
 		return nil
 	}
 	return map[string]interface{}{
-		"name":             domain.Name,
-		"description":      domain.Description,
-		"version":          domain.Version,
-		"ownerEmail":       domain.OwnerEmail,
-		"ownerApp":         domain.OwnerApp,
-		"timeoutSeconds":   domain.TimeoutSeconds,
-		"inputParameters":  domain.InputParameters,
-		"outputParameters": domain.OutputParameters,
-		"variables":        domain.Variables,
-		"inputTemplate":    domain.InputTemplate,
-		"tasks":            toGenericWorkflowTasks(domain.Tasks),
+		"ownerApp":                      domain.OwnerApp,
+		"createTime":                    domain.CreateTime,
+		"updateTime":                    domain.UpdateTime,
+		"createdBy":                     domain.CreatedBy,
+		"updatedBy":                     domain.UpdatedBy,
+		"name":                          domain.Name,
+		"description":                   domain.Description,
+		"version":                       domain.Version,
+		"ownerEmail":                    domain.OwnerEmail,
+		"failureWorkflow":               domain.FailureWorkflow,
+		"schemaVersion":                 domain.SchemaVersion,
+		"restartable":                   domain.Restartable,
+		"workflowStatusListenerEnabled": domain.WorkflowStatusListenerEnabled,
+		"timeoutPolicy":                 domain.TimeoutPolicy,
+		"timeoutSeconds":                domain.TimeoutSeconds,
+		"inputParameters":               domain.InputParameters,
+		"outputParameters":              domain.OutputParameters,
+		"variables":                     domain.Variables,
+		"inputTemplate":                 domain.InputTemplate,
+		"tags": func() []map[string]interface{} {
+			if domain.Tags == nil {
+				return nil
+			}
+			tags := make([]map[string]interface{}, len(domain.Tags))
+			for i, t := range domain.Tags {
+				tags[i] = map[string]interface{}{
+					"key":   t.Key,
+					"type":  t.Type,
+					"value": t.Value,
+				}
+			}
+			return tags
+		}(),
+		"overwriteTags": domain.OverwriteTags,
+		"rateLimitConfig": func() map[string]interface{} {
+			if domain.RateLimitConfig == nil {
+				return nil
+			}
+			return map[string]interface{}{
+				"rateLimitKey":        domain.RateLimitConfig.RateLimitKey,
+				"concurrentExecLimit": domain.RateLimitConfig.ConcurrentExecLimit,
+			}
+		}(),
+		"tasks": toGenericWorkflowTasks(domain.Tasks),
 	}
 }
 
+//nolint:gocyclo,gocognit
 func fromMapToWorkflowDef(m map[string]interface{}) *model.WorkflowDef {
 	if m == nil {
 		return nil
 	}
 	wf := &model.WorkflowDef{}
+	if v, ok := m["ownerApp"].(string); ok {
+		wf.OwnerApp = v
+	}
+	if v, ok := m["createTime"].(float64); ok { // JSON numbers decode to float64
+		wf.CreateTime = int64(v)
+	}
+	if v, ok := m["updateTime"].(float64); ok {
+		wf.UpdateTime = int64(v)
+	}
+	if v, ok := m["createdBy"].(string); ok {
+		wf.CreatedBy = v
+	}
+	if v, ok := m["updatedBy"].(string); ok {
+		wf.UpdatedBy = v
+	}
 	if name, ok := m["name"].(string); ok {
 		wf.Name = name
 	}
@@ -5602,8 +5466,20 @@ func fromMapToWorkflowDef(m map[string]interface{}) *model.WorkflowDef {
 	if ownerEmail, ok := m["ownerEmail"].(string); ok {
 		wf.OwnerEmail = ownerEmail
 	}
-	if ownerApp, ok := m["ownerApp"].(string); ok {
-		wf.OwnerApp = ownerApp
+	if v, ok := m["failureWorkflow"].(string); ok {
+		wf.FailureWorkflow = v
+	}
+	if v, ok := m["schemaVersion"].(float64); ok {
+		wf.SchemaVersion = int32(v)
+	}
+	if v, ok := m["restartable"].(bool); ok {
+		wf.Restartable = v
+	}
+	if v, ok := m["workflowStatusListenerEnabled"].(bool); ok {
+		wf.WorkflowStatusListenerEnabled = v
+	}
+	if v, ok := m["timeoutPolicy"].(string); ok {
+		wf.TimeoutPolicy = v
 	}
 	if timeout, ok := m["timeoutSeconds"].(float64); ok {
 		wf.TimeoutSeconds = int64(timeout)
@@ -5625,38 +5501,156 @@ func fromMapToWorkflowDef(m map[string]interface{}) *model.WorkflowDef {
 	if tpl, ok := m["inputTemplate"].(map[string]interface{}); ok {
 		wf.InputTemplate = tpl
 	}
+	if tags, ok := m["tags"].([]interface{}); ok {
+		wf.Tags = make([]model.TagObject, len(tags))
+		for i := range tags {
+			if tagMap, ok := tags[i].(map[string]interface{}); ok {
+				if kv, ok := tagMap["key"].(string); ok {
+					wf.Tags[i].Key = kv
+				}
+				if tv, ok := tagMap["type"].(string); ok {
+					wf.Tags[i].Type = tv
+				}
+				if vv, ok := tagMap["value"].(string); ok {
+					wf.Tags[i].Value = vv
+				}
+			}
+		}
+	}
+	if v, ok := m["overwriteTags"].(bool); ok {
+		wf.OverwriteTags = v
+	}
+	if rlc, ok := m["rateLimitConfig"].(map[string]interface{}); ok {
+		cfg := &model.RateLimitConfig{}
+		if k, ok := rlc["rateLimitKey"].(string); ok {
+			cfg.RateLimitKey = k
+		}
+		if c, ok := rlc["concurrentExecLimit"].(float64); ok {
+			cfg.ConcurrentExecLimit = int32(c)
+		}
+		wf.RateLimitConfig = cfg
+	}
 	if tasks, ok := m["tasks"].([]interface{}); ok {
 		wf.Tasks = fromGenericWorkflowTasks(tasks)
 	}
 	return wf
 }
 
+//nolint:gocyclo,gocognit
 func toGenericWorkflowTasks(tasks []model.WorkflowTask) []interface{} {
 	if tasks == nil {
 		return nil
 	}
 	res := make([]interface{}, len(tasks))
 	for i := range tasks {
-		res[i] = map[string]interface{}{
+		m := map[string]interface{}{
 			"name":                           tasks[i].Name,
 			"taskReferenceName":              tasks[i].TaskReferenceName,
 			"description":                    tasks[i].Description,
 			"inputParameters":                tasks[i].InputParameters,
 			"type":                           tasks[i].Type_,
-			"optional":                       tasks[i].Optional,
-			"startDelay":                     tasks[i].StartDelay,
-			"asyncComplete":                  tasks[i].AsyncComplete,
-			"retryCount":                     tasks[i].RetryCount,
-			"rateLimited":                    tasks[i].RateLimited,
-			"loopCondition":                  tasks[i].LoopCondition,
+			"dynamicTaskNameParam":           tasks[i].DynamicTaskNameParam,
+			"caseValueParam":                 tasks[i].CaseValueParam,
+			"caseExpression":                 tasks[i].CaseExpression,
 			"scriptExpression":               tasks[i].ScriptExpression,
+			"startDelay":                     tasks[i].StartDelay,
 			"joinOn":                         tasks[i].JoinOn,
 			"sink":                           tasks[i].Sink,
+			"optional":                       tasks[i].Optional,
+			"rateLimited":                    tasks[i].RateLimited,
+			"asyncComplete":                  tasks[i].AsyncComplete,
+			"loopCondition":                  tasks[i].LoopCondition,
+			"retryCount":                     tasks[i].RetryCount,
 			"expression":                     tasks[i].Expression,
-			"dynamicTaskNameParam":           tasks[i].DynamicTaskNameParam,
+			"dynamicForkJoinTasksParam":      tasks[i].DynamicForkJoinTasksParam,
 			"dynamicForkTasksParam":          tasks[i].DynamicForkTasksParam,
 			"dynamicForkTasksInputParamName": tasks[i].DynamicForkTasksInputParamName,
 		}
+
+		// Only include enum-like strings when non-empty to avoid server coercion errors
+		if tasks[i].EvaluatorType != "" {
+			m["evaluatorType"] = tasks[i].EvaluatorType
+		}
+		if tasks[i].WorkflowTaskType != "" {
+			m["workflowTaskType"] = tasks[i].WorkflowTaskType
+		}
+
+		if tasks[i].DecisionCases != nil {
+			dc := make(map[string]interface{}, len(tasks[i].DecisionCases))
+			for k, arr := range tasks[i].DecisionCases {
+				dc[k] = toGenericWorkflowTasks(arr)
+			}
+			m["decisionCases"] = dc
+		}
+		if len(tasks[i].DefaultCase) > 0 {
+			m["defaultCase"] = toGenericWorkflowTasks(tasks[i].DefaultCase)
+		}
+		if len(tasks[i].ForkTasks) > 0 {
+			forks := make([]interface{}, len(tasks[i].ForkTasks))
+			for j := range tasks[i].ForkTasks {
+				forks[j] = toGenericWorkflowTasks(tasks[i].ForkTasks[j])
+			}
+			m["forkTasks"] = forks
+		}
+		if tasks[i].SubWorkflowParam != nil {
+			sw := map[string]interface{}{
+				"name":    tasks[i].SubWorkflowParam.Name,
+				"version": tasks[i].SubWorkflowParam.Version,
+			}
+			if tasks[i].SubWorkflowParam.TaskToDomain != nil {
+				sw["taskToDomain"] = tasks[i].SubWorkflowParam.TaskToDomain
+			}
+			if tasks[i].SubWorkflowParam.WorkflowDefinition != nil {
+				sw["workflowDefinition"] = toMapFromWorkflowDef(tasks[i].SubWorkflowParam.WorkflowDefinition)
+			}
+			m["subWorkflowParam"] = sw
+		}
+		if len(tasks[i].LoopOver) > 0 {
+			m["loopOver"] = toGenericWorkflowTasks(tasks[i].LoopOver)
+		}
+		if len(tasks[i].DefaultExclusiveJoinTask) > 0 {
+			m["defaultExclusiveJoinTask"] = tasks[i].DefaultExclusiveJoinTask
+		}
+		if tasks[i].TaskDefinition != nil {
+			// Minimal pass-through for task definition fields used in JSON
+			td := map[string]interface{}{
+				"name":                        tasks[i].TaskDefinition.Name,
+				"description":                 tasks[i].TaskDefinition.Description,
+				"retryCount":                  tasks[i].TaskDefinition.RetryCount,
+				"timeoutSeconds":              tasks[i].TaskDefinition.TimeoutSeconds,
+				"inputKeys":                   tasks[i].TaskDefinition.InputKeys,
+				"outputKeys":                  tasks[i].TaskDefinition.OutputKeys,
+				"timeoutPolicy":               tasks[i].TaskDefinition.TimeoutPolicy,
+				"retryLogic":                  tasks[i].TaskDefinition.RetryLogic,
+				"retryDelaySeconds":           tasks[i].TaskDefinition.RetryDelaySeconds,
+				"responseTimeoutSeconds":      tasks[i].TaskDefinition.ResponseTimeoutSeconds,
+				"concurrentExecLimit":         tasks[i].TaskDefinition.ConcurrentExecLimit,
+				"inputTemplate":               tasks[i].TaskDefinition.InputTemplate,
+				"rateLimitPerFrequency":       tasks[i].TaskDefinition.RateLimitPerFrequency,
+				"rateLimitFrequencyInSeconds": tasks[i].TaskDefinition.RateLimitFrequencyInSeconds,
+				"isolationGroupId":            tasks[i].TaskDefinition.IsolationGroupId,
+				"executionNameSpace":          tasks[i].TaskDefinition.ExecutionNameSpace,
+				"ownerEmail":                  tasks[i].TaskDefinition.OwnerEmail,
+				"pollTimeoutSeconds":          tasks[i].TaskDefinition.PollTimeoutSeconds,
+				"backoffScaleFactor":          tasks[i].TaskDefinition.BackoffScaleFactor,
+				"overwriteTags":               tasks[i].TaskDefinition.OverwriteTags,
+			}
+			if tasks[i].TaskDefinition.Tags != nil {
+				tags := make([]map[string]interface{}, len(tasks[i].TaskDefinition.Tags))
+				for k, t := range tasks[i].TaskDefinition.Tags {
+					tags[k] = map[string]interface{}{"key": t.Key, "type": t.Type, "value": t.Value}
+				}
+				td["tags"] = tags
+			}
+			m["taskDefinition"] = td
+		}
+		if tasks[i].CacheConfig != nil {
+			m["cacheConfig"] = map[string]interface{}{
+				"key":         tasks[i].CacheConfig.Key,
+				"ttlInSecond": tasks[i].CacheConfig.TtlInSeconds,
+			}
+		}
+		res[i] = m
 	}
 	return res
 }
@@ -5684,6 +5678,15 @@ func fromGenericWorkflowTasks(items []interface{}) []model.WorkflowTask {
 			}
 			if v, ok := m["type"].(string); ok {
 				wt.Type_ = v
+			}
+			if v, ok := m["dynamicTaskNameParam"].(string); ok {
+				wt.DynamicTaskNameParam = v
+			}
+			if v, ok := m["caseValueParam"].(string); ok {
+				wt.CaseValueParam = v
+			}
+			if v, ok := m["caseExpression"].(string); ok {
+				wt.CaseExpression = v
 			}
 			if v, ok := m["optional"].(bool); ok {
 				wt.Optional = v
@@ -5720,14 +5723,171 @@ func fromGenericWorkflowTasks(items []interface{}) []model.WorkflowTask {
 			if v, ok := m["expression"].(string); ok {
 				wt.Expression = v
 			}
-			if v, ok := m["dynamicTaskNameParam"].(string); ok {
-				wt.DynamicTaskNameParam = v
-			}
 			if v, ok := m["dynamicForkTasksParam"].(string); ok {
 				wt.DynamicForkTasksParam = v
 			}
 			if v, ok := m["dynamicForkTasksInputParamName"].(string); ok {
 				wt.DynamicForkTasksInputParamName = v
+			}
+			if v, ok := m["dynamicForkJoinTasksParam"].(string); ok {
+				wt.DynamicForkJoinTasksParam = v
+			}
+			if v, ok := m["evaluatorType"].(string); ok {
+				wt.EvaluatorType = v
+			}
+			if v, ok := m["workflowTaskType"].(string); ok {
+				wt.WorkflowTaskType = v
+			}
+			if v, ok := m["defaultExclusiveJoinTask"].([]interface{}); ok {
+				wt.DefaultExclusiveJoinTask = make([]string, len(v))
+				for j := range v {
+					if s, sok := v[j].(string); sok {
+						wt.DefaultExclusiveJoinTask[j] = s
+					}
+				}
+			}
+			if v, ok := m["decisionCases"].(map[string]interface{}); ok {
+				wt.DecisionCases = make(map[string][]model.WorkflowTask, len(v))
+				for key, arr := range v {
+					if list, ok := arr.([]interface{}); ok {
+						wt.DecisionCases[key] = fromGenericWorkflowTasks(list)
+					}
+				}
+			}
+			if v, ok := m["defaultCase"].([]interface{}); ok {
+				wt.DefaultCase = fromGenericWorkflowTasks(v)
+			}
+			if v, ok := m["forkTasks"].([]interface{}); ok {
+				wt.ForkTasks = make([][]model.WorkflowTask, len(v))
+				for j := range v {
+					if inner, ok := v[j].([]interface{}); ok {
+						wt.ForkTasks[j] = fromGenericWorkflowTasks(inner)
+					}
+				}
+			}
+			if v, ok := m["loopOver"].([]interface{}); ok {
+				wt.LoopOver = fromGenericWorkflowTasks(v)
+			}
+			if sw, ok := m["subWorkflowParam"].(map[string]interface{}); ok {
+				p := &model.SubWorkflowParams{}
+				if n, ok := sw["name"].(string); ok {
+					p.Name = n
+				}
+				if ver, ok := sw["version"].(float64); ok {
+					p.Version = int32(ver)
+				}
+				if td, ok := sw["taskToDomain"].(map[string]interface{}); ok {
+					p.TaskToDomain = make(map[string]string, len(td))
+					for k, val := range td {
+						if s, sok := val.(string); sok {
+							p.TaskToDomain[k] = s
+						}
+					}
+				}
+				if wfd, ok := sw["workflowDefinition"].(map[string]interface{}); ok {
+					p.WorkflowDefinition = fromMapToWorkflowDef(wfd)
+				}
+				wt.SubWorkflowParam = p
+			}
+			if td, ok := m["taskDefinition"].(map[string]interface{}); ok {
+				d := &model.TaskDef{}
+				if s, ok := td["name"].(string); ok {
+					d.Name = s
+				}
+				if s, ok := td["description"].(string); ok {
+					d.Description = s
+				}
+				if n, ok := td["retryCount"].(float64); ok {
+					d.RetryCount = int32(n)
+				}
+				if n, ok := td["timeoutSeconds"].(float64); ok {
+					d.TimeoutSeconds = int64(n)
+				}
+				if arr, ok := td["inputKeys"].([]interface{}); ok {
+					d.InputKeys = make([]string, len(arr))
+					for j := range arr {
+						if s, sok := arr[j].(string); sok {
+							d.InputKeys[j] = s
+						}
+					}
+				}
+				if arr, ok := td["outputKeys"].([]interface{}); ok {
+					d.OutputKeys = make([]string, len(arr))
+					for j := range arr {
+						if s, sok := arr[j].(string); sok {
+							d.OutputKeys[j] = s
+						}
+					}
+				}
+				if s, ok := td["timeoutPolicy"].(string); ok {
+					d.TimeoutPolicy = s
+				}
+				if s, ok := td["retryLogic"].(string); ok {
+					d.RetryLogic = s
+				}
+				if n, ok := td["retryDelaySeconds"].(float64); ok {
+					d.RetryDelaySeconds = int32(n)
+				}
+				if n, ok := td["responseTimeoutSeconds"].(float64); ok {
+					d.ResponseTimeoutSeconds = int64(n)
+				}
+				if n, ok := td["concurrentExecLimit"].(float64); ok {
+					d.ConcurrentExecLimit = int32(n)
+				}
+				if mp, ok := td["inputTemplate"].(map[string]interface{}); ok {
+					d.InputTemplate = mp
+				}
+				if n, ok := td["rateLimitPerFrequency"].(float64); ok {
+					d.RateLimitPerFrequency = int32(n)
+				}
+				if n, ok := td["rateLimitFrequencyInSeconds"].(float64); ok {
+					d.RateLimitFrequencyInSeconds = int32(n)
+				}
+				if s, ok := td["isolationGroupId"].(string); ok {
+					d.IsolationGroupId = s
+				}
+				if s, ok := td["executionNameSpace"].(string); ok {
+					d.ExecutionNameSpace = s
+				}
+				if s, ok := td["ownerEmail"].(string); ok {
+					d.OwnerEmail = s
+				}
+				if n, ok := td["pollTimeoutSeconds"].(float64); ok {
+					d.PollTimeoutSeconds = int32(n)
+				}
+				if n, ok := td["backoffScaleFactor"].(float64); ok {
+					d.BackoffScaleFactor = int32(n)
+				}
+				if arr, ok := td["tags"].([]interface{}); ok {
+					d.Tags = make([]model.TagObject, len(arr))
+					for j := range arr {
+						if tagMap, ok := arr[j].(map[string]interface{}); ok {
+							if s, ok := tagMap["key"].(string); ok {
+								d.Tags[j].Key = s
+							}
+							if s, ok := tagMap["type"].(string); ok {
+								d.Tags[j].Type = s
+							}
+							if s, ok := tagMap["value"].(string); ok {
+								d.Tags[j].Value = s
+							}
+						}
+					}
+				}
+				if b, ok := td["overwriteTags"].(bool); ok {
+					d.OverwriteTags = b
+				}
+				wt.TaskDefinition = d
+			}
+			if cc, ok := m["cacheConfig"].(map[string]interface{}); ok {
+				c := &model.CacheConfig{}
+				if s, ok := cc["key"].(string); ok {
+					c.Key = s
+				}
+				if n, ok := cc["ttlInSecond"].(float64); ok {
+					c.TtlInSeconds = int(n)
+				}
+				wt.CacheConfig = c
 			}
 			res[i] = wt
 		}

@@ -212,6 +212,46 @@ func TestGetTagsForTaskDef(t *testing.T) {
 	}
 }
 
+func TestMetadataClient_GetTaskDef(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
+	taskDef := model.TaskDef{
+		Name:        TaskName,
+		Description: "Test task definition created from Go SDK",
+	}
+
+	tag0 := model.MetadataTag{
+		Key:   "key_0",
+		Value: "value_0",
+	}
+
+	tags := []model.MetadataTag{tag0}
+
+	_, err := testdata.MetadataClient.RegisterTaskDefWithTags(context.Background(), taskDef, tags)
+	require.NoError(t, err)
+
+	taskDef, _, err = testdata.MetadataClient.GetTaskDef(context.Background(), TaskName)
+	require.NoError(t, err)
+	require.NotNil(t, taskDef)
+	assert.Equal(t, len(tags), 1)
+	assert.Equal(t, taskDef.Name, TaskName)
+	assert.Equal(t, taskDef.Description, "Test task definition created from Go SDK")
+
+	taskDefs, _, err := testdata.MetadataClient.GetTaskDefs(context.Background())
+	require.NoError(t, err)
+	require.NotNil(t, taskDefs)
+
+	found := false
+	for _, taskDef := range taskDefs {
+		if taskDef.Name == TaskName {
+			found = true
+			assert.Equal(t, taskDef.Description, "Test task definition created from Go SDK")
+			break
+		}
+	}
+	assert.True(t, found)
+}
+
 func TestUpdateTaskDefWithTags(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	taskDef := model.TaskDef{

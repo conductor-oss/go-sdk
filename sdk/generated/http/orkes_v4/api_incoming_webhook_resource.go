@@ -55,10 +55,10 @@ type IncomingWebhookResourceAPIHandleWebhookRequest struct {
 	ctx           context.Context
 	ApiService    IncomingWebhookResourceAPI
 	id            string
-	requestParams *map[string]map[string]interface{}
+	requestParams *map[string]interface{}
 }
 
-func (r IncomingWebhookResourceAPIHandleWebhookRequest) RequestParams(requestParams map[string]map[string]interface{}) IncomingWebhookResourceAPIHandleWebhookRequest {
+func (r IncomingWebhookResourceAPIHandleWebhookRequest) RequestParams(requestParams map[string]interface{}) IncomingWebhookResourceAPIHandleWebhookRequest {
 	r.requestParams = &requestParams
 	return r
 }
@@ -181,11 +181,11 @@ type IncomingWebhookResourceAPIHandleWebhook1Request struct {
 	ctx           context.Context
 	ApiService    IncomingWebhookResourceAPI
 	id            string
-	requestParams *map[string]map[string]interface{}
+	requestParams *map[string]interface{}
 	body          *string
 }
 
-func (r IncomingWebhookResourceAPIHandleWebhook1Request) RequestParams(requestParams map[string]map[string]interface{}) IncomingWebhookResourceAPIHandleWebhook1Request {
+func (r IncomingWebhookResourceAPIHandleWebhook1Request) RequestParams(requestParams map[string]interface{}) IncomingWebhookResourceAPIHandleWebhook1Request {
 	r.requestParams = &requestParams
 	return r
 }

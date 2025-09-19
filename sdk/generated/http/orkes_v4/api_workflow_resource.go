@@ -70,8 +70,8 @@ type WorkflowResourceAPI interface {
 	ExecuteWorkflowAsAPI(ctx context.Context, name string) WorkflowResourceAPIExecuteWorkflowAsAPIRequest
 
 	// ExecuteWorkflowAsAPIExecute executes the request
-	//  @return map[string]map[string]interface{}
-	ExecuteWorkflowAsAPIExecute(r WorkflowResourceAPIExecuteWorkflowAsAPIRequest) (map[string]map[string]interface{}, *http.Response, error)
+	//  @return map[string]interface{}
+	ExecuteWorkflowAsAPIExecute(r WorkflowResourceAPIExecuteWorkflowAsAPIRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
 		ExecuteWorkflowAsGetAPI Execute a workflow synchronously with input and outputs using get api
@@ -85,9 +85,9 @@ type WorkflowResourceAPI interface {
 	ExecuteWorkflowAsGetAPI(ctx context.Context, name string) WorkflowResourceAPIExecuteWorkflowAsGetAPIRequest
 
 	// ExecuteWorkflowAsGetAPIExecute executes the request
-	//  @return map[string]map[string]interface{}
+	//  @return map[string]interface{}
 	// Deprecated
-	ExecuteWorkflowAsGetAPIExecute(r WorkflowResourceAPIExecuteWorkflowAsGetAPIRequest) (map[string]map[string]interface{}, *http.Response, error)
+	ExecuteWorkflowAsGetAPIExecute(r WorkflowResourceAPIExecuteWorkflowAsGetAPIRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
 		GetExecutionStatus Gets the workflow by workflow id
@@ -187,10 +187,9 @@ type WorkflowResourceAPI interface {
 
 		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 		@param workflowId
-		@param taskReferenceName
 		@return WorkflowResourceAPIJumpToTaskRequest
 	*/
-	JumpToTask(ctx context.Context, workflowId string, taskReferenceName string) WorkflowResourceAPIJumpToTaskRequest
+	JumpToTask(ctx context.Context, workflowId string) WorkflowResourceAPIJumpToTaskRequest
 
 	// JumpToTaskExecute executes the request
 	JumpToTaskExecute(r WorkflowResourceAPIJumpToTaskRequest) (*http.Response, error)
@@ -784,7 +783,7 @@ type WorkflowResourceAPIExecuteWorkflowAsAPIRequest struct {
 	ctx              context.Context
 	ApiService       WorkflowResourceAPI
 	name             string
-	requestBody      *map[string]map[string]interface{}
+	requestBody      *map[string]interface{}
 	version          *int32
 	requestId        *string
 	waitUntilTaskRef *string
@@ -793,7 +792,7 @@ type WorkflowResourceAPIExecuteWorkflowAsAPIRequest struct {
 	xOnConflict      *string
 }
 
-func (r WorkflowResourceAPIExecuteWorkflowAsAPIRequest) RequestBody(requestBody map[string]map[string]interface{}) WorkflowResourceAPIExecuteWorkflowAsAPIRequest {
+func (r WorkflowResourceAPIExecuteWorkflowAsAPIRequest) RequestBody(requestBody map[string]interface{}) WorkflowResourceAPIExecuteWorkflowAsAPIRequest {
 	r.requestBody = &requestBody
 	return r
 }
@@ -828,7 +827,7 @@ func (r WorkflowResourceAPIExecuteWorkflowAsAPIRequest) XOnConflict(xOnConflict 
 	return r
 }
 
-func (r WorkflowResourceAPIExecuteWorkflowAsAPIRequest) Execute() (map[string]map[string]interface{}, *http.Response, error) {
+func (r WorkflowResourceAPIExecuteWorkflowAsAPIRequest) Execute() (map[string]interface{}, *http.Response, error) {
 	return r.ApiService.ExecuteWorkflowAsAPIExecute(r)
 }
 
@@ -849,13 +848,13 @@ func (a *WorkflowResourceAPIService) ExecuteWorkflowAsAPI(ctx context.Context, n
 
 // Execute executes the request
 //
-//	@return map[string]map[string]interface{}
-func (a *WorkflowResourceAPIService) ExecuteWorkflowAsAPIExecute(r WorkflowResourceAPIExecuteWorkflowAsAPIRequest) (map[string]map[string]interface{}, *http.Response, error) {
+//	@return map[string]interface{}
+func (a *WorkflowResourceAPIService) ExecuteWorkflowAsAPIExecute(r WorkflowResourceAPIExecuteWorkflowAsAPIRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
 		localVarPostBody    interface{}
 		formFiles           []formFile
-		localVarReturnValue map[string]map[string]interface{}
+		localVarReturnValue map[string]interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "WorkflowResourceAPIService.ExecuteWorkflowAsAPI")
@@ -1003,7 +1002,7 @@ func (r WorkflowResourceAPIExecuteWorkflowAsGetAPIRequest) XOnConflict(xOnConfli
 	return r
 }
 
-func (r WorkflowResourceAPIExecuteWorkflowAsGetAPIRequest) Execute() (map[string]map[string]interface{}, *http.Response, error) {
+func (r WorkflowResourceAPIExecuteWorkflowAsGetAPIRequest) Execute() (map[string]interface{}, *http.Response, error) {
 	return r.ApiService.ExecuteWorkflowAsGetAPIExecute(r)
 }
 
@@ -1026,15 +1025,15 @@ func (a *WorkflowResourceAPIService) ExecuteWorkflowAsGetAPI(ctx context.Context
 
 // Execute executes the request
 //
-//	@return map[string]map[string]interface{}
+//	@return map[string]interface{}
 //
 // Deprecated
-func (a *WorkflowResourceAPIService) ExecuteWorkflowAsGetAPIExecute(r WorkflowResourceAPIExecuteWorkflowAsGetAPIRequest) (map[string]map[string]interface{}, *http.Response, error) {
+func (a *WorkflowResourceAPIService) ExecuteWorkflowAsGetAPIExecute(r WorkflowResourceAPIExecuteWorkflowAsGetAPIRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
 		localVarPostBody    interface{}
 		formFiles           []formFile
-		localVarReturnValue map[string]map[string]interface{}
+		localVarReturnValue map[string]interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "WorkflowResourceAPIService.ExecuteWorkflowAsGetAPI")
@@ -2164,11 +2163,16 @@ type WorkflowResourceAPIJumpToTaskRequest struct {
 	ctx               context.Context
 	ApiService        WorkflowResourceAPI
 	workflowId        string
-	taskReferenceName string
-	requestBody       *map[string]map[string]interface{}
+	taskReferenceName *string
+	requestBody       *map[string]interface{}
 }
 
-func (r WorkflowResourceAPIJumpToTaskRequest) RequestBody(requestBody map[string]map[string]interface{}) WorkflowResourceAPIJumpToTaskRequest {
+func (r WorkflowResourceAPIJumpToTaskRequest) TaskReferenceName(taskReferenceName string) WorkflowResourceAPIJumpToTaskRequest {
+	r.taskReferenceName = &taskReferenceName
+	return r
+}
+
+func (r WorkflowResourceAPIJumpToTaskRequest) RequestBody(requestBody map[string]interface{}) WorkflowResourceAPIJumpToTaskRequest {
 	r.requestBody = &requestBody
 	return r
 }
@@ -2184,15 +2188,13 @@ Jump workflow execution to given task.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@param workflowId
-	@param taskReferenceName
 	@return WorkflowResourceAPIJumpToTaskRequest
 */
-func (a *WorkflowResourceAPIService) JumpToTask(ctx context.Context, workflowId string, taskReferenceName string) WorkflowResourceAPIJumpToTaskRequest {
+func (a *WorkflowResourceAPIService) JumpToTask(ctx context.Context, workflowId string) WorkflowResourceAPIJumpToTaskRequest {
 	return WorkflowResourceAPIJumpToTaskRequest{
-		ApiService:        a,
-		ctx:               ctx,
-		workflowId:        workflowId,
-		taskReferenceName: taskReferenceName,
+		ApiService: a,
+		ctx:        ctx,
+		workflowId: workflowId,
 	}
 }
 
@@ -2211,15 +2213,18 @@ func (a *WorkflowResourceAPIService) JumpToTaskExecute(r WorkflowResourceAPIJump
 
 	localVarPath := localBasePath + "/workflow/{workflowId}/jump/{taskReferenceName}"
 	localVarPath = strings.Replace(localVarPath, "{"+"workflowId"+"}", url.PathEscape(parameterValueToString(r.workflowId, "workflowId")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"taskReferenceName"+"}", url.PathEscape(parameterValueToString(r.taskReferenceName, "taskReferenceName")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
+	if r.taskReferenceName == nil {
+		return nil, reportError("taskReferenceName is required and must be specified")
+	}
 	if r.requestBody == nil {
 		return nil, reportError("requestBody is required and must be specified")
 	}
 
+	parameterAddToHeaderOrQuery(localVarQueryParams, "taskReferenceName", r.taskReferenceName, "")
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{"application/json"}
 
@@ -3397,7 +3402,7 @@ type WorkflowResourceAPIStartWorkflow1Request struct {
 	ctx             context.Context
 	ApiService      WorkflowResourceAPI
 	name            string
-	requestBody     *map[string]map[string]interface{}
+	requestBody     *map[string]interface{}
 	version         *int32
 	correlationId   *string
 	priority        *int32
@@ -3405,7 +3410,7 @@ type WorkflowResourceAPIStartWorkflow1Request struct {
 	xOnConflict     *string
 }
 
-func (r WorkflowResourceAPIStartWorkflow1Request) RequestBody(requestBody map[string]map[string]interface{}) WorkflowResourceAPIStartWorkflow1Request {
+func (r WorkflowResourceAPIStartWorkflow1Request) RequestBody(requestBody map[string]interface{}) WorkflowResourceAPIStartWorkflow1Request {
 	r.requestBody = &requestBody
 	return r
 }
@@ -3980,10 +3985,10 @@ type WorkflowResourceAPIUpdateWorkflowStateRequest struct {
 	ctx         context.Context
 	ApiService  WorkflowResourceAPI
 	workflowId  string
-	requestBody *map[string]map[string]interface{}
+	requestBody *map[string]interface{}
 }
 
-func (r WorkflowResourceAPIUpdateWorkflowStateRequest) RequestBody(requestBody map[string]map[string]interface{}) WorkflowResourceAPIUpdateWorkflowStateRequest {
+func (r WorkflowResourceAPIUpdateWorkflowStateRequest) RequestBody(requestBody map[string]interface{}) WorkflowResourceAPIUpdateWorkflowStateRequest {
 	r.requestBody = &requestBody
 	return r
 }

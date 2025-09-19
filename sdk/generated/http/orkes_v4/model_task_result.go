@@ -19,17 +19,17 @@ var _ MappedNullable = &TaskResult{}
 
 // TaskResult struct for TaskResult
 type TaskResult struct {
-	CallbackAfterSeconds             *int64                            `json:"callbackAfterSeconds,omitempty"`
-	ExtendLease                      *bool                             `json:"extendLease,omitempty"`
-	ExternalOutputPayloadStoragePath *string                           `json:"externalOutputPayloadStoragePath,omitempty"`
-	Logs                             []TaskExecLog                     `json:"logs,omitempty"`
-	OutputData                       map[string]map[string]interface{} `json:"outputData,omitempty"`
-	ReasonForIncompletion            *string                           `json:"reasonForIncompletion,omitempty"`
-	Status                           *string                           `json:"status,omitempty"`
-	SubWorkflowId                    *string                           `json:"subWorkflowId,omitempty"`
-	TaskId                           *string                           `json:"taskId,omitempty"`
-	WorkerId                         *string                           `json:"workerId,omitempty"`
-	WorkflowInstanceId               *string                           `json:"workflowInstanceId,omitempty"`
+	CallbackAfterSeconds             *int64                 `json:"callbackAfterSeconds,omitempty"`
+	ExtendLease                      *bool                  `json:"extendLease,omitempty"`
+	ExternalOutputPayloadStoragePath *string                `json:"externalOutputPayloadStoragePath,omitempty"`
+	Logs                             []TaskExecLog          `json:"logs,omitempty"`
+	OutputData                       map[string]interface{} `json:"outputData,omitempty"`
+	ReasonForIncompletion            *string                `json:"reasonForIncompletion,omitempty"`
+	Status                           *string                `json:"status,omitempty"`
+	SubWorkflowId                    *string                `json:"subWorkflowId,omitempty"`
+	TaskId                           *string                `json:"taskId,omitempty"`
+	WorkerId                         *string                `json:"workerId,omitempty"`
+	WorkflowInstanceId               *string                `json:"workflowInstanceId,omitempty"`
 }
 
 // NewTaskResult instantiates a new TaskResult object
@@ -178,9 +178,9 @@ func (o *TaskResult) SetLogs(v []TaskExecLog) {
 }
 
 // GetOutputData returns the OutputData field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *TaskResult) GetOutputData() map[string]map[string]interface{} {
+func (o *TaskResult) GetOutputData() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.OutputData
@@ -189,7 +189,7 @@ func (o *TaskResult) GetOutputData() map[string]map[string]interface{} {
 // GetOutputDataOk returns a tuple with the OutputData field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *TaskResult) GetOutputDataOk() (*map[string]map[string]interface{}, bool) {
+func (o *TaskResult) GetOutputDataOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.OutputData) {
 		return nil, false
 	}
@@ -205,8 +205,8 @@ func (o *TaskResult) HasOutputData() bool {
 	return false
 }
 
-// SetOutputData gets a reference to the given map[string]map[string]interface{} and assigns it to the OutputData field.
-func (o *TaskResult) SetOutputData(v map[string]map[string]interface{}) {
+// SetOutputData gets a reference to the given map[string]interface{} and assigns it to the OutputData field.
+func (o *TaskResult) SetOutputData(v map[string]interface{}) {
 	o.OutputData = v
 }
 

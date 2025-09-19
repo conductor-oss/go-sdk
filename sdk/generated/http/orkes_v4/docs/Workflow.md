@@ -15,9 +15,9 @@ Name | Type | Description | Notes
 **FailedTaskNames** | Pointer to **[]string** |  | [optional] 
 **History** | Pointer to [**[]Workflow**](Workflow.md) |  | [optional] 
 **IdempotencyKey** | Pointer to **string** |  | [optional] 
-**Input** | Pointer to **map[string]interface{}** |  | [optional] 
+**Input** | Pointer to  |  | [optional] 
 **LastRetriedTime** | Pointer to **int64** |  | [optional] 
-**Output** | Pointer to **map[string]interface{}** |  | [optional] 
+**Output** | Pointer to  |  | [optional] 
 **OwnerApp** | Pointer to **string** |  | [optional] 
 **ParentWorkflowId** | Pointer to **string** |  | [optional] 
 **ParentWorkflowTaskId** | Pointer to **string** |  | [optional] 
@@ -32,7 +32,7 @@ Name | Type | Description | Notes
 **Tasks** | Pointer to [**[]Task**](Task.md) |  | [optional] 
 **UpdateTime** | Pointer to **int64** |  | [optional] 
 **UpdatedBy** | Pointer to **string** |  | [optional] 
-**Variables** | Pointer to **map[string]interface{}** |  | [optional] 
+**Variables** | Pointer to  |  | [optional] 
 **WorkflowDefinition** | Pointer to [**WorkflowDef**](WorkflowDef.md) |  | [optional] 
 **WorkflowId** | Pointer to **string** |  | [optional] 
 **WorkflowName** | Pointer to **string** |  | [optional] 
@@ -334,20 +334,20 @@ HasIdempotencyKey returns a boolean if a field has been set.
 
 ### GetInput
 
-`func (o *Workflow) GetInput() map[string]interface{}`
+`func (o *Workflow) GetInput() map[string]map[string]interface{}`
 
 GetInput returns the Input field if non-nil, zero value otherwise.
 
 ### GetInputOk
 
-`func (o *Workflow) GetInputOk() (*map[string]interface{}, bool)`
+`func (o *Workflow) GetInputOk() (*map[string]map[string]interface{}, bool)`
 
 GetInputOk returns a tuple with the Input field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetInput
 
-`func (o *Workflow) SetInput(v map[string]interface{})`
+`func (o *Workflow) SetInput(v map[string]map[string]interface{})`
 
 SetInput sets Input field to given value.
 
@@ -357,6 +357,16 @@ SetInput sets Input field to given value.
 
 HasInput returns a boolean if a field has been set.
 
+### SetInputNil
+
+`func (o *Workflow) SetInputNil(b bool)`
+
+ SetInputNil sets the value for Input to be an explicit nil
+
+### UnsetInput
+`func (o *Workflow) UnsetInput()`
+
+UnsetInput ensures that no value is present for Input, not even an explicit nil
 ### GetLastRetriedTime
 
 `func (o *Workflow) GetLastRetriedTime() int64`
@@ -384,20 +394,20 @@ HasLastRetriedTime returns a boolean if a field has been set.
 
 ### GetOutput
 
-`func (o *Workflow) GetOutput() map[string]interface{}`
+`func (o *Workflow) GetOutput() map[string]map[string]interface{}`
 
 GetOutput returns the Output field if non-nil, zero value otherwise.
 
 ### GetOutputOk
 
-`func (o *Workflow) GetOutputOk() (*map[string]interface{}, bool)`
+`func (o *Workflow) GetOutputOk() (*map[string]map[string]interface{}, bool)`
 
 GetOutputOk returns a tuple with the Output field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetOutput
 
-`func (o *Workflow) SetOutput(v map[string]interface{})`
+`func (o *Workflow) SetOutput(v map[string]map[string]interface{})`
 
 SetOutput sets Output field to given value.
 
@@ -407,6 +417,16 @@ SetOutput sets Output field to given value.
 
 HasOutput returns a boolean if a field has been set.
 
+### SetOutputNil
+
+`func (o *Workflow) SetOutputNil(b bool)`
+
+ SetOutputNil sets the value for Output to be an explicit nil
+
+### UnsetOutput
+`func (o *Workflow) UnsetOutput()`
+
+UnsetOutput ensures that no value is present for Output, not even an explicit nil
 ### GetOwnerApp
 
 `func (o *Workflow) GetOwnerApp() string`
@@ -769,20 +789,20 @@ HasUpdatedBy returns a boolean if a field has been set.
 
 ### GetVariables
 
-`func (o *Workflow) GetVariables() map[string]interface{}`
+`func (o *Workflow) GetVariables() map[string]map[string]interface{}`
 
 GetVariables returns the Variables field if non-nil, zero value otherwise.
 
 ### GetVariablesOk
 
-`func (o *Workflow) GetVariablesOk() (*map[string]interface{}, bool)`
+`func (o *Workflow) GetVariablesOk() (*map[string]map[string]interface{}, bool)`
 
 GetVariablesOk returns a tuple with the Variables field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetVariables
 
-`func (o *Workflow) SetVariables(v map[string]interface{})`
+`func (o *Workflow) SetVariables(v map[string]map[string]interface{})`
 
 SetVariables sets Variables field to given value.
 
@@ -792,6 +812,16 @@ SetVariables sets Variables field to given value.
 
 HasVariables returns a boolean if a field has been set.
 
+### SetVariablesNil
+
+`func (o *Workflow) SetVariablesNil(b bool)`
+
+ SetVariablesNil sets the value for Variables to be an explicit nil
+
+### UnsetVariables
+`func (o *Workflow) UnsetVariables()`
+
+UnsetVariables ensures that no value is present for Variables, not even an explicit nil
 ### GetWorkflowDefinition
 
 `func (o *Workflow) GetWorkflowDefinition() WorkflowDef`

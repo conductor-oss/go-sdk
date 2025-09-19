@@ -19,20 +19,20 @@ var _ MappedNullable = &Integration{}
 
 // Integration struct for Integration
 type Integration struct {
-	Apis          []IntegrationApi                  `json:"apis,omitempty"`
-	Category      *string                           `json:"category,omitempty"`
-	Configuration map[string]map[string]interface{} `json:"configuration,omitempty"`
-	CreateTime    *int64                            `json:"createTime,omitempty"`
-	CreatedBy     *string                           `json:"createdBy,omitempty"`
-	Description   *string                           `json:"description,omitempty"`
-	Enabled       *bool                             `json:"enabled,omitempty"`
-	ModelsCount   *int64                            `json:"modelsCount,omitempty"`
-	Name          *string                           `json:"name,omitempty"`
-	OwnerApp      *string                           `json:"ownerApp,omitempty"`
-	Tags          []Tag                             `json:"tags,omitempty"`
-	Type          *string                           `json:"type,omitempty"`
-	UpdateTime    *int64                            `json:"updateTime,omitempty"`
-	UpdatedBy     *string                           `json:"updatedBy,omitempty"`
+	Apis          []IntegrationApi       `json:"apis,omitempty"`
+	Category      *string                `json:"category,omitempty"`
+	Configuration map[string]interface{} `json:"configuration,omitempty"`
+	CreateTime    *int64                 `json:"createTime,omitempty"`
+	CreatedBy     *string                `json:"createdBy,omitempty"`
+	Description   *string                `json:"description,omitempty"`
+	Enabled       *bool                  `json:"enabled,omitempty"`
+	ModelsCount   *int64                 `json:"modelsCount,omitempty"`
+	Name          *string                `json:"name,omitempty"`
+	OwnerApp      *string                `json:"ownerApp,omitempty"`
+	Tags          []Tag                  `json:"tags,omitempty"`
+	Type          *string                `json:"type,omitempty"`
+	UpdateTime    *int64                 `json:"updateTime,omitempty"`
+	UpdatedBy     *string                `json:"updatedBy,omitempty"`
 }
 
 // NewIntegration instantiates a new Integration object
@@ -117,9 +117,9 @@ func (o *Integration) SetCategory(v string) {
 }
 
 // GetConfiguration returns the Configuration field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *Integration) GetConfiguration() map[string]map[string]interface{} {
+func (o *Integration) GetConfiguration() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.Configuration
@@ -128,7 +128,7 @@ func (o *Integration) GetConfiguration() map[string]map[string]interface{} {
 // GetConfigurationOk returns a tuple with the Configuration field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *Integration) GetConfigurationOk() (*map[string]map[string]interface{}, bool) {
+func (o *Integration) GetConfigurationOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.Configuration) {
 		return nil, false
 	}
@@ -144,8 +144,8 @@ func (o *Integration) HasConfiguration() bool {
 	return false
 }
 
-// SetConfiguration gets a reference to the given map[string]map[string]interface{} and assigns it to the Configuration field.
-func (o *Integration) SetConfiguration(v map[string]map[string]interface{}) {
+// SetConfiguration gets a reference to the given map[string]interface{} and assigns it to the Configuration field.
+func (o *Integration) SetConfiguration(v map[string]interface{}) {
 	o.Configuration = v
 }
 

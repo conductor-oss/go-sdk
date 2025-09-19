@@ -12,7 +12,6 @@ package orkes_v4
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 // checks if the StartWorkflowRequest type satisfies the MappedNullable interface at compile time
@@ -20,17 +19,17 @@ var _ MappedNullable = &StartWorkflowRequest{}
 
 // StartWorkflowRequest struct for StartWorkflowRequest
 type StartWorkflowRequest struct {
-	CorrelationId                   *string                           `json:"correlationId,omitempty"`
-	CreatedBy                       *string                           `json:"createdBy,omitempty"`
-	ExternalInputPayloadStoragePath *string                           `json:"externalInputPayloadStoragePath,omitempty"`
-	IdempotencyKey                  *string                           `json:"idempotencyKey,omitempty"`
-	IdempotencyStrategy             *string                           `json:"idempotencyStrategy,omitempty"`
-	Input                           map[string]map[string]interface{} `json:"input,omitempty"`
-	Name                            string                            `json:"name"`
-	Priority                        *int32                            `json:"priority,omitempty"`
-	TaskToDomain                    map[string]string                 `json:"taskToDomain,omitempty"`
-	Version                         *int32                            `json:"version,omitempty"`
-	WorkflowDef                     *WorkflowDef                      `json:"workflowDef,omitempty"`
+	CorrelationId                   *string                `json:"correlationId,omitempty"`
+	CreatedBy                       *string                `json:"createdBy,omitempty"`
+	ExternalInputPayloadStoragePath *string                `json:"externalInputPayloadStoragePath,omitempty"`
+	IdempotencyKey                  *string                `json:"idempotencyKey,omitempty"`
+	IdempotencyStrategy             *string                `json:"idempotencyStrategy,omitempty"`
+	Input                           map[string]interface{} `json:"input,omitempty"`
+	Name                            string                 `json:"name"`
+	Priority                        *int32                 `json:"priority,omitempty"`
+	TaskToDomain                    map[string]string      `json:"taskToDomain,omitempty"`
+	Version                         *int32                 `json:"version,omitempty"`
+	WorkflowDef                     *WorkflowDef           `json:"workflowDef,omitempty"`
 }
 
 type _StartWorkflowRequest StartWorkflowRequest
@@ -214,9 +213,9 @@ func (o *StartWorkflowRequest) SetIdempotencyStrategy(v string) {
 }
 
 // GetInput returns the Input field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *StartWorkflowRequest) GetInput() map[string]map[string]interface{} {
+func (o *StartWorkflowRequest) GetInput() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.Input
@@ -225,7 +224,7 @@ func (o *StartWorkflowRequest) GetInput() map[string]map[string]interface{} {
 // GetInputOk returns a tuple with the Input field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *StartWorkflowRequest) GetInputOk() (*map[string]map[string]interface{}, bool) {
+func (o *StartWorkflowRequest) GetInputOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.Input) {
 		return nil, false
 	}
@@ -241,8 +240,8 @@ func (o *StartWorkflowRequest) HasInput() bool {
 	return false
 }
 
-// SetInput gets a reference to the given map[string]map[string]interface{} and assigns it to the Input field.
-func (o *StartWorkflowRequest) SetInput(v map[string]map[string]interface{}) {
+// SetInput gets a reference to the given map[string]interface{} and assigns it to the Input field.
+func (o *StartWorkflowRequest) SetInput(v map[string]interface{}) {
 	o.Input = v
 }
 
@@ -444,38 +443,18 @@ func (o StartWorkflowRequest) ToMap() (map[string]interface{}, error) {
 }
 
 func (o *StartWorkflowRequest) UnmarshalJSON(bytes []byte) (err error) {
-	// This validates that all required properties are included in the JSON object
-	// by unmarshalling the object into a generic map with string keys and checking
-	// that every required field exists as a key in the generic map.
-	requiredProperties := []string{
-		"name",
-	}
+	varObj := _StartWorkflowRequest{}
 
-	allProperties := make(map[string]interface{})
-
-	err = json.Unmarshal(bytes, &allProperties)
+	err = json.Unmarshal(bytes, &varObj)
 
 	if err != nil {
 		return err
 	}
 
-	for _, requiredProperty := range requiredProperties {
-		if _, exists := allProperties[requiredProperty]; !exists {
-			return fmt.Errorf("no value given for required property %v", requiredProperty)
-		}
-	}
-
-	varStartWorkflowRequest := _StartWorkflowRequest{}
-
-	err = json.Unmarshal(bytes, &varStartWorkflowRequest)
-
-	if err != nil {
-		return err
-	}
-
-	*o = StartWorkflowRequest(varStartWorkflowRequest)
+	*o = StartWorkflowRequest(varObj)
 
 	return err
+
 }
 
 type NullableStartWorkflowRequest struct {

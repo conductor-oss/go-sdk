@@ -103,8 +103,8 @@ type MetadataResourceAPI interface {
 	GetWorkflowNamesAndVersions(ctx context.Context) MetadataResourceAPIGetWorkflowNamesAndVersionsRequest
 
 	// GetWorkflowNamesAndVersionsExecute executes the request
-	//  @return map[string]map[string]interface{}
-	GetWorkflowNamesAndVersionsExecute(r MetadataResourceAPIGetWorkflowNamesAndVersionsRequest) (map[string]map[string]interface{}, *http.Response, error)
+	//  @return map[string]interface{}
+	GetWorkflowNamesAndVersionsExecute(r MetadataResourceAPIGetWorkflowNamesAndVersionsRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
 		RegisterTaskDef Update an existing task
@@ -789,7 +789,7 @@ type MetadataResourceAPIGetWorkflowNamesAndVersionsRequest struct {
 	ApiService MetadataResourceAPI
 }
 
-func (r MetadataResourceAPIGetWorkflowNamesAndVersionsRequest) Execute() (map[string]map[string]interface{}, *http.Response, error) {
+func (r MetadataResourceAPIGetWorkflowNamesAndVersionsRequest) Execute() (map[string]interface{}, *http.Response, error) {
 	return r.ApiService.GetWorkflowNamesAndVersionsExecute(r)
 }
 
@@ -808,13 +808,13 @@ func (a *MetadataResourceAPIService) GetWorkflowNamesAndVersions(ctx context.Con
 
 // Execute executes the request
 //
-//	@return map[string]map[string]interface{}
-func (a *MetadataResourceAPIService) GetWorkflowNamesAndVersionsExecute(r MetadataResourceAPIGetWorkflowNamesAndVersionsRequest) (map[string]map[string]interface{}, *http.Response, error) {
+//	@return map[string]interface{}
+func (a *MetadataResourceAPIService) GetWorkflowNamesAndVersionsExecute(r MetadataResourceAPIGetWorkflowNamesAndVersionsRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
 		localVarPostBody    interface{}
 		formFiles           []formFile
-		localVarReturnValue map[string]map[string]interface{}
+		localVarReturnValue map[string]interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MetadataResourceAPIService.GetWorkflowNamesAndVersions")

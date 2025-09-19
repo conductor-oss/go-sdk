@@ -12,7 +12,6 @@ package orkes_v4
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 // checks if the WorkflowDef type satisfies the MappedNullable interface at compile time
@@ -20,34 +19,34 @@ var _ MappedNullable = &WorkflowDef{}
 
 // WorkflowDef struct for WorkflowDef
 type WorkflowDef struct {
-	CacheConfig                   *CacheConfig                      `json:"cacheConfig,omitempty"`
-	CreateTime                    *int64                            `json:"createTime,omitempty"`
-	CreatedBy                     *string                           `json:"createdBy,omitempty"`
-	Description                   *string                           `json:"description,omitempty"`
-	EnforceSchema                 *bool                             `json:"enforceSchema,omitempty"`
-	FailureWorkflow               *string                           `json:"failureWorkflow,omitempty"`
-	InputParameters               []string                          `json:"inputParameters,omitempty"`
-	InputSchema                   *SchemaDef                        `json:"inputSchema,omitempty"`
-	InputTemplate                 map[string]map[string]interface{} `json:"inputTemplate,omitempty"`
-	MaskedFields                  []string                          `json:"maskedFields,omitempty"`
-	Metadata                      map[string]map[string]interface{} `json:"metadata,omitempty"`
-	Name                          *string                           `json:"name,omitempty"`
-	OutputParameters              map[string]map[string]interface{} `json:"outputParameters,omitempty"`
-	OutputSchema                  *SchemaDef                        `json:"outputSchema,omitempty"`
-	OwnerApp                      *string                           `json:"ownerApp,omitempty"`
-	OwnerEmail                    *string                           `json:"ownerEmail,omitempty"`
-	RateLimitConfig               *RateLimitConfig                  `json:"rateLimitConfig,omitempty"`
-	Restartable                   *bool                             `json:"restartable,omitempty"`
-	SchemaVersion                 *int32                            `json:"schemaVersion,omitempty"`
-	Tasks                         []WorkflowTask                    `json:"tasks"`
-	TimeoutPolicy                 *string                           `json:"timeoutPolicy,omitempty"`
-	TimeoutSeconds                int64                             `json:"timeoutSeconds"`
-	UpdateTime                    *int64                            `json:"updateTime,omitempty"`
-	UpdatedBy                     *string                           `json:"updatedBy,omitempty"`
-	Variables                     map[string]map[string]interface{} `json:"variables,omitempty"`
-	Version                       *int32                            `json:"version,omitempty"`
-	WorkflowStatusListenerEnabled *bool                             `json:"workflowStatusListenerEnabled,omitempty"`
-	WorkflowStatusListenerSink    *string                           `json:"workflowStatusListenerSink,omitempty"`
+	CacheConfig                   *CacheConfig           `json:"cacheConfig,omitempty"`
+	CreateTime                    *int64                 `json:"createTime,omitempty"`
+	CreatedBy                     *string                `json:"createdBy,omitempty"`
+	Description                   *string                `json:"description,omitempty"`
+	EnforceSchema                 *bool                  `json:"enforceSchema,omitempty"`
+	FailureWorkflow               *string                `json:"failureWorkflow,omitempty"`
+	InputParameters               []string               `json:"inputParameters,omitempty"`
+	InputSchema                   *SchemaDef             `json:"inputSchema,omitempty"`
+	InputTemplate                 map[string]interface{} `json:"inputTemplate,omitempty"`
+	MaskedFields                  []string               `json:"maskedFields,omitempty"`
+	Metadata                      map[string]interface{} `json:"metadata,omitempty"`
+	Name                          *string                `json:"name,omitempty"`
+	OutputParameters              map[string]interface{} `json:"outputParameters,omitempty"`
+	OutputSchema                  *SchemaDef             `json:"outputSchema,omitempty"`
+	OwnerApp                      *string                `json:"ownerApp,omitempty"`
+	OwnerEmail                    *string                `json:"ownerEmail,omitempty"`
+	RateLimitConfig               *RateLimitConfig       `json:"rateLimitConfig,omitempty"`
+	Restartable                   *bool                  `json:"restartable,omitempty"`
+	SchemaVersion                 *int32                 `json:"schemaVersion,omitempty"`
+	Tasks                         []WorkflowTask         `json:"tasks"`
+	TimeoutPolicy                 *string                `json:"timeoutPolicy,omitempty"`
+	TimeoutSeconds                int64                  `json:"timeoutSeconds"`
+	UpdateTime                    *int64                 `json:"updateTime,omitempty"`
+	UpdatedBy                     *string                `json:"updatedBy,omitempty"`
+	Variables                     map[string]interface{} `json:"variables,omitempty"`
+	Version                       *int32                 `json:"version,omitempty"`
+	WorkflowStatusListenerEnabled *bool                  `json:"workflowStatusListenerEnabled,omitempty"`
+	WorkflowStatusListenerSink    *string                `json:"workflowStatusListenerSink,omitempty"`
 }
 
 type _WorkflowDef WorkflowDef
@@ -328,9 +327,9 @@ func (o *WorkflowDef) SetInputSchema(v SchemaDef) {
 }
 
 // GetInputTemplate returns the InputTemplate field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *WorkflowDef) GetInputTemplate() map[string]map[string]interface{} {
+func (o *WorkflowDef) GetInputTemplate() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.InputTemplate
@@ -339,7 +338,7 @@ func (o *WorkflowDef) GetInputTemplate() map[string]map[string]interface{} {
 // GetInputTemplateOk returns a tuple with the InputTemplate field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *WorkflowDef) GetInputTemplateOk() (*map[string]map[string]interface{}, bool) {
+func (o *WorkflowDef) GetInputTemplateOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.InputTemplate) {
 		return nil, false
 	}
@@ -355,8 +354,8 @@ func (o *WorkflowDef) HasInputTemplate() bool {
 	return false
 }
 
-// SetInputTemplate gets a reference to the given map[string]map[string]interface{} and assigns it to the InputTemplate field.
-func (o *WorkflowDef) SetInputTemplate(v map[string]map[string]interface{}) {
+// SetInputTemplate gets a reference to the given map[string]interface{} and assigns it to the InputTemplate field.
+func (o *WorkflowDef) SetInputTemplate(v map[string]interface{}) {
 	o.InputTemplate = v
 }
 
@@ -393,9 +392,9 @@ func (o *WorkflowDef) SetMaskedFields(v []string) {
 }
 
 // GetMetadata returns the Metadata field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *WorkflowDef) GetMetadata() map[string]map[string]interface{} {
+func (o *WorkflowDef) GetMetadata() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.Metadata
@@ -404,7 +403,7 @@ func (o *WorkflowDef) GetMetadata() map[string]map[string]interface{} {
 // GetMetadataOk returns a tuple with the Metadata field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *WorkflowDef) GetMetadataOk() (*map[string]map[string]interface{}, bool) {
+func (o *WorkflowDef) GetMetadataOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.Metadata) {
 		return nil, false
 	}
@@ -420,8 +419,8 @@ func (o *WorkflowDef) HasMetadata() bool {
 	return false
 }
 
-// SetMetadata gets a reference to the given map[string]map[string]interface{} and assigns it to the Metadata field.
-func (o *WorkflowDef) SetMetadata(v map[string]map[string]interface{}) {
+// SetMetadata gets a reference to the given map[string]interface{} and assigns it to the Metadata field.
+func (o *WorkflowDef) SetMetadata(v map[string]interface{}) {
 	o.Metadata = v
 }
 
@@ -458,9 +457,9 @@ func (o *WorkflowDef) SetName(v string) {
 }
 
 // GetOutputParameters returns the OutputParameters field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *WorkflowDef) GetOutputParameters() map[string]map[string]interface{} {
+func (o *WorkflowDef) GetOutputParameters() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.OutputParameters
@@ -469,7 +468,7 @@ func (o *WorkflowDef) GetOutputParameters() map[string]map[string]interface{} {
 // GetOutputParametersOk returns a tuple with the OutputParameters field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *WorkflowDef) GetOutputParametersOk() (*map[string]map[string]interface{}, bool) {
+func (o *WorkflowDef) GetOutputParametersOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.OutputParameters) {
 		return nil, false
 	}
@@ -485,8 +484,8 @@ func (o *WorkflowDef) HasOutputParameters() bool {
 	return false
 }
 
-// SetOutputParameters gets a reference to the given map[string]map[string]interface{} and assigns it to the OutputParameters field.
-func (o *WorkflowDef) SetOutputParameters(v map[string]map[string]interface{}) {
+// SetOutputParameters gets a reference to the given map[string]interface{} and assigns it to the OutputParameters field.
+func (o *WorkflowDef) SetOutputParameters(v map[string]interface{}) {
 	o.OutputParameters = v
 }
 
@@ -827,9 +826,9 @@ func (o *WorkflowDef) SetUpdatedBy(v string) {
 }
 
 // GetVariables returns the Variables field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *WorkflowDef) GetVariables() map[string]map[string]interface{} {
+func (o *WorkflowDef) GetVariables() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.Variables
@@ -838,7 +837,7 @@ func (o *WorkflowDef) GetVariables() map[string]map[string]interface{} {
 // GetVariablesOk returns a tuple with the Variables field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *WorkflowDef) GetVariablesOk() (*map[string]map[string]interface{}, bool) {
+func (o *WorkflowDef) GetVariablesOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.Variables) {
 		return nil, false
 	}
@@ -854,8 +853,8 @@ func (o *WorkflowDef) HasVariables() bool {
 	return false
 }
 
-// SetVariables gets a reference to the given map[string]map[string]interface{} and assigns it to the Variables field.
-func (o *WorkflowDef) SetVariables(v map[string]map[string]interface{}) {
+// SetVariables gets a reference to the given map[string]interface{} and assigns it to the Variables field.
+func (o *WorkflowDef) SetVariables(v map[string]interface{}) {
 	o.Variables = v
 }
 
@@ -1049,39 +1048,18 @@ func (o WorkflowDef) ToMap() (map[string]interface{}, error) {
 }
 
 func (o *WorkflowDef) UnmarshalJSON(bytes []byte) (err error) {
-	// This validates that all required properties are included in the JSON object
-	// by unmarshalling the object into a generic map with string keys and checking
-	// that every required field exists as a key in the generic map.
-	requiredProperties := []string{
-		"tasks",
-		"timeoutSeconds",
-	}
+	varObj := _WorkflowDef{}
 
-	allProperties := make(map[string]interface{})
-
-	err = json.Unmarshal(bytes, &allProperties)
+	err = json.Unmarshal(bytes, &varObj)
 
 	if err != nil {
 		return err
 	}
 
-	for _, requiredProperty := range requiredProperties {
-		if _, exists := allProperties[requiredProperty]; !exists {
-			return fmt.Errorf("no value given for required property %v", requiredProperty)
-		}
-	}
-
-	varWorkflowDef := _WorkflowDef{}
-
-	err = json.Unmarshal(bytes, &varWorkflowDef)
-
-	if err != nil {
-		return err
-	}
-
-	*o = WorkflowDef(varWorkflowDef)
+	*o = WorkflowDef(varObj)
 
 	return err
+
 }
 
 type NullableWorkflowDef struct {

@@ -44,14 +44,6 @@ func TestConcurrentWorkflowExecution(t *testing.T) {
 	err := wf.Register(true)
 	assert.NoError(t, err)
 
-	// Clean up workflow after test
-	defer func() {
-		err := wf.UnRegister()
-		if err != nil {
-			t.Logf("Failed to unregister workflow: %v", err)
-		}
-	}()
-
 	// Start 10 workflows simultaneously
 	var wg sync.WaitGroup
 	ids := make([]string, 10)
@@ -94,6 +86,13 @@ func TestConcurrentWorkflowExecution(t *testing.T) {
 
 	assert.GreaterOrEqual(t, completedCount, int(concurrentLimit), "Completed count should be equal to concurrent limit")
 	assert.Less(t, completedCount, len(ids), "Completed count should be less than or equal to the number of workflows")
+
+	t.Cleanup(func() {
+		err := wf.UnRegister()
+		if err != nil {
+			t.Logf("Failed to unregister workflow: %v", err)
+		}
+	})
 }
 
 // TestPerCustomerRateLimit tests rate limiting per customer ID
@@ -117,14 +116,6 @@ func TestPerCustomerRateLimit(t *testing.T) {
 	// Register the workflow
 	err := wf.Register(true)
 	assert.NoError(t, err)
-
-	// Clean up workflow after test
-	defer func() {
-		err := wf.UnRegister()
-		if err != nil {
-			t.Logf("Failed to unregister workflow: %v", err)
-		}
-	}()
 
 	type CustomerWorkflow struct {
 		CustomerID string
@@ -216,4 +207,11 @@ func TestPerCustomerRateLimit(t *testing.T) {
 			"Customer %s should have %d running workflows, got %d",
 			customerId, workflowsPerCustomer-stats.Completed, stats.Running)
 	}
+
+	t.Cleanup(func() {
+		err := wf.UnRegister()
+		if err != nil {
+			t.Logf("Failed to unregister workflow: %v", err)
+		}
+	})
 }

@@ -12,7 +12,6 @@ package orkes_v4
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 // checks if the StateChangeEvent type satisfies the MappedNullable interface at compile time
@@ -20,8 +19,8 @@ var _ MappedNullable = &StateChangeEvent{}
 
 // StateChangeEvent struct for StateChangeEvent
 type StateChangeEvent struct {
-	Payload map[string]map[string]interface{} `json:"payload,omitempty"`
-	Type    string                            `json:"type"`
+	Payload map[string]interface{} `json:"payload,omitempty"`
+	Type    string                 `json:"type"`
 }
 
 type _StateChangeEvent StateChangeEvent
@@ -45,9 +44,9 @@ func NewStateChangeEventWithDefaults() *StateChangeEvent {
 }
 
 // GetPayload returns the Payload field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *StateChangeEvent) GetPayload() map[string]map[string]interface{} {
+func (o *StateChangeEvent) GetPayload() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.Payload
@@ -56,7 +55,7 @@ func (o *StateChangeEvent) GetPayload() map[string]map[string]interface{} {
 // GetPayloadOk returns a tuple with the Payload field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *StateChangeEvent) GetPayloadOk() (*map[string]map[string]interface{}, bool) {
+func (o *StateChangeEvent) GetPayloadOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.Payload) {
 		return nil, false
 	}
@@ -72,8 +71,8 @@ func (o *StateChangeEvent) HasPayload() bool {
 	return false
 }
 
-// SetPayload gets a reference to the given map[string]map[string]interface{} and assigns it to the Payload field.
-func (o *StateChangeEvent) SetPayload(v map[string]map[string]interface{}) {
+// SetPayload gets a reference to the given map[string]interface{} and assigns it to the Payload field.
+func (o *StateChangeEvent) SetPayload(v map[string]interface{}) {
 	o.Payload = v
 }
 
@@ -119,38 +118,18 @@ func (o StateChangeEvent) ToMap() (map[string]interface{}, error) {
 }
 
 func (o *StateChangeEvent) UnmarshalJSON(bytes []byte) (err error) {
-	// This validates that all required properties are included in the JSON object
-	// by unmarshalling the object into a generic map with string keys and checking
-	// that every required field exists as a key in the generic map.
-	requiredProperties := []string{
-		"type",
-	}
+	varObj := _StateChangeEvent{}
 
-	allProperties := make(map[string]interface{})
-
-	err = json.Unmarshal(bytes, &allProperties)
+	err = json.Unmarshal(bytes, &varObj)
 
 	if err != nil {
 		return err
 	}
 
-	for _, requiredProperty := range requiredProperties {
-		if _, exists := allProperties[requiredProperty]; !exists {
-			return fmt.Errorf("no value given for required property %v", requiredProperty)
-		}
-	}
-
-	varStateChangeEvent := _StateChangeEvent{}
-
-	err = json.Unmarshal(bytes, &varStateChangeEvent)
-
-	if err != nil {
-		return err
-	}
-
-	*o = StateChangeEvent(varStateChangeEvent)
+	*o = StateChangeEvent(varObj)
 
 	return err
+
 }
 
 type NullableStateChangeEvent struct {

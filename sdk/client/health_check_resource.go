@@ -16,28 +16,18 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
-// Linger please
-var (
-	_ context.Context
-)
-
+// HealthCheckResourceApiService is the service for checking the health of the Conductor server
 type HealthCheckResourceApiService struct {
 	*APIClient
 }
 
-/*
-HealthCheckResourceApiService
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-
-@return http_model.HealthCheckStatus
-*/
+// DoCheck checks the health of the Conductor server
 func (a *HealthCheckResourceApiService) DoCheck(ctx context.Context) (model.HealthCheckStatus, *http.Response, error) {
-
 	req := a.http_orkes.HealthCheckResourceAPI.DoCheck(ctx)
 	result, resp, err := req.Execute()
 	if err != nil {
 		return model.HealthCheckStatus{}, resp, err
 	}
-	// ORKES client returns map[string]interface{}; convert to domain
+
 	return toDomainHealthCheckStatusFromOrkes(result), resp, nil
 }

@@ -12,7 +12,6 @@ package orkes_v4
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 // checks if the UpgradeWorkflowRequest type satisfies the MappedNullable interface at compile time
@@ -20,10 +19,10 @@ var _ MappedNullable = &UpgradeWorkflowRequest{}
 
 // UpgradeWorkflowRequest struct for UpgradeWorkflowRequest
 type UpgradeWorkflowRequest struct {
-	Name          string                            `json:"name"`
-	TaskOutput    map[string]map[string]interface{} `json:"taskOutput,omitempty"`
-	Version       *int32                            `json:"version,omitempty"`
-	WorkflowInput map[string]map[string]interface{} `json:"workflowInput,omitempty"`
+	Name          string                 `json:"name"`
+	TaskOutput    map[string]interface{} `json:"taskOutput,omitempty"`
+	Version       *int32                 `json:"version,omitempty"`
+	WorkflowInput map[string]interface{} `json:"workflowInput,omitempty"`
 }
 
 type _UpgradeWorkflowRequest UpgradeWorkflowRequest
@@ -71,9 +70,9 @@ func (o *UpgradeWorkflowRequest) SetName(v string) {
 }
 
 // GetTaskOutput returns the TaskOutput field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *UpgradeWorkflowRequest) GetTaskOutput() map[string]map[string]interface{} {
+func (o *UpgradeWorkflowRequest) GetTaskOutput() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.TaskOutput
@@ -82,7 +81,7 @@ func (o *UpgradeWorkflowRequest) GetTaskOutput() map[string]map[string]interface
 // GetTaskOutputOk returns a tuple with the TaskOutput field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *UpgradeWorkflowRequest) GetTaskOutputOk() (*map[string]map[string]interface{}, bool) {
+func (o *UpgradeWorkflowRequest) GetTaskOutputOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.TaskOutput) {
 		return nil, false
 	}
@@ -98,8 +97,8 @@ func (o *UpgradeWorkflowRequest) HasTaskOutput() bool {
 	return false
 }
 
-// SetTaskOutput gets a reference to the given map[string]map[string]interface{} and assigns it to the TaskOutput field.
-func (o *UpgradeWorkflowRequest) SetTaskOutput(v map[string]map[string]interface{}) {
+// SetTaskOutput gets a reference to the given map[string]interface{} and assigns it to the TaskOutput field.
+func (o *UpgradeWorkflowRequest) SetTaskOutput(v map[string]interface{}) {
 	o.TaskOutput = v
 }
 
@@ -136,9 +135,9 @@ func (o *UpgradeWorkflowRequest) SetVersion(v int32) {
 }
 
 // GetWorkflowInput returns the WorkflowInput field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *UpgradeWorkflowRequest) GetWorkflowInput() map[string]map[string]interface{} {
+func (o *UpgradeWorkflowRequest) GetWorkflowInput() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.WorkflowInput
@@ -147,7 +146,7 @@ func (o *UpgradeWorkflowRequest) GetWorkflowInput() map[string]map[string]interf
 // GetWorkflowInputOk returns a tuple with the WorkflowInput field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *UpgradeWorkflowRequest) GetWorkflowInputOk() (*map[string]map[string]interface{}, bool) {
+func (o *UpgradeWorkflowRequest) GetWorkflowInputOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.WorkflowInput) {
 		return nil, false
 	}
@@ -163,8 +162,8 @@ func (o *UpgradeWorkflowRequest) HasWorkflowInput() bool {
 	return false
 }
 
-// SetWorkflowInput gets a reference to the given map[string]map[string]interface{} and assigns it to the WorkflowInput field.
-func (o *UpgradeWorkflowRequest) SetWorkflowInput(v map[string]map[string]interface{}) {
+// SetWorkflowInput gets a reference to the given map[string]interface{} and assigns it to the WorkflowInput field.
+func (o *UpgradeWorkflowRequest) SetWorkflowInput(v map[string]interface{}) {
 	o.WorkflowInput = v
 }
 
@@ -192,38 +191,18 @@ func (o UpgradeWorkflowRequest) ToMap() (map[string]interface{}, error) {
 }
 
 func (o *UpgradeWorkflowRequest) UnmarshalJSON(bytes []byte) (err error) {
-	// This validates that all required properties are included in the JSON object
-	// by unmarshalling the object into a generic map with string keys and checking
-	// that every required field exists as a key in the generic map.
-	requiredProperties := []string{
-		"name",
-	}
+	varObj := _UpgradeWorkflowRequest{}
 
-	allProperties := make(map[string]interface{})
-
-	err = json.Unmarshal(bytes, &allProperties)
+	err = json.Unmarshal(bytes, &varObj)
 
 	if err != nil {
 		return err
 	}
 
-	for _, requiredProperty := range requiredProperties {
-		if _, exists := allProperties[requiredProperty]; !exists {
-			return fmt.Errorf("no value given for required property %v", requiredProperty)
-		}
-	}
-
-	varUpgradeWorkflowRequest := _UpgradeWorkflowRequest{}
-
-	err = json.Unmarshal(bytes, &varUpgradeWorkflowRequest)
-
-	if err != nil {
-		return err
-	}
-
-	*o = UpgradeWorkflowRequest(varUpgradeWorkflowRequest)
+	*o = UpgradeWorkflowRequest(varObj)
 
 	return err
+
 }
 
 type NullableUpgradeWorkflowRequest struct {

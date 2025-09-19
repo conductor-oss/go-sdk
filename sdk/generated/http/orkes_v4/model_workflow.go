@@ -423,9 +423,9 @@ func (o *Workflow) SetIdempotencyKey(v string) {
 	o.IdempotencyKey = &v
 }
 
-// GetInput returns the Input field value if set, zero value otherwise.
+// GetInput returns the Input field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *Workflow) GetInput() map[string]interface{} {
-	if o == nil || IsNil(o.Input) {
+	if o == nil {
 		var ret map[string]interface{}
 		return ret
 	}
@@ -434,16 +434,17 @@ func (o *Workflow) GetInput() map[string]interface{} {
 
 // GetInputOk returns a tuple with the Input field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *Workflow) GetInputOk() (map[string]interface{}, bool) {
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *Workflow) GetInputOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.Input) {
-		return map[string]interface{}{}, false
+		return nil, false
 	}
-	return o.Input, true
+	return &o.Input, true
 }
 
 // HasInput returns a boolean if a field has been set.
 func (o *Workflow) HasInput() bool {
-	if o != nil && !IsNil(o.Input) {
+	if o != nil && IsNil(o.Input) {
 		return true
 	}
 
@@ -487,9 +488,9 @@ func (o *Workflow) SetLastRetriedTime(v int64) {
 	o.LastRetriedTime = &v
 }
 
-// GetOutput returns the Output field value if set, zero value otherwise.
+// GetOutput returns the Output field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *Workflow) GetOutput() map[string]interface{} {
-	if o == nil || IsNil(o.Output) {
+	if o == nil {
 		var ret map[string]interface{}
 		return ret
 	}
@@ -498,16 +499,17 @@ func (o *Workflow) GetOutput() map[string]interface{} {
 
 // GetOutputOk returns a tuple with the Output field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *Workflow) GetOutputOk() (map[string]interface{}, bool) {
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *Workflow) GetOutputOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.Output) {
-		return map[string]interface{}{}, false
+		return nil, false
 	}
-	return o.Output, true
+	return &o.Output, true
 }
 
 // HasOutput returns a boolean if a field has been set.
 func (o *Workflow) HasOutput() bool {
-	if o != nil && !IsNil(o.Output) {
+	if o != nil && IsNil(o.Output) {
 		return true
 	}
 
@@ -968,9 +970,9 @@ func (o *Workflow) SetUpdatedBy(v string) {
 	o.UpdatedBy = &v
 }
 
-// GetVariables returns the Variables field value if set, zero value otherwise.
+// GetVariables returns the Variables field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *Workflow) GetVariables() map[string]interface{} {
-	if o == nil || IsNil(o.Variables) {
+	if o == nil {
 		var ret map[string]interface{}
 		return ret
 	}
@@ -979,16 +981,17 @@ func (o *Workflow) GetVariables() map[string]interface{} {
 
 // GetVariablesOk returns a tuple with the Variables field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *Workflow) GetVariablesOk() (map[string]interface{}, bool) {
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *Workflow) GetVariablesOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.Variables) {
-		return map[string]interface{}{}, false
+		return nil, false
 	}
-	return o.Variables, true
+	return &o.Variables, true
 }
 
 // HasVariables returns a boolean if a field has been set.
 func (o *Workflow) HasVariables() bool {
-	if o != nil && !IsNil(o.Variables) {
+	if o != nil && IsNil(o.Variables) {
 		return true
 	}
 
@@ -1171,13 +1174,13 @@ func (o Workflow) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.IdempotencyKey) {
 		toSerialize["idempotencyKey"] = o.IdempotencyKey
 	}
-	if !IsNil(o.Input) {
+	if o.Input != nil {
 		toSerialize["input"] = o.Input
 	}
 	if !IsNil(o.LastRetriedTime) {
 		toSerialize["lastRetriedTime"] = o.LastRetriedTime
 	}
-	if !IsNil(o.Output) {
+	if o.Output != nil {
 		toSerialize["output"] = o.Output
 	}
 	if !IsNil(o.OwnerApp) {
@@ -1222,7 +1225,7 @@ func (o Workflow) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.UpdatedBy) {
 		toSerialize["updatedBy"] = o.UpdatedBy
 	}
-	if !IsNil(o.Variables) {
+	if o.Variables != nil {
 		toSerialize["variables"] = o.Variables
 	}
 	if !IsNil(o.WorkflowDefinition) {

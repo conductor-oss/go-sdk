@@ -921,7 +921,7 @@ Name | Type | Description  | Notes
 
 ## JumpToTask
 
-> JumpToTask(ctx, workflowId, taskReferenceName).RequestBody(requestBody).Execute()
+> JumpToTask(ctx, workflowId).TaskReferenceName(taskReferenceName).RequestBody(requestBody).Execute()
 
 Jump workflow execution to given task
 
@@ -946,7 +946,7 @@ func main() {
 
     configuration := openapiclient.NewConfiguration()
     apiClient := openapiclient.NewAPIClient(configuration)
-    r, err := apiClient.WorkflowResourceAPI.JumpToTask(context.Background(), workflowId, taskReferenceName).RequestBody(requestBody).Execute()
+    r, err := apiClient.WorkflowResourceAPI.JumpToTask(context.Background(), workflowId).TaskReferenceName(taskReferenceName).RequestBody(requestBody).Execute()
     if err != nil {
         fmt.Fprintf(os.Stderr, "Error when calling `WorkflowResourceAPI.JumpToTask``: %v\n", err)
         fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -961,7 +961,6 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
 **workflowId** | **string** |  | 
-**taskReferenceName** | **string** |  | 
 
 ### Other Parameters
 
@@ -971,7 +970,7 @@ Other parameters are passed through a pointer to a apiJumpToTaskRequest struct v
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
-
+ **taskReferenceName** | **string** |  | 
  **requestBody** | **map[string]map[string]interface{}** |  | 
 
 ### Return type

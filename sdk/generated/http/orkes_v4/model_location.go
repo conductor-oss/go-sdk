@@ -19,8 +19,8 @@ var _ MappedNullable = &Location{}
 
 // Location struct for Location
 type Location struct {
-	AllFields              map[string]map[string]interface{} `json:"allFields,omitempty"`
-	DefaultInstanceForType *Location                         `json:"defaultInstanceForType,omitempty"`
+	AllFields              map[string]interface{} `json:"allFields,omitempty"`
+	DefaultInstanceForType *Location              `json:"defaultInstanceForType,omitempty"`
 	// Simplified schema for Descriptor (original had circular references)
 	DescriptorForType            map[string]interface{} `json:"descriptorForType,omitempty"`
 	InitializationErrorString    *string                `json:"initializationErrorString,omitempty"`
@@ -59,9 +59,9 @@ func NewLocationWithDefaults() *Location {
 }
 
 // GetAllFields returns the AllFields field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *Location) GetAllFields() map[string]map[string]interface{} {
+func (o *Location) GetAllFields() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.AllFields
@@ -70,7 +70,7 @@ func (o *Location) GetAllFields() map[string]map[string]interface{} {
 // GetAllFieldsOk returns a tuple with the AllFields field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *Location) GetAllFieldsOk() (*map[string]map[string]interface{}, bool) {
+func (o *Location) GetAllFieldsOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.AllFields) {
 		return nil, false
 	}
@@ -86,8 +86,8 @@ func (o *Location) HasAllFields() bool {
 	return false
 }
 
-// SetAllFields gets a reference to the given map[string]map[string]interface{} and assigns it to the AllFields field.
-func (o *Location) SetAllFields(v map[string]map[string]interface{}) {
+// SetAllFields gets a reference to the given map[string]interface{} and assigns it to the AllFields field.
+func (o *Location) SetAllFields(v map[string]interface{}) {
 	o.AllFields = v
 }
 

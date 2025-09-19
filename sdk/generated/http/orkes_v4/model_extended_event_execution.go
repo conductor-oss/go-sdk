@@ -19,19 +19,19 @@ var _ MappedNullable = &ExtendedEventExecution{}
 
 // ExtendedEventExecution struct for ExtendedEventExecution
 type ExtendedEventExecution struct {
-	Action             *string                           `json:"action,omitempty"`
-	Created            *int64                            `json:"created,omitempty"`
-	Event              *string                           `json:"event,omitempty"`
-	EventHandler       *EventHandler                     `json:"eventHandler,omitempty"`
-	FullMessagePayload map[string]map[string]interface{} `json:"fullMessagePayload,omitempty"`
-	Id                 *string                           `json:"id,omitempty"`
-	MessageId          *string                           `json:"messageId,omitempty"`
-	Name               *string                           `json:"name,omitempty"`
-	OrgId              *string                           `json:"orgId,omitempty"`
-	Output             map[string]map[string]interface{} `json:"output,omitempty"`
-	Payload            map[string]map[string]interface{} `json:"payload,omitempty"`
-	Status             *string                           `json:"status,omitempty"`
-	StatusDescription  *string                           `json:"statusDescription,omitempty"`
+	Action             *string                `json:"action,omitempty"`
+	Created            *int64                 `json:"created,omitempty"`
+	Event              *string                `json:"event,omitempty"`
+	EventHandler       *EventHandler          `json:"eventHandler,omitempty"`
+	FullMessagePayload map[string]interface{} `json:"fullMessagePayload,omitempty"`
+	Id                 *string                `json:"id,omitempty"`
+	MessageId          *string                `json:"messageId,omitempty"`
+	Name               *string                `json:"name,omitempty"`
+	OrgId              *string                `json:"orgId,omitempty"`
+	Output             map[string]interface{} `json:"output,omitempty"`
+	Payload            map[string]interface{} `json:"payload,omitempty"`
+	Status             *string                `json:"status,omitempty"`
+	StatusDescription  *string                `json:"statusDescription,omitempty"`
 }
 
 // NewExtendedEventExecution instantiates a new ExtendedEventExecution object
@@ -180,9 +180,9 @@ func (o *ExtendedEventExecution) SetEventHandler(v EventHandler) {
 }
 
 // GetFullMessagePayload returns the FullMessagePayload field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *ExtendedEventExecution) GetFullMessagePayload() map[string]map[string]interface{} {
+func (o *ExtendedEventExecution) GetFullMessagePayload() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.FullMessagePayload
@@ -191,7 +191,7 @@ func (o *ExtendedEventExecution) GetFullMessagePayload() map[string]map[string]i
 // GetFullMessagePayloadOk returns a tuple with the FullMessagePayload field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *ExtendedEventExecution) GetFullMessagePayloadOk() (*map[string]map[string]interface{}, bool) {
+func (o *ExtendedEventExecution) GetFullMessagePayloadOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.FullMessagePayload) {
 		return nil, false
 	}
@@ -207,8 +207,8 @@ func (o *ExtendedEventExecution) HasFullMessagePayload() bool {
 	return false
 }
 
-// SetFullMessagePayload gets a reference to the given map[string]map[string]interface{} and assigns it to the FullMessagePayload field.
-func (o *ExtendedEventExecution) SetFullMessagePayload(v map[string]map[string]interface{}) {
+// SetFullMessagePayload gets a reference to the given map[string]interface{} and assigns it to the FullMessagePayload field.
+func (o *ExtendedEventExecution) SetFullMessagePayload(v map[string]interface{}) {
 	o.FullMessagePayload = v
 }
 
@@ -341,9 +341,9 @@ func (o *ExtendedEventExecution) SetOrgId(v string) {
 }
 
 // GetOutput returns the Output field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *ExtendedEventExecution) GetOutput() map[string]map[string]interface{} {
+func (o *ExtendedEventExecution) GetOutput() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.Output
@@ -352,7 +352,7 @@ func (o *ExtendedEventExecution) GetOutput() map[string]map[string]interface{} {
 // GetOutputOk returns a tuple with the Output field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *ExtendedEventExecution) GetOutputOk() (*map[string]map[string]interface{}, bool) {
+func (o *ExtendedEventExecution) GetOutputOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.Output) {
 		return nil, false
 	}
@@ -368,15 +368,15 @@ func (o *ExtendedEventExecution) HasOutput() bool {
 	return false
 }
 
-// SetOutput gets a reference to the given map[string]map[string]interface{} and assigns it to the Output field.
-func (o *ExtendedEventExecution) SetOutput(v map[string]map[string]interface{}) {
+// SetOutput gets a reference to the given map[string]interface{} and assigns it to the Output field.
+func (o *ExtendedEventExecution) SetOutput(v map[string]interface{}) {
 	o.Output = v
 }
 
 // GetPayload returns the Payload field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *ExtendedEventExecution) GetPayload() map[string]map[string]interface{} {
+func (o *ExtendedEventExecution) GetPayload() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.Payload
@@ -385,7 +385,7 @@ func (o *ExtendedEventExecution) GetPayload() map[string]map[string]interface{} 
 // GetPayloadOk returns a tuple with the Payload field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *ExtendedEventExecution) GetPayloadOk() (*map[string]map[string]interface{}, bool) {
+func (o *ExtendedEventExecution) GetPayloadOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.Payload) {
 		return nil, false
 	}
@@ -401,8 +401,8 @@ func (o *ExtendedEventExecution) HasPayload() bool {
 	return false
 }
 
-// SetPayload gets a reference to the given map[string]map[string]interface{} and assigns it to the Payload field.
-func (o *ExtendedEventExecution) SetPayload(v map[string]map[string]interface{}) {
+// SetPayload gets a reference to the given map[string]interface{} and assigns it to the Payload field.
+func (o *ExtendedEventExecution) SetPayload(v map[string]interface{}) {
 	o.Payload = v
 }
 

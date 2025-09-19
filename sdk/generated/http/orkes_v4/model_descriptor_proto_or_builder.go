@@ -19,7 +19,7 @@ var _ MappedNullable = &DescriptorProtoOrBuilder{}
 
 // DescriptorProtoOrBuilder struct for DescriptorProtoOrBuilder
 type DescriptorProtoOrBuilder struct {
-	AllFields map[string]map[string]interface{} `json:"allFields,omitempty"`
+	AllFields map[string]interface{} `json:"allFields,omitempty"`
 	// Simplified schema for Message (original had circular references)
 	DefaultInstanceForType map[string]interface{} `json:"defaultInstanceForType,omitempty"`
 	// Simplified schema for Descriptor (original had circular references)
@@ -41,6 +41,7 @@ type DescriptorProtoOrBuilder struct {
 	Name                        *string                         `json:"name,omitempty"`
 	NameBytes                   *ByteString                     `json:"nameBytes,omitempty"`
 	NestedTypeCount             *int32                          `json:"nestedTypeCount,omitempty"`
+	NestedTypeList              []map[string]interface{}        `json:"nestedTypeList,omitempty"`
 	OneofDeclCount              *int32                          `json:"oneofDeclCount,omitempty"`
 	OneofDeclList               []map[string]interface{}        `json:"oneofDeclList,omitempty"`
 	OneofDeclOrBuilderList      []OneofDescriptorProtoOrBuilder `json:"oneofDeclOrBuilderList,omitempty"`
@@ -72,9 +73,9 @@ func NewDescriptorProtoOrBuilderWithDefaults() *DescriptorProtoOrBuilder {
 }
 
 // GetAllFields returns the AllFields field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *DescriptorProtoOrBuilder) GetAllFields() map[string]map[string]interface{} {
+func (o *DescriptorProtoOrBuilder) GetAllFields() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.AllFields
@@ -83,7 +84,7 @@ func (o *DescriptorProtoOrBuilder) GetAllFields() map[string]map[string]interfac
 // GetAllFieldsOk returns a tuple with the AllFields field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *DescriptorProtoOrBuilder) GetAllFieldsOk() (*map[string]map[string]interface{}, bool) {
+func (o *DescriptorProtoOrBuilder) GetAllFieldsOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.AllFields) {
 		return nil, false
 	}
@@ -99,8 +100,8 @@ func (o *DescriptorProtoOrBuilder) HasAllFields() bool {
 	return false
 }
 
-// SetAllFields gets a reference to the given map[string]map[string]interface{} and assigns it to the AllFields field.
-func (o *DescriptorProtoOrBuilder) SetAllFields(v map[string]map[string]interface{}) {
+// SetAllFields gets a reference to the given map[string]interface{} and assigns it to the AllFields field.
+func (o *DescriptorProtoOrBuilder) SetAllFields(v map[string]interface{}) {
 	o.AllFields = v
 }
 
@@ -715,6 +716,38 @@ func (o *DescriptorProtoOrBuilder) SetNestedTypeCount(v int32) {
 	o.NestedTypeCount = &v
 }
 
+// GetNestedTypeList returns the NestedTypeList field value if set, zero value otherwise.
+func (o *DescriptorProtoOrBuilder) GetNestedTypeList() []map[string]interface{} {
+	if o == nil || IsNil(o.NestedTypeList) {
+		var ret []map[string]interface{}
+		return ret
+	}
+	return o.NestedTypeList
+}
+
+// GetNestedTypeListOk returns a tuple with the NestedTypeList field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DescriptorProtoOrBuilder) GetNestedTypeListOk() ([]map[string]interface{}, bool) {
+	if o == nil || IsNil(o.NestedTypeList) {
+		return nil, false
+	}
+	return o.NestedTypeList, true
+}
+
+// HasNestedTypeList returns a boolean if a field has been set.
+func (o *DescriptorProtoOrBuilder) HasNestedTypeList() bool {
+	if o != nil && !IsNil(o.NestedTypeList) {
+		return true
+	}
+
+	return false
+}
+
+// SetNestedTypeList gets a reference to the given []map[string]interface{} and assigns it to the NestedTypeList field.
+func (o *DescriptorProtoOrBuilder) SetNestedTypeList(v []map[string]interface{}) {
+	o.NestedTypeList = v
+}
+
 // GetOneofDeclCount returns the OneofDeclCount field value if set, zero value otherwise.
 func (o *DescriptorProtoOrBuilder) GetOneofDeclCount() int32 {
 	if o == nil || IsNil(o.OneofDeclCount) {
@@ -1136,6 +1169,9 @@ func (o DescriptorProtoOrBuilder) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.NestedTypeCount) {
 		toSerialize["nestedTypeCount"] = o.NestedTypeCount
+	}
+	if !IsNil(o.NestedTypeList) {
+		toSerialize["nestedTypeList"] = o.NestedTypeList
 	}
 	if !IsNil(o.OneofDeclCount) {
 		toSerialize["oneofDeclCount"] = o.OneofDeclCount

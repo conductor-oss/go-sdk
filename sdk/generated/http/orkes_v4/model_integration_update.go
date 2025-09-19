@@ -19,11 +19,11 @@ var _ MappedNullable = &IntegrationUpdate{}
 
 // IntegrationUpdate struct for IntegrationUpdate
 type IntegrationUpdate struct {
-	Category      *string                           `json:"category,omitempty"`
-	Configuration map[string]map[string]interface{} `json:"configuration,omitempty"`
-	Description   *string                           `json:"description,omitempty"`
-	Enabled       *bool                             `json:"enabled,omitempty"`
-	Type          *string                           `json:"type,omitempty"`
+	Category      *string                `json:"category,omitempty"`
+	Configuration map[string]interface{} `json:"configuration,omitempty"`
+	Description   *string                `json:"description,omitempty"`
+	Enabled       *bool                  `json:"enabled,omitempty"`
+	Type          *string                `json:"type,omitempty"`
 }
 
 // NewIntegrationUpdate instantiates a new IntegrationUpdate object
@@ -76,9 +76,9 @@ func (o *IntegrationUpdate) SetCategory(v string) {
 }
 
 // GetConfiguration returns the Configuration field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *IntegrationUpdate) GetConfiguration() map[string]map[string]interface{} {
+func (o *IntegrationUpdate) GetConfiguration() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.Configuration
@@ -87,7 +87,7 @@ func (o *IntegrationUpdate) GetConfiguration() map[string]map[string]interface{}
 // GetConfigurationOk returns a tuple with the Configuration field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *IntegrationUpdate) GetConfigurationOk() (*map[string]map[string]interface{}, bool) {
+func (o *IntegrationUpdate) GetConfigurationOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.Configuration) {
 		return nil, false
 	}
@@ -103,8 +103,8 @@ func (o *IntegrationUpdate) HasConfiguration() bool {
 	return false
 }
 
-// SetConfiguration gets a reference to the given map[string]map[string]interface{} and assigns it to the Configuration field.
-func (o *IntegrationUpdate) SetConfiguration(v map[string]map[string]interface{}) {
+// SetConfiguration gets a reference to the given map[string]interface{} and assigns it to the Configuration field.
+func (o *IntegrationUpdate) SetConfiguration(v map[string]interface{}) {
 	o.Configuration = v
 }
 

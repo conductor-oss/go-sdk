@@ -19,12 +19,12 @@ var _ MappedNullable = &FieldOptions{}
 
 // FieldOptions struct for FieldOptions
 type FieldOptions struct {
-	AllFields              map[string]map[string]interface{} `json:"allFields,omitempty"`
-	AllFieldsRaw           map[string]map[string]interface{} `json:"allFieldsRaw,omitempty"`
-	Ctype                  *string                           `json:"ctype,omitempty"`
-	DebugRedact            *bool                             `json:"debugRedact,omitempty"`
-	DefaultInstanceForType *FieldOptions                     `json:"defaultInstanceForType,omitempty"`
-	Deprecated             *bool                             `json:"deprecated,omitempty"`
+	AllFields              map[string]interface{} `json:"allFields,omitempty"`
+	AllFieldsRaw           map[string]interface{} `json:"allFieldsRaw,omitempty"`
+	Ctype                  *string                `json:"ctype,omitempty"`
+	DebugRedact            *bool                  `json:"debugRedact,omitempty"`
+	DefaultInstanceForType *FieldOptions          `json:"defaultInstanceForType,omitempty"`
+	Deprecated             *bool                  `json:"deprecated,omitempty"`
 	// Simplified schema for Descriptor (original had circular references)
 	DescriptorForType                map[string]interface{}    `json:"descriptorForType,omitempty"`
 	EditionDefaultsCount             *int32                    `json:"editionDefaultsCount,omitempty"`
@@ -69,9 +69,9 @@ func NewFieldOptionsWithDefaults() *FieldOptions {
 }
 
 // GetAllFields returns the AllFields field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *FieldOptions) GetAllFields() map[string]map[string]interface{} {
+func (o *FieldOptions) GetAllFields() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.AllFields
@@ -80,7 +80,7 @@ func (o *FieldOptions) GetAllFields() map[string]map[string]interface{} {
 // GetAllFieldsOk returns a tuple with the AllFields field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *FieldOptions) GetAllFieldsOk() (*map[string]map[string]interface{}, bool) {
+func (o *FieldOptions) GetAllFieldsOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.AllFields) {
 		return nil, false
 	}
@@ -96,15 +96,15 @@ func (o *FieldOptions) HasAllFields() bool {
 	return false
 }
 
-// SetAllFields gets a reference to the given map[string]map[string]interface{} and assigns it to the AllFields field.
-func (o *FieldOptions) SetAllFields(v map[string]map[string]interface{}) {
+// SetAllFields gets a reference to the given map[string]interface{} and assigns it to the AllFields field.
+func (o *FieldOptions) SetAllFields(v map[string]interface{}) {
 	o.AllFields = v
 }
 
 // GetAllFieldsRaw returns the AllFieldsRaw field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *FieldOptions) GetAllFieldsRaw() map[string]map[string]interface{} {
+func (o *FieldOptions) GetAllFieldsRaw() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.AllFieldsRaw
@@ -113,7 +113,7 @@ func (o *FieldOptions) GetAllFieldsRaw() map[string]map[string]interface{} {
 // GetAllFieldsRawOk returns a tuple with the AllFieldsRaw field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *FieldOptions) GetAllFieldsRawOk() (*map[string]map[string]interface{}, bool) {
+func (o *FieldOptions) GetAllFieldsRawOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.AllFieldsRaw) {
 		return nil, false
 	}
@@ -129,8 +129,8 @@ func (o *FieldOptions) HasAllFieldsRaw() bool {
 	return false
 }
 
-// SetAllFieldsRaw gets a reference to the given map[string]map[string]interface{} and assigns it to the AllFieldsRaw field.
-func (o *FieldOptions) SetAllFieldsRaw(v map[string]map[string]interface{}) {
+// SetAllFieldsRaw gets a reference to the given map[string]interface{} and assigns it to the AllFieldsRaw field.
+func (o *FieldOptions) SetAllFieldsRaw(v map[string]interface{}) {
 	o.AllFieldsRaw = v
 }
 

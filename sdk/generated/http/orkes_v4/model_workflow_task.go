@@ -30,32 +30,32 @@ type WorkflowTask struct {
 	DefaultExclusiveJoinTask []string               `json:"defaultExclusiveJoinTask,omitempty"`
 	Description              *string                `json:"description,omitempty"`
 	// Deprecated
-	DynamicForkJoinTasksParam      *string                           `json:"dynamicForkJoinTasksParam,omitempty"`
-	DynamicForkTasksInputParamName *string                           `json:"dynamicForkTasksInputParamName,omitempty"`
-	DynamicForkTasksParam          *string                           `json:"dynamicForkTasksParam,omitempty"`
-	DynamicTaskNameParam           *string                           `json:"dynamicTaskNameParam,omitempty"`
-	EvaluatorType                  *string                           `json:"evaluatorType,omitempty"`
-	Expression                     *string                           `json:"expression,omitempty"`
-	ForkTasks                      []interface{}                     `json:"forkTasks,omitempty"`
-	InputParameters                map[string]map[string]interface{} `json:"inputParameters,omitempty"`
-	JoinOn                         []string                          `json:"joinOn,omitempty"`
-	JoinStatus                     *string                           `json:"joinStatus,omitempty"`
-	LoopCondition                  *string                           `json:"loopCondition,omitempty"`
-	LoopOver                       interface{}                       `json:"loopOver,omitempty"`
-	Name                           *string                           `json:"name,omitempty"`
-	OnStateChange                  map[string]interface{}            `json:"onStateChange,omitempty"`
-	Optional                       *bool                             `json:"optional,omitempty"`
-	Permissive                     *bool                             `json:"permissive,omitempty"`
-	RateLimited                    *bool                             `json:"rateLimited,omitempty"`
-	RetryCount                     *int32                            `json:"retryCount,omitempty"`
-	ScriptExpression               *string                           `json:"scriptExpression,omitempty"`
-	Sink                           *string                           `json:"sink,omitempty"`
-	StartDelay                     *int32                            `json:"startDelay,omitempty"`
-	SubWorkflowParam               *SubWorkflowParams                `json:"subWorkflowParam,omitempty"`
-	TaskDefinition                 *TaskDef                          `json:"taskDefinition,omitempty"`
-	TaskReferenceName              *string                           `json:"taskReferenceName,omitempty"`
-	Type                           *string                           `json:"type,omitempty"`
-	WorkflowTaskType               *string                           `json:"workflowTaskType,omitempty"`
+	DynamicForkJoinTasksParam      *string                `json:"dynamicForkJoinTasksParam,omitempty"`
+	DynamicForkTasksInputParamName *string                `json:"dynamicForkTasksInputParamName,omitempty"`
+	DynamicForkTasksParam          *string                `json:"dynamicForkTasksParam,omitempty"`
+	DynamicTaskNameParam           *string                `json:"dynamicTaskNameParam,omitempty"`
+	EvaluatorType                  *string                `json:"evaluatorType,omitempty"`
+	Expression                     *string                `json:"expression,omitempty"`
+	ForkTasks                      []interface{}          `json:"forkTasks,omitempty"`
+	InputParameters                map[string]interface{} `json:"inputParameters,omitempty"`
+	JoinOn                         []string               `json:"joinOn,omitempty"`
+	JoinStatus                     *string                `json:"joinStatus,omitempty"`
+	LoopCondition                  *string                `json:"loopCondition,omitempty"`
+	LoopOver                       interface{}            `json:"loopOver,omitempty"`
+	Name                           *string                `json:"name,omitempty"`
+	OnStateChange                  map[string]interface{} `json:"onStateChange,omitempty"`
+	Optional                       *bool                  `json:"optional,omitempty"`
+	Permissive                     *bool                  `json:"permissive,omitempty"`
+	RateLimited                    *bool                  `json:"rateLimited,omitempty"`
+	RetryCount                     *int32                 `json:"retryCount,omitempty"`
+	ScriptExpression               *string                `json:"scriptExpression,omitempty"`
+	Sink                           *string                `json:"sink,omitempty"`
+	StartDelay                     *int32                 `json:"startDelay,omitempty"`
+	SubWorkflowParam               *SubWorkflowParams     `json:"subWorkflowParam,omitempty"`
+	TaskDefinition                 *TaskDef               `json:"taskDefinition,omitempty"`
+	TaskReferenceName              *string                `json:"taskReferenceName,omitempty"`
+	Type                           *string                `json:"type,omitempty"`
+	WorkflowTaskType               *string                `json:"workflowTaskType,omitempty"`
 }
 
 // NewWorkflowTask instantiates a new WorkflowTask object
@@ -567,9 +567,9 @@ func (o *WorkflowTask) SetForkTasks(v []interface{}) {
 }
 
 // GetInputParameters returns the InputParameters field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *WorkflowTask) GetInputParameters() map[string]map[string]interface{} {
+func (o *WorkflowTask) GetInputParameters() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.InputParameters
@@ -578,7 +578,7 @@ func (o *WorkflowTask) GetInputParameters() map[string]map[string]interface{} {
 // GetInputParametersOk returns a tuple with the InputParameters field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *WorkflowTask) GetInputParametersOk() (*map[string]map[string]interface{}, bool) {
+func (o *WorkflowTask) GetInputParametersOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.InputParameters) {
 		return nil, false
 	}
@@ -594,8 +594,8 @@ func (o *WorkflowTask) HasInputParameters() bool {
 	return false
 }
 
-// SetInputParameters gets a reference to the given map[string]map[string]interface{} and assigns it to the InputParameters field.
-func (o *WorkflowTask) SetInputParameters(v map[string]map[string]interface{}) {
+// SetInputParameters gets a reference to the given map[string]interface{} and assigns it to the InputParameters field.
+func (o *WorkflowTask) SetInputParameters(v map[string]interface{}) {
 	o.InputParameters = v
 }
 

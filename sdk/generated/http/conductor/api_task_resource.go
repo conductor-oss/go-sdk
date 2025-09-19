@@ -2290,11 +2290,11 @@ type TaskResourceAPIUpdateTask1Request struct {
 	workflowId  string
 	taskRefName string
 	status      string
-	requestBody *map[string]map[string]interface{}
+	requestBody *map[string]interface{}
 	workerid    *string
 }
 
-func (r TaskResourceAPIUpdateTask1Request) RequestBody(requestBody map[string]map[string]interface{}) TaskResourceAPIUpdateTask1Request {
+func (r TaskResourceAPIUpdateTask1Request) RequestBody(requestBody map[string]interface{}) TaskResourceAPIUpdateTask1Request {
 	r.requestBody = &requestBody
 	return r
 }
@@ -2420,11 +2420,11 @@ type TaskResourceAPIUpdateTaskSyncRequest struct {
 	workflowId  string
 	taskRefName string
 	status      string
-	requestBody *map[string]map[string]interface{}
+	requestBody *map[string]interface{}
 	workerid    *string
 }
 
-func (r TaskResourceAPIUpdateTaskSyncRequest) RequestBody(requestBody map[string]map[string]interface{}) TaskResourceAPIUpdateTaskSyncRequest {
+func (r TaskResourceAPIUpdateTaskSyncRequest) RequestBody(requestBody map[string]interface{}) TaskResourceAPIUpdateTaskSyncRequest {
 	r.requestBody = &requestBody
 	return r
 }

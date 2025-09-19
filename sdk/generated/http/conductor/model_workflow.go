@@ -19,39 +19,39 @@ var _ MappedNullable = &Workflow{}
 
 // Workflow struct for Workflow
 type Workflow struct {
-	OwnerApp                         *string                           `json:"ownerApp,omitempty"`
-	CreateTime                       *int64                            `json:"createTime,omitempty"`
-	UpdateTime                       *int64                            `json:"updateTime,omitempty"`
-	CreatedBy                        *string                           `json:"createdBy,omitempty"`
-	UpdatedBy                        *string                           `json:"updatedBy,omitempty"`
-	Status                           *string                           `json:"status,omitempty"`
-	EndTime                          *int64                            `json:"endTime,omitempty"`
-	WorkflowId                       *string                           `json:"workflowId,omitempty"`
-	ParentWorkflowId                 *string                           `json:"parentWorkflowId,omitempty"`
-	ParentWorkflowTaskId             *string                           `json:"parentWorkflowTaskId,omitempty"`
-	Tasks                            []Task                            `json:"tasks,omitempty"`
-	Input                            map[string]map[string]interface{} `json:"input,omitempty"`
-	Output                           map[string]map[string]interface{} `json:"output,omitempty"`
-	CorrelationId                    *string                           `json:"correlationId,omitempty"`
-	ReRunFromWorkflowId              *string                           `json:"reRunFromWorkflowId,omitempty"`
-	ReasonForIncompletion            *string                           `json:"reasonForIncompletion,omitempty"`
-	Event                            *string                           `json:"event,omitempty"`
-	TaskToDomain                     *map[string]string                `json:"taskToDomain,omitempty"`
-	FailedReferenceTaskNames         []string                          `json:"failedReferenceTaskNames,omitempty"`
-	WorkflowDefinition               *WorkflowDef                      `json:"workflowDefinition,omitempty"`
-	ExternalInputPayloadStoragePath  *string                           `json:"externalInputPayloadStoragePath,omitempty"`
-	ExternalOutputPayloadStoragePath *string                           `json:"externalOutputPayloadStoragePath,omitempty"`
-	Priority                         *int32                            `json:"priority,omitempty"`
-	Variables                        map[string]map[string]interface{} `json:"variables,omitempty"`
-	LastRetriedTime                  *int64                            `json:"lastRetriedTime,omitempty"`
-	FailedTaskNames                  []string                          `json:"failedTaskNames,omitempty"`
-	History                          []Workflow                        `json:"history,omitempty"`
-	IdempotencyKey                   *string                           `json:"idempotencyKey,omitempty"`
-	RateLimitKey                     *string                           `json:"rateLimitKey,omitempty"`
-	RateLimited                      *bool                             `json:"rateLimited,omitempty"`
-	StartTime                        *int64                            `json:"startTime,omitempty"`
-	WorkflowName                     *string                           `json:"workflowName,omitempty"`
-	WorkflowVersion                  *int32                            `json:"workflowVersion,omitempty"`
+	OwnerApp                         *string                `json:"ownerApp,omitempty"`
+	CreateTime                       *int64                 `json:"createTime,omitempty"`
+	UpdateTime                       *int64                 `json:"updateTime,omitempty"`
+	CreatedBy                        *string                `json:"createdBy,omitempty"`
+	UpdatedBy                        *string                `json:"updatedBy,omitempty"`
+	Status                           *string                `json:"status,omitempty"`
+	EndTime                          *int64                 `json:"endTime,omitempty"`
+	WorkflowId                       *string                `json:"workflowId,omitempty"`
+	ParentWorkflowId                 *string                `json:"parentWorkflowId,omitempty"`
+	ParentWorkflowTaskId             *string                `json:"parentWorkflowTaskId,omitempty"`
+	Tasks                            []Task                 `json:"tasks,omitempty"`
+	Input                            map[string]interface{} `json:"input,omitempty"`
+	Output                           map[string]interface{} `json:"output,omitempty"`
+	CorrelationId                    *string                `json:"correlationId,omitempty"`
+	ReRunFromWorkflowId              *string                `json:"reRunFromWorkflowId,omitempty"`
+	ReasonForIncompletion            *string                `json:"reasonForIncompletion,omitempty"`
+	Event                            *string                `json:"event,omitempty"`
+	TaskToDomain                     *map[string]string     `json:"taskToDomain,omitempty"`
+	FailedReferenceTaskNames         []string               `json:"failedReferenceTaskNames,omitempty"`
+	WorkflowDefinition               *WorkflowDef           `json:"workflowDefinition,omitempty"`
+	ExternalInputPayloadStoragePath  *string                `json:"externalInputPayloadStoragePath,omitempty"`
+	ExternalOutputPayloadStoragePath *string                `json:"externalOutputPayloadStoragePath,omitempty"`
+	Priority                         *int32                 `json:"priority,omitempty"`
+	Variables                        map[string]interface{} `json:"variables,omitempty"`
+	LastRetriedTime                  *int64                 `json:"lastRetriedTime,omitempty"`
+	FailedTaskNames                  []string               `json:"failedTaskNames,omitempty"`
+	History                          []Workflow             `json:"history,omitempty"`
+	IdempotencyKey                   *string                `json:"idempotencyKey,omitempty"`
+	RateLimitKey                     *string                `json:"rateLimitKey,omitempty"`
+	RateLimited                      *bool                  `json:"rateLimited,omitempty"`
+	StartTime                        *int64                 `json:"startTime,omitempty"`
+	WorkflowName                     *string                `json:"workflowName,omitempty"`
+	WorkflowVersion                  *int32                 `json:"workflowVersion,omitempty"`
 }
 
 // NewWorkflow instantiates a new Workflow object
@@ -424,9 +424,9 @@ func (o *Workflow) SetTasks(v []Task) {
 }
 
 // GetInput returns the Input field value if set, zero value otherwise.
-func (o *Workflow) GetInput() map[string]map[string]interface{} {
+func (o *Workflow) GetInput() map[string]interface{} {
 	if o == nil || IsNil(o.Input) {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.Input
@@ -434,9 +434,9 @@ func (o *Workflow) GetInput() map[string]map[string]interface{} {
 
 // GetInputOk returns a tuple with the Input field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *Workflow) GetInputOk() (map[string]map[string]interface{}, bool) {
+func (o *Workflow) GetInputOk() (map[string]interface{}, bool) {
 	if o == nil || IsNil(o.Input) {
-		return map[string]map[string]interface{}{}, false
+		return map[string]interface{}{}, false
 	}
 	return o.Input, true
 }
@@ -450,15 +450,15 @@ func (o *Workflow) HasInput() bool {
 	return false
 }
 
-// SetInput gets a reference to the given map[string]map[string]interface{} and assigns it to the Input field.
-func (o *Workflow) SetInput(v map[string]map[string]interface{}) {
+// SetInput gets a reference to the given map[string]interface{} and assigns it to the Input field.
+func (o *Workflow) SetInput(v map[string]interface{}) {
 	o.Input = v
 }
 
 // GetOutput returns the Output field value if set, zero value otherwise.
-func (o *Workflow) GetOutput() map[string]map[string]interface{} {
+func (o *Workflow) GetOutput() map[string]interface{} {
 	if o == nil || IsNil(o.Output) {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.Output
@@ -466,9 +466,9 @@ func (o *Workflow) GetOutput() map[string]map[string]interface{} {
 
 // GetOutputOk returns a tuple with the Output field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *Workflow) GetOutputOk() (map[string]map[string]interface{}, bool) {
+func (o *Workflow) GetOutputOk() (map[string]interface{}, bool) {
 	if o == nil || IsNil(o.Output) {
-		return map[string]map[string]interface{}{}, false
+		return map[string]interface{}{}, false
 	}
 	return o.Output, true
 }
@@ -482,8 +482,8 @@ func (o *Workflow) HasOutput() bool {
 	return false
 }
 
-// SetOutput gets a reference to the given map[string]map[string]interface{} and assigns it to the Output field.
-func (o *Workflow) SetOutput(v map[string]map[string]interface{}) {
+// SetOutput gets a reference to the given map[string]interface{} and assigns it to the Output field.
+func (o *Workflow) SetOutput(v map[string]interface{}) {
 	o.Output = v
 }
 
@@ -808,9 +808,9 @@ func (o *Workflow) SetPriority(v int32) {
 }
 
 // GetVariables returns the Variables field value if set, zero value otherwise.
-func (o *Workflow) GetVariables() map[string]map[string]interface{} {
+func (o *Workflow) GetVariables() map[string]interface{} {
 	if o == nil || IsNil(o.Variables) {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.Variables
@@ -818,9 +818,9 @@ func (o *Workflow) GetVariables() map[string]map[string]interface{} {
 
 // GetVariablesOk returns a tuple with the Variables field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *Workflow) GetVariablesOk() (map[string]map[string]interface{}, bool) {
+func (o *Workflow) GetVariablesOk() (map[string]interface{}, bool) {
 	if o == nil || IsNil(o.Variables) {
-		return map[string]map[string]interface{}{}, false
+		return map[string]interface{}{}, false
 	}
 	return o.Variables, true
 }
@@ -834,8 +834,8 @@ func (o *Workflow) HasVariables() bool {
 	return false
 }
 
-// SetVariables gets a reference to the given map[string]map[string]interface{} and assigns it to the Variables field.
-func (o *Workflow) SetVariables(v map[string]map[string]interface{}) {
+// SetVariables gets a reference to the given map[string]interface{} and assigns it to the Variables field.
+func (o *Workflow) SetVariables(v map[string]interface{}) {
 	o.Variables = v
 }
 

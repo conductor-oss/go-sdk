@@ -12,7 +12,6 @@ package conductor
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 // checks if the TaskResult type satisfies the MappedNullable interface at compile time
@@ -20,17 +19,17 @@ var _ MappedNullable = &TaskResult{}
 
 // TaskResult struct for TaskResult
 type TaskResult struct {
-	WorkflowInstanceId               string                            `json:"workflowInstanceId"`
-	TaskId                           string                            `json:"taskId"`
-	ReasonForIncompletion            *string                           `json:"reasonForIncompletion,omitempty"`
-	CallbackAfterSeconds             *int64                            `json:"callbackAfterSeconds,omitempty"`
-	WorkerId                         *string                           `json:"workerId,omitempty"`
-	Status                           *string                           `json:"status,omitempty"`
-	OutputData                       map[string]map[string]interface{} `json:"outputData,omitempty"`
-	Logs                             []TaskExecLog                     `json:"logs,omitempty"`
-	ExternalOutputPayloadStoragePath *string                           `json:"externalOutputPayloadStoragePath,omitempty"`
-	SubWorkflowId                    *string                           `json:"subWorkflowId,omitempty"`
-	ExtendLease                      *bool                             `json:"extendLease,omitempty"`
+	WorkflowInstanceId               string                 `json:"workflowInstanceId"`
+	TaskId                           string                 `json:"taskId"`
+	ReasonForIncompletion            *string                `json:"reasonForIncompletion,omitempty"`
+	CallbackAfterSeconds             *int64                 `json:"callbackAfterSeconds,omitempty"`
+	WorkerId                         *string                `json:"workerId,omitempty"`
+	Status                           *string                `json:"status,omitempty"`
+	OutputData                       map[string]interface{} `json:"outputData,omitempty"`
+	Logs                             []TaskExecLog          `json:"logs,omitempty"`
+	ExternalOutputPayloadStoragePath *string                `json:"externalOutputPayloadStoragePath,omitempty"`
+	SubWorkflowId                    *string                `json:"subWorkflowId,omitempty"`
+	ExtendLease                      *bool                  `json:"extendLease,omitempty"`
 }
 
 type _TaskResult TaskResult
@@ -231,9 +230,9 @@ func (o *TaskResult) SetStatus(v string) {
 }
 
 // GetOutputData returns the OutputData field value if set, zero value otherwise.
-func (o *TaskResult) GetOutputData() map[string]map[string]interface{} {
+func (o *TaskResult) GetOutputData() map[string]interface{} {
 	if o == nil || IsNil(o.OutputData) {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.OutputData
@@ -241,9 +240,9 @@ func (o *TaskResult) GetOutputData() map[string]map[string]interface{} {
 
 // GetOutputDataOk returns a tuple with the OutputData field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *TaskResult) GetOutputDataOk() (map[string]map[string]interface{}, bool) {
+func (o *TaskResult) GetOutputDataOk() (map[string]interface{}, bool) {
 	if o == nil || IsNil(o.OutputData) {
-		return map[string]map[string]interface{}{}, false
+		return map[string]interface{}{}, false
 	}
 	return o.OutputData, true
 }
@@ -257,8 +256,8 @@ func (o *TaskResult) HasOutputData() bool {
 	return false
 }
 
-// SetOutputData gets a reference to the given map[string]map[string]interface{} and assigns it to the OutputData field.
-func (o *TaskResult) SetOutputData(v map[string]map[string]interface{}) {
+// SetOutputData gets a reference to the given map[string]interface{} and assigns it to the OutputData field.
+func (o *TaskResult) SetOutputData(v map[string]interface{}) {
 	o.OutputData = v
 }
 
@@ -433,39 +432,18 @@ func (o TaskResult) ToMap() (map[string]interface{}, error) {
 }
 
 func (o *TaskResult) UnmarshalJSON(bytes []byte) (err error) {
-	// This validates that all required properties are included in the JSON object
-	// by unmarshalling the object into a generic map with string keys and checking
-	// that every required field exists as a key in the generic map.
-	requiredProperties := []string{
-		"workflowInstanceId",
-		"taskId",
-	}
+	varObj := _TaskResult{}
 
-	allProperties := make(map[string]interface{})
-
-	err = json.Unmarshal(bytes, &allProperties)
+	err = json.Unmarshal(bytes, &varObj)
 
 	if err != nil {
 		return err
 	}
 
-	for _, requiredProperty := range requiredProperties {
-		if _, exists := allProperties[requiredProperty]; !exists {
-			return fmt.Errorf("no value given for required property %v", requiredProperty)
-		}
-	}
-
-	varTaskResult := _TaskResult{}
-
-	err = json.Unmarshal(bytes, &varTaskResult)
-
-	if err != nil {
-		return err
-	}
-
-	*o = TaskResult(varTaskResult)
+	*o = TaskResult(varObj)
 
 	return err
+
 }
 
 type NullableTaskResult struct {

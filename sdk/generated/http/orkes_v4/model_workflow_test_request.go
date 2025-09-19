@@ -12,7 +12,6 @@ package orkes_v4
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 // checks if the WorkflowTestRequest type satisfies the MappedNullable interface at compile time
@@ -20,19 +19,19 @@ var _ MappedNullable = &WorkflowTestRequest{}
 
 // WorkflowTestRequest struct for WorkflowTestRequest
 type WorkflowTestRequest struct {
-	CorrelationId                   *string                           `json:"correlationId,omitempty"`
-	CreatedBy                       *string                           `json:"createdBy,omitempty"`
-	ExternalInputPayloadStoragePath *string                           `json:"externalInputPayloadStoragePath,omitempty"`
-	IdempotencyKey                  *string                           `json:"idempotencyKey,omitempty"`
-	IdempotencyStrategy             *string                           `json:"idempotencyStrategy,omitempty"`
-	Input                           map[string]map[string]interface{} `json:"input,omitempty"`
-	Name                            string                            `json:"name"`
-	Priority                        *int32                            `json:"priority,omitempty"`
-	SubWorkflowTestRequest          map[string]WorkflowTestRequest    `json:"subWorkflowTestRequest,omitempty"`
-	TaskRefToMockOutput             map[string]interface{}            `json:"taskRefToMockOutput,omitempty"`
-	TaskToDomain                    map[string]string                 `json:"taskToDomain,omitempty"`
-	Version                         *int32                            `json:"version,omitempty"`
-	WorkflowDef                     *WorkflowDef                      `json:"workflowDef,omitempty"`
+	CorrelationId                   *string                        `json:"correlationId,omitempty"`
+	CreatedBy                       *string                        `json:"createdBy,omitempty"`
+	ExternalInputPayloadStoragePath *string                        `json:"externalInputPayloadStoragePath,omitempty"`
+	IdempotencyKey                  *string                        `json:"idempotencyKey,omitempty"`
+	IdempotencyStrategy             *string                        `json:"idempotencyStrategy,omitempty"`
+	Input                           map[string]interface{}         `json:"input,omitempty"`
+	Name                            string                         `json:"name"`
+	Priority                        *int32                         `json:"priority,omitempty"`
+	SubWorkflowTestRequest          map[string]WorkflowTestRequest `json:"subWorkflowTestRequest,omitempty"`
+	TaskRefToMockOutput             map[string]interface{}         `json:"taskRefToMockOutput,omitempty"`
+	TaskToDomain                    map[string]string              `json:"taskToDomain,omitempty"`
+	Version                         *int32                         `json:"version,omitempty"`
+	WorkflowDef                     *WorkflowDef                   `json:"workflowDef,omitempty"`
 }
 
 type _WorkflowTestRequest WorkflowTestRequest
@@ -216,9 +215,9 @@ func (o *WorkflowTestRequest) SetIdempotencyStrategy(v string) {
 }
 
 // GetInput returns the Input field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *WorkflowTestRequest) GetInput() map[string]map[string]interface{} {
+func (o *WorkflowTestRequest) GetInput() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.Input
@@ -227,7 +226,7 @@ func (o *WorkflowTestRequest) GetInput() map[string]map[string]interface{} {
 // GetInputOk returns a tuple with the Input field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *WorkflowTestRequest) GetInputOk() (*map[string]map[string]interface{}, bool) {
+func (o *WorkflowTestRequest) GetInputOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.Input) {
 		return nil, false
 	}
@@ -243,8 +242,8 @@ func (o *WorkflowTestRequest) HasInput() bool {
 	return false
 }
 
-// SetInput gets a reference to the given map[string]map[string]interface{} and assigns it to the Input field.
-func (o *WorkflowTestRequest) SetInput(v map[string]map[string]interface{}) {
+// SetInput gets a reference to the given map[string]interface{} and assigns it to the Input field.
+func (o *WorkflowTestRequest) SetInput(v map[string]interface{}) {
 	o.Input = v
 }
 
@@ -518,38 +517,18 @@ func (o WorkflowTestRequest) ToMap() (map[string]interface{}, error) {
 }
 
 func (o *WorkflowTestRequest) UnmarshalJSON(bytes []byte) (err error) {
-	// This validates that all required properties are included in the JSON object
-	// by unmarshalling the object into a generic map with string keys and checking
-	// that every required field exists as a key in the generic map.
-	requiredProperties := []string{
-		"name",
-	}
+	varObj := _WorkflowTestRequest{}
 
-	allProperties := make(map[string]interface{})
-
-	err = json.Unmarshal(bytes, &allProperties)
+	err = json.Unmarshal(bytes, &varObj)
 
 	if err != nil {
 		return err
 	}
 
-	for _, requiredProperty := range requiredProperties {
-		if _, exists := allProperties[requiredProperty]; !exists {
-			return fmt.Errorf("no value given for required property %v", requiredProperty)
-		}
-	}
-
-	varWorkflowTestRequest := _WorkflowTestRequest{}
-
-	err = json.Unmarshal(bytes, &varWorkflowTestRequest)
-
-	if err != nil {
-		return err
-	}
-
-	*o = WorkflowTestRequest(varWorkflowTestRequest)
+	*o = WorkflowTestRequest(varObj)
 
 	return err
+
 }
 
 type NullableWorkflowTestRequest struct {

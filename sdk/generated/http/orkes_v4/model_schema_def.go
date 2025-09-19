@@ -12,7 +12,6 @@ package orkes_v4
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 // checks if the SchemaDef type satisfies the MappedNullable interface at compile time
@@ -20,16 +19,16 @@ var _ MappedNullable = &SchemaDef{}
 
 // SchemaDef struct for SchemaDef
 type SchemaDef struct {
-	CreateTime  *int64                            `json:"createTime,omitempty"`
-	CreatedBy   *string                           `json:"createdBy,omitempty"`
-	Data        map[string]map[string]interface{} `json:"data,omitempty"`
-	ExternalRef *string                           `json:"externalRef,omitempty"`
-	Name        string                            `json:"name"`
-	OwnerApp    *string                           `json:"ownerApp,omitempty"`
-	Type        string                            `json:"type"`
-	UpdateTime  *int64                            `json:"updateTime,omitempty"`
-	UpdatedBy   *string                           `json:"updatedBy,omitempty"`
-	Version     int32                             `json:"version"`
+	CreateTime  *int64                 `json:"createTime,omitempty"`
+	CreatedBy   *string                `json:"createdBy,omitempty"`
+	Data        map[string]interface{} `json:"data,omitempty"`
+	ExternalRef *string                `json:"externalRef,omitempty"`
+	Name        string                 `json:"name"`
+	OwnerApp    *string                `json:"ownerApp,omitempty"`
+	Type        string                 `json:"type"`
+	UpdateTime  *int64                 `json:"updateTime,omitempty"`
+	UpdatedBy   *string                `json:"updatedBy,omitempty"`
+	Version     int32                  `json:"version"`
 }
 
 type _SchemaDef SchemaDef
@@ -119,9 +118,9 @@ func (o *SchemaDef) SetCreatedBy(v string) {
 }
 
 // GetData returns the Data field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *SchemaDef) GetData() map[string]map[string]interface{} {
+func (o *SchemaDef) GetData() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.Data
@@ -130,7 +129,7 @@ func (o *SchemaDef) GetData() map[string]map[string]interface{} {
 // GetDataOk returns a tuple with the Data field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *SchemaDef) GetDataOk() (*map[string]map[string]interface{}, bool) {
+func (o *SchemaDef) GetDataOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.Data) {
 		return nil, false
 	}
@@ -146,8 +145,8 @@ func (o *SchemaDef) HasData() bool {
 	return false
 }
 
-// SetData gets a reference to the given map[string]map[string]interface{} and assigns it to the Data field.
-func (o *SchemaDef) SetData(v map[string]map[string]interface{}) {
+// SetData gets a reference to the given map[string]interface{} and assigns it to the Data field.
+func (o *SchemaDef) SetData(v map[string]interface{}) {
 	o.Data = v
 }
 
@@ -389,40 +388,18 @@ func (o SchemaDef) ToMap() (map[string]interface{}, error) {
 }
 
 func (o *SchemaDef) UnmarshalJSON(bytes []byte) (err error) {
-	// This validates that all required properties are included in the JSON object
-	// by unmarshalling the object into a generic map with string keys and checking
-	// that every required field exists as a key in the generic map.
-	requiredProperties := []string{
-		"name",
-		"type",
-		"version",
-	}
+	varObj := _SchemaDef{}
 
-	allProperties := make(map[string]interface{})
-
-	err = json.Unmarshal(bytes, &allProperties)
+	err = json.Unmarshal(bytes, &varObj)
 
 	if err != nil {
 		return err
 	}
 
-	for _, requiredProperty := range requiredProperties {
-		if _, exists := allProperties[requiredProperty]; !exists {
-			return fmt.Errorf("no value given for required property %v", requiredProperty)
-		}
-	}
-
-	varSchemaDef := _SchemaDef{}
-
-	err = json.Unmarshal(bytes, &varSchemaDef)
-
-	if err != nil {
-		return err
-	}
-
-	*o = SchemaDef(varSchemaDef)
+	*o = SchemaDef(varObj)
 
 	return err
+
 }
 
 type NullableSchemaDef struct {

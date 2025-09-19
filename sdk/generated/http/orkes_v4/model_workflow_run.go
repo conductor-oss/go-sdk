@@ -19,18 +19,18 @@ var _ MappedNullable = &WorkflowRun{}
 
 // WorkflowRun struct for WorkflowRun
 type WorkflowRun struct {
-	CorrelationId *string                           `json:"correlationId,omitempty"`
-	CreateTime    *int64                            `json:"createTime,omitempty"`
-	CreatedBy     *string                           `json:"createdBy,omitempty"`
-	Input         map[string]map[string]interface{} `json:"input,omitempty"`
-	Output        map[string]map[string]interface{} `json:"output,omitempty"`
-	Priority      *int32                            `json:"priority,omitempty"`
-	RequestId     *string                           `json:"requestId,omitempty"`
-	Status        *string                           `json:"status,omitempty"`
-	Tasks         []Task                            `json:"tasks,omitempty"`
-	UpdateTime    *int64                            `json:"updateTime,omitempty"`
-	Variables     map[string]map[string]interface{} `json:"variables,omitempty"`
-	WorkflowId    *string                           `json:"workflowId,omitempty"`
+	CorrelationId *string                `json:"correlationId,omitempty"`
+	CreateTime    *int64                 `json:"createTime,omitempty"`
+	CreatedBy     *string                `json:"createdBy,omitempty"`
+	Input         map[string]interface{} `json:"input,omitempty"`
+	Output        map[string]interface{} `json:"output,omitempty"`
+	Priority      *int32                 `json:"priority,omitempty"`
+	RequestId     *string                `json:"requestId,omitempty"`
+	Status        *string                `json:"status,omitempty"`
+	Tasks         []Task                 `json:"tasks,omitempty"`
+	UpdateTime    *int64                 `json:"updateTime,omitempty"`
+	Variables     map[string]interface{} `json:"variables,omitempty"`
+	WorkflowId    *string                `json:"workflowId,omitempty"`
 }
 
 // NewWorkflowRun instantiates a new WorkflowRun object
@@ -147,9 +147,9 @@ func (o *WorkflowRun) SetCreatedBy(v string) {
 }
 
 // GetInput returns the Input field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *WorkflowRun) GetInput() map[string]map[string]interface{} {
+func (o *WorkflowRun) GetInput() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.Input
@@ -158,7 +158,7 @@ func (o *WorkflowRun) GetInput() map[string]map[string]interface{} {
 // GetInputOk returns a tuple with the Input field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *WorkflowRun) GetInputOk() (*map[string]map[string]interface{}, bool) {
+func (o *WorkflowRun) GetInputOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.Input) {
 		return nil, false
 	}
@@ -174,15 +174,15 @@ func (o *WorkflowRun) HasInput() bool {
 	return false
 }
 
-// SetInput gets a reference to the given map[string]map[string]interface{} and assigns it to the Input field.
-func (o *WorkflowRun) SetInput(v map[string]map[string]interface{}) {
+// SetInput gets a reference to the given map[string]interface{} and assigns it to the Input field.
+func (o *WorkflowRun) SetInput(v map[string]interface{}) {
 	o.Input = v
 }
 
 // GetOutput returns the Output field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *WorkflowRun) GetOutput() map[string]map[string]interface{} {
+func (o *WorkflowRun) GetOutput() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.Output
@@ -191,7 +191,7 @@ func (o *WorkflowRun) GetOutput() map[string]map[string]interface{} {
 // GetOutputOk returns a tuple with the Output field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *WorkflowRun) GetOutputOk() (*map[string]map[string]interface{}, bool) {
+func (o *WorkflowRun) GetOutputOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.Output) {
 		return nil, false
 	}
@@ -207,8 +207,8 @@ func (o *WorkflowRun) HasOutput() bool {
 	return false
 }
 
-// SetOutput gets a reference to the given map[string]map[string]interface{} and assigns it to the Output field.
-func (o *WorkflowRun) SetOutput(v map[string]map[string]interface{}) {
+// SetOutput gets a reference to the given map[string]interface{} and assigns it to the Output field.
+func (o *WorkflowRun) SetOutput(v map[string]interface{}) {
 	o.Output = v
 }
 
@@ -373,9 +373,9 @@ func (o *WorkflowRun) SetUpdateTime(v int64) {
 }
 
 // GetVariables returns the Variables field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *WorkflowRun) GetVariables() map[string]map[string]interface{} {
+func (o *WorkflowRun) GetVariables() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.Variables
@@ -384,7 +384,7 @@ func (o *WorkflowRun) GetVariables() map[string]map[string]interface{} {
 // GetVariablesOk returns a tuple with the Variables field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *WorkflowRun) GetVariablesOk() (*map[string]map[string]interface{}, bool) {
+func (o *WorkflowRun) GetVariablesOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.Variables) {
 		return nil, false
 	}
@@ -400,8 +400,8 @@ func (o *WorkflowRun) HasVariables() bool {
 	return false
 }
 
-// SetVariables gets a reference to the given map[string]map[string]interface{} and assigns it to the Variables field.
-func (o *WorkflowRun) SetVariables(v map[string]map[string]interface{}) {
+// SetVariables gets a reference to the given map[string]interface{} and assigns it to the Variables field.
+func (o *WorkflowRun) SetVariables(v map[string]interface{}) {
 	o.Variables = v
 }
 

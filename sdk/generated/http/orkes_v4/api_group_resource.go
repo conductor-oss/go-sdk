@@ -32,7 +32,7 @@ type GroupResourceAPI interface {
 	AddUserToGroup(ctx context.Context, groupId string, userId string) GroupResourceAPIAddUserToGroupRequest
 
 	// AddUserToGroupExecute executes the request
-	//  @return map[string]interface{}
+	//  @return []interface{}
 	AddUserToGroupExecute(r GroupResourceAPIAddUserToGroupRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
@@ -57,7 +57,7 @@ type GroupResourceAPI interface {
 	DeleteGroup(ctx context.Context, id string) GroupResourceAPIDeleteGroupRequest
 
 	// DeleteGroupExecute executes the request
-	//  @return map[string]interface{}
+	//  @return []interface{}
 	DeleteGroupExecute(r GroupResourceAPIDeleteGroupRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
@@ -83,7 +83,7 @@ type GroupResourceAPI interface {
 	GetGroup(ctx context.Context, id string) GroupResourceAPIGetGroupRequest
 
 	// GetGroupExecute executes the request
-	//  @return map[string]interface{}
+	//  @return []interface{}
 	GetGroupExecute(r GroupResourceAPIGetGroupRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
@@ -96,8 +96,8 @@ type GroupResourceAPI interface {
 	GetUsersInGroup(ctx context.Context, id string) GroupResourceAPIGetUsersInGroupRequest
 
 	// GetUsersInGroupExecute executes the request
-	//  @return map[string]interface{}
-	GetUsersInGroupExecute(r GroupResourceAPIGetUsersInGroupRequest) (map[string]interface{}, *http.Response, error)
+	//  @return []interface{}
+	GetUsersInGroupExecute(r GroupResourceAPIGetUsersInGroupRequest) ([]interface{}, *http.Response, error)
 
 	/*
 		ListGroups Get all groups
@@ -122,7 +122,7 @@ type GroupResourceAPI interface {
 	RemoveUserFromGroup(ctx context.Context, groupId string, userId string) GroupResourceAPIRemoveUserFromGroupRequest
 
 	// RemoveUserFromGroupExecute executes the request
-	//  @return map[string]interface{}
+	//  @return []interface{}
 	RemoveUserFromGroupExecute(r GroupResourceAPIRemoveUserFromGroupRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
@@ -147,7 +147,7 @@ type GroupResourceAPI interface {
 	UpsertGroup(ctx context.Context, id string) GroupResourceAPIUpsertGroupRequest
 
 	// UpsertGroupExecute executes the request
-	//  @return map[string]interface{}
+	//  @return []interface{}
 	UpsertGroupExecute(r GroupResourceAPIUpsertGroupRequest) (map[string]interface{}, *http.Response, error)
 }
 
@@ -184,7 +184,7 @@ func (a *GroupResourceAPIService) AddUserToGroup(ctx context.Context, groupId st
 
 // Execute executes the request
 //
-//	@return map[string]interface{}
+//	@return []interface{}
 func (a *GroupResourceAPIService) AddUserToGroupExecute(r GroupResourceAPIAddUserToGroupRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPost
@@ -416,7 +416,7 @@ func (a *GroupResourceAPIService) DeleteGroup(ctx context.Context, id string) Gr
 
 // Execute executes the request
 //
-//	@return map[string]interface{}
+//	@return []interface{}
 func (a *GroupResourceAPIService) DeleteGroupExecute(r GroupResourceAPIDeleteGroupRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -648,7 +648,7 @@ func (a *GroupResourceAPIService) GetGroup(ctx context.Context, id string) Group
 
 // Execute executes the request
 //
-//	@return map[string]interface{}
+//	@return []interface{}
 func (a *GroupResourceAPIService) GetGroupExecute(r GroupResourceAPIGetGroupRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
@@ -743,7 +743,7 @@ type GroupResourceAPIGetUsersInGroupRequest struct {
 	id         string
 }
 
-func (r GroupResourceAPIGetUsersInGroupRequest) Execute() (map[string]interface{}, *http.Response, error) {
+func (r GroupResourceAPIGetUsersInGroupRequest) Execute() ([]interface{}, *http.Response, error) {
 	return r.ApiService.GetUsersInGroupExecute(r)
 }
 
@@ -764,13 +764,13 @@ func (a *GroupResourceAPIService) GetUsersInGroup(ctx context.Context, id string
 
 // Execute executes the request
 //
-//	@return map[string]interface{}
-func (a *GroupResourceAPIService) GetUsersInGroupExecute(r GroupResourceAPIGetUsersInGroupRequest) (map[string]interface{}, *http.Response, error) {
+//	@return []interface{}
+func (a *GroupResourceAPIService) GetUsersInGroupExecute(r GroupResourceAPIGetUsersInGroupRequest) ([]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
 		localVarPostBody    interface{}
 		formFiles           []formFile
-		localVarReturnValue map[string]interface{}
+		localVarReturnValue []interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "GroupResourceAPIService.GetUsersInGroup")
@@ -995,7 +995,7 @@ func (a *GroupResourceAPIService) RemoveUserFromGroup(ctx context.Context, group
 
 // Execute executes the request
 //
-//	@return map[string]interface{}
+//	@return []interface{}
 func (a *GroupResourceAPIService) RemoveUserFromGroupExecute(r GroupResourceAPIRemoveUserFromGroupRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
@@ -1233,7 +1233,7 @@ func (a *GroupResourceAPIService) UpsertGroup(ctx context.Context, id string) Gr
 
 // Execute executes the request
 //
-//	@return map[string]interface{}
+//	@return []interface{}
 func (a *GroupResourceAPIService) UpsertGroupExecute(r GroupResourceAPIUpsertGroupRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPut

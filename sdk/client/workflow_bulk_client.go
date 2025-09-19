@@ -17,5 +17,5 @@ type WorkflowBulkClient interface {
 }
 
 func NewWorkflowBulkClient(client *APIClient) WorkflowBulkClient {
-	return &WorkflowBulkResourceApiService{client}
+	return NewWorkflowBulkResourceApiService(client)
 }

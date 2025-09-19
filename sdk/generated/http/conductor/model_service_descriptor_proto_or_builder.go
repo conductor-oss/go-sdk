@@ -28,8 +28,8 @@ type ServiceDescriptorProtoOrBuilder struct {
 	OptionsOrBuilder          *ServiceOptionsOrBuilder         `json:"optionsOrBuilder,omitempty"`
 	InitializationErrorString *string                          `json:"initializationErrorString,omitempty"`
 	// Simplified schema for Descriptor (original had circular references)
-	DescriptorForType map[string]interface{}            `json:"descriptorForType,omitempty"`
-	AllFields         map[string]map[string]interface{} `json:"allFields,omitempty"`
+	DescriptorForType map[string]interface{} `json:"descriptorForType,omitempty"`
+	AllFields         map[string]interface{} `json:"allFields,omitempty"`
 	// Simplified schema for Message (original had circular references)
 	DefaultInstanceForType map[string]interface{} `json:"defaultInstanceForType,omitempty"`
 	UnknownFields          *UnknownFieldSet       `json:"unknownFields,omitempty"`
@@ -342,9 +342,9 @@ func (o *ServiceDescriptorProtoOrBuilder) SetDescriptorForType(v map[string]inte
 }
 
 // GetAllFields returns the AllFields field value if set, zero value otherwise.
-func (o *ServiceDescriptorProtoOrBuilder) GetAllFields() map[string]map[string]interface{} {
+func (o *ServiceDescriptorProtoOrBuilder) GetAllFields() map[string]interface{} {
 	if o == nil || IsNil(o.AllFields) {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.AllFields
@@ -352,9 +352,9 @@ func (o *ServiceDescriptorProtoOrBuilder) GetAllFields() map[string]map[string]i
 
 // GetAllFieldsOk returns a tuple with the AllFields field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *ServiceDescriptorProtoOrBuilder) GetAllFieldsOk() (map[string]map[string]interface{}, bool) {
+func (o *ServiceDescriptorProtoOrBuilder) GetAllFieldsOk() (map[string]interface{}, bool) {
 	if o == nil || IsNil(o.AllFields) {
-		return map[string]map[string]interface{}{}, false
+		return map[string]interface{}{}, false
 	}
 	return o.AllFields, true
 }
@@ -368,8 +368,8 @@ func (o *ServiceDescriptorProtoOrBuilder) HasAllFields() bool {
 	return false
 }
 
-// SetAllFields gets a reference to the given map[string]map[string]interface{} and assigns it to the AllFields field.
-func (o *ServiceDescriptorProtoOrBuilder) SetAllFields(v map[string]map[string]interface{}) {
+// SetAllFields gets a reference to the given map[string]interface{} and assigns it to the AllFields field.
+func (o *ServiceDescriptorProtoOrBuilder) SetAllFields(v map[string]interface{}) {
 	o.AllFields = v
 }
 

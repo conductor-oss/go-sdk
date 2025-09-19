@@ -28,8 +28,8 @@ type WorkflowResourceApiService struct {
 	*APIClient
 }
 
-// NewWorkflowResourceApiServiceV2FromClient creates a V2 service from existing APIClient
-func NewWorkflowResourceApiServiceFromClient(apiClient *APIClient) *WorkflowResourceApiService {
+// NewWorkflowResourceApiService creates a service from existing APIClient
+func NewWorkflowResourceApiService(apiClient *APIClient) *WorkflowResourceApiService {
 	if apiClient == nil {
 		return nil
 	}

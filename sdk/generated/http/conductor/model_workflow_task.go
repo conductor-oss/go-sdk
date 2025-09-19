@@ -12,7 +12,6 @@ package conductor
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 // checks if the WorkflowTask type satisfies the MappedNullable interface at compile time
@@ -20,12 +19,12 @@ var _ MappedNullable = &WorkflowTask{}
 
 // WorkflowTask struct for WorkflowTask
 type WorkflowTask struct {
-	Name                 string                            `json:"name"`
-	TaskReferenceName    string                            `json:"taskReferenceName"`
-	Description          *string                           `json:"description,omitempty"`
-	InputParameters      map[string]map[string]interface{} `json:"inputParameters,omitempty"`
-	Type                 *string                           `json:"type,omitempty"`
-	DynamicTaskNameParam *string                           `json:"dynamicTaskNameParam,omitempty"`
+	Name                 string                 `json:"name"`
+	TaskReferenceName    string                 `json:"taskReferenceName"`
+	Description          *string                `json:"description,omitempty"`
+	InputParameters      map[string]interface{} `json:"inputParameters,omitempty"`
+	Type                 *string                `json:"type,omitempty"`
+	DynamicTaskNameParam *string                `json:"dynamicTaskNameParam,omitempty"`
 	// Deprecated
 	CaseValueParam *string `json:"caseValueParam,omitempty"`
 	// Deprecated
@@ -161,9 +160,9 @@ func (o *WorkflowTask) SetDescription(v string) {
 }
 
 // GetInputParameters returns the InputParameters field value if set, zero value otherwise.
-func (o *WorkflowTask) GetInputParameters() map[string]map[string]interface{} {
+func (o *WorkflowTask) GetInputParameters() map[string]interface{} {
 	if o == nil || IsNil(o.InputParameters) {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.InputParameters
@@ -171,9 +170,9 @@ func (o *WorkflowTask) GetInputParameters() map[string]map[string]interface{} {
 
 // GetInputParametersOk returns a tuple with the InputParameters field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *WorkflowTask) GetInputParametersOk() (map[string]map[string]interface{}, bool) {
+func (o *WorkflowTask) GetInputParametersOk() (map[string]interface{}, bool) {
 	if o == nil || IsNil(o.InputParameters) {
-		return map[string]map[string]interface{}{}, false
+		return map[string]interface{}{}, false
 	}
 	return o.InputParameters, true
 }
@@ -187,8 +186,8 @@ func (o *WorkflowTask) HasInputParameters() bool {
 	return false
 }
 
-// SetInputParameters gets a reference to the given map[string]map[string]interface{} and assigns it to the InputParameters field.
-func (o *WorkflowTask) SetInputParameters(v map[string]map[string]interface{}) {
+// SetInputParameters gets a reference to the given map[string]interface{} and assigns it to the InputParameters field.
+func (o *WorkflowTask) SetInputParameters(v map[string]interface{}) {
 	o.InputParameters = v
 }
 
@@ -1273,39 +1272,18 @@ func (o WorkflowTask) ToMap() (map[string]interface{}, error) {
 }
 
 func (o *WorkflowTask) UnmarshalJSON(bytes []byte) (err error) {
-	// This validates that all required properties are included in the JSON object
-	// by unmarshalling the object into a generic map with string keys and checking
-	// that every required field exists as a key in the generic map.
-	requiredProperties := []string{
-		"name",
-		"taskReferenceName",
-	}
+	varObj := _WorkflowTask{}
 
-	allProperties := make(map[string]interface{})
-
-	err = json.Unmarshal(bytes, &allProperties)
+	err = json.Unmarshal(bytes, &varObj)
 
 	if err != nil {
 		return err
 	}
 
-	for _, requiredProperty := range requiredProperties {
-		if _, exists := allProperties[requiredProperty]; !exists {
-			return fmt.Errorf("no value given for required property %v", requiredProperty)
-		}
-	}
-
-	varWorkflowTask := _WorkflowTask{}
-
-	err = json.Unmarshal(bytes, &varWorkflowTask)
-
-	if err != nil {
-		return err
-	}
-
-	*o = WorkflowTask(varWorkflowTask)
+	*o = WorkflowTask(varObj)
 
 	return err
+
 }
 
 type NullableWorkflowTask struct {

@@ -56,7 +56,7 @@ func CreateSimpleJumpWorkflow(executor *executor.WorkflowExecutor) *workflow.Con
 		Description("Complete final workflow processing")
 
 	// Chain all tasks together
-	wf.Add(task1).Add(task2).Add(task3).Add(httpTask).Add(task5)
+	wf.Add(task1).Add(task2).Add(task3).Add(httpTask).Add(task5).OwnerEmail("owner@example.com")
 
 	return wf
 }
@@ -94,7 +94,7 @@ func CreateWaitBasedJumpWorkflow(executor *executor.WorkflowExecutor) *workflow.
 		Input("api_result", "${execute_api_call.output.response}").
 		Description("Store final workflow results")
 
-	wf.Add(task1).Add(waitTask).Add(task3).Add(httpTask).Add(setVarTask)
+	wf.Add(task1).Add(waitTask).Add(task3).Add(httpTask).Add(setVarTask).OwnerEmail("owner@example.com")
 
 	return wf
 }

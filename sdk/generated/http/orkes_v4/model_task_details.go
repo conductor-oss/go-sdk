@@ -19,11 +19,11 @@ var _ MappedNullable = &TaskDetails{}
 
 // TaskDetails struct for TaskDetails
 type TaskDetails struct {
-	Output        map[string]map[string]interface{} `json:"output,omitempty"`
-	OutputMessage *Any                              `json:"outputMessage,omitempty"`
-	TaskId        *string                           `json:"taskId,omitempty"`
-	TaskRefName   *string                           `json:"taskRefName,omitempty"`
-	WorkflowId    *string                           `json:"workflowId,omitempty"`
+	Output        map[string]interface{} `json:"output,omitempty"`
+	OutputMessage *Any                   `json:"outputMessage,omitempty"`
+	TaskId        *string                `json:"taskId,omitempty"`
+	TaskRefName   *string                `json:"taskRefName,omitempty"`
+	WorkflowId    *string                `json:"workflowId,omitempty"`
 }
 
 // NewTaskDetails instantiates a new TaskDetails object
@@ -44,9 +44,9 @@ func NewTaskDetailsWithDefaults() *TaskDetails {
 }
 
 // GetOutput returns the Output field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *TaskDetails) GetOutput() map[string]map[string]interface{} {
+func (o *TaskDetails) GetOutput() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.Output
@@ -55,7 +55,7 @@ func (o *TaskDetails) GetOutput() map[string]map[string]interface{} {
 // GetOutputOk returns a tuple with the Output field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *TaskDetails) GetOutputOk() (*map[string]map[string]interface{}, bool) {
+func (o *TaskDetails) GetOutputOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.Output) {
 		return nil, false
 	}
@@ -71,8 +71,8 @@ func (o *TaskDetails) HasOutput() bool {
 	return false
 }
 
-// SetOutput gets a reference to the given map[string]map[string]interface{} and assigns it to the Output field.
-func (o *TaskDetails) SetOutput(v map[string]map[string]interface{}) {
+// SetOutput gets a reference to the given map[string]interface{} and assigns it to the Output field.
+func (o *TaskDetails) SetOutput(v map[string]interface{}) {
 	o.Output = v
 }
 

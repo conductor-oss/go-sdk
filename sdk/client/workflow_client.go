@@ -45,5 +45,5 @@ type WorkflowClient interface {
 }
 
 func NewWorkflowClient(apiClient *APIClient) WorkflowClient {
-	return &WorkflowResourceApiService{apiClient}
+	return NewWorkflowResourceApiService(apiClient)
 }

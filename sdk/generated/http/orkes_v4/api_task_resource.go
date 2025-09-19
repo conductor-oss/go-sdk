@@ -68,8 +68,8 @@ type TaskResourceAPI interface {
 	GetAllPollData(ctx context.Context) TaskResourceAPIGetAllPollDataRequest
 
 	// GetAllPollDataExecute executes the request
-	//  @return map[string]map[string]interface{}
-	GetAllPollDataExecute(r TaskResourceAPIGetAllPollDataRequest) (map[string]map[string]interface{}, *http.Response, error)
+	//  @return map[string]interface{}
+	GetAllPollDataExecute(r TaskResourceAPIGetAllPollDataRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
 		GetPollData Get the last poll data for a given task type
@@ -642,7 +642,7 @@ func (r TaskResourceAPIGetAllPollDataRequest) LastPollTimeOpt(lastPollTimeOpt st
 	return r
 }
 
-func (r TaskResourceAPIGetAllPollDataRequest) Execute() (map[string]map[string]interface{}, *http.Response, error) {
+func (r TaskResourceAPIGetAllPollDataRequest) Execute() (map[string]interface{}, *http.Response, error) {
 	return r.ApiService.GetAllPollDataExecute(r)
 }
 
@@ -661,13 +661,13 @@ func (a *TaskResourceAPIService) GetAllPollData(ctx context.Context) TaskResourc
 
 // Execute executes the request
 //
-//	@return map[string]map[string]interface{}
-func (a *TaskResourceAPIService) GetAllPollDataExecute(r TaskResourceAPIGetAllPollDataRequest) (map[string]map[string]interface{}, *http.Response, error) {
+//	@return map[string]interface{}
+func (a *TaskResourceAPIService) GetAllPollDataExecute(r TaskResourceAPIGetAllPollDataRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
 		localVarPostBody    interface{}
 		formFiles           []formFile
-		localVarReturnValue map[string]map[string]interface{}
+		localVarReturnValue map[string]interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "TaskResourceAPIService.GetAllPollData")
@@ -1912,11 +1912,11 @@ type TaskResourceAPIUpdateTask1Request struct {
 	workflowId  string
 	taskRefName string
 	status      string
-	requestBody *map[string]map[string]interface{}
+	requestBody *map[string]interface{}
 	workerid    *string
 }
 
-func (r TaskResourceAPIUpdateTask1Request) RequestBody(requestBody map[string]map[string]interface{}) TaskResourceAPIUpdateTask1Request {
+func (r TaskResourceAPIUpdateTask1Request) RequestBody(requestBody map[string]interface{}) TaskResourceAPIUpdateTask1Request {
 	r.requestBody = &requestBody
 	return r
 }
@@ -2056,11 +2056,11 @@ type TaskResourceAPIUpdateTaskSyncRequest struct {
 	workflowId  string
 	taskRefName string
 	status      string
-	requestBody *map[string]map[string]interface{}
+	requestBody *map[string]interface{}
 	workerid    *string
 }
 
-func (r TaskResourceAPIUpdateTaskSyncRequest) RequestBody(requestBody map[string]map[string]interface{}) TaskResourceAPIUpdateTaskSyncRequest {
+func (r TaskResourceAPIUpdateTaskSyncRequest) RequestBody(requestBody map[string]interface{}) TaskResourceAPIUpdateTaskSyncRequest {
 	r.requestBody = &requestBody
 	return r
 }

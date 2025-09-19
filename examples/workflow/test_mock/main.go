@@ -75,7 +75,8 @@ func createTestWorkflow(executor *executor.WorkflowExecutor) *workflow.Conductor
 		Description("Simple workflow for testing and mocking with SIMPLE tasks only").
 		Add(validateTask).
 		Add(processTask).
-		Add(outputTask)
+		Add(outputTask).
+		OwnerEmail("owner@example.com")
 }
 
 // testWorkflowWithMocks demonstrates testing a workflow with mocked task outputs

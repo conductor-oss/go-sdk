@@ -19,9 +19,9 @@ var _ MappedNullable = &IntegrationApiUpdate{}
 
 // IntegrationApiUpdate struct for IntegrationApiUpdate
 type IntegrationApiUpdate struct {
-	Configuration map[string]map[string]interface{} `json:"configuration,omitempty"`
-	Description   *string                           `json:"description,omitempty"`
-	Enabled       *bool                             `json:"enabled,omitempty"`
+	Configuration map[string]interface{} `json:"configuration,omitempty"`
+	Description   *string                `json:"description,omitempty"`
+	Enabled       *bool                  `json:"enabled,omitempty"`
 }
 
 // NewIntegrationApiUpdate instantiates a new IntegrationApiUpdate object
@@ -42,9 +42,9 @@ func NewIntegrationApiUpdateWithDefaults() *IntegrationApiUpdate {
 }
 
 // GetConfiguration returns the Configuration field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *IntegrationApiUpdate) GetConfiguration() map[string]map[string]interface{} {
+func (o *IntegrationApiUpdate) GetConfiguration() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.Configuration
@@ -53,7 +53,7 @@ func (o *IntegrationApiUpdate) GetConfiguration() map[string]map[string]interfac
 // GetConfigurationOk returns a tuple with the Configuration field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *IntegrationApiUpdate) GetConfigurationOk() (*map[string]map[string]interface{}, bool) {
+func (o *IntegrationApiUpdate) GetConfigurationOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.Configuration) {
 		return nil, false
 	}
@@ -69,8 +69,8 @@ func (o *IntegrationApiUpdate) HasConfiguration() bool {
 	return false
 }
 
-// SetConfiguration gets a reference to the given map[string]map[string]interface{} and assigns it to the Configuration field.
-func (o *IntegrationApiUpdate) SetConfiguration(v map[string]map[string]interface{}) {
+// SetConfiguration gets a reference to the given map[string]interface{} and assigns it to the Configuration field.
+func (o *IntegrationApiUpdate) SetConfiguration(v map[string]interface{}) {
 	o.Configuration = v
 }
 

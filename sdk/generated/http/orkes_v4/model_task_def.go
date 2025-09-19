@@ -12,7 +12,6 @@ package orkes_v4
 
 import (
 	"encoding/json"
-	"fmt"
 )
 
 // checks if the TaskDef type satisfies the MappedNullable interface at compile time
@@ -20,35 +19,35 @@ var _ MappedNullable = &TaskDef{}
 
 // TaskDef struct for TaskDef
 type TaskDef struct {
-	BackoffScaleFactor          *int32                            `json:"backoffScaleFactor,omitempty"`
-	BaseType                    *string                           `json:"baseType,omitempty"`
-	ConcurrentExecLimit         *int32                            `json:"concurrentExecLimit,omitempty"`
-	CreateTime                  *int64                            `json:"createTime,omitempty"`
-	CreatedBy                   *string                           `json:"createdBy,omitempty"`
-	Description                 *string                           `json:"description,omitempty"`
-	EnforceSchema               *bool                             `json:"enforceSchema,omitempty"`
-	ExecutionNameSpace          *string                           `json:"executionNameSpace,omitempty"`
-	InputKeys                   []string                          `json:"inputKeys,omitempty"`
-	InputSchema                 *SchemaDef                        `json:"inputSchema,omitempty"`
-	InputTemplate               map[string]map[string]interface{} `json:"inputTemplate,omitempty"`
-	IsolationGroupId            *string                           `json:"isolationGroupId,omitempty"`
-	Name                        *string                           `json:"name,omitempty"`
-	OutputKeys                  []string                          `json:"outputKeys,omitempty"`
-	OutputSchema                *SchemaDef                        `json:"outputSchema,omitempty"`
-	OwnerApp                    *string                           `json:"ownerApp,omitempty"`
-	OwnerEmail                  *string                           `json:"ownerEmail,omitempty"`
-	PollTimeoutSeconds          *int32                            `json:"pollTimeoutSeconds,omitempty"`
-	RateLimitFrequencyInSeconds *int32                            `json:"rateLimitFrequencyInSeconds,omitempty"`
-	RateLimitPerFrequency       *int32                            `json:"rateLimitPerFrequency,omitempty"`
-	ResponseTimeoutSeconds      *int64                            `json:"responseTimeoutSeconds,omitempty"`
-	RetryCount                  *int32                            `json:"retryCount,omitempty"`
-	RetryDelaySeconds           *int32                            `json:"retryDelaySeconds,omitempty"`
-	RetryLogic                  *string                           `json:"retryLogic,omitempty"`
-	TimeoutPolicy               *string                           `json:"timeoutPolicy,omitempty"`
-	TimeoutSeconds              int64                             `json:"timeoutSeconds"`
-	TotalTimeoutSeconds         int64                             `json:"totalTimeoutSeconds"`
-	UpdateTime                  *int64                            `json:"updateTime,omitempty"`
-	UpdatedBy                   *string                           `json:"updatedBy,omitempty"`
+	BackoffScaleFactor          *int32                 `json:"backoffScaleFactor,omitempty"`
+	BaseType                    *string                `json:"baseType,omitempty"`
+	ConcurrentExecLimit         *int32                 `json:"concurrentExecLimit,omitempty"`
+	CreateTime                  *int64                 `json:"createTime,omitempty"`
+	CreatedBy                   *string                `json:"createdBy,omitempty"`
+	Description                 *string                `json:"description,omitempty"`
+	EnforceSchema               *bool                  `json:"enforceSchema,omitempty"`
+	ExecutionNameSpace          *string                `json:"executionNameSpace,omitempty"`
+	InputKeys                   []string               `json:"inputKeys,omitempty"`
+	InputSchema                 *SchemaDef             `json:"inputSchema,omitempty"`
+	InputTemplate               map[string]interface{} `json:"inputTemplate,omitempty"`
+	IsolationGroupId            *string                `json:"isolationGroupId,omitempty"`
+	Name                        *string                `json:"name,omitempty"`
+	OutputKeys                  []string               `json:"outputKeys,omitempty"`
+	OutputSchema                *SchemaDef             `json:"outputSchema,omitempty"`
+	OwnerApp                    *string                `json:"ownerApp,omitempty"`
+	OwnerEmail                  *string                `json:"ownerEmail,omitempty"`
+	PollTimeoutSeconds          *int32                 `json:"pollTimeoutSeconds,omitempty"`
+	RateLimitFrequencyInSeconds *int32                 `json:"rateLimitFrequencyInSeconds,omitempty"`
+	RateLimitPerFrequency       *int32                 `json:"rateLimitPerFrequency,omitempty"`
+	ResponseTimeoutSeconds      *int64                 `json:"responseTimeoutSeconds,omitempty"`
+	RetryCount                  *int32                 `json:"retryCount,omitempty"`
+	RetryDelaySeconds           *int32                 `json:"retryDelaySeconds,omitempty"`
+	RetryLogic                  *string                `json:"retryLogic,omitempty"`
+	TimeoutPolicy               *string                `json:"timeoutPolicy,omitempty"`
+	TimeoutSeconds              int64                  `json:"timeoutSeconds"`
+	TotalTimeoutSeconds         int64                  `json:"totalTimeoutSeconds"`
+	UpdateTime                  *int64                 `json:"updateTime,omitempty"`
+	UpdatedBy                   *string                `json:"updatedBy,omitempty"`
 }
 
 type _TaskDef TaskDef
@@ -393,9 +392,9 @@ func (o *TaskDef) SetInputSchema(v SchemaDef) {
 }
 
 // GetInputTemplate returns the InputTemplate field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *TaskDef) GetInputTemplate() map[string]map[string]interface{} {
+func (o *TaskDef) GetInputTemplate() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.InputTemplate
@@ -404,7 +403,7 @@ func (o *TaskDef) GetInputTemplate() map[string]map[string]interface{} {
 // GetInputTemplateOk returns a tuple with the InputTemplate field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *TaskDef) GetInputTemplateOk() (*map[string]map[string]interface{}, bool) {
+func (o *TaskDef) GetInputTemplateOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.InputTemplate) {
 		return nil, false
 	}
@@ -420,8 +419,8 @@ func (o *TaskDef) HasInputTemplate() bool {
 	return false
 }
 
-// SetInputTemplate gets a reference to the given map[string]map[string]interface{} and assigns it to the InputTemplate field.
-func (o *TaskDef) SetInputTemplate(v map[string]map[string]interface{}) {
+// SetInputTemplate gets a reference to the given map[string]interface{} and assigns it to the InputTemplate field.
+func (o *TaskDef) SetInputTemplate(v map[string]interface{}) {
 	o.InputTemplate = v
 }
 
@@ -1082,39 +1081,18 @@ func (o TaskDef) ToMap() (map[string]interface{}, error) {
 }
 
 func (o *TaskDef) UnmarshalJSON(bytes []byte) (err error) {
-	// This validates that all required properties are included in the JSON object
-	// by unmarshalling the object into a generic map with string keys and checking
-	// that every required field exists as a key in the generic map.
-	requiredProperties := []string{
-		"timeoutSeconds",
-		"totalTimeoutSeconds",
-	}
+	varObj := _TaskDef{}
 
-	allProperties := make(map[string]interface{})
-
-	err = json.Unmarshal(bytes, &allProperties)
+	err = json.Unmarshal(bytes, &varObj)
 
 	if err != nil {
 		return err
 	}
 
-	for _, requiredProperty := range requiredProperties {
-		if _, exists := allProperties[requiredProperty]; !exists {
-			return fmt.Errorf("no value given for required property %v", requiredProperty)
-		}
-	}
-
-	varTaskDef := _TaskDef{}
-
-	err = json.Unmarshal(bytes, &varTaskDef)
-
-	if err != nil {
-		return err
-	}
-
-	*o = TaskDef(varTaskDef)
+	*o = TaskDef(varObj)
 
 	return err
+
 }
 
 type NullableTaskDef struct {

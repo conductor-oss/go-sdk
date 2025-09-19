@@ -5441,13 +5441,13 @@ paths:
         schema:
           type: string
         style: simple
-      - explode: false
-        in: path
+      - explode: true
+        in: query
         name: taskReferenceName
         required: true
         schema:
           type: string
-        style: simple
+        style: form
       requestBody:
         content:
           application/json:
@@ -6700,6 +6700,10 @@ components:
         nestedTypeCount:
           format: int32
           type: integer
+        nestedTypeList:
+          items:
+            $ref: '#/components/schemas/DescriptorProto'
+          type: array
         oneofDeclCount:
           format: int32
           type: integer
@@ -16497,7 +16501,8 @@ components:
         - failedReferenceTaskNames
         - failedReferenceTaskNames
         ownerApp: ownerApp
-        output: "{}"
+        output:
+          key: "{}"
         failedTaskNames:
         - failedTaskNames
         - failedTaskNames
@@ -16926,7 +16931,8 @@ components:
           taskId: taskId
           externalOutputPayloadStoragePath: externalOutputPayloadStoragePath
           status: IN_PROGRESS
-        variables: "{}"
+        variables:
+          key: "{}"
         updatedBy: updatedBy
         externalInputPayloadStoragePath: externalInputPayloadStoragePath
         idempotencyKey: idempotencyKey
@@ -16939,7 +16945,8 @@ components:
         - null
         rateLimitKey: rateLimitKey
         priority: 59
-        input: "{}"
+        input:
+          key: "{}"
         parentWorkflowId: parentWorkflowId
         createTime: 0
         createdBy: createdBy
@@ -16981,12 +16988,14 @@ components:
         idempotencyKey:
           type: string
         input:
-          type: object
+          additionalProperties:
+            type: object
         lastRetriedTime:
           format: int64
           type: integer
         output:
-          type: object
+          additionalProperties:
+            type: object
         ownerApp:
           type: string
         parentWorkflowId:
@@ -17031,7 +17040,8 @@ components:
         updatedBy:
           type: string
         variables:
-          type: object
+          additionalProperties:
+            type: object
         workflowDefinition:
           $ref: '#/components/schemas/WorkflowDef'
         workflowId:

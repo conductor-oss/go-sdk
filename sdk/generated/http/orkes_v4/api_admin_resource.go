@@ -42,8 +42,8 @@ type AdminResourceAPI interface {
 	GetRedisUsage(ctx context.Context) AdminResourceAPIGetRedisUsageRequest
 
 	// GetRedisUsageExecute executes the request
-	//  @return map[string]map[string]interface{}
-	GetRedisUsageExecute(r AdminResourceAPIGetRedisUsageRequest) (map[string]map[string]interface{}, *http.Response, error)
+	//  @return map[string]interface{}
+	GetRedisUsageExecute(r AdminResourceAPIGetRedisUsageRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
 		RequeueSweep Queue up all the running workflows for sweep
@@ -197,7 +197,7 @@ type AdminResourceAPIGetRedisUsageRequest struct {
 	ApiService AdminResourceAPI
 }
 
-func (r AdminResourceAPIGetRedisUsageRequest) Execute() (map[string]map[string]interface{}, *http.Response, error) {
+func (r AdminResourceAPIGetRedisUsageRequest) Execute() (map[string]interface{}, *http.Response, error) {
 	return r.ApiService.GetRedisUsageExecute(r)
 }
 
@@ -216,13 +216,13 @@ func (a *AdminResourceAPIService) GetRedisUsage(ctx context.Context) AdminResour
 
 // Execute executes the request
 //
-//	@return map[string]map[string]interface{}
-func (a *AdminResourceAPIService) GetRedisUsageExecute(r AdminResourceAPIGetRedisUsageRequest) (map[string]map[string]interface{}, *http.Response, error) {
+//	@return map[string]interface{}
+func (a *AdminResourceAPIService) GetRedisUsageExecute(r AdminResourceAPIGetRedisUsageRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
 		localVarPostBody    interface{}
 		formFiles           []formFile
-		localVarReturnValue map[string]map[string]interface{}
+		localVarReturnValue map[string]interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "AdminResourceAPIService.GetRedisUsage")

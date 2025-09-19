@@ -55,8 +55,8 @@ type SecretResourceAPI interface {
 	DeleteSecret(ctx context.Context, key string) SecretResourceAPIDeleteSecretRequest
 
 	// DeleteSecretExecute executes the request
-	//  @return map[string]interface{}
-	DeleteSecretExecute(r SecretResourceAPIDeleteSecretRequest) (map[string]interface{}, *http.Response, error)
+	//  @return interface{}
+	DeleteSecretExecute(r SecretResourceAPIDeleteSecretRequest) (interface{}, *http.Response, error)
 
 	/*
 		DeleteTagForSecret Delete tags of the secret
@@ -142,8 +142,8 @@ type SecretResourceAPI interface {
 	PutSecret(ctx context.Context, key string) SecretResourceAPIPutSecretRequest
 
 	// PutSecretExecute executes the request
-	//  @return map[string]interface{}
-	PutSecretExecute(r SecretResourceAPIPutSecretRequest) (map[string]interface{}, *http.Response, error)
+	//  @return interface{}
+	PutSecretExecute(r SecretResourceAPIPutSecretRequest) (interface{}, *http.Response, error)
 
 	/*
 		PutTagForSecret Tag a secret
@@ -167,8 +167,8 @@ type SecretResourceAPI interface {
 	SecretExists(ctx context.Context, key string) SecretResourceAPISecretExistsRequest
 
 	// SecretExistsExecute executes the request
-	//  @return map[string]interface{}
-	SecretExistsExecute(r SecretResourceAPISecretExistsRequest) (map[string]interface{}, *http.Response, error)
+	//  @return interface{}
+	SecretExistsExecute(r SecretResourceAPISecretExistsRequest) (interface{}, *http.Response, error)
 }
 
 // SecretResourceAPIService SecretResourceAPI service
@@ -404,7 +404,7 @@ type SecretResourceAPIDeleteSecretRequest struct {
 	key        string
 }
 
-func (r SecretResourceAPIDeleteSecretRequest) Execute() (map[string]interface{}, *http.Response, error) {
+func (r SecretResourceAPIDeleteSecretRequest) Execute() (interface{}, *http.Response, error) {
 	return r.ApiService.DeleteSecretExecute(r)
 }
 
@@ -425,13 +425,13 @@ func (a *SecretResourceAPIService) DeleteSecret(ctx context.Context, key string)
 
 // Execute executes the request
 //
-//	@return map[string]interface{}
-func (a *SecretResourceAPIService) DeleteSecretExecute(r SecretResourceAPIDeleteSecretRequest) (map[string]interface{}, *http.Response, error) {
+//	@return interface{}
+func (a *SecretResourceAPIService) DeleteSecretExecute(r SecretResourceAPIDeleteSecretRequest) (interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodDelete
 		localVarPostBody    interface{}
 		formFiles           []formFile
-		localVarReturnValue map[string]interface{}
+		localVarReturnValue interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "SecretResourceAPIService.DeleteSecret")
@@ -1221,7 +1221,7 @@ func (r SecretResourceAPIPutSecretRequest) Body(body string) SecretResourceAPIPu
 	return r
 }
 
-func (r SecretResourceAPIPutSecretRequest) Execute() (map[string]interface{}, *http.Response, error) {
+func (r SecretResourceAPIPutSecretRequest) Execute() (interface{}, *http.Response, error) {
 	return r.ApiService.PutSecretExecute(r)
 }
 
@@ -1242,13 +1242,13 @@ func (a *SecretResourceAPIService) PutSecret(ctx context.Context, key string) Se
 
 // Execute executes the request
 //
-//	@return map[string]interface{}
-func (a *SecretResourceAPIService) PutSecretExecute(r SecretResourceAPIPutSecretRequest) (map[string]interface{}, *http.Response, error) {
+//	@return interface{}
+func (a *SecretResourceAPIService) PutSecretExecute(r SecretResourceAPIPutSecretRequest) (interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodPut
 		localVarPostBody    interface{}
 		formFiles           []formFile
-		localVarReturnValue map[string]interface{}
+		localVarReturnValue interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "SecretResourceAPIService.PutSecret")
@@ -1469,7 +1469,7 @@ type SecretResourceAPISecretExistsRequest struct {
 	key        string
 }
 
-func (r SecretResourceAPISecretExistsRequest) Execute() (map[string]interface{}, *http.Response, error) {
+func (r SecretResourceAPISecretExistsRequest) Execute() (interface{}, *http.Response, error) {
 	return r.ApiService.SecretExistsExecute(r)
 }
 
@@ -1490,13 +1490,13 @@ func (a *SecretResourceAPIService) SecretExists(ctx context.Context, key string)
 
 // Execute executes the request
 //
-//	@return map[string]interface{}
-func (a *SecretResourceAPIService) SecretExistsExecute(r SecretResourceAPISecretExistsRequest) (map[string]interface{}, *http.Response, error) {
+//	@return interface{}
+func (a *SecretResourceAPIService) SecretExistsExecute(r SecretResourceAPISecretExistsRequest) (interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
 		localVarPostBody    interface{}
 		formFiles           []formFile
-		localVarReturnValue map[string]interface{}
+		localVarReturnValue interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "SecretResourceAPIService.SecretExists")

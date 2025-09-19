@@ -61,9 +61,9 @@ type TaskModel struct {
 	QueueWaitTime                    *int64        `json:"queueWaitTime,omitempty"`
 	LoopOverTask                     *bool         `json:"loopOverTask,omitempty"`
 	// Deprecated
-	InputData map[string]map[string]interface{} `json:"inputData,omitempty"`
+	InputData map[string]interface{} `json:"inputData,omitempty"`
 	// Deprecated
-	OutputData map[string]map[string]interface{} `json:"outputData,omitempty"`
+	OutputData map[string]interface{} `json:"outputData,omitempty"`
 }
 
 // NewTaskModel instantiates a new TaskModel object
@@ -1397,9 +1397,9 @@ func (o *TaskModel) SetLoopOverTask(v bool) {
 
 // GetInputData returns the InputData field value if set, zero value otherwise.
 // Deprecated
-func (o *TaskModel) GetInputData() map[string]map[string]interface{} {
+func (o *TaskModel) GetInputData() map[string]interface{} {
 	if o == nil || IsNil(o.InputData) {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.InputData
@@ -1408,9 +1408,9 @@ func (o *TaskModel) GetInputData() map[string]map[string]interface{} {
 // GetInputDataOk returns a tuple with the InputData field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // Deprecated
-func (o *TaskModel) GetInputDataOk() (map[string]map[string]interface{}, bool) {
+func (o *TaskModel) GetInputDataOk() (map[string]interface{}, bool) {
 	if o == nil || IsNil(o.InputData) {
-		return map[string]map[string]interface{}{}, false
+		return map[string]interface{}{}, false
 	}
 	return o.InputData, true
 }
@@ -1424,17 +1424,17 @@ func (o *TaskModel) HasInputData() bool {
 	return false
 }
 
-// SetInputData gets a reference to the given map[string]map[string]interface{} and assigns it to the InputData field.
+// SetInputData gets a reference to the given map[string]interface{} and assigns it to the InputData field.
 // Deprecated
-func (o *TaskModel) SetInputData(v map[string]map[string]interface{}) {
+func (o *TaskModel) SetInputData(v map[string]interface{}) {
 	o.InputData = v
 }
 
 // GetOutputData returns the OutputData field value if set, zero value otherwise.
 // Deprecated
-func (o *TaskModel) GetOutputData() map[string]map[string]interface{} {
+func (o *TaskModel) GetOutputData() map[string]interface{} {
 	if o == nil || IsNil(o.OutputData) {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.OutputData
@@ -1443,9 +1443,9 @@ func (o *TaskModel) GetOutputData() map[string]map[string]interface{} {
 // GetOutputDataOk returns a tuple with the OutputData field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // Deprecated
-func (o *TaskModel) GetOutputDataOk() (map[string]map[string]interface{}, bool) {
+func (o *TaskModel) GetOutputDataOk() (map[string]interface{}, bool) {
 	if o == nil || IsNil(o.OutputData) {
-		return map[string]map[string]interface{}{}, false
+		return map[string]interface{}{}, false
 	}
 	return o.OutputData, true
 }
@@ -1459,9 +1459,9 @@ func (o *TaskModel) HasOutputData() bool {
 	return false
 }
 
-// SetOutputData gets a reference to the given map[string]map[string]interface{} and assigns it to the OutputData field.
+// SetOutputData gets a reference to the given map[string]interface{} and assigns it to the OutputData field.
 // Deprecated
-func (o *TaskModel) SetOutputData(v map[string]map[string]interface{}) {
+func (o *TaskModel) SetOutputData(v map[string]interface{}) {
 	o.OutputData = v
 }
 

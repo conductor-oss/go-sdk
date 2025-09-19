@@ -19,8 +19,8 @@ var _ MappedNullable = &ConnectivityTestInput{}
 
 // ConnectivityTestInput struct for ConnectivityTestInput
 type ConnectivityTestInput struct {
-	Input map[string]map[string]interface{} `json:"input,omitempty"`
-	Sink  *string                           `json:"sink,omitempty"`
+	Input map[string]interface{} `json:"input,omitempty"`
+	Sink  *string                `json:"sink,omitempty"`
 }
 
 // NewConnectivityTestInput instantiates a new ConnectivityTestInput object
@@ -41,9 +41,9 @@ func NewConnectivityTestInputWithDefaults() *ConnectivityTestInput {
 }
 
 // GetInput returns the Input field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *ConnectivityTestInput) GetInput() map[string]map[string]interface{} {
+func (o *ConnectivityTestInput) GetInput() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.Input
@@ -52,7 +52,7 @@ func (o *ConnectivityTestInput) GetInput() map[string]map[string]interface{} {
 // GetInputOk returns a tuple with the Input field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *ConnectivityTestInput) GetInputOk() (*map[string]map[string]interface{}, bool) {
+func (o *ConnectivityTestInput) GetInputOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.Input) {
 		return nil, false
 	}
@@ -68,8 +68,8 @@ func (o *ConnectivityTestInput) HasInput() bool {
 	return false
 }
 
-// SetInput gets a reference to the given map[string]map[string]interface{} and assigns it to the Input field.
-func (o *ConnectivityTestInput) SetInput(v map[string]map[string]interface{}) {
+// SetInput gets a reference to the given map[string]interface{} and assigns it to the Input field.
+func (o *ConnectivityTestInput) SetInput(v map[string]interface{}) {
 	o.Input = v
 }
 

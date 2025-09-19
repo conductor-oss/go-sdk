@@ -110,11 +110,6 @@ func (a *ApplicationResourceApiService) DeleteTagForApplication(ctx context.Cont
 
 // GetAccessKeys gets access keys for an application
 func (a *ApplicationResourceApiService) GetAccessKeys(ctx context.Context, id string) ([]rbac.AccessKeyResponse, *http.Response, error) {
-	// // Prefer direct HTTP because server returns an array and generator expects a map
-	// if keys, resp, err := a.getAccessKeysDirect(ctx, id); err == nil {
-	// 	return keys, resp, nil
-	// }
-
 	// Fallback to generated client in case server behavior changes
 	req := a.http_orkes.ApplicationResourceAPI.GetAccessKeys(ctx, id)
 	genKeys, resp, err := req.Execute()

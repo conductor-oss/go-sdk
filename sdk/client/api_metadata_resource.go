@@ -307,13 +307,12 @@ func (a *MetadataResourceApiService) GetWorkflowNamesAndVersions(ctx context.Con
 
 	// Convert map[string]map[string]interface{} to map[string][]int32
 	result := make(map[string][]int32)
-	for workflowName, versionMap := range genResult {
+	for workflowName, versionData := range genResult {
 		var versions []int32
-		// Extract version numbers from the map
-		for versionStr := range versionMap {
-			// Try to convert version string to int32
-			if version, ok := versionMap[versionStr].(float64); ok {
-				versions = append(versions, int32(version))
+		// Try to convert version data to []float64
+		if versionSlice, ok := versionData.([]float64); ok {
+			for _, v := range versionSlice {
+				versions = append(versions, int32(v))
 			}
 		}
 		result[workflowName] = versions

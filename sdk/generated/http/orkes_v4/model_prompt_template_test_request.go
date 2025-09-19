@@ -19,13 +19,13 @@ var _ MappedNullable = &PromptTemplateTestRequest{}
 
 // PromptTemplateTestRequest struct for PromptTemplateTestRequest
 type PromptTemplateTestRequest struct {
-	LlmProvider     *string                           `json:"llmProvider,omitempty"`
-	Model           *string                           `json:"model,omitempty"`
-	Prompt          *string                           `json:"prompt,omitempty"`
-	PromptVariables map[string]map[string]interface{} `json:"promptVariables,omitempty"`
-	StopWords       []string                          `json:"stopWords,omitempty"`
-	Temperature     *float64                          `json:"temperature,omitempty"`
-	TopP            *float64                          `json:"topP,omitempty"`
+	LlmProvider     *string                `json:"llmProvider,omitempty"`
+	Model           *string                `json:"model,omitempty"`
+	Prompt          *string                `json:"prompt,omitempty"`
+	PromptVariables map[string]interface{} `json:"promptVariables,omitempty"`
+	StopWords       []string               `json:"stopWords,omitempty"`
+	Temperature     *float64               `json:"temperature,omitempty"`
+	TopP            *float64               `json:"topP,omitempty"`
 }
 
 // NewPromptTemplateTestRequest instantiates a new PromptTemplateTestRequest object
@@ -142,9 +142,9 @@ func (o *PromptTemplateTestRequest) SetPrompt(v string) {
 }
 
 // GetPromptVariables returns the PromptVariables field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *PromptTemplateTestRequest) GetPromptVariables() map[string]map[string]interface{} {
+func (o *PromptTemplateTestRequest) GetPromptVariables() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.PromptVariables
@@ -153,7 +153,7 @@ func (o *PromptTemplateTestRequest) GetPromptVariables() map[string]map[string]i
 // GetPromptVariablesOk returns a tuple with the PromptVariables field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *PromptTemplateTestRequest) GetPromptVariablesOk() (*map[string]map[string]interface{}, bool) {
+func (o *PromptTemplateTestRequest) GetPromptVariablesOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.PromptVariables) {
 		return nil, false
 	}
@@ -169,8 +169,8 @@ func (o *PromptTemplateTestRequest) HasPromptVariables() bool {
 	return false
 }
 
-// SetPromptVariables gets a reference to the given map[string]map[string]interface{} and assigns it to the PromptVariables field.
-func (o *PromptTemplateTestRequest) SetPromptVariables(v map[string]map[string]interface{}) {
+// SetPromptVariables gets a reference to the given map[string]interface{} and assigns it to the PromptVariables field.
+func (o *PromptTemplateTestRequest) SetPromptVariables(v map[string]interface{}) {
 	o.PromptVariables = v
 }
 

@@ -2,8 +2,9 @@ package client
 
 import (
 	"context"
-	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"net/http"
+
+	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
 type SchedulerClient interface {
@@ -24,5 +25,5 @@ type SchedulerClient interface {
 }
 
 func NewSchedulerClient(apiClient *APIClient) SchedulerClient {
-	return &SchedulerResourceApiService{apiClient}
+	return NewSchedulerResourceApiService(apiClient)
 }

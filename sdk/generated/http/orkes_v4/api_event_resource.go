@@ -106,8 +106,8 @@ type EventResourceAPI interface {
 	GetQueueConfig(ctx context.Context, queueType string, queueName string) EventResourceAPIGetQueueConfigRequest
 
 	// GetQueueConfigExecute executes the request
-	//  @return map[string]map[string]interface{}
-	GetQueueConfigExecute(r EventResourceAPIGetQueueConfigRequest) (map[string]map[string]interface{}, *http.Response, error)
+	//  @return map[string]interface{}
+	GetQueueConfigExecute(r EventResourceAPIGetQueueConfigRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
 		GetQueueNames Get all queue configs
@@ -924,7 +924,7 @@ type EventResourceAPIGetQueueConfigRequest struct {
 	queueName  string
 }
 
-func (r EventResourceAPIGetQueueConfigRequest) Execute() (map[string]map[string]interface{}, *http.Response, error) {
+func (r EventResourceAPIGetQueueConfigRequest) Execute() (map[string]interface{}, *http.Response, error) {
 	return r.ApiService.GetQueueConfigExecute(r)
 }
 
@@ -947,13 +947,13 @@ func (a *EventResourceAPIService) GetQueueConfig(ctx context.Context, queueType 
 
 // Execute executes the request
 //
-//	@return map[string]map[string]interface{}
-func (a *EventResourceAPIService) GetQueueConfigExecute(r EventResourceAPIGetQueueConfigRequest) (map[string]map[string]interface{}, *http.Response, error) {
+//	@return map[string]interface{}
+func (a *EventResourceAPIService) GetQueueConfigExecute(r EventResourceAPIGetQueueConfigRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
 		localVarPostBody    interface{}
 		formFiles           []formFile
-		localVarReturnValue map[string]map[string]interface{}
+		localVarReturnValue map[string]interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "EventResourceAPIService.GetQueueConfig")
@@ -1271,10 +1271,10 @@ func (a *EventResourceAPIService) GetTagsForEventHandlerExecute(r EventResourceA
 type EventResourceAPIHandleIncomingEventRequest struct {
 	ctx         context.Context
 	ApiService  EventResourceAPI
-	requestBody *map[string]map[string]interface{}
+	requestBody *map[string]interface{}
 }
 
-func (r EventResourceAPIHandleIncomingEventRequest) RequestBody(requestBody map[string]map[string]interface{}) EventResourceAPIHandleIncomingEventRequest {
+func (r EventResourceAPIHandleIncomingEventRequest) RequestBody(requestBody map[string]interface{}) EventResourceAPIHandleIncomingEventRequest {
 	r.requestBody = &requestBody
 	return r
 }

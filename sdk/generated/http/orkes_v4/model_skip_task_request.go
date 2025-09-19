@@ -19,8 +19,8 @@ var _ MappedNullable = &SkipTaskRequest{}
 
 // SkipTaskRequest struct for SkipTaskRequest
 type SkipTaskRequest struct {
-	TaskInput  map[string]map[string]interface{} `json:"taskInput,omitempty"`
-	TaskOutput map[string]map[string]interface{} `json:"taskOutput,omitempty"`
+	TaskInput  map[string]interface{} `json:"taskInput,omitempty"`
+	TaskOutput map[string]interface{} `json:"taskOutput,omitempty"`
 }
 
 // NewSkipTaskRequest instantiates a new SkipTaskRequest object
@@ -41,9 +41,9 @@ func NewSkipTaskRequestWithDefaults() *SkipTaskRequest {
 }
 
 // GetTaskInput returns the TaskInput field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *SkipTaskRequest) GetTaskInput() map[string]map[string]interface{} {
+func (o *SkipTaskRequest) GetTaskInput() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.TaskInput
@@ -52,7 +52,7 @@ func (o *SkipTaskRequest) GetTaskInput() map[string]map[string]interface{} {
 // GetTaskInputOk returns a tuple with the TaskInput field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *SkipTaskRequest) GetTaskInputOk() (*map[string]map[string]interface{}, bool) {
+func (o *SkipTaskRequest) GetTaskInputOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.TaskInput) {
 		return nil, false
 	}
@@ -68,15 +68,15 @@ func (o *SkipTaskRequest) HasTaskInput() bool {
 	return false
 }
 
-// SetTaskInput gets a reference to the given map[string]map[string]interface{} and assigns it to the TaskInput field.
-func (o *SkipTaskRequest) SetTaskInput(v map[string]map[string]interface{}) {
+// SetTaskInput gets a reference to the given map[string]interface{} and assigns it to the TaskInput field.
+func (o *SkipTaskRequest) SetTaskInput(v map[string]interface{}) {
 	o.TaskInput = v
 }
 
 // GetTaskOutput returns the TaskOutput field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *SkipTaskRequest) GetTaskOutput() map[string]map[string]interface{} {
+func (o *SkipTaskRequest) GetTaskOutput() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.TaskOutput
@@ -85,7 +85,7 @@ func (o *SkipTaskRequest) GetTaskOutput() map[string]map[string]interface{} {
 // GetTaskOutputOk returns a tuple with the TaskOutput field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *SkipTaskRequest) GetTaskOutputOk() (*map[string]map[string]interface{}, bool) {
+func (o *SkipTaskRequest) GetTaskOutputOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.TaskOutput) {
 		return nil, false
 	}
@@ -101,8 +101,8 @@ func (o *SkipTaskRequest) HasTaskOutput() bool {
 	return false
 }
 
-// SetTaskOutput gets a reference to the given map[string]map[string]interface{} and assigns it to the TaskOutput field.
-func (o *SkipTaskRequest) SetTaskOutput(v map[string]map[string]interface{}) {
+// SetTaskOutput gets a reference to the given map[string]interface{} and assigns it to the TaskOutput field.
+func (o *SkipTaskRequest) SetTaskOutput(v map[string]interface{}) {
 	o.TaskOutput = v
 }
 

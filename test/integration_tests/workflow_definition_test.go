@@ -267,7 +267,7 @@ func TestTerminateWorkflow(t *testing.T) {
 	workflowId, err := wf.StartWorkflowWithInput(map[string]interface{}{"test": "terminate"})
 	assert.NoError(t, err, "Failed to start workflow")
 
-	defer func() {
+	t.Cleanup(func() {
 		err = testdata.WorkflowExecutor.RemoveWorkflow(workflowId)
 		assert.NoError(t, err, "Failed to remove workflow")
 		_, err = testdata.MetadataClient.UnregisterWorkflowDef(
@@ -276,7 +276,7 @@ func TestTerminateWorkflow(t *testing.T) {
 			wf.GetVersion(),
 		)
 		assert.NoError(t, err, "Failed to remove workflow definition")
-	}()
+	})
 
 	// Wait for workflow to be running
 	runningWorkflow, err := testdata.WaitForWorkflowRunning(workflowId, testdata.WorkflowValidationTimeout)
@@ -314,7 +314,7 @@ func TestRetryWorkflow(t *testing.T) {
 	workflowId, err := wf.StartWorkflowWithInput(map[string]interface{}{"test": "retry"})
 	assert.NoError(t, err, "Failed to start workflow")
 
-	defer func() {
+	t.Cleanup(func() {
 		err = testdata.WorkflowExecutor.RemoveWorkflow(workflowId)
 		assert.NoError(t, err, "Failed to remove workflow")
 		_, err = testdata.MetadataClient.UnregisterWorkflowDef(
@@ -323,7 +323,7 @@ func TestRetryWorkflow(t *testing.T) {
 			wf.GetVersion(),
 		)
 		assert.NoError(t, err, "Failed to remove workflow definition")
-	}()
+	})
 
 	// Wait for workflow to be running
 	runningWorkflow, err := testdata.WaitForWorkflowRunning(workflowId, testdata.WorkflowValidationTimeout)
@@ -378,7 +378,7 @@ func TestRerunWorkflow(t *testing.T) {
 	workflowId, err := wf.StartWorkflowWithInput(map[string]interface{}{"test": "rerun"})
 	assert.NoError(t, err, "Failed to start workflow for rerun test")
 
-	defer func() {
+	t.Cleanup(func() {
 		err = testdata.WorkflowExecutor.RemoveWorkflow(workflowId)
 		assert.NoError(t, err, "Failed to remove workflow")
 		_, err = testdata.MetadataClient.UnregisterWorkflowDef(
@@ -387,7 +387,7 @@ func TestRerunWorkflow(t *testing.T) {
 			wf.GetVersion(),
 		)
 		assert.NoError(t, err, "Failed to remove workflow definition")
-	}()
+	})
 
 	// Wait for workflow completion
 	completedWorkflow, err := testdata.WaitForWorkflowCompletion(workflowId, testdata.WorkflowValidationTimeout)
@@ -531,7 +531,7 @@ func TestRestartWorkflow(t *testing.T) {
 	workflowId, err := wfV1.StartWorkflowWithInput(map[string]interface{}{"test": "restart"})
 	require.NoError(t, err, "start workflow")
 
-	defer func() {
+	t.Cleanup(func() {
 		err = testdata.WorkflowExecutor.RemoveWorkflow(workflowId)
 		assert.NoError(t, err, "Failed to remove workflow")
 		_, err = testdata.MetadataClient.UnregisterWorkflowDef(
@@ -546,7 +546,7 @@ func TestRestartWorkflow(t *testing.T) {
 			wfV2.GetVersion(),
 		)
 		assert.NoError(t, err, "Failed to remove workflow definition")
-	}()
+	})
 
 	// Wait for workflow completion
 	completedWorkflow, err := testdata.WaitForWorkflowCompletion(workflowId, testdata.WorkflowValidationTimeout)
@@ -627,22 +627,22 @@ func TestUpgradeRunningWorkflowToVersion(t *testing.T) {
 	workflowId, err := testdata.WorkflowExecutor.StartWorkflow(startRequest)
 	assert.NoError(t, err, "Failed to start workflow")
 
-	// defer func() {
-	// 	err = testdata.WorkflowExecutor.RemoveWorkflow(workflowId)
-	// 	assert.NoError(t, err, "Failed to remove workflow")
-	// 	_, err = testdata.MetadataClient.UnregisterWorkflowDef(
-	// 		context.Background(),
-	// 		wfV1.GetName(),
-	// 		wfV1.GetVersion(),
-	// 	)
-	// 	assert.NoError(t, err, "Failed to remove workflow definition v1")
-	// 	_, err = testdata.MetadataClient.UnregisterWorkflowDef(
-	// 		context.Background(),
-	// 		wfV2.GetName(),
-	// 		wfV2.GetVersion(),
-	// 	)
-	// 	assert.NoError(t, err, "Failed to remove workflow definition v2")
-	// }()
+	t.Cleanup(func() {
+		err = testdata.WorkflowExecutor.RemoveWorkflow(workflowId)
+		assert.NoError(t, err, "Failed to remove workflow")
+		_, err = testdata.MetadataClient.UnregisterWorkflowDef(
+			context.Background(),
+			wfV1.GetName(),
+			wfV1.GetVersion(),
+		)
+		assert.NoError(t, err, "Failed to remove workflow definition v1")
+		_, err = testdata.MetadataClient.UnregisterWorkflowDef(
+			context.Background(),
+			wfV2.GetName(),
+			wfV2.GetVersion(),
+		)
+		assert.NoError(t, err, "Failed to remove workflow definition v2")
+	})
 
 	// Wait for workflow to be running with version 1
 	workflowAfterRunning, err := testdata.WaitForWorkflowStatus(workflowId,
@@ -727,7 +727,7 @@ func TestStartWorkflowWithRequest(t *testing.T) {
 		startRequest,
 	)
 
-	defer func() {
+	t.Cleanup(func() {
 		err = testdata.WorkflowExecutor.RemoveWorkflow(workflowId)
 		assert.NoError(t, err, "Failed to remove workflow")
 		_, err = testdata.MetadataClient.UnregisterWorkflowDef(
@@ -736,7 +736,7 @@ func TestStartWorkflowWithRequest(t *testing.T) {
 			wf.GetVersion(),
 		)
 		assert.NoError(t, err, "Failed to remove workflow definition")
-	}()
+	})
 
 	assert.NoError(t, err, "Failed to start workflow with request")
 	assert.NotEmpty(t, workflowId, "Workflow ID should not be empty")
@@ -879,7 +879,7 @@ func TestGetRunningWorkflow(t *testing.T) {
 	}
 
 	// Setup cleanup
-	defer func() {
+	t.Cleanup(func() {
 		for _, id := range workflowIds {
 			err = testdata.WorkflowExecutor.RemoveWorkflow(id)
 			assert.NoError(t, err, "Failed to remove workflow %s", id)
@@ -891,7 +891,7 @@ func TestGetRunningWorkflow(t *testing.T) {
 			wf.GetVersion(),
 		)
 		assert.NoError(t, err, "Failed to remove workflow definition")
-	}()
+	})
 
 	// Wait for workflows to be running
 	time.Sleep(500 * time.Millisecond)
@@ -965,7 +965,7 @@ func TestGetWorkflowsBatch(t *testing.T) {
 	}
 
 	// Setup cleanup
-	defer func() {
+	t.Cleanup(func() {
 		for _, id := range workflowIds {
 			err = testdata.WorkflowExecutor.RemoveWorkflow(id)
 			if err != nil {
@@ -981,7 +981,7 @@ func TestGetWorkflowsBatch(t *testing.T) {
 		if err != nil {
 			t.Logf("Warning: Failed to remove workflow definition: %v", err)
 		}
-	}()
+	})
 	err = testdata.WaitForMultipleWorkflowsCompletion(workflowIds, testdata.WorkflowValidationTimeout)
 	assert.NoError(t, err, "Failed to wait for workflow completion")
 
@@ -1085,7 +1085,7 @@ func TestGetWorkflowsByCorrelationId(t *testing.T) {
 		assert.NoError(t, err, "Failed to start workflow %d", i)
 		workflowIds[i] = workflowId
 	}
-	defer func() {
+	t.Cleanup(func() {
 		for _, id := range workflowIds {
 			err = testdata.WorkflowExecutor.RemoveWorkflow(id)
 			assert.NoError(t, err, "Failed to remove workflow %s", id)
@@ -1096,7 +1096,7 @@ func TestGetWorkflowsByCorrelationId(t *testing.T) {
 			wf.GetVersion(),
 		)
 		assert.NoError(t, err, "Failed to remove workflow definition")
-	}()
+	})
 
 	// Wait for workflows to complete
 	err = testdata.WaitForMultipleWorkflowsCompletion(workflowIds, 30*time.Second)
@@ -1164,7 +1164,7 @@ func TestPauseResumeWorkflow(t *testing.T) {
 	workflowId, err := wf.StartWorkflowWithInput(map[string]interface{}{"test": "pause"})
 	assert.NoError(t, err, "Failed to start workflow")
 
-	defer func() {
+	t.Cleanup(func() {
 		err = testdata.WorkflowExecutor.RemoveWorkflow(workflowId)
 		assert.NoError(t, err, "Failed to remove workflow")
 		_, err = testdata.MetadataClient.UnregisterWorkflowDef(
@@ -1173,7 +1173,7 @@ func TestPauseResumeWorkflow(t *testing.T) {
 			wf.GetVersion(),
 		)
 		assert.NoError(t, err, "Failed to remove workflow definition")
-	}()
+	})
 
 	// Wait for workflow to be running
 	runningWorkflow, err := testdata.WaitForWorkflowRunning(workflowId, testdata.WorkflowValidationTimeout)
@@ -1241,7 +1241,7 @@ func TestResetWorkflowCallbackTime(t *testing.T) {
 	workflowId, err := testdata.WorkflowExecutor.StartWorkflow(startRequest)
 	assert.NoError(t, err, "Failed to start workflow")
 
-	defer func() {
+	t.Cleanup(func() {
 		err = testdata.WorkflowExecutor.RemoveWorkflow(workflowId)
 		assert.NoError(t, err, "Failed to remove workflow")
 		_, err = testdata.MetadataClient.UnregisterWorkflowDef(
@@ -1250,7 +1250,7 @@ func TestResetWorkflowCallbackTime(t *testing.T) {
 			wf.GetVersion(),
 		)
 		assert.NoError(t, err, "Failed to remove workflow definition")
-	}()
+	})
 
 	// Wait for the workflow to start and task to be scheduled
 	workflowWithTasks, err := testdata.WaitForWorkflowStatus(workflowId, []model.WorkflowStatus{model.RunningWorkflow}, testdata.WorkflowValidationTimeout)
@@ -1350,14 +1350,14 @@ func TestWorkflowTest(t *testing.T) {
 	err := testdata.ValidateWorkflowRegistration(httpTaskWorkflow)
 	assert.NoError(t, err, "Failed to register workflow")
 
-	defer func() {
+	t.Cleanup(func() {
 		_, err := testdata.MetadataClient.UnregisterWorkflowDef(
 			context.Background(),
 			httpTaskWorkflow.GetName(),
 			httpTaskWorkflow.GetVersion(),
 		)
 		assert.NoError(t, err, "Failed to unregister workflow definition")
-	}()
+	})
 
 	// Create a task mock for the HTTP task to simulate its output
 	taskMocks := make(map[string][]model.TaskMock)
@@ -1427,12 +1427,12 @@ func TestJumpToTask(t *testing.T) {
 	workflowId, err := testdata.WorkflowExecutor.StartWorkflow(startRequest)
 	assert.NoError(t, err, "Failed to start workflow")
 
-	defer func() {
+	t.Cleanup(func() {
 		err = testdata.WorkflowExecutor.RemoveWorkflow(workflowId)
 		assert.NoError(t, err, "Failed to remove workflow")
 		_, err = testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), workflowDef.GetName(), workflowDef.GetVersion())
 		assert.NoError(t, err, "Failed to remove workflow definition")
-	}()
+	})
 
 	runningWorkflow, err := testdata.WaitForWorkflowStatus(workflowId, []model.WorkflowStatus{model.RunningWorkflow}, testdata.WorkflowValidationTimeout)
 	assert.NoError(t, err, "Failed to wait for workflow to start")
@@ -1508,12 +1508,12 @@ func TestSkipTaskFromWorkflow(t *testing.T) {
 	workflowId, err := testdata.WorkflowExecutor.StartWorkflow(startRequest)
 	assert.NoError(t, err, "Failed to start workflow")
 
-	defer func() {
+	t.Cleanup(func() {
 		err = testdata.WorkflowExecutor.RemoveWorkflow(workflowId)
 		assert.NoError(t, err, "Failed to remove workflow")
 		_, err = testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), wf.GetName(), wf.GetVersion())
 		assert.NoError(t, err, "Failed to remove workflow definition")
-	}()
+	})
 
 	// Wait for workflow to be running
 	runningWorkflow, err := testdata.WaitForWorkflowStatus(workflowId, []model.WorkflowStatus{model.RunningWorkflow}, testdata.WorkflowValidationTimeout)
@@ -1607,12 +1607,12 @@ func TestUpdateWorkflowAndTaskState(t *testing.T) {
 	workflowId, err := testdata.WorkflowExecutor.StartWorkflow(startRequest)
 	assert.NoError(t, err, "Failed to start workflow")
 
-	defer func() {
+	t.Cleanup(func() {
 		err = testdata.WorkflowExecutor.RemoveWorkflow(workflowId)
 		assert.NoError(t, err, "Failed to remove workflow")
 		_, err = testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), wf.GetName(), wf.GetVersion())
 		assert.NoError(t, err, "Failed to remove workflow definition")
-	}()
+	})
 
 	workflowWithTasks, err := testdata.WaitForWorkflowStatus(workflowId, []model.WorkflowStatus{model.RunningWorkflow}, testdata.WorkflowValidationTimeout)
 	assert.NoError(t, err, "Failed to wait for workflow to start")
@@ -1707,12 +1707,12 @@ func TestUpdateWorkflowState(t *testing.T) {
 	workflowId, err := testdata.WorkflowExecutor.StartWorkflow(startRequest)
 	assert.NoError(t, err, "Failed to start workflow")
 
-	defer func() {
+	t.Cleanup(func() {
 		err = testdata.WorkflowExecutor.RemoveWorkflow(workflowId)
 		assert.NoError(t, err, "Failed to remove workflow")
 		_, err = testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), wf.GetName(), wf.GetVersion())
 		assert.NoError(t, err, "Failed to remove workflow definition")
-	}()
+	})
 
 	runningWorkflow, err := testdata.WaitForWorkflowStatus(workflowId, []model.WorkflowStatus{model.RunningWorkflow}, testdata.WorkflowValidationTimeout)
 	assert.NoError(t, err, "Failed to wait for workflow to start")
@@ -1863,14 +1863,14 @@ func TestGetWorkflows(t *testing.T) {
 		}
 	}
 
-	defer func() {
+	t.Cleanup(func() {
 		for _, id := range workflowIds {
 			err = testdata.WorkflowExecutor.RemoveWorkflow(id)
 			assert.NoError(t, err, "Failed to remove workflow %s", id)
 		}
 		_, err = testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), wf.GetName(), wf.GetVersion())
 		assert.NoError(t, err, "Failed to remove workflow definition")
-	}()
+	})
 
 	// Wait for workflows to complete
 	err = testdata.WaitForMultipleWorkflowsCompletion(workflowIds, testdata.WorkflowValidationTimeout)

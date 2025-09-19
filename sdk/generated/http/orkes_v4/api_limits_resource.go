@@ -29,8 +29,8 @@ type LimitsResourceAPI interface {
 	Get2(ctx context.Context) LimitsResourceAPIGet2Request
 
 	// Get2Execute executes the request
-	//  @return map[string]map[string]interface{}
-	Get2Execute(r LimitsResourceAPIGet2Request) (map[string]map[string]interface{}, *http.Response, error)
+	//  @return map[string]interface{}
+	Get2Execute(r LimitsResourceAPIGet2Request) (map[string]interface{}, *http.Response, error)
 }
 
 // LimitsResourceAPIService LimitsResourceAPI service
@@ -41,7 +41,7 @@ type LimitsResourceAPIGet2Request struct {
 	ApiService LimitsResourceAPI
 }
 
-func (r LimitsResourceAPIGet2Request) Execute() (map[string]map[string]interface{}, *http.Response, error) {
+func (r LimitsResourceAPIGet2Request) Execute() (map[string]interface{}, *http.Response, error) {
 	return r.ApiService.Get2Execute(r)
 }
 
@@ -60,13 +60,13 @@ func (a *LimitsResourceAPIService) Get2(ctx context.Context) LimitsResourceAPIGe
 
 // Execute executes the request
 //
-//	@return map[string]map[string]interface{}
-func (a *LimitsResourceAPIService) Get2Execute(r LimitsResourceAPIGet2Request) (map[string]map[string]interface{}, *http.Response, error) {
+//	@return map[string]interface{}
+func (a *LimitsResourceAPIService) Get2Execute(r LimitsResourceAPIGet2Request) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
 		localVarPostBody    interface{}
 		formFiles           []formFile
-		localVarReturnValue map[string]map[string]interface{}
+		localVarReturnValue map[string]interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "LimitsResourceAPIService.Get2")

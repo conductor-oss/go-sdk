@@ -19,9 +19,9 @@ var _ MappedNullable = &Health{}
 
 // Health struct for Health
 type Health struct {
-	Details      map[string]map[string]interface{} `json:"details,omitempty"`
-	ErrorMessage *string                           `json:"errorMessage,omitempty"`
-	Healthy      *bool                             `json:"healthy,omitempty"`
+	Details      map[string]interface{} `json:"details,omitempty"`
+	ErrorMessage *string                `json:"errorMessage,omitempty"`
+	Healthy      *bool                  `json:"healthy,omitempty"`
 }
 
 // NewHealth instantiates a new Health object
@@ -42,9 +42,9 @@ func NewHealthWithDefaults() *Health {
 }
 
 // GetDetails returns the Details field value if set, zero value otherwise.
-func (o *Health) GetDetails() map[string]map[string]interface{} {
+func (o *Health) GetDetails() map[string]interface{} {
 	if o == nil || IsNil(o.Details) {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.Details
@@ -52,9 +52,9 @@ func (o *Health) GetDetails() map[string]map[string]interface{} {
 
 // GetDetailsOk returns a tuple with the Details field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *Health) GetDetailsOk() (map[string]map[string]interface{}, bool) {
+func (o *Health) GetDetailsOk() (map[string]interface{}, bool) {
 	if o == nil || IsNil(o.Details) {
-		return map[string]map[string]interface{}{}, false
+		return map[string]interface{}{}, false
 	}
 	return o.Details, true
 }
@@ -68,8 +68,8 @@ func (o *Health) HasDetails() bool {
 	return false
 }
 
-// SetDetails gets a reference to the given map[string]map[string]interface{} and assigns it to the Details field.
-func (o *Health) SetDetails(v map[string]map[string]interface{}) {
+// SetDetails gets a reference to the given map[string]interface{} and assigns it to the Details field.
+func (o *Health) SetDetails(v map[string]interface{}) {
 	o.Details = v
 }
 

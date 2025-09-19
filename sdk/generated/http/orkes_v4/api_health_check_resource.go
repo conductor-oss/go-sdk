@@ -29,8 +29,8 @@ type HealthCheckResourceAPI interface {
 	DoCheck(ctx context.Context) HealthCheckResourceAPIDoCheckRequest
 
 	// DoCheckExecute executes the request
-	//  @return map[string]map[string]interface{}
-	DoCheckExecute(r HealthCheckResourceAPIDoCheckRequest) (map[string]map[string]interface{}, *http.Response, error)
+	//  @return map[string]interface{}
+	DoCheckExecute(r HealthCheckResourceAPIDoCheckRequest) (map[string]interface{}, *http.Response, error)
 }
 
 // HealthCheckResourceAPIService HealthCheckResourceAPI service
@@ -41,7 +41,7 @@ type HealthCheckResourceAPIDoCheckRequest struct {
 	ApiService HealthCheckResourceAPI
 }
 
-func (r HealthCheckResourceAPIDoCheckRequest) Execute() (map[string]map[string]interface{}, *http.Response, error) {
+func (r HealthCheckResourceAPIDoCheckRequest) Execute() (map[string]interface{}, *http.Response, error) {
 	return r.ApiService.DoCheckExecute(r)
 }
 
@@ -60,13 +60,13 @@ func (a *HealthCheckResourceAPIService) DoCheck(ctx context.Context) HealthCheck
 
 // Execute executes the request
 //
-//	@return map[string]map[string]interface{}
-func (a *HealthCheckResourceAPIService) DoCheckExecute(r HealthCheckResourceAPIDoCheckRequest) (map[string]map[string]interface{}, *http.Response, error) {
+//	@return map[string]interface{}
+func (a *HealthCheckResourceAPIService) DoCheckExecute(r HealthCheckResourceAPIDoCheckRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
 		localVarPostBody    interface{}
 		formFiles           []formFile
-		localVarReturnValue map[string]map[string]interface{}
+		localVarReturnValue map[string]interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "HealthCheckResourceAPIService.DoCheck")

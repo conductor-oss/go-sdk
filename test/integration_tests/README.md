@@ -20,19 +20,30 @@ This directory contains integration tests for the Conductor Workflow API endpoin
 | `POST` | `/api/workflow/{workflowId}/restart` | Restarts a completed workflow | `TestRestartWorkflow` |
 | `PUT` | `/api/workflow/{workflowId}/resume` | Resumes the workflow | `TestPauseResumeWorkflow`|
 | `POST` | `/api/workflow/{workflowId}/retry` | Retries the last failed task | `TestRetryWorkflow`, `TestRetryWorkflowWithDecide` |
-| `GET` | `/api/workflow/search` | Search for workflows based on payload and parameters | Not directly tested |
+| `GET` | `/api/workflow/search` | Search for workflows based on payload and parameters | `TestWorkflowSearch` |
 | `PUT` | `/api/workflow/{workflowId}/skiptask/{taskReferenceName}` | Skips a given task from a running workflow | `TestSkipTaskFromWorkflow` |
 | `POST` | `/api/workflow/{name}` | Start a new workflow | Multiple tests |
 | `POST` | `/api/workflow/execute/{name}/{version}` | Execute a workflow and wait for completion | `TestExecuteWorkflow`, `TestExecuteWorkflowSync` |
-| `POST` | `/api/workflow` | Start a workflow with a StartWorkflowRequest | `TestStartWorkflowWithRequest` |
-| `POST` | `/api/workflow/execute/{name}/{version}` | Execute workflow with specified return strategy | Not directly tested |
-| `POST` | `/api/workflow/{workflowId}/jump/{taskReferenceName}` | Jump workflow execution to a given task | Not directly tested |
+| `POST` | `/api/workflow` | Start a workflow with a StartWorkflowRequest | Multiple tests `TestStartWorkflowWithRequest` |
+| `POST` | `/api/workflow/execute/{name}/{version}` | Execute workflow with specified return strategy | `TestSignal_AllStrategies_Comprehensive` |
+| `POST` | `/api/workflow/{workflowId}/jump/{taskReferenceName}` | Jump workflow execution to a given task | `TestJumpToTask` |
 | `POST` | `/api/workflow/{workflowId}/state` | Update workflow variables, tasks and trigger evaluation | `TestUpdateWorkflowAndTaskState` |
 | `POST` | `/api/workflow/{workflowId}/upgrade` | Upgrade running workflow to newer version | `TestUpgradeRunningWorkflowToVersion` |
-| `POST` | `/api/workflow/test` | Test workflow execution using mock data | Not directly tested |
+| `POST` | `/api/workflow/test` | Test workflow execution using mock data | `TestWorkflowTest` |
 | `GET` | `/api/workflow/{workflowId}/tasks` | Gets workflow tasks by workflow execution id | `TestGetExecutionStatusTaskList` |
 | `POST` | `/api/workflow/{workflowId}/variables` | Updates workflow variables and triggers evaluation | `TestUpdateWorkflowState` |
 | `DELETE` | `/api/workflow/{workflowId}` | Terminate workflow execution | `TestTerminateWorkflow`, `TestTerminateWorkflowWithFailure` |
+
+## Workflow Bulk API Endpoints and Tests
+
+| HTTP Method | URL | Description | Test Function |
+|-------------|-----|-------------|--------------|
+| `POST` | `/api/workflow/bulk/delete` | Permanently remove workflows from the system | `TestWorkflowBulkDelete` |
+| `PUT` | `/api/workflow/bulk/pause` | Pause the list of workflows | `TestWorkflowBulkPause` |
+| `POST` | `/api/workflow/bulk/restart` | Restart the list of completed workflow | `TestWorkflowBulkRestart` |
+| `PUT` | `/api/workflow/bulk/resume` | Resume the list of workflows | `TestWorkflowBulkResume` |
+| `POST` | `/api/workflow/bulk/retry` | Retry the last failed task for each workflow from the list | `TestWorkflowBulkRetry` |
+| `POST` | `/api/workflow/bulk/terminate` | Terminate workflows execution | `TestWorkflowBulkTerminate` |
 
 ## Running Tests
 

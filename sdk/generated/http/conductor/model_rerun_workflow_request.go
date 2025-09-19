@@ -19,11 +19,11 @@ var _ MappedNullable = &RerunWorkflowRequest{}
 
 // RerunWorkflowRequest struct for RerunWorkflowRequest
 type RerunWorkflowRequest struct {
-	ReRunFromWorkflowId *string                           `json:"reRunFromWorkflowId,omitempty"`
-	WorkflowInput       map[string]map[string]interface{} `json:"workflowInput,omitempty"`
-	ReRunFromTaskId     *string                           `json:"reRunFromTaskId,omitempty"`
-	TaskInput           map[string]map[string]interface{} `json:"taskInput,omitempty"`
-	CorrelationId       *string                           `json:"correlationId,omitempty"`
+	ReRunFromWorkflowId *string                `json:"reRunFromWorkflowId,omitempty"`
+	WorkflowInput       map[string]interface{} `json:"workflowInput,omitempty"`
+	ReRunFromTaskId     *string                `json:"reRunFromTaskId,omitempty"`
+	TaskInput           map[string]interface{} `json:"taskInput,omitempty"`
+	CorrelationId       *string                `json:"correlationId,omitempty"`
 }
 
 // NewRerunWorkflowRequest instantiates a new RerunWorkflowRequest object
@@ -76,9 +76,9 @@ func (o *RerunWorkflowRequest) SetReRunFromWorkflowId(v string) {
 }
 
 // GetWorkflowInput returns the WorkflowInput field value if set, zero value otherwise.
-func (o *RerunWorkflowRequest) GetWorkflowInput() map[string]map[string]interface{} {
+func (o *RerunWorkflowRequest) GetWorkflowInput() map[string]interface{} {
 	if o == nil || IsNil(o.WorkflowInput) {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.WorkflowInput
@@ -86,9 +86,9 @@ func (o *RerunWorkflowRequest) GetWorkflowInput() map[string]map[string]interfac
 
 // GetWorkflowInputOk returns a tuple with the WorkflowInput field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *RerunWorkflowRequest) GetWorkflowInputOk() (map[string]map[string]interface{}, bool) {
+func (o *RerunWorkflowRequest) GetWorkflowInputOk() (map[string]interface{}, bool) {
 	if o == nil || IsNil(o.WorkflowInput) {
-		return map[string]map[string]interface{}{}, false
+		return map[string]interface{}{}, false
 	}
 	return o.WorkflowInput, true
 }
@@ -102,8 +102,8 @@ func (o *RerunWorkflowRequest) HasWorkflowInput() bool {
 	return false
 }
 
-// SetWorkflowInput gets a reference to the given map[string]map[string]interface{} and assigns it to the WorkflowInput field.
-func (o *RerunWorkflowRequest) SetWorkflowInput(v map[string]map[string]interface{}) {
+// SetWorkflowInput gets a reference to the given map[string]interface{} and assigns it to the WorkflowInput field.
+func (o *RerunWorkflowRequest) SetWorkflowInput(v map[string]interface{}) {
 	o.WorkflowInput = v
 }
 
@@ -140,9 +140,9 @@ func (o *RerunWorkflowRequest) SetReRunFromTaskId(v string) {
 }
 
 // GetTaskInput returns the TaskInput field value if set, zero value otherwise.
-func (o *RerunWorkflowRequest) GetTaskInput() map[string]map[string]interface{} {
+func (o *RerunWorkflowRequest) GetTaskInput() map[string]interface{} {
 	if o == nil || IsNil(o.TaskInput) {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.TaskInput
@@ -150,9 +150,9 @@ func (o *RerunWorkflowRequest) GetTaskInput() map[string]map[string]interface{} 
 
 // GetTaskInputOk returns a tuple with the TaskInput field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *RerunWorkflowRequest) GetTaskInputOk() (map[string]map[string]interface{}, bool) {
+func (o *RerunWorkflowRequest) GetTaskInputOk() (map[string]interface{}, bool) {
 	if o == nil || IsNil(o.TaskInput) {
-		return map[string]map[string]interface{}{}, false
+		return map[string]interface{}{}, false
 	}
 	return o.TaskInput, true
 }
@@ -166,8 +166,8 @@ func (o *RerunWorkflowRequest) HasTaskInput() bool {
 	return false
 }
 
-// SetTaskInput gets a reference to the given map[string]map[string]interface{} and assigns it to the TaskInput field.
-func (o *RerunWorkflowRequest) SetTaskInput(v map[string]map[string]interface{}) {
+// SetTaskInput gets a reference to the given map[string]interface{} and assigns it to the TaskInput field.
+func (o *RerunWorkflowRequest) SetTaskInput(v map[string]interface{}) {
 	o.TaskInput = v
 }
 

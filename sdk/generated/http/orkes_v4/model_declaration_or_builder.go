@@ -19,7 +19,7 @@ var _ MappedNullable = &DeclarationOrBuilder{}
 
 // DeclarationOrBuilder struct for DeclarationOrBuilder
 type DeclarationOrBuilder struct {
-	AllFields map[string]map[string]interface{} `json:"allFields,omitempty"`
+	AllFields map[string]interface{} `json:"allFields,omitempty"`
 	// Simplified schema for Message (original had circular references)
 	DefaultInstanceForType map[string]interface{} `json:"defaultInstanceForType,omitempty"`
 	// Simplified schema for Descriptor (original had circular references)
@@ -54,9 +54,9 @@ func NewDeclarationOrBuilderWithDefaults() *DeclarationOrBuilder {
 }
 
 // GetAllFields returns the AllFields field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *DeclarationOrBuilder) GetAllFields() map[string]map[string]interface{} {
+func (o *DeclarationOrBuilder) GetAllFields() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.AllFields
@@ -65,7 +65,7 @@ func (o *DeclarationOrBuilder) GetAllFields() map[string]map[string]interface{} 
 // GetAllFieldsOk returns a tuple with the AllFields field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *DeclarationOrBuilder) GetAllFieldsOk() (*map[string]map[string]interface{}, bool) {
+func (o *DeclarationOrBuilder) GetAllFieldsOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.AllFields) {
 		return nil, false
 	}
@@ -81,8 +81,8 @@ func (o *DeclarationOrBuilder) HasAllFields() bool {
 	return false
 }
 
-// SetAllFields gets a reference to the given map[string]map[string]interface{} and assigns it to the AllFields field.
-func (o *DeclarationOrBuilder) SetAllFields(v map[string]map[string]interface{}) {
+// SetAllFields gets a reference to the given map[string]interface{} and assigns it to the AllFields field.
+func (o *DeclarationOrBuilder) SetAllFields(v map[string]interface{}) {
 	o.AllFields = v
 }
 

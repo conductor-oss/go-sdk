@@ -19,8 +19,8 @@ var _ MappedNullable = &EnumValueOptionsOrBuilder{}
 
 // EnumValueOptionsOrBuilder struct for EnumValueOptionsOrBuilder
 type EnumValueOptionsOrBuilder struct {
-	AllFields   map[string]map[string]interface{} `json:"allFields,omitempty"`
-	DebugRedact *bool                             `json:"debugRedact,omitempty"`
+	AllFields   map[string]interface{} `json:"allFields,omitempty"`
+	DebugRedact *bool                  `json:"debugRedact,omitempty"`
 	// Simplified schema for Message (original had circular references)
 	DefaultInstanceForType map[string]interface{} `json:"defaultInstanceForType,omitempty"`
 	Deprecated             *bool                  `json:"deprecated,omitempty"`
@@ -54,9 +54,9 @@ func NewEnumValueOptionsOrBuilderWithDefaults() *EnumValueOptionsOrBuilder {
 }
 
 // GetAllFields returns the AllFields field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *EnumValueOptionsOrBuilder) GetAllFields() map[string]map[string]interface{} {
+func (o *EnumValueOptionsOrBuilder) GetAllFields() map[string]interface{} {
 	if o == nil {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.AllFields
@@ -65,7 +65,7 @@ func (o *EnumValueOptionsOrBuilder) GetAllFields() map[string]map[string]interfa
 // GetAllFieldsOk returns a tuple with the AllFields field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *EnumValueOptionsOrBuilder) GetAllFieldsOk() (*map[string]map[string]interface{}, bool) {
+func (o *EnumValueOptionsOrBuilder) GetAllFieldsOk() (*map[string]interface{}, bool) {
 	if o == nil || IsNil(o.AllFields) {
 		return nil, false
 	}
@@ -81,8 +81,8 @@ func (o *EnumValueOptionsOrBuilder) HasAllFields() bool {
 	return false
 }
 
-// SetAllFields gets a reference to the given map[string]map[string]interface{} and assigns it to the AllFields field.
-func (o *EnumValueOptionsOrBuilder) SetAllFields(v map[string]map[string]interface{}) {
+// SetAllFields gets a reference to the given map[string]interface{} and assigns it to the AllFields field.
+func (o *EnumValueOptionsOrBuilder) SetAllFields(v map[string]interface{}) {
 	o.AllFields = v
 }
 

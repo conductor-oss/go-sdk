@@ -19,11 +19,11 @@ var _ MappedNullable = &StartWorkflow{}
 
 // StartWorkflow struct for StartWorkflow
 type StartWorkflow struct {
-	Name          *string                           `json:"name,omitempty"`
-	Version       *int32                            `json:"version,omitempty"`
-	CorrelationId *string                           `json:"correlationId,omitempty"`
-	Input         map[string]map[string]interface{} `json:"input,omitempty"`
-	TaskToDomain  *map[string]string                `json:"taskToDomain,omitempty"`
+	Name          *string                `json:"name,omitempty"`
+	Version       *int32                 `json:"version,omitempty"`
+	CorrelationId *string                `json:"correlationId,omitempty"`
+	Input         map[string]interface{} `json:"input,omitempty"`
+	TaskToDomain  *map[string]string     `json:"taskToDomain,omitempty"`
 }
 
 // NewStartWorkflow instantiates a new StartWorkflow object
@@ -140,9 +140,9 @@ func (o *StartWorkflow) SetCorrelationId(v string) {
 }
 
 // GetInput returns the Input field value if set, zero value otherwise.
-func (o *StartWorkflow) GetInput() map[string]map[string]interface{} {
+func (o *StartWorkflow) GetInput() map[string]interface{} {
 	if o == nil || IsNil(o.Input) {
-		var ret map[string]map[string]interface{}
+		var ret map[string]interface{}
 		return ret
 	}
 	return o.Input
@@ -150,9 +150,9 @@ func (o *StartWorkflow) GetInput() map[string]map[string]interface{} {
 
 // GetInputOk returns a tuple with the Input field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-func (o *StartWorkflow) GetInputOk() (map[string]map[string]interface{}, bool) {
+func (o *StartWorkflow) GetInputOk() (map[string]interface{}, bool) {
 	if o == nil || IsNil(o.Input) {
-		return map[string]map[string]interface{}{}, false
+		return map[string]interface{}{}, false
 	}
 	return o.Input, true
 }
@@ -166,8 +166,8 @@ func (o *StartWorkflow) HasInput() bool {
 	return false
 }
 
-// SetInput gets a reference to the given map[string]map[string]interface{} and assigns it to the Input field.
-func (o *StartWorkflow) SetInput(v map[string]map[string]interface{}) {
+// SetInput gets a reference to the given map[string]interface{} and assigns it to the Input field.
+func (o *StartWorkflow) SetInput(v map[string]interface{}) {
 	o.Input = v
 }
 

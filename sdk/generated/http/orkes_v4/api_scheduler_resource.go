@@ -117,8 +117,8 @@ type SchedulerResourceAPI interface {
 	PauseAllSchedules(ctx context.Context) SchedulerResourceAPIPauseAllSchedulesRequest
 
 	// PauseAllSchedulesExecute executes the request
-	//  @return map[string]map[string]interface{}
-	PauseAllSchedulesExecute(r SchedulerResourceAPIPauseAllSchedulesRequest) (map[string]map[string]interface{}, *http.Response, error)
+	//  @return map[string]interface{}
+	PauseAllSchedulesExecute(r SchedulerResourceAPIPauseAllSchedulesRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
 		PauseSchedule Pauses an existing schedule by name
@@ -154,8 +154,8 @@ type SchedulerResourceAPI interface {
 	RequeueAllExecutionRecords(ctx context.Context) SchedulerResourceAPIRequeueAllExecutionRecordsRequest
 
 	// RequeueAllExecutionRecordsExecute executes the request
-	//  @return map[string]map[string]interface{}
-	RequeueAllExecutionRecordsExecute(r SchedulerResourceAPIRequeueAllExecutionRecordsRequest) (map[string]map[string]interface{}, *http.Response, error)
+	//  @return map[string]interface{}
+	RequeueAllExecutionRecordsExecute(r SchedulerResourceAPIRequeueAllExecutionRecordsRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
 		ResumeAllSchedules Resume all scheduling
@@ -166,8 +166,8 @@ type SchedulerResourceAPI interface {
 	ResumeAllSchedules(ctx context.Context) SchedulerResourceAPIResumeAllSchedulesRequest
 
 	// ResumeAllSchedulesExecute executes the request
-	//  @return map[string]map[string]interface{}
-	ResumeAllSchedulesExecute(r SchedulerResourceAPIResumeAllSchedulesRequest) (map[string]map[string]interface{}, *http.Response, error)
+	//  @return map[string]interface{}
+	ResumeAllSchedulesExecute(r SchedulerResourceAPIResumeAllSchedulesRequest) (map[string]interface{}, *http.Response, error)
 
 	/*
 		ResumeSchedule Resume a paused schedule by name
@@ -1084,7 +1084,7 @@ type SchedulerResourceAPIPauseAllSchedulesRequest struct {
 	ApiService SchedulerResourceAPI
 }
 
-func (r SchedulerResourceAPIPauseAllSchedulesRequest) Execute() (map[string]map[string]interface{}, *http.Response, error) {
+func (r SchedulerResourceAPIPauseAllSchedulesRequest) Execute() (map[string]interface{}, *http.Response, error) {
 	return r.ApiService.PauseAllSchedulesExecute(r)
 }
 
@@ -1103,13 +1103,13 @@ func (a *SchedulerResourceAPIService) PauseAllSchedules(ctx context.Context) Sch
 
 // Execute executes the request
 //
-//	@return map[string]map[string]interface{}
-func (a *SchedulerResourceAPIService) PauseAllSchedulesExecute(r SchedulerResourceAPIPauseAllSchedulesRequest) (map[string]map[string]interface{}, *http.Response, error) {
+//	@return map[string]interface{}
+func (a *SchedulerResourceAPIService) PauseAllSchedulesExecute(r SchedulerResourceAPIPauseAllSchedulesRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
 		localVarPostBody    interface{}
 		formFiles           []formFile
-		localVarReturnValue map[string]map[string]interface{}
+		localVarReturnValue map[string]interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "SchedulerResourceAPIService.PauseAllSchedules")
@@ -1430,7 +1430,7 @@ type SchedulerResourceAPIRequeueAllExecutionRecordsRequest struct {
 	ApiService SchedulerResourceAPI
 }
 
-func (r SchedulerResourceAPIRequeueAllExecutionRecordsRequest) Execute() (map[string]map[string]interface{}, *http.Response, error) {
+func (r SchedulerResourceAPIRequeueAllExecutionRecordsRequest) Execute() (map[string]interface{}, *http.Response, error) {
 	return r.ApiService.RequeueAllExecutionRecordsExecute(r)
 }
 
@@ -1449,13 +1449,13 @@ func (a *SchedulerResourceAPIService) RequeueAllExecutionRecords(ctx context.Con
 
 // Execute executes the request
 //
-//	@return map[string]map[string]interface{}
-func (a *SchedulerResourceAPIService) RequeueAllExecutionRecordsExecute(r SchedulerResourceAPIRequeueAllExecutionRecordsRequest) (map[string]map[string]interface{}, *http.Response, error) {
+//	@return map[string]interface{}
+func (a *SchedulerResourceAPIService) RequeueAllExecutionRecordsExecute(r SchedulerResourceAPIRequeueAllExecutionRecordsRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
 		localVarPostBody    interface{}
 		formFiles           []formFile
-		localVarReturnValue map[string]map[string]interface{}
+		localVarReturnValue map[string]interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "SchedulerResourceAPIService.RequeueAllExecutionRecords")
@@ -1542,7 +1542,7 @@ type SchedulerResourceAPIResumeAllSchedulesRequest struct {
 	ApiService SchedulerResourceAPI
 }
 
-func (r SchedulerResourceAPIResumeAllSchedulesRequest) Execute() (map[string]map[string]interface{}, *http.Response, error) {
+func (r SchedulerResourceAPIResumeAllSchedulesRequest) Execute() (map[string]interface{}, *http.Response, error) {
 	return r.ApiService.ResumeAllSchedulesExecute(r)
 }
 
@@ -1561,13 +1561,13 @@ func (a *SchedulerResourceAPIService) ResumeAllSchedules(ctx context.Context) Sc
 
 // Execute executes the request
 //
-//	@return map[string]map[string]interface{}
-func (a *SchedulerResourceAPIService) ResumeAllSchedulesExecute(r SchedulerResourceAPIResumeAllSchedulesRequest) (map[string]map[string]interface{}, *http.Response, error) {
+//	@return map[string]interface{}
+func (a *SchedulerResourceAPIService) ResumeAllSchedulesExecute(r SchedulerResourceAPIResumeAllSchedulesRequest) (map[string]interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod  = http.MethodGet
 		localVarPostBody    interface{}
 		formFiles           []formFile
-		localVarReturnValue map[string]map[string]interface{}
+		localVarReturnValue map[string]interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "SchedulerResourceAPIService.ResumeAllSchedules")

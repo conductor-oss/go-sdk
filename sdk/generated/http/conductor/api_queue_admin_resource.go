@@ -279,10 +279,10 @@ type QueueAdminResourceAPIUpdate1Request struct {
 	workflowId  string
 	taskRefName string
 	status      string
-	requestBody *map[string]map[string]interface{}
+	requestBody *map[string]interface{}
 }
 
-func (r QueueAdminResourceAPIUpdate1Request) RequestBody(requestBody map[string]map[string]interface{}) QueueAdminResourceAPIUpdate1Request {
+func (r QueueAdminResourceAPIUpdate1Request) RequestBody(requestBody map[string]interface{}) QueueAdminResourceAPIUpdate1Request {
 	r.requestBody = &requestBody
 	return r
 }
@@ -388,10 +388,10 @@ type QueueAdminResourceAPIUpdateByTaskIdRequest struct {
 	workflowId  string
 	taskId      string
 	status      string
-	requestBody *map[string]map[string]interface{}
+	requestBody *map[string]interface{}
 }
 
-func (r QueueAdminResourceAPIUpdateByTaskIdRequest) RequestBody(requestBody map[string]map[string]interface{}) QueueAdminResourceAPIUpdateByTaskIdRequest {
+func (r QueueAdminResourceAPIUpdateByTaskIdRequest) RequestBody(requestBody map[string]interface{}) QueueAdminResourceAPIUpdateByTaskIdRequest {
 	r.requestBody = &requestBody
 	return r
 }

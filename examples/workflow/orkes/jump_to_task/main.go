@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
-	"examples/workflow/jump_to_task/service"
-	"examples/workflow/jump_to_task/worker"
-	"examples/workflow/jump_to_task/workflow"
-	jumpworkflow "examples/workflow/jump_to_task/workflow"
+	"examples/workflow/orkes/jump_to_task/service"
+	"examples/workflow/orkes/jump_to_task/worker"
+	"examples/workflow/orkes/jump_to_task/workflow"
+	jumpworkflow "examples/workflow/orkes/jump_to_task/workflow"
 	"fmt"
 	"time"
 
@@ -94,6 +94,7 @@ func runJumpToTaskDemo(logger *zap.Logger) error {
 	}
 
 	logger.Info("=== All JumpToTask demonstrations completed successfully ===")
+
 	return nil
 }
 
