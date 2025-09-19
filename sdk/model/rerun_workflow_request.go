@@ -9,10 +9,16 @@
 
 package model
 
+// RerunWorkflowRequest is the request body for the Rerun Workflow.
 type RerunWorkflowRequest struct {
-	ReRunFromWorkflowId string                 `json:"reRunFromWorkflowId,omitempty"`
-	WorkflowInput       map[string]interface{} `json:"workflowInput,omitempty"`
-	ReRunFromTaskId     string                 `json:"reRunFromTaskId,omitempty"`
-	TaskInput           map[string]interface{} `json:"taskInput,omitempty"`
-	CorrelationId       string                 `json:"correlationId,omitempty"`
+	// ReRunFromWorkflowId the unique identifier of the workflow to be rerun.
+	ReRunFromWorkflowId string `json:"reRunFromWorkflowId,omitempty"`
+	// WorkflowInput a map of inputs for the rerun workflow.
+	WorkflowInput map[string]interface{} `json:"workflowInput,omitempty"`
+	// ReRunFromTaskId the unique identifier of the task to rerun the workflow from.
+	ReRunFromTaskId string `json:"reRunFromTaskId,omitempty"`
+	// TaskInput a map of inputs for the rerun task.
+	TaskInput map[string]interface{} `json:"taskInput,omitempty"`
+	// CorrelationId the unique identifier used to correlate the current workflow execution with other executions of the same workflow.
+	CorrelationId string `json:"correlationId,omitempty"`
 }

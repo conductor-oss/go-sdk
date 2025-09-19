@@ -1906,7 +1906,7 @@ func toDomainWorkflowRun(orkesRun *orkes.WorkflowRun) model.WorkflowRun {
 			domainRun.CorrelationId = *orkesRun.CorrelationId
 		}
 		if orkesRun.Status != nil {
-			domainRun.Status = *orkesRun.Status
+			domainRun.Status = model.WorkflowStatus(*orkesRun.Status)
 		}
 		if orkesRun.Priority != nil {
 			domainRun.Priority = *orkesRun.Priority
@@ -2081,49 +2081,6 @@ func toGeneratedSkipTaskRequest(domainRequest *model.SkipTaskRequest) orkes.Skip
 	}
 
 	return orkesRequest
-}
-
-// toDomainWorkflowRunFromSignalResponse converts orkes.SignalResponse to model.WorkflowRun
-func toDomainWorkflowRunFromSignalResponse(signalResponse *orkes.SignalResponse) model.WorkflowRun {
-	if signalResponse == nil {
-		return model.WorkflowRun{}
-	}
-
-	workflowRun := model.WorkflowRun{}
-
-	// Convert string pointer fields to strings
-	workflowRun.CorrelationId = GetPointerValue(signalResponse.CorrelationId, "")
-	workflowRun.RequestId = GetPointerValue(signalResponse.RequestId, "")
-	workflowRun.WorkflowId = GetPointerValue(signalResponse.WorkflowId, "")
-	workflowRun.TargetWorkflowId = GetPointerValue(signalResponse.TargetWorkflowId, "")
-
-	// Convert ResponseType from string pointer to string
-	workflowRun.ResponseType = GetPointerValue(signalResponse.ResponseType, "")
-
-	// Convert TargetWorkflowStatus from string pointer to string
-	workflowRun.TargetWorkflowStatus = GetPointerValue(signalResponse.TargetWorkflowStatus, "")
-
-	// Map overall status if present in extended SignalResponse
-	if signalResponse.Status != "" {
-		workflowRun.Status = signalResponse.Status
-	}
-
-	// Fallback to target workflow status if overall status missing
-	if workflowRun.Status == "" && workflowRun.TargetWorkflowStatus != "" {
-		workflowRun.Status = workflowRun.TargetWorkflowStatus
-	}
-
-	// Convert Input from nested map to flat map
-	if signalResponse.Input != nil {
-		workflowRun.Input = signalResponse.Input
-	}
-
-	// Convert Output from nested map to flat map
-	if signalResponse.Output != nil {
-		workflowRun.Output = signalResponse.Output
-	}
-
-	return workflowRun
 }
 
 // ============================================================================

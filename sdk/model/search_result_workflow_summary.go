@@ -9,7 +9,10 @@
 
 package model
 
+// SearchResultWorkflowSummary is the response from the search workflow endpoint.
 type SearchResultWorkflowSummary struct {
-	TotalHits int64             `json:"totalHits,omitempty"`
-	Results   []WorkflowSummary `json:"results,omitempty"`
+	// TotalHits the total number of workflows that match the search criteria.
+	TotalHits int64 `json:"totalHits,omitempty"`
+	// Results the list of workflows that match the search criteria.
+	Results []WorkflowSummary `json:"results,omitempty"`
 }

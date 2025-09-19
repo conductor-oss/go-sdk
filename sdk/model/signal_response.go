@@ -138,7 +138,6 @@ func (r *SignalResponse) GetTaskRun() TaskRun {
 	case PausedWorkflow:
 		taskStatus = InProgressTask // Map PAUSED to IN_PROGRESS for task status
 	default:
-		// For unknown statuses, try direct conversion or default to IN_PROGRESS
 		if string(r.Status) != "" {
 			taskStatus = TaskResultStatus(r.Status)
 		} else {
@@ -178,7 +177,7 @@ func (r *SignalResponse) GetWorkflowRun() WorkflowRun {
 		WorkflowId:           r.WorkflowId,
 		CorrelationId:        r.CorrelationID,
 		Priority:             r.Priority,
-		Status:               r.Status.String(),
+		Status:               r.Status,
 		Input:                r.Input,
 		Output:               r.Output,
 		Tasks:                r.Tasks,
@@ -186,9 +185,9 @@ func (r *SignalResponse) GetWorkflowRun() WorkflowRun {
 		CreateTime:           r.CreateTime,
 		UpdateTime:           r.UpdateTime,
 		Variables:            r.Variables,
-		ResponseType:         r.ResponseType.String(),
+		ResponseType:         r.ResponseType,
 		TargetWorkflowId:     r.TargetWorkflowId,
-		TargetWorkflowStatus: r.TargetWorkflowStatus.String(),
+		TargetWorkflowStatus: r.TargetWorkflowStatus,
 	}
 }
 

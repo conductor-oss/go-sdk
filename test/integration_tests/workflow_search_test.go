@@ -205,10 +205,9 @@ func TestWorkflowSearch(t *testing.T) {
 		{
 			name: "SearchWithSkipCache",
 			searchOpts: &client.WorkflowResourceApiSearchOpts{
-				Query:     optional.NewString(fmt.Sprintf("workflowId = %s", workflowId1)),
-				SkipCache: optional.NewBool(true),
-				Start:     optional.NewInt32(0),
-				Size:      optional.NewInt32(10),
+				Query: optional.NewString(fmt.Sprintf("workflowId = %s", workflowId1)),
+				Start: optional.NewInt32(0),
+				Size:  optional.NewInt32(10),
 			},
 			expectExactResults: 1,
 			validateResults: func(t *testing.T, results []model.WorkflowSummary, workflowId1, workflowId2, wf1Name string) {

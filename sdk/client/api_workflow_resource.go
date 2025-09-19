@@ -51,6 +51,7 @@ func (a *WorkflowResourceApiService) Decide(ctx context.Context, workflowId stri
 
 // WorkflowResourceApiDeleteOpts contains optional parameters for Delete
 type WorkflowResourceApiDeleteOpts struct {
+	// Deprecated: There is no effect when configured.
 	ArchiveWorkflow optional.Bool
 }
 
@@ -69,7 +70,9 @@ func (a *WorkflowResourceApiService) Delete(ctx context.Context, workflowId stri
 	return resp, nil
 }
 
+// WorkflowResourceApiGetExecutionStatusOpts contains optional parameters for GetExecutionStatus
 type WorkflowResourceApiGetExecutionStatusOpts struct {
+	// IncludeTasks if set to true, all task execution details will be fetched in a tasks array
 	IncludeTasks optional.Bool
 }
 
@@ -95,9 +98,13 @@ func (a *WorkflowResourceApiService) GetExecutionStatus(ctx context.Context, wor
 
 // WorkflowResourceApiStartWorkflowOpts contains optional parameters for StartWorkflow
 type WorkflowResourceApiStartWorkflowOpts struct {
-	Version       optional.Int32
+	// Version the workflow version. If unspecified, the latest version will be used.
+	Version optional.Int32
+	// CorrelationId A unique identifier used to correlate the current workflow execution with other executions of the same workflow.
 	CorrelationId optional.String
-	Priority      optional.Int32
+	// Priority Priority of the workflow execution. Supported values: 0-99.
+	// Default is 0, which means workflows are completed in a first-in-first-out order.
+	Priority optional.Int32
 }
 
 // StartWorkflow - Start a new workflow
@@ -165,18 +172,26 @@ func (a *WorkflowResourceApiService) ExecuteWorkflow(
 	}
 
 	// Convert result using mapper
-	result := toDomainWorkflowRunFromSignalResponse(genResult)
+	signalResponse := toDomainSignalResponseFromGenerated(genResult)
 
-	return result, resp, nil
+	return signalResponse.GetWorkflowRun(), resp, nil
 }
 
+// ExecuteWorkflowOpts contains optional parameters for ExecuteWorkflow
 type ExecuteWorkflowOpts struct {
-	RequestID        string
+	// RequestID a user-generated request ID, which can be used to track the API request.
+	RequestID string
+	// WaitUntilTaskRef the reference name of the task to wait for before returning a response
 	WaitUntilTaskRef []string
-	WaitForSeconds   int
-	Input            map[string]interface{}
-	Consistency      model.WorkflowConsistency
-	ReturnStrategy   model.ReturnStrategy
+	// WaitForSeconds the duration in seconds to wait before returning a response. Default is 10.
+	WaitForSeconds int
+	// Input the input for the workflow. If unspecified, the workflow will use the input from the StartWorkflowRequest.
+	Input map[string]interface{}
+	// Specifies how the request persists and is replicated. Supported values: DURABLE, REGION_DURABLE.
+	Consistency model.WorkflowConsistency
+	// ReturnStrategy this parameter defines the strategy for when the API returns a response.
+	// Supported values: TARGET_WORKFLOW, BLOCKING_WORKFLOW, BLOCKING_TASK, BLOCKING_TASK_INPUT.
+	ReturnStrategy model.ReturnStrategy
 }
 
 // DefaultExecuteWorkflowOpts returns the default options
@@ -289,7 +304,9 @@ func (a *WorkflowResourceApiService) ResumeWorkflow(ctx context.Context, workflo
 
 // WorkflowResourceApiTerminateOpts contains optional parameters for Terminate
 type WorkflowResourceApiTerminateOpts struct {
-	Reason                 optional.String
+	// Reason a reason for termination.
+	Reason optional.String
+	// TriggerFailureWorkflow if set to true,  the associated compensation flow (if any) will be triggered.
 	TriggerFailureWorkflow optional.Bool
 }
 
@@ -313,8 +330,12 @@ func (a *WorkflowResourceApiService) Terminate(ctx context.Context, workflowId s
 	return resp, nil
 }
 
+// WorkflowResourceApiRetryOpts contains optional parameters for Retry
 type WorkflowResourceApiRetryOpts struct {
+	// ResumeSubworkflowTasks If set to true, the parent workflow is restarted from the sub-workflow’s last failed task.
+	// If set to false, a new sub-workflow execution is created
 	ResumeSubworkflowTasks optional.Bool
+	// RetryIfRetriedByParent if set to false, the sub-workflow will be prohibited from retrying if its parent workflow has been retried before
 	RetryIfRetriedByParent optional.Bool
 }
 
@@ -336,7 +357,9 @@ func (a *WorkflowResourceApiService) Retry(ctx context.Context, workflowId strin
 	return resp, nil
 }
 
+// WorkflowResourceApiRestartOpts contains optional parameters for Restart
 type WorkflowResourceApiRestartOpts struct {
+	// UseLatestDefinitions if set to true, the restarted workflow will use the latest definition from the metadata store.
 	UseLatestDefinitions optional.Bool
 }
 
@@ -355,13 +378,29 @@ func (a *WorkflowResourceApiService) Restart(ctx context.Context, workflowId str
 	return resp, nil
 }
 
+// WorkflowResourceApiSearchOpts contains optional parameters for Search
 type WorkflowResourceApiSearchOpts struct {
-	Start     optional.Int32
-	Size      optional.Int32
-	Sort      optional.String
-	FreeText  optional.String
-	Query     optional.String
-	SkipCache optional.Bool
+	// Start starts of the search results list, which is used for pagination. Default is 0.
+	Start optional.Int32
+	// Size the number of workflows to return. Default is 100.
+	Size optional.Int32
+	// Sort the field to sort the results by. Format "FIELD:ASC|DESC". For example, "workflowId:DESC".
+	Sort optional.String
+	// FreeText the free text associated with the workflow execution
+	// (workflow input values, workflow output values, workflow variable values, task output values, correlation ID, and reason for incompletion).
+	FreeText optional.String
+	// Query the query expression in the format FIELD = VALUE or FIELD IN (value1, value2).
+	// Supported fields for querying:
+	// workflowId, correlationId, workflowType, status, startTime, modifiedTime.
+	//
+	// Example queries:
+	// workflowType = your_workflow_name
+	// status IN (PAUSED, RUNNING)
+	// startTime >1726655978410
+	// startTime < 1696143600000
+	// workflowType = your_workflow_name AND status = PAUSED
+	// workflowId IN (3434546, 45365767, 20984885) AND workflowType = test_workflow
+	Query optional.String
 }
 
 // Search - Search for workflows
@@ -383,9 +422,6 @@ func (a *WorkflowResourceApiService) Search(ctx context.Context, opts *WorkflowR
 		}
 		if opts.Query.IsSet() {
 			req = req.Query(opts.Query.Value())
-		}
-		if opts.SkipCache.IsSet() {
-			req = req.SkipCache(opts.SkipCache.Value())
 		}
 	}
 
@@ -431,7 +467,17 @@ func (a *WorkflowResourceApiService) GetExternalStorageLocation(ctx context.Cont
 	return domainLoc, resp, nil
 }
 
-// GetRunningWorkflow - Get running workflows (backward compatible)
+// WorkflowResourceApiGetRunningWorkflowOpts contains optional parameters for GetRunningWorkflow
+type WorkflowResourceApiGetRunningWorkflowOpts struct {
+	// Version the version of the workflow.
+	Version optional.Int32
+	// StartTime the start time of the workflow.
+	StartTime optional.Int64
+	// EndTime the end time of the workflow.
+	EndTime optional.Int64
+}
+
+// GetRunningWorkflow - Get running workflows
 func (a *WorkflowResourceApiService) GetRunningWorkflow(ctx context.Context, name string, opts *WorkflowResourceApiGetRunningWorkflowOpts) ([]string, *http.Response, error) {
 	req := a.http_orkes.WorkflowResourceAPI.GetRunningWorkflow(ctx, name)
 
@@ -454,13 +500,7 @@ func (a *WorkflowResourceApiService) GetRunningWorkflow(ctx context.Context, nam
 	return result, resp, nil
 }
 
-type WorkflowResourceApiGetRunningWorkflowOpts struct {
-	Version   optional.Int32
-	StartTime optional.Int64
-	EndTime   optional.Int64
-}
-
-// GetWorkflows - Get workflows by correlation IDs (backward compatible)
+// GetWorkflows - Get workflows by correlation IDs
 func (a *WorkflowResourceApiService) GetWorkflows(ctx context.Context, body []string, name string, opts *WorkflowResourceApiGetWorkflowsOpts) (map[string][]model.Workflow, *http.Response, error) {
 	req := a.http_orkes.WorkflowResourceAPI.GetWorkflows(ctx, name).RequestBody(body)
 
@@ -542,8 +582,10 @@ func (a *WorkflowResourceApiService) GetWorkflowsBatch(ctx context.Context, body
 
 // WorkflowResourceApiGetWorkflowsOpts contains optional parameters for GetWorkflows
 type WorkflowResourceApiGetWorkflowsOpts struct {
+	// IncludeClosed if set to true, the response will also include workflows in a terminal state.
 	IncludeClosed optional.Bool
-	IncludeTasks  optional.Bool
+	// IncludeTasks if set to true, all task execution details will be fetched in a tasks array.
+	IncludeTasks optional.Bool
 }
 
 // GetWorkflowsByCorrelationId - Get workflows by correlation ID
@@ -597,11 +639,19 @@ func (a *WorkflowResourceApiService) ResetWorkflow(ctx context.Context, workflow
 
 // WorkflowResourceApiSearchWorkflowsByTasksOpts contains optional parameters for SearchWorkflowsByTasks
 type WorkflowResourceApiSearchWorkflowsByTasksOpts struct {
-	Start    optional.Int32
-	Size     optional.Int32
-	Sort     optional.String
+	// Start starts of the search results list, which is used for pagination. Default is 0.
+	Start optional.Int32
+	// Size the number of workflows to return. Default is 100.
+	Size optional.Int32
+	// Sort the field to sort the results by.
+	Sort optional.String
+	// FreeText the free text associated with the workflow execution
+	// (workflow input values, workflow output values, workflow variable values, task output values, correlation ID, and reason for incompletion).
 	FreeText optional.String
-	Query    optional.String
+	// Query the query expression in the format FIELD = VALUE or FIELD IN (value1, value2).
+	// Supported fields for querying:
+	// workflowId, correlationId, workflowType, status, startTime, modifiedTime.
+	Query optional.String
 }
 
 // SearchWorkflowsByTasks - Search workflows by tasks
@@ -625,12 +675,21 @@ func (a *WorkflowResourceApiService) SearchWorkflowsByTasks(ctx context.Context,
 	return result, resp, nil
 }
 
+// WorkflowResourceApiSearchWorkflowsByTasksV2Opts contains optional parameters for SearchWorkflowsByTasksV2.
 type WorkflowResourceApiSearchWorkflowsByTasksV2Opts struct {
-	Start    optional.Int32
-	Size     optional.Int32
-	Sort     optional.String
+	// Start starts of the search results list, which is used for pagination. Default is 0.
+	Start optional.Int32
+	// Size the number of workflows to return. Default is 100.
+	Size optional.Int32
+	// Sort the field to sort the results by.
+	Sort optional.String
+	// FreeText the free text associated with the workflow execution
+	// (workflow input values, workflow output values, workflow variable values, task output values, correlation ID, and reason for incompletion).
 	FreeText optional.String
-	Query    optional.String
+	// Query the query expression in the format FIELD = VALUE or FIELD IN (value1, value2).
+	// Supported fields for querying:
+	// workflowId, correlationId, workflowType, status, startTime, modifiedTime.
+	Query optional.String
 }
 
 // SearchWorkflowsByTasksV2 - Search workflows by tasks V2
@@ -745,9 +804,11 @@ func (a *WorkflowResourceApiService) ExecuteAndGetBlockingTaskInput(ctx context.
 
 // WorkflowResourceApiJumpToTaskOpts contains optional parameters for JumpToTask
 type WorkflowResourceApiJumpToTaskOpts struct {
+	// TaskReferenceName the reference name of the task to jump to.
 	TaskReferenceName optional.String
 }
 
+// JumpToTask jumps to a specific task in a running workflow.
 func (a *WorkflowResourceApiService) JumpToTask(ctx context.Context, body map[string]interface{}, workflowId string, optionals *WorkflowResourceApiJumpToTaskOpts) (*http.Response, error) {
 	// Build request with required body and path parameter
 	req := a.http_orkes.WorkflowResourceAPI.
@@ -768,8 +829,10 @@ func (a *WorkflowResourceApiService) JumpToTask(ctx context.Context, body map[st
 
 // WorkflowResourceApiUpdateWorkflowAndTaskStateOpts contains optional parameters for UpdateWorkflowAndTaskState
 type WorkflowResourceApiUpdateWorkflowAndTaskStateOpts struct {
+	// WaitUntilTaskRef the reference name of the task to wait for before returning a response.
 	WaitUntilTaskRef optional.String
-	WaitForSeconds   optional.Int32
+	// WaitForSeconds the duration in seconds to wait before returning a response.
+	WaitForSeconds optional.Int32
 }
 
 // UpdateWorkflowAndTaskState - Update workflow and task state
@@ -822,11 +885,15 @@ func (a *WorkflowResourceApiService) TestWorkflow(ctx context.Context, body mode
 
 // WorkflowResourceAPIGetExecutionStatusTaskListOpts contains optional parameters for GetExecutionStatusTaskList
 type WorkflowResourceAPIGetExecutionStatusTaskListOpts struct {
-	Start  optional.Int32
-	Count  optional.Int32
+	// Start the start of the task list.
+	Start optional.Int32
+	// Count the count of the task list.
+	Count optional.Int32
+	// Status the status of the task list.
 	Status optional.Interface
 }
 
+// GetExecutionStatusTaskList - Get execution status task list
 func (a *WorkflowResourceApiService) GetExecutionStatusTaskList(ctx context.Context, workflowID string, opts *WorkflowResourceAPIGetExecutionStatusTaskListOpts) (model.TaskListSearchResultSummary, *http.Response, error) {
 	req := a.http_orkes.WorkflowResourceAPI.GetExecutionStatusTaskList(ctx, workflowID)
 
@@ -867,6 +934,9 @@ func (a *WorkflowResourceApiService) GetExecutionStatusTaskList(ctx context.Cont
 	return toDomainTaskListSearchResultSummaryFromConductorGenerated(resp), httpResp, nil
 }
 
+// UpdateWorkflowStateUpdates updates workflow variables for a running workflow.
+//
+// This method is similar to the Set Variable task, except the variables can be updated anytime in real time.
 func (a *WorkflowResourceApiService) UpdateWorkflowState(ctx context.Context, body map[string]interface{}, workflowID string) (model.Workflow, *http.Response, error) {
 	req := a.http_orkes.WorkflowResourceAPI.UpdateWorkflowState(ctx, workflowID)
 	req = req.RequestBody(body)
