@@ -20,9 +20,8 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/model/integration"
 )
 
-// IntegrationResourceApiService wraps the generated client to maintain backward compatibility
+// IntegrationResourceApiService
 type IntegrationResourceApiService struct {
-	// Embedded for backward compatibility with helper methods
 	*APIClient
 }
 

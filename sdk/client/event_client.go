@@ -22,6 +22,11 @@ type EventHandlerClient interface {
 	GetEventHandlersForEvent(ctx context.Context, event string, localVarOptionals *EventResourceApiGetEventHandlersForEventOpts) ([]model.EventHandler, *http.Response, error)
 	RemoveEventHandler(ctx context.Context, name string) (*http.Response, error)
 	UpdateEventHandler(ctx context.Context, body model.EventHandler) (*http.Response, error)
+	DeleteQueueConfig(ctx context.Context, queueType string, queueName string) (*http.Response, error)
+	GetQueueConfig(ctx context.Context, queueType string, queueName string) (map[string]interface{}, *http.Response, error)
+	GetQueueNames(ctx context.Context) (map[string]interface{}, *http.Response, error)
+	PutQueueConfig(ctx context.Context, body string, queueType string, queueName string) (*http.Response, error)
+	RemoveEventHandlerStatus(ctx context.Context, name string) (*http.Response, error)
 }
 
 func NewEventHandlerClient(client *APIClient) EventHandlerClient {

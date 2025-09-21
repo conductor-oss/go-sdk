@@ -17,6 +17,7 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
+// TagsApiService
 type TagsApiService struct {
 	*APIClient
 }

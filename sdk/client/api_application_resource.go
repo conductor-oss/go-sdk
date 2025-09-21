@@ -18,7 +18,7 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/model/rbac"
 )
 
-// ApplicationResourceApiService wraps the generated client to maintain backward compatibility
+// ApplicationResourceApiService
 type ApplicationResourceApiService struct {
 	*APIClient
 }

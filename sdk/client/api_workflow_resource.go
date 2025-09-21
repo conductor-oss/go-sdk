@@ -22,9 +22,9 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
-// WorkflowResourceApiService wraps the generated client to maintain backward compatibility
+// WorkflowResourceApiService
 type WorkflowResourceApiService struct {
-	// Embedded for backward compatibility with helper methods
+	// Embedded for helper methods
 	*APIClient
 }
 

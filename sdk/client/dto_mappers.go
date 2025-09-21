@@ -4490,18 +4490,6 @@ func toDomainWorkflowSummaryFromConductorGenerated(gen *conductor.WorkflowSummar
 	}
 }
 
-// convertFromNestedMapInterface converts map[string]map[string]interface{} to map[string]interface{}
-func convertFromNestedMapInterface(nested map[string]map[string]interface{}) map[string]interface{} {
-	if nested == nil {
-		return nil
-	}
-	flat := make(map[string]interface{}, len(nested))
-	for k, v := range nested {
-		flat[k] = v
-	}
-	return flat
-}
-
 // convertFromMapInterface converts any interface{} (including primitives, maps, arrays) into *interface{} for domain
 func convertFromMapInterface(v interface{}) *interface{} {
 	if v == nil {

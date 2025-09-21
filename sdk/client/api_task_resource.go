@@ -17,6 +17,7 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
+// TaskResourceApiService
 type TaskResourceApiService struct {
 	*APIClient
 }

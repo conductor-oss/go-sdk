@@ -18,7 +18,7 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
-// EventResourceApiService wraps the generated client to maintain backward compatibility
+// EventResourceApiService
 type EventResourceApiService struct {
 	*APIClient
 }

@@ -17,7 +17,7 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
-// SchedulerResourceApiService wraps the generated client to maintain backward compatibility
+// SchedulerResourceApiService
 type SchedulerResourceApiService struct {
 	*APIClient
 }

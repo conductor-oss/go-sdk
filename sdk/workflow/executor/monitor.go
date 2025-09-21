@@ -27,14 +27,14 @@ type WorkflowMonitor struct {
 	mutex                        sync.Mutex
 	refreshInterval              time.Duration
 	executionChannelByWorkflowId map[string]WorkflowExecutionChannel
-	workflowClient               *client.WorkflowResourceApiService
+	workflowClient               client.WorkflowClient
 }
 
 const (
 	defaultMonitorRunningWorkflowsRefreshInterval = 100 * time.Millisecond
 )
 
-func NewWorkflowMonitor(workflowClient *client.WorkflowResourceApiService) *WorkflowMonitor {
+func NewWorkflowMonitor(workflowClient client.WorkflowClient) *WorkflowMonitor {
 	workflowMonitor := &WorkflowMonitor{
 		refreshInterval:              defaultMonitorRunningWorkflowsRefreshInterval,
 		executionChannelByWorkflowId: make(map[string]WorkflowExecutionChannel),

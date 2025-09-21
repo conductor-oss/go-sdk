@@ -18,6 +18,7 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
+// WorkflowBulkResourceApiService
 type WorkflowBulkResourceApiService struct {
 	*APIClient
 }

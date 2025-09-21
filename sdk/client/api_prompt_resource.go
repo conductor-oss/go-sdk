@@ -17,9 +17,8 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/model/integration"
 )
 
-// PromptResourceApiService wraps the generated client to maintain backward compatibility
+// PromptResourceApiService
 type PromptResourceApiService struct {
-	// Embedded for backward compatibility with helper methods
 	*APIClient
 }
 

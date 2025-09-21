@@ -16,9 +16,8 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
-// EnvironmentResourceApiService wraps the generated client to maintain backward compatibility
+// EnvironmentResourceApiService
 type EnvironmentResourceApiService struct {
-	// Embedded for backward compatibility with helper methods
 	*APIClient
 }
 

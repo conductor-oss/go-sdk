@@ -16,6 +16,7 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/model/rbac"
 )
 
+// GroupResourceApiService
 type GroupResourceApiService struct {
 	*APIClient
 }

@@ -27,11 +27,11 @@ import (
 )
 
 type WorkflowExecutor struct {
-	metadataClient *client.MetadataResourceApiService
-	taskClient     *client.TaskResourceApiService
-	tagsClient     *client.TagsApiService
-	workflowClient *client.WorkflowResourceApiService
-	eventClient    *client.EventResourceApiService
+	metadataClient client.MetadataClient
+	taskClient     client.TaskClient
+	tagsClient     client.TagsClient
+	workflowClient client.WorkflowClient
+	eventClient    client.EventHandlerClient
 
 	workflowMonitor *WorkflowMonitor
 
@@ -46,21 +46,16 @@ const (
 
 // NewWorkflowExecutor Create a new workflow executor
 func NewWorkflowExecutor(apiClient *client.APIClient) *WorkflowExecutor {
-	metadataClient := client.MetadataResourceApiService{
-		APIClient: apiClient,
-	}
-	tagsClient := client.TagsApiService{
-		APIClient: apiClient,
-	}
-	taskClient := client.TaskResourceApiService{
-		APIClient: apiClient,
-	}
-	workflowClient := client.WorkflowResourceApiService{
-		APIClient: apiClient,
-	}
-	eventClient := client.EventResourceApiService{
-		APIClient: apiClient,
-	}
+	metadataClient := client.NewMetadataClient(apiClient)
+
+	tagsClient := client.NewTagsClient(apiClient)
+
+	taskClient := client.NewTaskClient(apiClient)
+
+	workflowClient := client.NewWorkflowClient(apiClient)
+
+	eventClient := client.NewEventHandlerClient(apiClient)
+
 	startWorkflowBatchSize, err := getEnvInt(startWorkflowBatchSizeEnv)
 	if err != nil {
 		startWorkflowBatchSize = 256
@@ -70,12 +65,12 @@ func NewWorkflowExecutor(apiClient *client.APIClient) *WorkflowExecutor {
 		waitForWorkflowBatchSize = 256
 	}
 	workflowExecutor := WorkflowExecutor{
-		metadataClient:           &metadataClient,
-		tagsClient:               &tagsClient,
-		taskClient:               &taskClient,
-		workflowClient:           &workflowClient,
-		eventClient:              &eventClient,
-		workflowMonitor:          NewWorkflowMonitor(&workflowClient),
+		metadataClient:           metadataClient,
+		tagsClient:               tagsClient,
+		taskClient:               taskClient,
+		workflowClient:           workflowClient,
+		eventClient:              eventClient,
+		workflowMonitor:          NewWorkflowMonitor(workflowClient),
 		startWorkflowBatchSize:   startWorkflowBatchSize,
 		waitForWorkflowBatchSize: waitForWorkflowBatchSize,
 	}
