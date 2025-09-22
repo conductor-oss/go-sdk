@@ -347,6 +347,61 @@ func WaitForMultipleWorkflowsCompletion(workflowIds []string, timeout time.Durat
 	return fmt.Errorf("not all workflows completed within %v", timeout)
 }
 
+// WaitForMultipleWorkflowsStatus waits for multiple workflows to reach any of the expected statuses
+func WaitForMultipleWorkflowsStatus(workflowIds []string, expectedStatuses []model.WorkflowStatus, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+
+	for time.Now().Before(deadline) {
+		allReachedExpectedStatus := true
+
+		for _, workflowId := range workflowIds {
+			workflow, err := WorkflowExecutor.GetWorkflow(workflowId, false)
+			if err != nil {
+				// Continue retrying on error
+				allReachedExpectedStatus = false
+				break
+			}
+
+			// Check if current workflow status is in the expected statuses
+			statusMatched := false
+			for _, expectedStatus := range expectedStatuses {
+				if workflow.Status == expectedStatus {
+					statusMatched = true
+					break
+				}
+			}
+
+			// If workflow status is not in expected statuses
+			if !statusMatched {
+				// Check if failure is expected
+				isFailureExpected := false
+				for _, expectedStatus := range expectedStatuses {
+					if expectedStatus == model.FailedWorkflow || expectedStatus == model.TerminatedWorkflow {
+						isFailureExpected = true
+						break
+					}
+				}
+
+				// If failure is not expected but workflow failed
+				if !isFailureExpected && (workflow.Status == model.FailedWorkflow || workflow.Status == model.TerminatedWorkflow) {
+					return fmt.Errorf("workflow %s failed with unexpected status: %s", workflowId, workflow.Status)
+				}
+
+				allReachedExpectedStatus = false
+				break
+			}
+		}
+
+		if allReachedExpectedStatus {
+			return nil
+		}
+
+		time.Sleep(1 * time.Second)
+	}
+
+	return fmt.Errorf("not all workflows reached expected statuses %v within %v", expectedStatuses, timeout)
+}
+
 // WaitForTaskInWorkflow waits for a specific task within a workflow to reach a certain status
 func WaitForTaskInWorkflow(workflowId, taskReferenceName string, expectedTaskStatus model.TaskResultStatus, timeout time.Duration) (*model.Task, error) {
 	deadline := time.Now().Add(timeout)

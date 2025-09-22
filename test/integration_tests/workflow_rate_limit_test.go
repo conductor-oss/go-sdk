@@ -25,11 +25,13 @@ import (
 
 // TestConcurrentWorkflowExecution tests actual concurrent execution with rate limits
 func TestConcurrentWorkflowExecution(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
 	testWorkflowExecutor := testdata.WorkflowExecutor
 
 	concurrentLimit := int32(3)
 	duration := 3 * time.Second
-	rateLimitKey := "concurrent_test"
+	rateLimitKey := "concurrent_test" + uuid.New().String()
 	// Create workflow with strict concurrency limit
 	workflowName := fmt.Sprintf("TEST_GO_WORKFLOW_CONCURRENT_%d-%s", time.Now().Unix(), uuid.New().String())
 	wf := workflow.NewConductorWorkflow(testWorkflowExecutor).
@@ -58,7 +60,7 @@ func TestConcurrentWorkflowExecution(t *testing.T) {
 			}
 			id, err := wf.StartWorkflowWithInput(input)
 			if err != nil {
-				t.Logf("Failed to start workflow: %v", err)
+				require.NoError(t, err)
 			}
 			ids[idx] = id
 		}(i)
@@ -67,6 +69,9 @@ func TestConcurrentWorkflowExecution(t *testing.T) {
 	wg.Wait()
 
 	time.Sleep(duration + 500*time.Millisecond)
+
+	err = testdata.WaitForMultipleWorkflowsStatus(ids, []model.WorkflowStatus{model.CompletedWorkflow, model.RunningWorkflow}, testdata.ExtendedValidationTimeout)
+	require.NoError(t, err)
 
 	completedCount := 0
 	for _, id := range ids {
@@ -89,6 +94,11 @@ func TestConcurrentWorkflowExecution(t *testing.T) {
 	assert.Less(t, completedCount, len(ids), "Completed count should be less than or equal to the number of workflows")
 
 	t.Cleanup(func() {
+		for _, id := range ids {
+			err = testdata.WorkflowExecutor.RemoveWorkflow(id)
+			assert.NoError(t, err, "Failed to remove workflow %s", id)
+		}
+
 		err := wf.UnRegister()
 		if err != nil {
 			t.Logf("Failed to unregister workflow: %v", err)
@@ -98,6 +108,8 @@ func TestConcurrentWorkflowExecution(t *testing.T) {
 
 // TestPerCustomerRateLimit tests rate limiting per customer ID
 func TestPerCustomerRateLimit(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
 	testWorkflowExecutor := testdata.WorkflowExecutor
 	concurrentLimit := int32(3)
 	duration := 3 * time.Second
@@ -210,6 +222,11 @@ func TestPerCustomerRateLimit(t *testing.T) {
 	}
 
 	t.Cleanup(func() {
+		for _, id := range allWorkflows {
+			err = testdata.WorkflowExecutor.RemoveWorkflow(id.WorkflowID)
+			assert.NoError(t, err, "Failed to remove workflow %s", id)
+		}
+
 		err := wf.UnRegister()
 		if err != nil {
 			t.Logf("Failed to unregister workflow: %v", err)
