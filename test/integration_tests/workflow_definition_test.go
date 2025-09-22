@@ -1120,6 +1120,9 @@ func TestGetWorkflowsByCorrelationId(t *testing.T) {
 		IncludeTasks:  optional.NewBool(true),
 	}
 
+	// Wait a moment for the update to be reflected
+	time.Sleep(1 * time.Second)
+
 	workflowsWithTasks, _, err := testdata.WorkflowClient.GetWorkflowsByCorrelationId(
 		context.Background(),
 		wf.GetName(),
@@ -1832,7 +1835,7 @@ func TestGetWorkflows(t *testing.T) {
 	// Create multiple correlation IDs and workflows
 	correlationIds := make([]string, 2)
 	workflowIds := make([]string, 4) // 2 workflows per correlation ID
-	uniqueSuffix := strconv.Itoa(time.Now().Nanosecond())
+	uniqueSuffix := fmt.Sprintf("%d-%s", time.Now().UnixNano(), uuid.New().String())
 
 	// Create a simple workflow
 	wf := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).
@@ -1904,6 +1907,9 @@ func TestGetWorkflows(t *testing.T) {
 		IncludeClosed: optional.NewBool(true),
 		IncludeTasks:  optional.NewBool(true),
 	}
+
+	// Wait a moment for the update to be reflected
+	time.Sleep(1 * time.Second)
 
 	workflowsMapWithTasks, _, err := testdata.WorkflowClient.GetWorkflows(
 		context.Background(),
