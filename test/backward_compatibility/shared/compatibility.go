@@ -19,10 +19,10 @@ import (
 var (
 	apiClient        = client.NewAPIClientFromEnv()
 	workflowExecutor = executor.NewWorkflowExecutor(apiClient)
-	taskClient       = &client.TaskResourceApiService{APIClient: apiClient}
-	workflowClient   = &client.WorkflowResourceApiService{APIClient: apiClient}
+	taskClient       = client.NewTaskClient(apiClient)
+	workflowClient   = client.NewWorkflowClient(apiClient)
 	taskRunner       = worker.NewTaskRunnerWithApiClient(apiClient)
-	schedulerClient  = &client.SchedulerResourceApiService{APIClient: apiClient}
+	schedulerClient  = client.NewSchedulerClient(apiClient)
 
 	// Cleanup tracking
 	createdWorkflows []string

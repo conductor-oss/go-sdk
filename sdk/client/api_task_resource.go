@@ -153,7 +153,7 @@ func (a *TaskResourceApiService) GetTask(ctx context.Context, taskId string) (mo
 }
 
 // Log adds a log to a task
-func (a *TaskResourceApiService) Log(ctx context.Context, taskId string, body string) (*http.Response, error) {
+func (a *TaskResourceApiService) Log(ctx context.Context, body string, taskId string) (*http.Response, error) {
 	// Use Orkes client
 	resp, err := a.http_orkes.TaskResourceAPI.Log(ctx, taskId).Body(body).Execute()
 	if err != nil {
@@ -373,6 +373,7 @@ func (a *TaskResourceApiService) UpdateTaskByRefName(ctx context.Context, body m
 	return result, resp, nil
 }
 
+// TaskResourceApiUpdateTaskSyncOpts are the options for the UpdateTaskSync method
 type TaskResourceApiUpdateTaskSyncOpts struct {
 	Workerid optional.String
 }

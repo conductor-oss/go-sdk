@@ -28,6 +28,7 @@ type TaskClient interface {
 	UpdateTaskByRefNameWithWorkerId(ctx context.Context, body map[string]interface{}, workflowId string, taskRefName string, status string, workerId optional.String) (string, *http.Response, error)
 	SignalAsync(ctx context.Context, body map[string]interface{}, workflowId string, status string) (*http.Response, error)
 	Signal(ctx context.Context, body map[string]interface{}, workflowID string, status model.WorkflowStatus, opts ...SignalTaskOpts) (*model.SignalResponse, error)
+	UpdateTaskSync(ctx context.Context, body map[string]interface{}, workflowId string, taskRefName string, status string) (model.Workflow, *http.Response, error)
 }
 
 func NewTaskClient(apiClient *APIClient) TaskClient {
