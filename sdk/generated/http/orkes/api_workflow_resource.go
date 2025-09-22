@@ -271,18 +271,18 @@ type WorkflowResourceAPI interface {
 	RetryExecute(r WorkflowResourceAPIRetryRequest) (*http.Response, error)
 
 	/*
-			Search1 Search for workflow executions based on payload and other parameters
+		Search1 Search for workflow executions based on payload and other parameters
 
-			Search for workflow executions based on payload and other parameters.
-		The query parameter accepts exact matches using `=` and `IN` on the following fields: `workflowId`, `correlationId`, `taskId`, `workflowType`, `taskType`, and `status`.
-			Matches using `=` can be written as `taskType = HTTP`.
-			Matches using `IN` are written as `status IN (SCHEDULED, IN_PROGRESS)`.
-		The 'startTime' and 'modifiedTime' field uses unix timestamps and accepts queries using `<` and `>`, for example `startTime < 1696143600000`.
-		Queries can be combined using `AND`, for example `taskType = HTTP AND status = SCHEDULED`.
+		Search for workflow executions based on payload and other parameters.
+	The query parameter accepts exact matches using `=` and `IN` on the following fields: `workflowId`, `correlationId`, `taskId`, `workflowType`, `taskType`, and `status`.
+		Matches using `=` can be written as `taskType = HTTP`.
+		Matches using `IN` are written as `status IN (SCHEDULED, IN_PROGRESS)`.
+	The 'startTime' and 'modifiedTime' field uses unix timestamps and accepts queries using `<` and `>`, for example `startTime < 1696143600000`.
+	Queries can be combined using `AND`, for example `taskType = HTTP AND status = SCHEDULED`.
 
 
-			@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-			@return WorkflowResourceAPISearch1Request
+		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+		@return WorkflowResourceAPISearch1Request
 	*/
 	Search1(ctx context.Context) WorkflowResourceAPISearch1Request
 

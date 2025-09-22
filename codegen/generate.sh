@@ -249,6 +249,36 @@ echo -e "${YELLOW}🧪 Verifying build after post-processing...${NC}"
 
 # Keep post-process verification minimal; all content fixes live in fix_generated_code.py
 
+# ========================================================================
+# STEP 9: REMOVE UNUSED DIRECTORIES
+# ========================================================================
+echo ""
+echo "============================================"
+echo "🗑️ Removing unused directories"
+echo "============================================"
+
+# Remove api, docs, and test directories
+if [ -d "${OUTPUT_DIR}/api" ]; then
+    echo "  Removing ${OUTPUT_DIR}/api directory..."
+    rm -rf "${OUTPUT_DIR}/api"
+    echo -e "  ${GREEN}✓ API directory removed${NC}"
+fi
+
+if [ -d "${OUTPUT_DIR}/docs" ]; then
+    echo "  Removing ${OUTPUT_DIR}/docs directory..."
+    rm -rf "${OUTPUT_DIR}/docs"
+    echo -e "  ${GREEN}✓ Docs directory removed${NC}"
+fi
+
+if [ -d "${OUTPUT_DIR}/test" ]; then
+    echo "  Removing ${OUTPUT_DIR}/test directory..."
+    rm -rf "${OUTPUT_DIR}/test"
+    echo -e "  ${GREEN}✓ Test directory removed${NC}"
+fi
+
+echo ""
+echo -e "${GREEN}✅ Unused directories removed successfully!${NC}"
+
 # Now try to build SDK
 if (cd "${PROJECT_ROOT}" && go build ./sdk/...); then
     echo -e "  ${GREEN}✓ Build OK${NC}"
