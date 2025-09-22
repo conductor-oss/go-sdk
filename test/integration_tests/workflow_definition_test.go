@@ -786,7 +786,7 @@ func TestGetWorkflowState(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 
 	// Create a workflow with variables
-	uniqueSuffix := strconv.Itoa(time.Now().Nanosecond())
+	uniqueSuffix := fmt.Sprintf("%d-%s", time.Now().UnixNano(), uuid.New().String())
 	wf := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).
 		Name("TEST_GO_WORKFLOW_STATE_" + uniqueSuffix).
 		Version(1).
@@ -1057,7 +1057,7 @@ func TestGetWorkflowsByCorrelationId(t *testing.T) {
 
 	// Create a unique correlation ID
 	correlationId := "test-correlation-" + uuid.New().String()
-	uniqueSuffix := strconv.Itoa(time.Now().Nanosecond())
+	uniqueSuffix := fmt.Sprintf("%d-%s", time.Now().UnixNano(), uuid.New().String())
 
 	// Create a simple workflow
 	wf := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).

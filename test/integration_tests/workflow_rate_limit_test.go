@@ -18,6 +18,7 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/sdk/workflow"
 	"github.com/conductor-sdk/conductor-go/test/testdata"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -30,7 +31,7 @@ func TestConcurrentWorkflowExecution(t *testing.T) {
 	duration := 3 * time.Second
 	rateLimitKey := "concurrent_test"
 	// Create workflow with strict concurrency limit
-	workflowName := fmt.Sprintf("TEST_GO_WORKFLOW_CONCURRENT_%d", time.Now().Unix())
+	workflowName := fmt.Sprintf("TEST_GO_WORKFLOW_CONCURRENT_%d-%s", time.Now().Unix(), uuid.New().String())
 	wf := workflow.NewConductorWorkflow(testWorkflowExecutor).
 		Name(workflowName).
 		Version(1).

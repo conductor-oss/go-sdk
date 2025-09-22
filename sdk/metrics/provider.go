@@ -53,9 +53,7 @@ func ProvideMetrics(metricsSettings *settings.MetricsSettings) {
 	)
 	portString := strconv.Itoa(metricsSettings.Port)
 	srv := &http.Server{
-		Addr:    ":" + portString,
-		Handler: nil,
-
+		Addr:         ":" + portString,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  60 * time.Second,
