@@ -2078,8 +2078,7 @@ func toGeneratedStartWorkflowRequestForExecute(domainRequest *model.StartWorkflo
 		orkesRequest.Version = &version
 	}
 	if domainRequest.CorrelationId != "" {
-		correlationId := domainRequest.CorrelationId
-		orkesRequest.CorrelationId = &correlationId
+		orkesRequest.CorrelationId = &domainRequest.CorrelationId
 	}
 	if domainRequest.Priority > 0 {
 		orkesRequest.Priority = &domainRequest.Priority

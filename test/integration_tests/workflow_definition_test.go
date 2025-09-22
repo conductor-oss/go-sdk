@@ -811,7 +811,7 @@ func TestGetWorkflowState(t *testing.T) {
 	workflowId, err := testdata.WorkflowExecutor.StartWorkflow(startRequest)
 	assert.NoError(t, err, "Failed to start workflow")
 
-	defer func() {
+	t.Cleanup(func() {
 		err = testdata.WorkflowExecutor.RemoveWorkflow(workflowId)
 		assert.NoError(t, err, "Failed to remove workflow")
 		_, err = testdata.MetadataClient.UnregisterWorkflowDef(
@@ -820,7 +820,7 @@ func TestGetWorkflowState(t *testing.T) {
 			wf.GetVersion(),
 		)
 		assert.NoError(t, err, "Failed to remove workflow definition")
-	}()
+	})
 
 	completedWorkflow, err := testdata.WaitForWorkflowCompletion(workflowId, testdata.WorkflowValidationTimeout)
 	assert.NoError(t, err, "Failed to wait for workflow completion")
@@ -1083,20 +1083,26 @@ func TestGetWorkflowsByCorrelationId(t *testing.T) {
 
 		workflowId, err := testdata.WorkflowExecutor.StartWorkflow(startRequest)
 		assert.NoError(t, err, "Failed to start workflow %d", i)
+
+		t.Logf("Started workflow with ID: %s", workflowId)
+		t.Logf("Workflow Correlation ID: %v", startRequest.CorrelationId)
+		t.Logf("Workflow count: %d", i+1)
+
 		workflowIds[i] = workflowId
 	}
-	t.Cleanup(func() {
-		for _, id := range workflowIds {
-			err = testdata.WorkflowExecutor.RemoveWorkflow(id)
-			assert.NoError(t, err, "Failed to remove workflow %s", id)
-		}
-		_, err = testdata.MetadataClient.UnregisterWorkflowDef(
-			context.Background(),
-			wf.GetName(),
-			wf.GetVersion(),
-		)
-		assert.NoError(t, err, "Failed to remove workflow definition")
-	})
+
+	// t.Cleanup(func() {
+	// 	for _, id := range workflowIds {
+	// 		err = testdata.WorkflowExecutor.RemoveWorkflow(id)
+	// 		assert.NoError(t, err, "Failed to remove workflow %s", id)
+	// 	}
+	// 	_, err = testdata.MetadataClient.UnregisterWorkflowDef(
+	// 		context.Background(),
+	// 		wf.GetName(),
+	// 		wf.GetVersion(),
+	// 	)
+	// 	assert.NoError(t, err, "Failed to remove workflow definition")
+	// })
 
 	// Wait for workflows to complete
 	err = testdata.WaitForMultipleWorkflowsCompletion(workflowIds, 30*time.Second)
@@ -1114,6 +1120,13 @@ func TestGetWorkflowsByCorrelationId(t *testing.T) {
 		correlationId,
 		opts,
 	)
+
+	for _, wf := range workflows {
+		t.Logf("Workflow ID: %s", wf.WorkflowId)
+		t.Logf("Workflow Correlation ID: %v", wf.CorrelationId)
+		t.Logf("Workflow Status: %v", wf.Status)
+	}
+
 	assert.NoError(t, err, "Failed to get workflows by correlation ID")
 	assert.NotNil(t, workflows, "Workflows should not be nil")
 	assert.Len(t, workflows, 3, "Should find 3 workflows with the correlation ID")
@@ -1859,18 +1872,22 @@ func TestGetWorkflows(t *testing.T) {
 
 			workflowId, err := testdata.WorkflowExecutor.StartWorkflow(startRequest)
 			assert.NoError(t, err, "Failed to start workflow %d-%d", i, j)
+			t.Logf("Started workflow with ID: %s", workflowId)
+			t.Logf("Workflow Correlation ID: %v", startRequest.CorrelationId)
+			t.Logf("Workflow count: %d", i*2+j)
+
 			workflowIds[i*2+j] = workflowId
 		}
 	}
 
-	t.Cleanup(func() {
-		for _, id := range workflowIds {
-			err = testdata.WorkflowExecutor.RemoveWorkflow(id)
-			assert.NoError(t, err, "Failed to remove workflow %s", id)
-		}
-		_, err = testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), wf.GetName(), wf.GetVersion())
-		assert.NoError(t, err, "Failed to remove workflow definition")
-	})
+	// t.Cleanup(func() {
+	// 	for _, id := range workflowIds {
+	// 		err = testdata.WorkflowExecutor.RemoveWorkflow(id)
+	// 		assert.NoError(t, err, "Failed to remove workflow %s", id)
+	// 	}
+	// 	_, err = testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), wf.GetName(), wf.GetVersion())
+	// 	assert.NoError(t, err, "Failed to remove workflow definition")
+	// })
 
 	// Wait for workflows to complete
 	err = testdata.WaitForMultipleWorkflowsCompletion(workflowIds, testdata.WorkflowValidationTimeout)
@@ -1890,6 +1907,16 @@ func TestGetWorkflows(t *testing.T) {
 	)
 	assert.NoError(t, err, "Failed to get workflows by batch correlation IDs")
 	assert.NotNil(t, workflowsMap, "Workflows map should not be nil")
+
+	for corrId, workflows := range workflowsMap {
+		t.Logf("Correlation ID: %s", corrId)
+		for i, wf := range workflows {
+			t.Logf("Workflow count %d", i+1)
+			t.Logf("Workflow ID: %s", wf.WorkflowId)
+			t.Logf("Workflow Correlation ID: %v", wf.CorrelationId)
+			t.Logf("Workflow Status: %v", wf.Status)
+		}
+	}
 
 	// Verify the result contains both correlation IDs
 	for _, corrId := range correlationIds {
