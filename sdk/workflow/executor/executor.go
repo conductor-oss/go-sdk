@@ -164,7 +164,9 @@ func (e *WorkflowExecutor) WaitForRunningWorkflowsUntilTimeout(timeout time.Dura
 
 func waitForRunningWorkflowUntilTimeoutDaemon(timeout time.Duration, runningWorkflow *RunningWorkflow, waitGroup *sync.WaitGroup) {
 	defer waitGroup.Done()
-	runningWorkflow.WaitForCompletionUntilTimeout(timeout)
+	if _, err := runningWorkflow.WaitForCompletionUntilTimeout(timeout); err != nil {
+		log.Warn("Failed to wait for running workflow until timeout", "error", err)
+	}
 }
 
 // GetWorkflow Get workflow execution by workflow Id.  If includeTasks is set, also fetches all the task details.
@@ -200,7 +202,7 @@ func (e *WorkflowExecutor) GetByCorrelationIdsAndNames(includeClosed bool, inclu
 // - Size:  Number of results to return
 //
 //   - Query: Query expression.  In the format FIELD = 'VALUE' or FIELD IN (value1, value2)
-//     Only AND operations are supported.  e.g. workflowId IN ('a', 'b', 'c') ADN workflowType ='test_workflow'
+//     Only AND operations are supported.  e.g. workflowId IN ('a', 'b', 'c') AND workflowType ='test_workflow'
 //     AND startTime BETWEEN 1000 and 2000
 //     Supported fields for Query are:workflowId,workflowType,status,startTime
 //   - FreeText: Full text search.  All the workflow input, output and task outputs upto certain limit (check with your admins to find the size limit)

@@ -39,6 +39,7 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/settings"
 )
 
+// #nosec G101 - These are environment variable keys, not secrets
 const (
 	CONDUCTOR_AUTH_KEY            = "CONDUCTOR_AUTH_KEY"
 	CONDUCTOR_AUTH_SECRET         = "CONDUCTOR_AUTH_SECRET"
@@ -287,6 +288,7 @@ func (c *APIClient) decode(v interface{}, b []byte, contentType string) (err err
 	return errors.New("undefined response type")
 }
 
+//nolint:gocognit,gocyclo
 func (c *APIClient) prepareRequest(
 	ctx context.Context,
 	path string, method string,
@@ -444,9 +446,9 @@ func CacheExpires(r *http.Response) time.Time {
 	respCacheControl := parseCacheControl(r.Header)
 
 	if maxAge, ok := respCacheControl["max-age"]; ok {
-		lifetime, err := time.ParseDuration(maxAge + "s")
-		if err != nil {
-			expires = now
+		lifetime, parseErr := time.ParseDuration(maxAge + "s")
+		if parseErr != nil {
+			return now
 		}
 		expires = now.Add(lifetime)
 	} else {
@@ -510,7 +512,12 @@ func detectContentType(body interface{}) string {
 }
 
 func getDecompressedBody(response *http.Response) ([]byte, error) {
-	defer response.Body.Close()
+	defer func() {
+		if closeErr := response.Body.Close(); closeErr != nil {
+			log.Error("Error closing response body", "error", closeErr)
+		}
+	}()
+
 	var reader io.ReadCloser
 	var err error
 	switch response.Header.Get("Content-Encoding") {
@@ -526,16 +533,26 @@ func getDecompressedBody(response *http.Response) ([]byte, error) {
 	default:
 		reader = response.Body
 	}
-	defer reader.Close()
+	defer func() {
+		if closeErr := reader.Close(); closeErr != nil {
+			log.Error("Error closing reader", "error", closeErr)
+		}
+	}()
+
 	return io.ReadAll(reader)
 }
 
 func addFile(w *multipart.Writer, fieldName, path string) error {
+	// #nosec G304 - path is derived from API usage, not untrusted input
 	file, err := os.Open(path)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		if closeErr := file.Close(); closeErr != nil {
+			log.Error("Error closing file", "error", closeErr)
+		}
+	}()
 
 	part, err := w.CreateFormFile(fieldName, filepath.Base(path))
 	if err != nil {

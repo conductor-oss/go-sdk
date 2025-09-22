@@ -34,7 +34,6 @@ func NewHttpRequester(authenticationSettings *settings.AuthenticationSettings, h
 
 	if authenticationSettings != nil && !authenticationSettings.IsEmpty() {
 		if tokenManager == nil {
-			tokenManager = nil
 			tokenManager = authentication.NewTokenManager(*authenticationSettings, tokenExpiration)
 		}
 	}
@@ -46,6 +45,8 @@ func NewHttpRequester(authenticationSettings *settings.AuthenticationSettings, h
 }
 
 // prepareRequest build the request
+//
+//nolint:gocognit,gocyclo,unused
 func (h *HttpRequester) prepareRequest(
 	ctx context.Context,
 	path string, method string,
@@ -88,20 +89,21 @@ func (h *HttpRequester) prepareRequest(
 						return nil, err
 					}
 				} else { // form value
-					w.WriteField(k, iv)
+					if err = w.WriteField(k, iv); err != nil {
+						return nil, err
+					}
 				}
 			}
 		}
 		if len(fileBytes) > 0 && fileName != "" {
 			w.Boundary()
 			//_, fileNm := filepath.Split(fileName)
-			part, err := w.CreateFormFile("file", filepath.Base(fileName))
-			if err != nil {
-				return nil, err
+			part, createErr := w.CreateFormFile("file", filepath.Base(fileName))
+			if createErr != nil {
+				return nil, createErr
 			}
-			_, err = part.Write(fileBytes)
-			if err != nil {
-				return nil, err
+			if _, writeErr := part.Write(fileBytes); writeErr != nil {
+				return nil, writeErr
 			}
 			// Set the Boundary in the Content-Type
 			headerParams["Content-Type"] = w.FormDataContentType()
@@ -109,7 +111,9 @@ func (h *HttpRequester) prepareRequest(
 
 		// Set Content-Length
 		headerParams["Content-Length"] = fmt.Sprintf("%d", body.Len())
-		w.Close()
+		if closeErr := w.Close(); closeErr != nil {
+			return nil, closeErr
+		}
 	}
 
 	if strings.HasPrefix(headerParams["Content-Type"], "application/x-www-form-urlencoded") && len(formParams) > 0 {

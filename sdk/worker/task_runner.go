@@ -34,7 +34,7 @@ var (
 	sleepForOnGenericError      = 200 * time.Millisecond
 )
 
-var hostname, _ = os.Hostname()
+var hostname, _ = os.Hostname() //nolint:errcheck
 
 // TaskRunner implements polling and execution logic for a Conductor worker. Every polling interval, each running
 // task attempts to retrieve a from Conductor. Multiple tasks can be started in parallel. All Goroutines started by this
@@ -302,7 +302,9 @@ func (c *TaskRunner) WaitWorkers() {
 }
 
 func (c *TaskRunner) startWorker(taskName string, executeFunction model.ExecuteTaskFunction, batchSize int, pollInterval time.Duration, taskDomain string) error {
-	c.SetPollIntervalForTask(taskName, pollInterval)
+	if err := c.SetPollIntervalForTask(taskName, pollInterval); err != nil {
+		return err
+	}
 	c.Resume(taskName)
 	previousMaxAllowedWorkers, err := c.getMaxAllowedWorkers(taskName)
 	if err != nil {
@@ -362,12 +364,12 @@ func (c *TaskRunner) workOnce(taskName string, executeFunction model.ExecuteTask
 		return
 	}
 	if len(tasks) < 1 {
-		pollInterval, err := c.GetPollIntervalForTask(taskName)
-		if err != nil {
-			log.Error(err)
+		pollInterval, getErr := c.GetPollIntervalForTask(taskName)
+		if getErr != nil {
+			log.Error(getErr)
 			pauseOnGenericError(
 				taskName, domain,
-				fmt.Errorf("failed to get poll interval, reason: %s", err.Error()),
+				fmt.Errorf("failed to get poll interval, reason: %s", getErr.Error()),
 			)
 			return
 		}
@@ -375,13 +377,20 @@ func (c *TaskRunner) workOnce(taskName string, executeFunction model.ExecuteTask
 		return
 	}
 	for _, task := range tasks {
-		c.increaseRunningWorkers(taskName)
+		if err = c.increaseRunningWorkers(taskName); err != nil {
+			log.Error("failed to increase running workers", "taskName", taskName, "error", err)
+			return
+		}
 		go c.executeAndUpdateTask(taskName, task, executeFunction)
 	}
 }
 
 func (c *TaskRunner) executeAndUpdateTask(taskName string, task model.Task, executeFunction model.ExecuteTaskFunction) {
-	defer c.runningWorkerDone(taskName)
+	defer func() {
+		if err := c.runningWorkerDone(taskName); err != nil {
+			log.Error("failed to decrement running workers", "taskName", taskName, "error", err)
+		}
+	}()
 	defer concurrency.HandlePanicError("execute_and_update_task " + string(task.TaskId) + ": " + string(task.Status))
 	taskResult := c.executeTask(&task, executeFunction)
 	err := c.updateTaskWithRetry(taskName, taskResult)
@@ -405,11 +414,11 @@ func (c *TaskRunner) batchPoll(taskName string, count int, domain string) ([]mod
 	opts := &client.TaskResourceApiBatchPollOpts{
 		Domain:   domainOptional,
 		Workerid: optional.NewString(hostname),
-		Count:    optional.NewInt32(int32(count)),
+		Count:    optional.NewInt32(int32(count)), //nolint:gosec
 	}
 
 	if timeout >= 0 {
-		opts.Timeout = optional.NewInt32(int32(timeout.Milliseconds()))
+		opts.Timeout = optional.NewInt32(int32(timeout.Milliseconds())) //nolint:gosec
 	}
 
 	tasks, response, err := c.conductorTaskResourceClient.BatchPoll(

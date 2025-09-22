@@ -58,7 +58,11 @@ func (t *CachedTokenManager) getTokenIfCached() string {
 	defer t.mutex.RUnlock()
 	token, found := t.database.Get(tokenKey)
 	if found {
-		return token.(string)
+		tokenString, ok := token.(string)
+		if !ok {
+			return ""
+		}
+		return tokenString
 	}
 	return ""
 }

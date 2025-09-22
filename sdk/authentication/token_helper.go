@@ -75,7 +75,7 @@ func GetToken(credentials settings.AuthenticationSettings, httpSettings *setting
 	}
 
 	if localVarHttpResponse.StatusCode < 200 || localVarHttpResponse.StatusCode >= 300 {
-		newErr := fmt.Errorf(string(localVarBody))
+		newErr := errors.New(string(localVarBody))
 		return localVarReturnValue, localVarHttpResponse, newErr
 	} else {
 		err = decode(&localVarReturnValue, localVarBody, localVarHttpResponse.Header.Get("Content-Type"))
@@ -83,6 +83,7 @@ func GetToken(credentials settings.AuthenticationSettings, httpSettings *setting
 	return localVarReturnValue, localVarHttpResponse, err
 }
 
+//nolint:gocognit,gocyclo
 func prepareRequest(
 	ctx context.Context,
 	httpSettings *settings.HttpSettings,
@@ -126,20 +127,22 @@ func prepareRequest(
 						return nil, err
 					}
 				} else { // form value
-					w.WriteField(k, iv)
+					err = w.WriteField(k, iv)
+					if err != nil {
+						return nil, err
+					}
 				}
 			}
 		}
 		if len(fileBytes) > 0 && fileName != "" {
 			w.Boundary()
 			//_, fileNm := filepath.Split(fileName)
-			part, err := w.CreateFormFile("file", filepath.Base(fileName))
-			if err != nil {
-				return nil, err
+			part, createErr := w.CreateFormFile("file", filepath.Base(fileName))
+			if createErr != nil {
+				return nil, createErr
 			}
-			_, err = part.Write(fileBytes)
-			if err != nil {
-				return nil, err
+			if _, writeErr := part.Write(fileBytes); writeErr != nil {
+				return nil, writeErr
 			}
 			// Set the Boundary in the Content-Type
 			headerParams["Content-Type"] = w.FormDataContentType()
@@ -147,7 +150,9 @@ func prepareRequest(
 
 		// Set Content-Length
 		headerParams["Content-Length"] = fmt.Sprintf("%d", body.Len())
-		w.Close()
+		if closeErr := w.Close(); closeErr != nil {
+			return nil, closeErr
+		}
 	}
 
 	if strings.HasPrefix(headerParams["Content-Type"], "application/x-www-form-urlencoded") && len(formParams) > 0 {
@@ -281,7 +286,11 @@ func detectContentType(body interface{}) string {
 }
 
 func getDecompressedBody(response *http.Response) ([]byte, error) {
-	defer response.Body.Close()
+	defer func() {
+		if closeErr := response.Body.Close(); closeErr != nil {
+			log.Error("Error closing response body", "error", closeErr)
+		}
+	}()
 
 	raw, err := io.ReadAll(response.Body)
 	if err != nil {
@@ -317,11 +326,16 @@ func getDecompressedBody(response *http.Response) ([]byte, error) {
 }
 
 func addFile(w *multipart.Writer, fieldName, path string) error {
+	// #nosec G304 - path comes from SDK-controlled form usage; not user input in runtime
 	file, err := os.Open(path)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		if closeErr := file.Close(); closeErr != nil {
+			log.Error("Error closing file", "error", closeErr)
+		}
+	}()
 
 	part, err := w.CreateFormFile(fieldName, filepath.Base(path))
 	if err != nil {

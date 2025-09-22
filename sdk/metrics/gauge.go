@@ -10,6 +10,7 @@
 package metrics
 
 import (
+	"github.com/conductor-sdk/conductor-go/sdk/log"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -132,8 +133,17 @@ func getGauge(metricName MetricName, labelValues []string) *prometheus.Gauge {
 	if !ok {
 		return nil
 	}
-	gauge, _ := gaugeVec.GetMetricWithLabelValues(
+	gauge, err := gaugeVec.GetMetricWithLabelValues(
 		labelValues...,
 	)
+	if err != nil {
+		log.Warn(
+			"Unable to get gauge with label values",
+			"metric", metricName,
+			"labels", labelValues,
+			"error", err,
+		)
+		return nil
+	}
 	return &gauge
 }

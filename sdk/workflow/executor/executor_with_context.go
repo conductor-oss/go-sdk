@@ -16,8 +16,8 @@ import (
 )
 
 func (e *WorkflowExecutor) RegisterWorkflowWithContext(ctx context.Context, overwrite bool, workflow *model.WorkflowDef) error {
-	if err := ctx.Err(); err != nil {
-		return err
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return ctxErr
 	}
 
 	_, err := e.metadataClient.RegisterWorkflowDef(ctx, overwrite, *workflow)
@@ -25,8 +25,8 @@ func (e *WorkflowExecutor) RegisterWorkflowWithContext(ctx context.Context, over
 }
 
 func (e *WorkflowExecutor) UnRegisterWorkflowWithContext(ctx context.Context, name string, version int32) error {
-	if err := ctx.Err(); err != nil {
-		return err
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return ctxErr
 	}
 
 	_, err := e.metadataClient.UnregisterWorkflowDef(ctx, name, version)
@@ -34,8 +34,8 @@ func (e *WorkflowExecutor) UnRegisterWorkflowWithContext(ctx context.Context, na
 }
 
 func (e *WorkflowExecutor) ExecuteWorkflowWithContext(ctx context.Context, startWorkflowRequest *model.StartWorkflowRequest, waitUntilTask string) (run *model.WorkflowRun, err error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return nil, ctxErr
 	}
 
 	requestId := ""
@@ -49,8 +49,8 @@ func (e *WorkflowExecutor) ExecuteWorkflowWithContext(ctx context.Context, start
 }
 
 func (e *WorkflowExecutor) ExecuteWorkflowWithReturnStrategyWithContext(ctx context.Context, startWorkflowRequest *model.StartWorkflowRequest, consistency model.WorkflowConsistency, returnStrategy model.ReturnStrategy, waitUntilTaskRef []string, waitForSeconds int) (run *model.SignalResponse, err error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return nil, ctxErr
 	}
 
 	resp, err := e.workflowClient.ExecuteWorkflowWithReturnStrategy(ctx, *startWorkflowRequest, client.ExecuteWorkflowOpts{
@@ -68,8 +68,8 @@ func (e *WorkflowExecutor) ExecuteWorkflowWithReturnStrategyWithContext(ctx cont
 }
 
 func (e *WorkflowExecutor) ExecuteAndGetTargetWithContext(ctx context.Context, startWorkflowRequest *model.StartWorkflowRequest, waitUntilTask []string, waitForSeconds int, consistency string) (run *model.WorkflowRun, err error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return nil, ctxErr
 	}
 
 	requestId := ""
@@ -91,8 +91,8 @@ func (e *WorkflowExecutor) ExecuteAndGetTargetWithContext(ctx context.Context, s
 }
 
 func (e *WorkflowExecutor) ExecuteAndGetBlockingWorkflowWithContext(ctx context.Context, startWorkflowRequest *model.StartWorkflowRequest, waitUntilTask []string, waitForSeconds int, consistency string) (run *model.WorkflowRun, err error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return nil, ctxErr
 	}
 
 	requestId := ""
@@ -114,8 +114,8 @@ func (e *WorkflowExecutor) ExecuteAndGetBlockingWorkflowWithContext(ctx context.
 }
 
 func (e *WorkflowExecutor) ExecuteAndGetBlockingTaskWithContext(ctx context.Context, startWorkflowRequest *model.StartWorkflowRequest, waitUntilTask []string, waitForSeconds int, consistency string) (run *model.TaskRun, err error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return nil, ctxErr
 	}
 
 	requestId := ""
@@ -138,8 +138,8 @@ func (e *WorkflowExecutor) ExecuteAndGetBlockingTaskWithContext(ctx context.Cont
 
 // Method for executing workflow with blocking task input
 func (e *WorkflowExecutor) ExecuteAndGetBlockingTaskInputWithContext(ctx context.Context, startWorkflowRequest *model.StartWorkflowRequest, waitUntilTask []string, waitForSeconds int, consistency string) (run *model.TaskRun, err error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return nil, ctxErr
 	}
 
 	requestId := ""
@@ -161,8 +161,8 @@ func (e *WorkflowExecutor) ExecuteAndGetBlockingTaskInputWithContext(ctx context
 }
 
 func (e *WorkflowExecutor) StartWorkflowWithContext(ctx context.Context, startWorkflowRequest *model.StartWorkflowRequest) (workflowId string, err error) {
-	if err := ctx.Err(); err != nil {
-		return "", err
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return "", ctxErr
 	}
 
 	id, _, err := e.workflowClient.StartWorkflowWithRequest(
@@ -180,8 +180,8 @@ func (e *WorkflowExecutor) GetWorkflowWithContext(ctx context.Context, workflowI
 }
 
 func (e *WorkflowExecutor) getWorkflowWithContext(ctx context.Context, retry int, workflowId string, includeTasks bool) (*model.Workflow, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return nil, ctxErr
 	}
 
 	workflow, response, err := e.workflowClient.GetExecutionStatus(
@@ -213,8 +213,8 @@ func (e *WorkflowExecutor) getWorkflowWithContext(ctx context.Context, retry int
 }
 
 func (e *WorkflowExecutor) GetWorkflowStatusWithContext(ctx context.Context, workflowId string, includeOutput bool, includeVariables bool) (*model.WorkflowState, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return nil, ctxErr
 	}
 
 	state, response, err := e.workflowClient.GetWorkflowState(ctx, workflowId, includeOutput, includeVariables)
@@ -225,8 +225,8 @@ func (e *WorkflowExecutor) GetWorkflowStatusWithContext(ctx context.Context, wor
 }
 
 func (e *WorkflowExecutor) GetByCorrelationIdsWithContext(ctx context.Context, workflowName string, includeClosed bool, includeTasks bool, correlationIds ...string) (map[string][]model.Workflow, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return nil, ctxErr
 	}
 
 	workflows, _, err := e.workflowClient.GetWorkflows(
@@ -244,8 +244,8 @@ func (e *WorkflowExecutor) GetByCorrelationIdsWithContext(ctx context.Context, w
 }
 
 func (e *WorkflowExecutor) GetByCorrelationIdsAndNamesWithContext(ctx context.Context, includeClosed bool, includeTasks bool, correlationIds []string, workflowNames []string) (map[string][]model.Workflow, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return nil, ctxErr
 	}
 
 	workflows, _, err := e.workflowClient.GetWorkflowsBatch(
@@ -267,8 +267,8 @@ func (e *WorkflowExecutor) GetByCorrelationIdsAndNamesWithContext(ctx context.Co
 }
 
 func (e *WorkflowExecutor) SearchWithContext(ctx context.Context, start int32, size int32, query string, freeText string) ([]model.WorkflowSummary, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return nil, ctxErr
 	}
 
 	workflows, _, err := e.workflowClient.Search(
@@ -288,8 +288,8 @@ func (e *WorkflowExecutor) SearchWithContext(ctx context.Context, start int32, s
 }
 
 func (e *WorkflowExecutor) PauseWithContext(ctx context.Context, workflowId string) error {
-	if err := ctx.Err(); err != nil {
-		return err
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return ctxErr
 	}
 
 	_, err := e.workflowClient.PauseWorkflow(ctx, workflowId)
@@ -300,8 +300,8 @@ func (e *WorkflowExecutor) PauseWithContext(ctx context.Context, workflowId stri
 }
 
 func (e *WorkflowExecutor) ResumeWithContext(ctx context.Context, workflowId string) error {
-	if err := ctx.Err(); err != nil {
-		return err
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return ctxErr
 	}
 
 	_, err := e.workflowClient.ResumeWorkflow(ctx, workflowId)
@@ -312,8 +312,8 @@ func (e *WorkflowExecutor) ResumeWithContext(ctx context.Context, workflowId str
 }
 
 func (e *WorkflowExecutor) TerminateWithContext(ctx context.Context, workflowId string, reason string) error {
-	if err := ctx.Err(); err != nil {
-		return err
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return ctxErr
 	}
 
 	if strings.TrimSpace(workflowId) == "" {
@@ -350,8 +350,8 @@ func (e *WorkflowExecutor) TerminateWithFailureWithContext(ctx context.Context, 
 }
 
 func (e *WorkflowExecutor) RestartWithContext(ctx context.Context, workflowId string, useLatestDefinition bool) error {
-	if err := ctx.Err(); err != nil {
-		return err
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return ctxErr
 	}
 
 	_, err := e.workflowClient.Restart(
@@ -369,8 +369,8 @@ func (e *WorkflowExecutor) RestartWithContext(ctx context.Context, workflowId st
 }
 
 func (e *WorkflowExecutor) RetryWithContext(ctx context.Context, workflowId string, resumeSubworkflowTasks bool) error {
-	if err := ctx.Err(); err != nil {
-		return err
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return ctxErr
 	}
 
 	_, err := e.workflowClient.Retry(
@@ -389,8 +389,8 @@ func (e *WorkflowExecutor) RetryWithContext(ctx context.Context, workflowId stri
 }
 
 func (e *WorkflowExecutor) ReRunWithContext(ctx context.Context, workflowId string, reRunRequest model.RerunWorkflowRequest) (id string, error error) {
-	if err := ctx.Err(); err != nil {
-		return "", err
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return "", ctxErr
 	}
 
 	id, _, err := e.workflowClient.Rerun(
@@ -407,8 +407,8 @@ func (e *WorkflowExecutor) ReRunWithContext(ctx context.Context, workflowId stri
 }
 
 func (e *WorkflowExecutor) SkipTasksFromWorkflowWithContext(ctx context.Context, workflowId string, taskReferenceName string, skipTaskRequest model.SkipTaskRequest) error {
-	if err := ctx.Err(); err != nil {
-		return err
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return ctxErr
 	}
 
 	_, err := e.workflowClient.SkipTaskFromWorkflow(
@@ -426,8 +426,8 @@ func (e *WorkflowExecutor) SkipTasksFromWorkflowWithContext(ctx context.Context,
 }
 
 func (e *WorkflowExecutor) UpdateTaskWithContext(ctx context.Context, taskId string, workflowInstanceId string, status model.TaskResultStatus, output interface{}) error {
-	if err := ctx.Err(); err != nil {
-		return err
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return ctxErr
 	}
 
 	taskResult, err := getTaskResultFromOutput(taskId, workflowInstanceId, output)
@@ -445,8 +445,8 @@ func (e *WorkflowExecutor) UpdateTaskWithContext(ctx context.Context, taskId str
 }
 
 func (e *WorkflowExecutor) UpdateTaskByRefNameWithContext(ctx context.Context, taskRefName string, workflowInstanceId string, status model.TaskResultStatus, output interface{}) error {
-	if err := ctx.Err(); err != nil {
-		return err
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return ctxErr
 	}
 
 	outputData, err := model.ConvertToMap(output)
@@ -463,8 +463,8 @@ func (e *WorkflowExecutor) UpdateTaskByRefNameWithContext(ctx context.Context, t
 }
 
 func (e *WorkflowExecutor) GetTaskWithContext(ctx context.Context, taskId string) (task *model.Task, err error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return nil, ctxErr
 	}
 
 	t, _, err := e.taskClient.GetTask(ctx, taskId)
@@ -476,8 +476,8 @@ func (e *WorkflowExecutor) GetTaskWithContext(ctx context.Context, taskId string
 }
 
 func (e *WorkflowExecutor) RemoveWorkflowWithContext(ctx context.Context, workflowId string) error {
-	if err := ctx.Err(); err != nil {
-		return err
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return ctxErr
 	}
 
 	_, err := e.workflowClient.Delete(ctx, workflowId, &client.WorkflowResourceApiDeleteOpts{ArchiveWorkflow: optional.NewBool(false)})
@@ -489,24 +489,24 @@ func (e *WorkflowExecutor) RemoveWorkflowWithContext(ctx context.Context, workfl
 }
 
 func (e *WorkflowExecutor) DeleteQueueConfigurationWithContext(ctx context.Context, queueConfiguration queue.QueueConfiguration) (*http.Response, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return nil, ctxErr
 	}
 
 	return e.eventClient.DeleteQueueConfig(ctx, queueConfiguration.QueueType, queueConfiguration.QueueName)
 }
 
 func (e *WorkflowExecutor) GetQueueConfigurationWithContext(ctx context.Context, queueConfiguration queue.QueueConfiguration) (map[string]interface{}, *http.Response, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, nil, err
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return nil, nil, ctxErr
 	}
 
 	return e.eventClient.GetQueueConfig(ctx, queueConfiguration.QueueType, queueConfiguration.QueueName)
 }
 
 func (e *WorkflowExecutor) PutQueueConfigurationWithContext(ctx context.Context, queueConfiguration queue.QueueConfiguration) (*http.Response, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return nil, ctxErr
 	}
 
 	body, err := queueConfiguration.GetConfiguration()
@@ -520,8 +520,8 @@ func (e *WorkflowExecutor) PutQueueConfigurationWithContext(ctx context.Context,
 // Enterprise Feature: This feature requires Orkes Conductor Enterprise license, NOT AVAILABLE in OSS.
 // SignalWorkflowTaskWithContext signals a task asynchronously
 func (e *WorkflowExecutor) SignalWorkflowTaskWithContext(ctx context.Context, workflowId string, status model.TaskResultStatus, output interface{}) error {
-	if err := ctx.Err(); err != nil {
-		return err
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return ctxErr
 	}
 
 	outputData, err := model.ConvertToMap(output)
@@ -540,8 +540,8 @@ func (e *WorkflowExecutor) SignalWorkflowTaskWithContext(ctx context.Context, wo
 // Enterprise Feature: This feature requires Orkes Conductor Enterprise license, NOT AVAILABLE in OSS.
 // Signal signals a task and returns the target workflow
 func (e *WorkflowExecutor) SignalWithContext(ctx context.Context, workflowId string, status model.WorkflowStatus, output interface{}, opts ...client.SignalTaskOpts) (*model.SignalResponse, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return nil, ctxErr
 	}
 
 	outputData, err := model.ConvertToMap(output)

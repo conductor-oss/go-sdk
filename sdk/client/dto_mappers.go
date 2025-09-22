@@ -1955,6 +1955,8 @@ func toDomainWorkflow(orkesWorkflow *orkes.Workflow) model.Workflow {
 }
 
 // toDomainWorkflowRun converts *orkes.WorkflowRun to model.WorkflowRun
+//
+//nolint:gocyclo,gocognit
 func toDomainWorkflowRun(orkesRun *orkes.WorkflowRun) model.WorkflowRun {
 	domainRun := model.WorkflowRun{}
 

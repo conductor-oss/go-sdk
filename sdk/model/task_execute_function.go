@@ -80,7 +80,13 @@ func ConvertToMap(input interface{}) (map[string]interface{}, error) {
 		return nil, err
 	}
 	var parsedInput map[string]interface{}
-	json.Unmarshal(data, &parsedInput)
+	if err = json.Unmarshal(data, &parsedInput); err != nil {
+		log.Warn(
+			"Failed to parse input",
+			"reason", err,
+		)
+		return nil, err
+	}
 	return parsedInput, nil
 }
 
@@ -90,5 +96,5 @@ func getHostname() string {
 }
 
 func updateHostname() {
-	hostname, _ = os.Hostname()
+	hostname, _ = os.Hostname() //nolint:errcheck
 }

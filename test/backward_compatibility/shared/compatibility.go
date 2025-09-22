@@ -157,7 +157,8 @@ func testSchedulerClientAPIs() error {
 		log.Info("✓ SchedulerClient.PutTagForSchedule successful")
 
 		// Test GetTagsForSchedule
-		tags, _, err := schedulerClient.GetTagsForSchedule(ctx, scheduleName)
+		var tags []model.Tag
+		tags, _, err = schedulerClient.GetTagsForSchedule(ctx, scheduleName)
 		if err != nil {
 			log.Warn("SchedulerClient.GetTagsForSchedule failed", "error", err)
 		} else {
@@ -317,8 +318,8 @@ func testWorkflowExecutorAPIs() error {
 			log.Info("✓ Pause successful")
 
 			// Verify paused state
-			pausedWorkflow, err := workflowExecutor.GetWorkflow(id, false)
-			if err == nil && pausedWorkflow.Status == "PAUSED" {
+			pausedWorkflow, errGet := workflowExecutor.GetWorkflow(id, false)
+			if errGet == nil && pausedWorkflow.Status == "PAUSED" {
 				log.Info("✓ Workflow successfully paused")
 			}
 
@@ -419,6 +420,8 @@ func testTaskClientAPIs() error {
 }
 
 // Test 4: WorkflowClient API methods
+//
+//nolint:gocyclo
 func testWorkflowClientAPIs() error {
 	log.Info("Testing WorkflowClient APIs...")
 
@@ -519,9 +522,13 @@ func testWorkflowClientAPIs() error {
 		log.Warn("Failed to complete task for WorkflowClient test", "error", err)
 	}
 
-	taskRunner.StartWorker("SIMPLE", SimpleTask, 1, time.Millisecond*100)
+	if err = taskRunner.StartWorker("SIMPLE", SimpleTask, 1, time.Millisecond*100); err != nil {
+		log.Error("Failed to start worker for WorkflowClient test", "error", err)
+	}
 	// Wait for workflow to complete
-	waitAndValidateWorkflow(workflowExecutor, workflowId)
+	if err = waitAndValidateWorkflow(workflowExecutor, workflowId); err != nil {
+		log.Warn("Workflow validation failed", "error", err)
+	}
 
 	// Test operations on completed workflow
 	// Test Restart (only works on completed workflows)
@@ -534,10 +541,14 @@ func testWorkflowClientAPIs() error {
 		log.Info("✓ WorkflowClient.Restart successful")
 		// Complete the restarted workflow
 		time.Sleep(2 * time.Second)
-		restartedWorkflow, _, _ := workflowClient.GetExecutionStatus(ctx, workflowId, nil)
-		if restartedWorkflow.Status == "RUNNING" {
-			_, _, _ = taskClient.UpdateTaskByRefName(ctx, outputData, workflowId, "SIMPLE", string(model.CompletedTask))
-			waitAndValidateWorkflow(workflowExecutor, workflowId)
+		restartedWorkflow, _, err := workflowClient.GetExecutionStatus(ctx, workflowId, nil)
+		if err == nil && restartedWorkflow.Status == "RUNNING" {
+			if _, _, updateErr := taskClient.UpdateTaskByRefName(ctx, outputData, workflowId, "SIMPLE", string(model.CompletedTask)); updateErr != nil {
+				log.Warn("Failed to update task by ref name during restart", "error", updateErr)
+			}
+			if valErr := waitAndValidateWorkflow(workflowExecutor, workflowId); valErr != nil {
+				log.Warn("Workflow validation after restart failed", "error", valErr)
+			}
 		}
 	}
 
@@ -613,9 +624,10 @@ func waitAndValidateWorkflow(executor *executor.WorkflowExecutor, workflowId str
 
 		fmt.Printf("Workflow %s status: %s\n", workflowId, workflow.Status)
 
-		if workflow.Status == "COMPLETED" {
+		switch workflow.Status {
+		case "COMPLETED":
 			return nil
-		} else if workflow.Status == "FAILED" || workflow.Status == "TIMED_OUT" {
+		case "FAILED", "TIMED_OUT":
 			return fmt.Errorf("workflow failed with status: %s", workflow.Status)
 		}
 

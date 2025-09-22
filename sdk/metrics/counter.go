@@ -192,8 +192,12 @@ func getCounter(metricName MetricName, labelValues []string) *prometheus.Counter
 	if !ok {
 		return nil
 	}
-	counter, _ := counterVec.GetMetricWithLabelValues(
+	counter, err := counterVec.GetMetricWithLabelValues(
 		labelValues...,
 	)
+	if err != nil {
+		return nil
+	}
+
 	return &counter
 }

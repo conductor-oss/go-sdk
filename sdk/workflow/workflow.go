@@ -317,14 +317,20 @@ func getInputAsMap(input interface{}) map[string]interface{} {
 	}
 	data, err := json.Marshal(input)
 	if err != nil {
-		log.Debug(
+		log.Warn(
 			"Failed to parse input",
 			"reason", err,
 		)
 		return nil
 	}
 	var parsedInput map[string]interface{}
-	json.Unmarshal(data, &parsedInput)
+	if err = json.Unmarshal(data, &parsedInput); err != nil {
+		log.Warn(
+			"Failed to parse input",
+			"reason", err,
+		)
+		return nil
+	}
 	return parsedInput
 }
 
