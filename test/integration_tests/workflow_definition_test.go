@@ -1091,6 +1091,9 @@ func TestGetWorkflowsByCorrelationId(t *testing.T) {
 	err = testdata.WaitForMultipleWorkflowsCompletion(workflowIds, 30*time.Second)
 	assert.NoError(t, err, "Failed to wait for workflows completion")
 
+	// Wait a moment for the update to be reflected
+	time.Sleep(1 * time.Second)
+
 	// Test GetWorkflowsByCorrelationId
 	opts := &client.WorkflowResourceApiGetWorkflowsOpts{
 		IncludeClosed: optional.NewBool(true),
@@ -1119,9 +1122,6 @@ func TestGetWorkflowsByCorrelationId(t *testing.T) {
 		IncludeClosed: optional.NewBool(true),
 		IncludeTasks:  optional.NewBool(true),
 	}
-
-	// Wait a moment for the update to be reflected
-	time.Sleep(1 * time.Second)
 
 	workflowsWithTasks, _, err := testdata.WorkflowClient.GetWorkflowsByCorrelationId(
 		context.Background(),
@@ -1874,6 +1874,9 @@ func TestGetWorkflows(t *testing.T) {
 	err = testdata.WaitForMultipleWorkflowsCompletion(workflowIds, testdata.WorkflowValidationTimeout)
 	assert.NoError(t, err, "Failed to wait for workflow to complete")
 
+	// Wait a moment for the update to be reflected
+	time.Sleep(1 * time.Second)
+
 	// Test GetWorkflows with batch correlation IDs
 	opts := &client.WorkflowResourceApiGetWorkflowsOpts{
 		IncludeClosed: optional.NewBool(true),
@@ -1907,9 +1910,6 @@ func TestGetWorkflows(t *testing.T) {
 		IncludeClosed: optional.NewBool(true),
 		IncludeTasks:  optional.NewBool(true),
 	}
-
-	// Wait a moment for the update to be reflected
-	time.Sleep(1 * time.Second)
 
 	workflowsMapWithTasks, _, err := testdata.WorkflowClient.GetWorkflows(
 		context.Background(),
