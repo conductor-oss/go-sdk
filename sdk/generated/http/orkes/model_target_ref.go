@@ -19,8 +19,8 @@ var _ MappedNullable = &TargetRef{}
 
 // TargetRef The object over which access is being granted or removed
 type TargetRef struct {
-	Id   string `json:"id"`
-	Type string `json:"type"`
+	Id   string `json:"id,omitempty"`
+	Type string `json:"type,omitempty"`
 }
 
 type _TargetRef TargetRef

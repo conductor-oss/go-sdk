@@ -24,6 +24,10 @@ const (
 	AlertOnly       TimeoutPolicy = "ALERT_ONLY"
 )
 
+func (w TimeoutPolicy) String() string {
+	return string(w)
+}
+
 type ConductorWorkflow struct {
 	executor                      *executor.WorkflowExecutor
 	name                          string
@@ -347,7 +351,7 @@ func (workflow *ConductorWorkflow) ToWorkflowDef() *model.WorkflowDef {
 		FailureWorkflow:               workflow.failureWorkflow,
 		SchemaVersion:                 2,
 		OwnerEmail:                    workflow.ownerEmail,
-		TimeoutPolicy:                 string(workflow.timeoutPolicy),
+		TimeoutPolicy:                 workflow.timeoutPolicy.String(),
 		TimeoutSeconds:                workflow.timeoutSeconds,
 		Variables:                     workflow.variables,
 		InputTemplate:                 workflow.inputTemplate,

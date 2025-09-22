@@ -20,7 +20,7 @@ var _ MappedNullable = &TargetRef{}
 // TargetRef struct for TargetRef
 type TargetRef struct {
 	Id   *string `json:"id,omitempty"`
-	Type string  `json:"type"`
+	Type string  `json:"type,omitempty"`
 }
 
 type _TargetRef TargetRef

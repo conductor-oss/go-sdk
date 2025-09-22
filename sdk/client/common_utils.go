@@ -50,6 +50,33 @@ func ToPointer[T any](value T) *T {
 	return &value
 }
 
+// ToPointerIfNotEmpty returns pointer to value only if it's not empty (zero value)
+// For primitive types like string, int, etc.
+func ToPointerIfNotEmpty[T comparable](value T) *T {
+	var zero T
+	if value == zero {
+		return nil
+	}
+	return &value
+}
+
+// ToPointerIfNotEmptyString returns pointer to string only if it's not empty
+func ToPointerIfNotEmptyString(value string) *string {
+	if value == "" {
+		return nil
+	}
+	return &value
+}
+
+// ToPointerIfNotZero returns pointer to numeric value only if it's not zero
+func ToPointerIfNotZero[T comparable](value T) *T {
+	var zero T
+	if value == zero {
+		return nil
+	}
+	return &value
+}
+
 func GetInputAsMap(input interface{}) map[string]interface{} {
 	if input == nil {
 		return nil

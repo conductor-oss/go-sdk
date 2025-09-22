@@ -22,7 +22,7 @@ type UpsertUserRequest struct {
 	// Ids of the groups this user belongs to
 	Groups []string `json:"groups,omitempty"`
 	// User's full name
-	Name  string   `json:"name"`
+	Name  string   `json:"name,omitempty"`
 	Roles []string `json:"roles,omitempty"`
 }
 

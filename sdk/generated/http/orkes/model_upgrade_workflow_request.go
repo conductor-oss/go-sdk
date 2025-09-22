@@ -19,7 +19,7 @@ var _ MappedNullable = &UpgradeWorkflowRequest{}
 
 // UpgradeWorkflowRequest struct for UpgradeWorkflowRequest
 type UpgradeWorkflowRequest struct {
-	Name          string                 `json:"name"`
+	Name          string                 `json:"name,omitempty"`
 	TaskOutput    map[string]interface{} `json:"taskOutput,omitempty"`
 	Version       *int32                 `json:"version,omitempty"`
 	WorkflowInput map[string]interface{} `json:"workflowInput,omitempty"`

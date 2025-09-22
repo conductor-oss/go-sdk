@@ -437,20 +437,20 @@ func toGeneratedWorkflowTask(domain model.WorkflowTask) orkes.WorkflowTask {
 	gen.Name = domain.Name
 	gen.TaskReferenceName = domain.TaskReferenceName
 
-	gen.Description = ToPointer(domain.Description)
-	gen.Type = ToPointer(domain.Type_)
-	gen.DynamicTaskNameParam = ToPointer(domain.DynamicTaskNameParam)
-	gen.CaseValueParam = ToPointer(domain.CaseValueParam)
-	gen.CaseExpression = ToPointer(domain.CaseExpression)
-	gen.ScriptExpression = ToPointer(domain.ScriptExpression)
-	gen.EvaluatorType = ToPointer(domain.EvaluatorType)
-	gen.Expression = ToPointer(domain.Expression)
-	gen.StartDelay = ToPointer(domain.StartDelay)
-	gen.DynamicForkJoinTasksParam = ToPointer(domain.DynamicForkJoinTasksParam)
-	gen.DynamicForkTasksParam = ToPointer(domain.DynamicForkTasksParam)
-	gen.DynamicForkTasksInputParamName = ToPointer(domain.DynamicForkTasksInputParamName)
-	gen.Optional = ToPointer(domain.Optional)
-	gen.Sink = ToPointer(domain.Sink)
+	gen.Description = ToPointerIfNotEmptyString(domain.Description)
+	gen.Type = ToPointerIfNotEmptyString(domain.Type_)
+	gen.DynamicTaskNameParam = ToPointerIfNotEmptyString(domain.DynamicTaskNameParam)
+	gen.CaseValueParam = ToPointerIfNotEmptyString(domain.CaseValueParam)
+	gen.CaseExpression = ToPointerIfNotEmptyString(domain.CaseExpression)
+	gen.ScriptExpression = ToPointerIfNotEmptyString(domain.ScriptExpression)
+	gen.EvaluatorType = ToPointerIfNotEmptyString(domain.EvaluatorType)
+	gen.Expression = ToPointerIfNotEmptyString(domain.Expression)
+	gen.StartDelay = ToPointerIfNotZero(domain.StartDelay)
+	gen.DynamicForkJoinTasksParam = ToPointerIfNotEmptyString(domain.DynamicForkJoinTasksParam)
+	gen.DynamicForkTasksParam = ToPointerIfNotEmptyString(domain.DynamicForkTasksParam)
+	gen.DynamicForkTasksInputParamName = ToPointerIfNotEmptyString(domain.DynamicForkTasksInputParamName)
+	gen.Optional = ToPointerIfNotEmpty(domain.Optional)
+	gen.Sink = ToPointerIfNotEmptyString(domain.Sink)
 
 	// Map complex fields that need conversion
 	if domain.DecisionCases != nil {
@@ -501,7 +501,7 @@ func toGeneratedWorkflowTask(domain model.WorkflowTask) orkes.WorkflowTask {
 
 	gen.DefaultExclusiveJoinTask = domain.DefaultExclusiveJoinTask
 
-	gen.LoopCondition = ToPointer(domain.LoopCondition)
+	gen.LoopCondition = ToPointerIfNotEmptyString(domain.LoopCondition)
 	if domain.LoopOver != nil {
 		genLoopOver := make([]orkes.WorkflowTask, len(domain.LoopOver))
 		for i, loopTask := range domain.LoopOver {
@@ -520,8 +520,8 @@ func toGeneratedSubWorkflowParams(domain *model.SubWorkflowParams) orkes.SubWork
 	}
 
 	gen := orkes.SubWorkflowParams{
-		Name:         ToPointer(domain.Name),
-		Version:      ToPointer(int32(domain.Version)),
+		Name:         ToPointerIfNotEmptyString(domain.Name),
+		Version:      ToPointerIfNotZero(int32(domain.Version)),
 		TaskToDomain: &domain.TaskToDomain,
 	}
 
@@ -560,25 +560,25 @@ func toGeneratedTaskDef(domain *model.TaskDef) orkes.TaskDef {
 
 	return orkes.TaskDef{
 		Name:                        domain.Name,
-		Description:                 ToPointer(domain.Description),
-		RetryCount:                  ToPointer(domain.RetryCount),
+		Description:                 ToPointerIfNotEmptyString(domain.Description),
+		RetryCount:                  ToPointerIfNotZero(domain.RetryCount),
 		TimeoutSeconds:              domain.TimeoutSeconds,
 		TotalTimeoutSeconds:         domain.TimeoutSeconds, // Use same value for both
 		InputKeys:                   domain.InputKeys,
 		OutputKeys:                  domain.OutputKeys,
 		TimeoutPolicy:               timeoutPolicyPtr,
 		RetryLogic:                  retryLogicPtr,
-		RetryDelaySeconds:           ToPointer(domain.RetryDelaySeconds),
-		ResponseTimeoutSeconds:      ToPointer(responseTimeoutSeconds),
-		ConcurrentExecLimit:         ToPointer(domain.ConcurrentExecLimit),
+		RetryDelaySeconds:           ToPointerIfNotZero(domain.RetryDelaySeconds),
+		ResponseTimeoutSeconds:      ToPointerIfNotZero(responseTimeoutSeconds),
+		ConcurrentExecLimit:         ToPointerIfNotZero(domain.ConcurrentExecLimit),
 		InputTemplate:               domain.InputTemplate,
-		RateLimitPerFrequency:       ToPointer(domain.RateLimitPerFrequency),
-		RateLimitFrequencyInSeconds: ToPointer(domain.RateLimitFrequencyInSeconds),
-		IsolationGroupId:            ToPointer(domain.IsolationGroupId),
-		ExecutionNameSpace:          ToPointer(domain.ExecutionNameSpace),
-		OwnerEmail:                  ToPointer(domain.OwnerEmail),
-		PollTimeoutSeconds:          ToPointer(domain.PollTimeoutSeconds),
-		BackoffScaleFactor:          ToPointer(backoffScaleFactor),
+		RateLimitPerFrequency:       ToPointerIfNotZero(domain.RateLimitPerFrequency),
+		RateLimitFrequencyInSeconds: ToPointerIfNotZero(domain.RateLimitFrequencyInSeconds),
+		IsolationGroupId:            ToPointerIfNotEmptyString(domain.IsolationGroupId),
+		ExecutionNameSpace:          ToPointerIfNotEmptyString(domain.ExecutionNameSpace),
+		OwnerEmail:                  ToPointerIfNotEmptyString(domain.OwnerEmail),
+		PollTimeoutSeconds:          ToPointerIfNotZero(domain.PollTimeoutSeconds),
+		BackoffScaleFactor:          ToPointerIfNotZero(backoffScaleFactor),
 	}
 }
 
@@ -1291,11 +1291,11 @@ func toGeneratedPromptTemplateTestRequest(req *model.PromptTemplateTestRequest) 
 		return nil
 	}
 	return &orkes.PromptTemplateTestRequest{
-		Prompt:          ToPointer(req.Prompt),
-		LlmProvider:     ToPointer(req.LlmProvider),
-		Model:           ToPointer(req.Model),
-		Temperature:     ToPointer(req.Temperature),
-		TopP:            ToPointer(req.TopP),
+		Prompt:          ToPointerIfNotEmptyString(req.Prompt),
+		LlmProvider:     ToPointerIfNotEmptyString(req.LlmProvider),
+		Model:           ToPointerIfNotEmptyString(req.Model),
+		Temperature:     ToPointerIfNotZero(req.Temperature),
+		TopP:            ToPointerIfNotZero(req.TopP),
 		PromptVariables: req.PromptVariables,
 	}
 }
@@ -1632,14 +1632,14 @@ func toGeneratedTaskResult(result *model.TaskResult) *orkes.TaskResult {
 	return &orkes.TaskResult{
 		WorkflowInstanceId:               result.WorkflowInstanceId,
 		TaskId:                           result.TaskId,
-		ReasonForIncompletion:            ToPointer(result.ReasonForIncompletion),
-		CallbackAfterSeconds:             ToPointer(result.CallbackAfterSeconds),
-		WorkerId:                         ToPointer(result.WorkerId),
-		Status:                           ToPointer(string(result.Status)),
+		ReasonForIncompletion:            ToPointerIfNotEmptyString(result.ReasonForIncompletion),
+		CallbackAfterSeconds:             ToPointerIfNotZero(result.CallbackAfterSeconds),
+		WorkerId:                         ToPointerIfNotEmptyString(result.WorkerId),
+		Status:                           ToPointerIfNotEmptyString(string(result.Status)),
 		OutputData:                       result.OutputData,
 		Logs:                             toGeneratedTaskExecLogs(result.Logs),
-		ExternalOutputPayloadStoragePath: ToPointer(result.ExternalOutputPayloadStoragePath),
-		SubWorkflowId:                    ToPointer(result.SubWorkflowId),
+		ExternalOutputPayloadStoragePath: ToPointerIfNotEmptyString(result.ExternalOutputPayloadStoragePath),
+		SubWorkflowId:                    ToPointerIfNotEmptyString(result.SubWorkflowId),
 	}
 }
 
@@ -1652,9 +1652,9 @@ func toGeneratedTaskExecLogs(logs []model.TaskExecLog) []orkes.TaskExecLog {
 	genLogs := make([]orkes.TaskExecLog, len(logs))
 	for i, log := range logs {
 		genLogs[i] = orkes.TaskExecLog{
-			Log:         ToPointer(log.Log),
-			TaskId:      ToPointer(log.TaskId),
-			CreatedTime: ToPointer(log.CreatedTime),
+			Log:         ToPointerIfNotEmptyString(log.Log),
+			TaskId:      ToPointerIfNotEmptyString(log.TaskId),
+			CreatedTime: ToPointerIfNotZero(log.CreatedTime),
 		}
 	}
 
@@ -1874,6 +1874,52 @@ func toDomainWorkflow(orkesWorkflow *orkes.Workflow) model.Workflow {
 	if orkesWorkflow.Output != nil {
 		domainWorkflow.Output = orkesWorkflow.Output
 	}
+	if orkesWorkflow.Event != nil {
+		domainWorkflow.Event = *orkesWorkflow.Event
+	}
+	if orkesWorkflow.ExternalInputPayloadStoragePath != nil {
+		domainWorkflow.ExternalInputPayloadStoragePath = *orkesWorkflow.ExternalInputPayloadStoragePath
+	}
+	if orkesWorkflow.ExternalOutputPayloadStoragePath != nil {
+		domainWorkflow.ExternalOutputPayloadStoragePath = *orkesWorkflow.ExternalOutputPayloadStoragePath
+	}
+	if orkesWorkflow.FailedReferenceTaskNames != nil {
+		domainWorkflow.FailedReferenceTaskNames = orkesWorkflow.FailedReferenceTaskNames
+	}
+	if orkesWorkflow.History != nil {
+		domainWorkflow.History = toDomainWorkflowsFromGenerated(orkesWorkflow.History)
+	}
+	if orkesWorkflow.IdempotencyKey != nil {
+		domainWorkflow.IdempotencyKey = *orkesWorkflow.IdempotencyKey
+	}
+	if orkesWorkflow.OwnerApp != nil {
+		domainWorkflow.OwnerApp = *orkesWorkflow.OwnerApp
+	}
+	if orkesWorkflow.ParentWorkflowId != nil {
+		domainWorkflow.ParentWorkflowId = *orkesWorkflow.ParentWorkflowId
+	}
+	if orkesWorkflow.ParentWorkflowTaskId != nil {
+		domainWorkflow.ParentWorkflowTaskId = *orkesWorkflow.ParentWorkflowTaskId
+	}
+	if orkesWorkflow.ReRunFromWorkflowId != nil {
+		domainWorkflow.ReRunFromWorkflowId = *orkesWorkflow.ReRunFromWorkflowId
+	}
+	if orkesWorkflow.ReasonForIncompletion != nil {
+		domainWorkflow.ReasonForIncompletion = *orkesWorkflow.ReasonForIncompletion
+	}
+	if orkesWorkflow.TaskToDomain != nil {
+		domainWorkflow.TaskToDomain = *orkesWorkflow.TaskToDomain
+	}
+	if orkesWorkflow.UpdatedBy != nil {
+		domainWorkflow.UpdatedBy = *orkesWorkflow.UpdatedBy
+	}
+	if orkesWorkflow.WorkflowName != nil {
+		domainWorkflow.WorkflowName = *orkesWorkflow.WorkflowName
+	}
+
+	if orkesWorkflow.WorkflowVersion != nil {
+		domainWorkflow.WorkflowVersion = *orkesWorkflow.WorkflowVersion
+	}
 
 	// Map variables
 	if orkesWorkflow.Variables != nil {
@@ -1889,6 +1935,20 @@ func toDomainWorkflow(orkesWorkflow *orkes.Workflow) model.Workflow {
 	if orkesWorkflow.WorkflowDefinition != nil {
 		wfDef := toDomainWorkflowDefFromGenerated(orkesWorkflow.WorkflowDefinition)
 		domainWorkflow.WorkflowDefinition = &wfDef
+	}
+
+	if orkesWorkflow.RateLimitKey != nil {
+		domainWorkflow.RateLimitKey = *orkesWorkflow.RateLimitKey
+	}
+	if orkesWorkflow.RateLimited != nil {
+		domainWorkflow.RateLimited = *orkesWorkflow.RateLimited
+	}
+
+	if orkesWorkflow.LastRetriedTime != nil {
+		domainWorkflow.LastRetriedTime = *orkesWorkflow.LastRetriedTime
+	}
+	if orkesWorkflow.FailedTaskNames != nil {
+		domainWorkflow.FailedTaskNames = orkesWorkflow.FailedTaskNames
 	}
 
 	return domainWorkflow
@@ -1927,6 +1987,22 @@ func toDomainWorkflowRun(orkesRun *orkes.WorkflowRun) model.WorkflowRun {
 
 		if orkesRun.Output != nil {
 			domainRun.Output = orkesRun.Output
+		}
+
+		if orkesRun.RequestId != nil {
+			domainRun.RequestId = *orkesRun.RequestId
+		}
+		if orkesRun.ResponseType != nil {
+			domainRun.ResponseType = model.ReturnStrategy(*orkesRun.ResponseType)
+		}
+		if orkesRun.TargetWorkflowId != nil {
+			domainRun.TargetWorkflowId = *orkesRun.TargetWorkflowId
+		}
+		if orkesRun.TargetWorkflowStatus != nil {
+			domainRun.TargetWorkflowStatus = model.WorkflowStatus(*orkesRun.TargetWorkflowStatus)
+		}
+		if orkesRun.Variables != nil {
+			domainRun.Variables = orkesRun.Variables
 		}
 
 		// Map tasks
@@ -2033,7 +2109,7 @@ func toGeneratedStartWorkflowRequestForExecute(domainRequest *model.StartWorkflo
 		orkesRequest.IdempotencyKey = &domainRequest.IdempotencyKey
 	}
 	if domainRequest.IdempotencyStrategy != "" {
-		strategy := string(domainRequest.IdempotencyStrategy)
+		strategy := domainRequest.IdempotencyStrategy.String()
 		orkesRequest.IdempotencyStrategy = &strategy
 	}
 	if domainRequest.CreatedBy != "" {
@@ -2540,9 +2616,9 @@ func toGeneratedServiceRegistry(domainRegistry *model.ServiceRegistry) *orkes.Se
 	}
 
 	serviceRegistry := &orkes.ServiceRegistry{
-		Name:       ToPointer(domainRegistry.Name),
-		ServiceURI: ToPointer(domainRegistry.ServiceURI),
-		Type:       ToPointer(domainRegistry.Type_),
+		Name:       ToPointerIfNotEmptyString(domainRegistry.Name),
+		ServiceURI: ToPointerIfNotEmptyString(domainRegistry.ServiceURI),
+		Type:       ToPointerIfNotEmptyString(domainRegistry.Type_),
 	}
 
 	if domainRegistry.Config != nil {
@@ -2566,15 +2642,15 @@ func toGeneratedServiceRegistryCircuitBreakerConfig(domainServiceRegistryCircuit
 	}
 
 	return &orkes.OrkesCircuitBreakerConfig{
-		AutomaticTransitionFromOpenToHalfOpenEnabled: ToPointer(domainServiceRegistryCircuitBreakerConfig.AutomaticTransitionFromOpenToHalfOpenEnabled),
-		FailureRateThreshold:                         ToPointer(domainServiceRegistryCircuitBreakerConfig.FailureRateThreshold),
-		MaxWaitDurationInHalfOpenState:               ToPointer(domainServiceRegistryCircuitBreakerConfig.MaxWaitDurationInHalfOpenState),
-		MinimumNumberOfCalls:                         ToPointer(domainServiceRegistryCircuitBreakerConfig.MinimumNumberOfCalls),
-		PermittedNumberOfCallsInHalfOpenState:        ToPointer(domainServiceRegistryCircuitBreakerConfig.PermittedNumberOfCallsInHalfOpenState),
-		SlidingWindowSize:                            ToPointer(domainServiceRegistryCircuitBreakerConfig.SlidingWindowSize),
-		SlowCallDurationThreshold:                    ToPointer(domainServiceRegistryCircuitBreakerConfig.SlowCallDurationThreshold),
-		SlowCallRateThreshold:                        ToPointer(domainServiceRegistryCircuitBreakerConfig.SlowCallRateThreshold),
-		WaitDurationInOpenState:                      ToPointer(domainServiceRegistryCircuitBreakerConfig.WaitDurationInOpenState),
+		AutomaticTransitionFromOpenToHalfOpenEnabled: ToPointerIfNotEmpty(domainServiceRegistryCircuitBreakerConfig.AutomaticTransitionFromOpenToHalfOpenEnabled),
+		FailureRateThreshold:                         ToPointerIfNotZero(domainServiceRegistryCircuitBreakerConfig.FailureRateThreshold),
+		MaxWaitDurationInHalfOpenState:               ToPointerIfNotZero(domainServiceRegistryCircuitBreakerConfig.MaxWaitDurationInHalfOpenState),
+		MinimumNumberOfCalls:                         ToPointerIfNotZero(domainServiceRegistryCircuitBreakerConfig.MinimumNumberOfCalls),
+		PermittedNumberOfCallsInHalfOpenState:        ToPointerIfNotZero(domainServiceRegistryCircuitBreakerConfig.PermittedNumberOfCallsInHalfOpenState),
+		SlidingWindowSize:                            ToPointerIfNotZero(domainServiceRegistryCircuitBreakerConfig.SlidingWindowSize),
+		SlowCallDurationThreshold:                    ToPointerIfNotZero(domainServiceRegistryCircuitBreakerConfig.SlowCallDurationThreshold),
+		SlowCallRateThreshold:                        ToPointerIfNotZero(domainServiceRegistryCircuitBreakerConfig.SlowCallRateThreshold),
+		WaitDurationInOpenState:                      ToPointerIfNotZero(domainServiceRegistryCircuitBreakerConfig.WaitDurationInOpenState),
 	}
 }
 
@@ -2592,12 +2668,12 @@ func toGeneratedServiceRegistryMethods(domainServiceRegistryMethods []model.Serv
 
 func toGeneratedServiceRegistryMethod(domainServiceRegistryMethod model.ServiceMethod) orkes.ServiceMethod {
 	return orkes.ServiceMethod{
-		Id:            ToPointer(domainServiceRegistryMethod.Id),
-		InputType:     ToPointer(domainServiceRegistryMethod.InputType),
-		MethodName:    ToPointer(domainServiceRegistryMethod.MethodName),
-		MethodType:    ToPointer(domainServiceRegistryMethod.MethodType),
-		OperationName: ToPointer(domainServiceRegistryMethod.OperationName),
-		OutputType:    ToPointer(domainServiceRegistryMethod.OutputType),
+		Id:            ToPointerIfNotEmpty(domainServiceRegistryMethod.Id),
+		InputType:     ToPointerIfNotEmptyString(domainServiceRegistryMethod.InputType),
+		MethodName:    ToPointerIfNotEmptyString(domainServiceRegistryMethod.MethodName),
+		MethodType:    ToPointerIfNotEmptyString(domainServiceRegistryMethod.MethodType),
+		OperationName: ToPointerIfNotEmptyString(domainServiceRegistryMethod.OperationName),
+		OutputType:    ToPointerIfNotEmptyString(domainServiceRegistryMethod.OutputType),
 		ExampleInput:  domainServiceRegistryMethod.ExampleInput,
 		RequestParams: toGeneratedServiceRegistryRequestParams(domainServiceRegistryMethod.RequestParams),
 	}
@@ -2605,9 +2681,9 @@ func toGeneratedServiceRegistryMethod(domainServiceRegistryMethod model.ServiceM
 
 func toGeneratedServiceRegistryRequestParam(domainServiceRegistryRequestParam model.RequestParam) orkes.RequestParam {
 	return orkes.RequestParam{
-		Name:     ToPointer(domainServiceRegistryRequestParam.Name),
-		Type:     ToPointer(domainServiceRegistryRequestParam.Type_),
-		Required: ToPointer(domainServiceRegistryRequestParam.Required),
+		Name:     ToPointerIfNotEmptyString(domainServiceRegistryRequestParam.Name),
+		Type:     ToPointerIfNotEmptyString(domainServiceRegistryRequestParam.Type_),
+		Required: ToPointerIfNotEmpty(domainServiceRegistryRequestParam.Required),
 		Schema:   toGeneratedSchema(domainServiceRegistryRequestParam.Schema),
 	}
 }
@@ -2630,8 +2706,8 @@ func toGeneratedSchema(domainSchema *model.Schema) *orkes.Schema {
 	}
 	return &orkes.Schema{
 		DefaultValue: convertToMapInterface(domainSchema.DefaultValue),
-		Format:       ToPointer(domainSchema.Format),
-		Type:         ToPointer(domainSchema.Type_),
+		Format:       ToPointerIfNotEmptyString(domainSchema.Format),
+		Type:         ToPointerIfNotEmptyString(domainSchema.Type_),
 	}
 }
 
@@ -2828,16 +2904,16 @@ func toGeneratedHumanTaskSearch(domain human.HumanTaskSearch) orkes.HumanTaskSea
 	assignees := make([]orkes.HumanTaskUser, 0, len(domain.Assignees))
 	for _, assignee := range domain.Assignees {
 		assignees = append(assignees, orkes.HumanTaskUser{
-			User:     ToPointer(assignee.User),
-			UserType: ToPointer(assignee.UserType),
+			User:     ToPointerIfNotEmptyString(assignee.User),
+			UserType: ToPointerIfNotEmptyString(assignee.UserType),
 		})
 	}
 
 	claimants := make([]orkes.HumanTaskUser, 0, len(domain.Claimants))
 	for _, claimant := range domain.Claimants {
 		claimants = append(claimants, orkes.HumanTaskUser{
-			User:     ToPointer(claimant.User),
-			UserType: ToPointer(claimant.UserType),
+			User:     ToPointerIfNotEmptyString(claimant.User),
+			UserType: ToPointerIfNotEmptyString(claimant.UserType),
 		})
 	}
 
@@ -2846,16 +2922,16 @@ func toGeneratedHumanTaskSearch(domain human.HumanTaskSearch) orkes.HumanTaskSea
 		Claimants:       claimants,
 		DefinitionNames: domain.DefinitionNames,
 		DisplayNames:    domain.DisplayNames,
-		FullTextQuery:   ToPointer(domain.FullTextQuery),
-		SearchType:      ToPointer(domain.SearchType),
-		Size:            ToPointer(domain.Size),
-		Start:           ToPointer(domain.Start),
+		FullTextQuery:   ToPointerIfNotEmptyString(domain.FullTextQuery),
+		SearchType:      ToPointerIfNotEmptyString(domain.SearchType),
+		Size:            ToPointerIfNotZero(domain.Size),
+		Start:           ToPointerIfNotZero(domain.Start),
 		States:          domain.States,
-		TaskInputQuery:  ToPointer(domain.TaskInputQuery),
-		TaskOutputQuery: ToPointer(domain.TaskOutputQuery),
+		TaskInputQuery:  ToPointerIfNotEmptyString(domain.TaskInputQuery),
+		TaskOutputQuery: ToPointerIfNotEmptyString(domain.TaskOutputQuery),
 		TaskRefNames:    domain.TaskRefNames,
-		UpdateEndTime:   ToPointer(domain.UpdateEndTime),
-		UpdateStartTime: ToPointer(domain.UpdateStartTime),
+		UpdateEndTime:   ToPointerIfNotZero(domain.UpdateEndTime),
+		UpdateStartTime: ToPointerIfNotZero(domain.UpdateStartTime),
 		WorkflowNames:   domain.WorkflowNames,
 	}
 }
@@ -3199,10 +3275,10 @@ func toDomainHumanTaskTemplates(genTemplates []orkes.HumanTaskTemplate) []human.
 // toGeneratedIntegrationUpdate converts domain IntegrationUpdate to generated IntegrationUpdate
 func toGeneratedIntegrationUpdate(update integration.IntegrationUpdate) orkes.IntegrationUpdate {
 	genUpdate := orkes.IntegrationUpdate{
-		Category:    ToPointer(update.Category),
-		Description: ToPointer(update.Description),
-		Type:        ToPointer(update.Type_),
-		Enabled:     ToPointer(update.Enabled),
+		Category:    ToPointerIfNotEmptyString(update.Category),
+		Description: ToPointerIfNotEmptyString(update.Description),
+		Type:        ToPointerIfNotEmptyString(update.Type_),
+		Enabled:     ToPointerIfNotEmpty(update.Enabled),
 	}
 
 	if update.Configuration != nil {
@@ -3220,8 +3296,8 @@ func toGeneratedIntegrationUpdate(update integration.IntegrationUpdate) orkes.In
 // toGeneratedIntegrationApiUpdate converts domain IntegrationApiUpdate to generated IntegrationApiUpdate
 func toGeneratedIntegrationApiUpdate(update integration.IntegrationApiUpdate) orkes.IntegrationApiUpdate {
 	genUpdate := orkes.IntegrationApiUpdate{
-		Enabled:     ToPointer(update.Enabled),
-		Description: ToPointer(update.Description),
+		Enabled:     ToPointerIfNotEmpty(update.Enabled),
+		Description: ToPointerIfNotEmptyString(update.Description),
 	}
 
 	if update.Configuration != nil {
@@ -3240,13 +3316,13 @@ func toGeneratedEventLogs(domainLogs []model.EventLog) []orkes.EventLog {
 	result := make([]orkes.EventLog, len(domainLogs))
 	for i, domainLog := range domainLogs {
 		result[i] = orkes.EventLog{
-			Id:          ToPointer(domainLog.Id),
-			EventType:   ToPointer(domainLog.EventType),
-			Event:       ToPointer(domainLog.Event),
-			CreatedAt:   ToPointer(domainLog.CreatedAt),
-			HandlerName: ToPointer(domainLog.HandlerName),
-			TaskId:      ToPointer(domainLog.TaskId),
-			WorkerId:    ToPointer(domainLog.WorkerId),
+			Id:          ToPointerIfNotEmptyString(domainLog.Id),
+			EventType:   ToPointerIfNotEmptyString(domainLog.EventType),
+			Event:       ToPointerIfNotEmptyString(domainLog.Event),
+			CreatedAt:   ToPointerIfNotZero(domainLog.CreatedAt),
+			HandlerName: ToPointerIfNotEmptyString(domainLog.HandlerName),
+			TaskId:      ToPointerIfNotEmptyString(domainLog.TaskId),
+			WorkerId:    ToPointerIfNotEmptyString(domainLog.WorkerId),
 		}
 	}
 	return result
@@ -3278,10 +3354,6 @@ func toExtendedWorkflowDef(domainDef *model.WorkflowDef) orkes.ExtendedWorkflowD
 
 	// Set timeout seconds with default if missing
 	timeoutSeconds := domainDef.TimeoutSeconds
-	if timeoutSeconds == 0 {
-		// Default to 60s if not provided to satisfy server requirement
-		timeoutSeconds = 60
-	}
 
 	var timeoutPolicyPtr *string
 	if domainDef.TimeoutPolicy != "" {
@@ -3294,24 +3366,33 @@ func toExtendedWorkflowDef(domainDef *model.WorkflowDef) orkes.ExtendedWorkflowD
 		schemaVersion = 2
 	}
 
+	var rateLimitConfig *orkes.RateLimitConfig
+	if domainDef.RateLimitConfig != nil {
+		rateLimitConfig = &orkes.RateLimitConfig{
+			RateLimitKey:        ToPointerIfNotEmptyString(domainDef.RateLimitConfig.RateLimitKey),
+			ConcurrentExecLimit: ToPointerIfNotZero(domainDef.RateLimitConfig.ConcurrentExecLimit),
+		}
+	}
+
 	return orkes.ExtendedWorkflowDef{
 		Name:                          domainDef.Name,
-		Description:                   ToPointer(domainDef.Description),
-		Version:                       ToPointer(domainDef.Version),
+		Description:                   ToPointerIfNotEmptyString(domainDef.Description),
+		Version:                       ToPointerIfNotZero(domainDef.Version),
 		Tasks:                         genTasks,
 		InputParameters:               domainDef.InputParameters,
 		OutputParameters:              domainDef.OutputParameters,
-		FailureWorkflow:               ToPointer(domainDef.FailureWorkflow),
-		SchemaVersion:                 ToPointer(int32(schemaVersion)),
-		OwnerEmail:                    ToPointer(domainDef.OwnerEmail),
+		FailureWorkflow:               ToPointerIfNotEmptyString(domainDef.FailureWorkflow),
+		SchemaVersion:                 ToPointerIfNotZero(int32(schemaVersion)),
+		OwnerEmail:                    ToPointerIfNotEmptyString(domainDef.OwnerEmail),
 		TimeoutPolicy:                 timeoutPolicyPtr,
 		TimeoutSeconds:                timeoutSeconds,
 		Variables:                     domainDef.Variables,
 		InputTemplate:                 domainDef.InputTemplate,
-		Restartable:                   ToPointer(domainDef.Restartable),
-		WorkflowStatusListenerEnabled: ToPointer(domainDef.WorkflowStatusListenerEnabled),
+		Restartable:                   ToPointerIfNotEmpty(domainDef.Restartable),
+		WorkflowStatusListenerEnabled: ToPointerIfNotEmpty(domainDef.WorkflowStatusListenerEnabled),
 		Tags:                          genTags,
-		OverwriteTags:                 ToPointer(domainDef.OverwriteTags),
+		OverwriteTags:                 &domainDef.OverwriteTags,
+		RateLimitConfig:               rateLimitConfig,
 	}
 }
 
@@ -3354,27 +3435,27 @@ func toExtendedTaskDef(domainDef *model.TaskDef) orkes.ExtendedTaskDef {
 
 	return orkes.ExtendedTaskDef{
 		Name:                        domainDef.Name,
-		Description:                 ToPointer(domainDef.Description),
-		RetryCount:                  ToPointer(domainDef.RetryCount),
+		Description:                 ToPointerIfNotEmptyString(domainDef.Description),
+		RetryCount:                  ToPointerIfNotZero(domainDef.RetryCount),
 		TimeoutSeconds:              domainDef.TimeoutSeconds,
 		TotalTimeoutSeconds:         domainDef.TimeoutSeconds, // Use same value for both
 		InputKeys:                   domainDef.InputKeys,
 		OutputKeys:                  domainDef.OutputKeys,
 		TimeoutPolicy:               timeoutPolicyPtr,
 		RetryLogic:                  retryLogicPtr,
-		RetryDelaySeconds:           ToPointer(domainDef.RetryDelaySeconds),
-		ResponseTimeoutSeconds:      ToPointer(responseTimeoutSeconds),
-		ConcurrentExecLimit:         ToPointer(domainDef.ConcurrentExecLimit),
+		RetryDelaySeconds:           ToPointerIfNotZero(domainDef.RetryDelaySeconds),
+		ResponseTimeoutSeconds:      ToPointerIfNotZero(responseTimeoutSeconds),
+		ConcurrentExecLimit:         ToPointerIfNotZero(domainDef.ConcurrentExecLimit),
 		InputTemplate:               domainDef.InputTemplate,
-		RateLimitPerFrequency:       ToPointer(domainDef.RateLimitPerFrequency),
-		RateLimitFrequencyInSeconds: ToPointer(domainDef.RateLimitFrequencyInSeconds),
-		IsolationGroupId:            ToPointer(domainDef.IsolationGroupId),
-		ExecutionNameSpace:          ToPointer(domainDef.ExecutionNameSpace),
-		OwnerEmail:                  ToPointer(domainDef.OwnerEmail),
-		PollTimeoutSeconds:          ToPointer(domainDef.PollTimeoutSeconds),
-		BackoffScaleFactor:          ToPointer(backoffScaleFactor),
+		RateLimitPerFrequency:       ToPointerIfNotZero(domainDef.RateLimitPerFrequency),
+		RateLimitFrequencyInSeconds: ToPointerIfNotZero(domainDef.RateLimitFrequencyInSeconds),
+		IsolationGroupId:            ToPointerIfNotEmptyString(domainDef.IsolationGroupId),
+		ExecutionNameSpace:          ToPointerIfNotEmptyString(domainDef.ExecutionNameSpace),
+		OwnerEmail:                  ToPointerIfNotEmptyString(domainDef.OwnerEmail),
+		PollTimeoutSeconds:          ToPointerIfNotZero(domainDef.PollTimeoutSeconds),
+		BackoffScaleFactor:          ToPointerIfNotZero(backoffScaleFactor),
 		Tags:                        genTags,
-		OverwriteTags:               ToPointer(domainDef.OverwriteTags),
+		OverwriteTags:               &domainDef.OverwriteTags,
 	}
 }
 
@@ -3391,8 +3472,8 @@ func toGeneratedTagsFromMetadataTags(metadataTags []model.MetadataTag) []orkes.T
 	result := make([]orkes.Tag, len(metadataTags))
 	for i, tag := range metadataTags {
 		result[i] = orkes.Tag{
-			Key:   ToPointer(tag.Key),
-			Value: ToPointer(tag.Value),
+			Key:   ToPointerIfNotEmptyString(tag.Key),
+			Value: ToPointerIfNotEmptyString(tag.Value),
 		}
 	}
 	return result
@@ -3426,7 +3507,7 @@ func toExtendedWorkflowDefWithTags(domainDef *model.WorkflowDef, tags []model.Me
 	// Add tags if provided
 	if len(tags) > 0 {
 		extDef.Tags = toGeneratedTagsFromMetadataTags(tags)
-		extDef.OverwriteTags = ToPointer(overwriteTags)
+		extDef.OverwriteTags = &overwriteTags
 	}
 
 	return extDef
@@ -3444,7 +3525,7 @@ func toExtendedTaskDefWithTags(domainDef *model.TaskDef, tags []model.MetadataTa
 	// Add tags if provided
 	if len(tags) > 0 {
 		extDef.Tags = toGeneratedTagsFromMetadataTags(tags)
-		extDef.OverwriteTags = ToPointer(overwriteTags)
+		extDef.OverwriteTags = &overwriteTags
 	}
 
 	return extDef
@@ -3857,8 +3938,8 @@ func toGeneratedWorkflowDefForConductor(domainWorkflow model.WorkflowDef) conduc
 		sv := domainWorkflow.SchemaVersion
 		result.SchemaVersion = &sv
 	}
-	result.Restartable = &domainWorkflow.Restartable
-	result.WorkflowStatusListenerEnabled = &domainWorkflow.WorkflowStatusListenerEnabled
+	result.Restartable = ToPointerIfNotEmpty(domainWorkflow.Restartable)
+	result.WorkflowStatusListenerEnabled = ToPointerIfNotEmpty(domainWorkflow.WorkflowStatusListenerEnabled)
 	if domainWorkflow.OwnerEmail != "" {
 		result.OwnerEmail = &domainWorkflow.OwnerEmail
 	}
@@ -4150,6 +4231,13 @@ func toGeneratedWorkflowDef(domain *model.WorkflowDef) *orkes.WorkflowDef {
 		gen.InputTemplate = domain.InputTemplate
 	}
 
+	if domain.RateLimitConfig != nil {
+		gen.RateLimitConfig = &orkes.RateLimitConfig{
+			RateLimitKey:        ToPointerIfNotEmptyString(domain.RateLimitConfig.RateLimitKey),
+			ConcurrentExecLimit: ToPointerIfNotZero(domain.RateLimitConfig.ConcurrentExecLimit),
+		}
+	}
+
 	return gen
 }
 
@@ -4424,6 +4512,14 @@ func toDomainWorkflowDefFromConductorGenerated(gen *conductor.WorkflowDef) *mode
 }
 
 // toDomainWorkflowsFromConductorGenerated converts []conductor.Workflow to []model.Workflow
+func toDomainWorkflowsFromGenerated(genWorkflows []orkes.Workflow) []model.Workflow {
+	domainWorkflows := make([]model.Workflow, len(genWorkflows))
+	for i, genWorkflow := range genWorkflows {
+		domainWorkflows[i] = toDomainWorkflow(&genWorkflow)
+	}
+	return domainWorkflows
+}
+
 func toDomainWorkflowsFromConductorGenerated(genWorkflows []conductor.Workflow) []model.Workflow {
 	if genWorkflows == nil {
 		return nil

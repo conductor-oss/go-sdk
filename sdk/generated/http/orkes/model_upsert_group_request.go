@@ -22,7 +22,7 @@ type UpsertGroupRequest struct {
 	// a default Map<TargetType, Set<Access> to share permissions, allowed target types: WORKFLOW_DEF, TASK_DEF, WORKFLOW_SCHEDULE
 	DefaultAccess *map[string][]string `json:"defaultAccess,omitempty"`
 	// A general description of the group
-	Description string   `json:"description"`
+	Description string   `json:"description,omitempty"`
 	Roles       []string `json:"roles,omitempty"`
 }
 

@@ -20,7 +20,7 @@ var _ MappedNullable = &StateChangeEvent{}
 // StateChangeEvent struct for StateChangeEvent
 type StateChangeEvent struct {
 	Payload map[string]interface{} `json:"payload,omitempty"`
-	Type    string                 `json:"type"`
+	Type    string                 `json:"type,omitempty"`
 }
 
 type _StateChangeEvent StateChangeEvent

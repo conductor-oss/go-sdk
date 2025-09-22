@@ -12,7 +12,6 @@ import (
 )
 
 func TestHumanTask_SearchWithRealTasks(t *testing.T) {
-	t.Skip("Skipping human task search test")
 	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
 	client := testdata.HumanTaskClient
 	ctx := context.Background()
@@ -43,7 +42,6 @@ func TestHumanTask_SearchWithRealTasks(t *testing.T) {
 }
 
 func TestHumanTask_Templates_ListEmpty(t *testing.T) {
-	t.Skip("Skipping human task templates list empty test")
 	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
 	client := testdata.HumanTaskClient
 	ctx := context.Background()
@@ -56,7 +54,6 @@ func TestHumanTask_Templates_ListEmpty(t *testing.T) {
 }
 
 func TestHumanTask_SaveTemplate_Roundtrip(t *testing.T) {
-	t.Skip("Skipping human task save template roundtrip test")
 	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
 	client := testdata.HumanTaskClient
 	ctx := context.Background()
@@ -81,7 +78,6 @@ func TestHumanTask_SaveTemplate_Roundtrip(t *testing.T) {
 
 // TestHumanTask_TemplateOperations tests template-related operations
 func TestHumanTask_TemplateOperations(t *testing.T) {
-	t.Skip("Skipping human task template operations test")
 	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
 	client := testdata.HumanTaskClient
 	ctx := context.Background()

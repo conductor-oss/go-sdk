@@ -23,12 +23,12 @@ type SchemaDef struct {
 	CreatedBy   *string                `json:"createdBy,omitempty"`
 	Data        map[string]interface{} `json:"data,omitempty"`
 	ExternalRef *string                `json:"externalRef,omitempty"`
-	Name        string                 `json:"name"`
+	Name        string                 `json:"name,omitempty"`
 	OwnerApp    *string                `json:"ownerApp,omitempty"`
-	Type        string                 `json:"type"`
+	Type        string                 `json:"type,omitempty"`
 	UpdateTime  *int64                 `json:"updateTime,omitempty"`
 	UpdatedBy   *string                `json:"updatedBy,omitempty"`
-	Version     int32                  `json:"version"`
+	Version     int32                  `json:"version,omitempty"`
 }
 
 type _SchemaDef SchemaDef

@@ -37,6 +37,7 @@ func NewMetadataResourceApiService(apiClient *APIClient) *MetadataResourceApiSer
 // RegisterWorkflowDef registers workflow definition
 func (a *MetadataResourceApiService) RegisterWorkflowDef(ctx context.Context, overwrite bool, body model.WorkflowDef) (*http.Response, error) {
 	extDef := toExtendedWorkflowDef(&body)
+
 	req := a.http_orkes.MetadataResourceAPI.Create(ctx).ExtendedWorkflowDef(extDef)
 	if overwrite {
 		req = req.Overwrite(overwrite)

@@ -6700,10 +6700,6 @@ components:
         nestedTypeCount:
           format: int32
           type: integer
-        nestedTypeList:
-          items:
-            $ref: '#/components/schemas/DescriptorProto'
-          type: array
         oneofDeclCount:
           format: int32
           type: integer

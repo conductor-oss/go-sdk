@@ -31,7 +31,7 @@ type TaskDef struct {
 	InputSchema                 *SchemaDef             `json:"inputSchema,omitempty"`
 	InputTemplate               map[string]interface{} `json:"inputTemplate,omitempty"`
 	IsolationGroupId            *string                `json:"isolationGroupId,omitempty"`
-	Name                        string                 `json:"name"`
+	Name                        string                 `json:"name,omitempty"`
 	OutputKeys                  []string               `json:"outputKeys,omitempty"`
 	OutputSchema                *SchemaDef             `json:"outputSchema,omitempty"`
 	OwnerApp                    *string                `json:"ownerApp,omitempty"`
@@ -44,8 +44,8 @@ type TaskDef struct {
 	RetryDelaySeconds           *int32                 `json:"retryDelaySeconds,omitempty"`
 	RetryLogic                  *string                `json:"retryLogic,omitempty"`
 	TimeoutPolicy               *string                `json:"timeoutPolicy,omitempty"`
-	TimeoutSeconds              int64                  `json:"timeoutSeconds"`
-	TotalTimeoutSeconds         int64                  `json:"totalTimeoutSeconds"`
+	TimeoutSeconds              int64                  `json:"timeoutSeconds,omitempty"`
+	TotalTimeoutSeconds         int64                  `json:"totalTimeoutSeconds,omitempty"`
 	UpdateTime                  *int64                 `json:"updateTime,omitempty"`
 	UpdatedBy                   *string                `json:"updatedBy,omitempty"`
 }

@@ -31,7 +31,7 @@ type ExtendedTaskDef struct {
 	InputSchema                 *SchemaDef             `json:"inputSchema,omitempty"`
 	InputTemplate               map[string]interface{} `json:"inputTemplate,omitempty"`
 	IsolationGroupId            *string                `json:"isolationGroupId,omitempty"`
-	Name                        string                 `json:"name"`
+	Name                        string                 `json:"name,omitempty"`
 	OutputKeys                  []string               `json:"outputKeys,omitempty"`
 	OutputSchema                *SchemaDef             `json:"outputSchema,omitempty"`
 	OverwriteTags               *bool                  `json:"overwriteTags,omitempty"`
@@ -46,8 +46,8 @@ type ExtendedTaskDef struct {
 	RetryLogic                  *string                `json:"retryLogic,omitempty"`
 	Tags                        []Tag                  `json:"tags,omitempty"`
 	TimeoutPolicy               *string                `json:"timeoutPolicy,omitempty"`
-	TimeoutSeconds              int64                  `json:"timeoutSeconds"`
-	TotalTimeoutSeconds         int64                  `json:"totalTimeoutSeconds"`
+	TimeoutSeconds              int64                  `json:"timeoutSeconds,omitempty"`
+	TotalTimeoutSeconds         int64                  `json:"totalTimeoutSeconds,omitempty"`
 	UpdateTime                  *int64                 `json:"updateTime,omitempty"`
 	UpdatedBy                   *string                `json:"updatedBy,omitempty"`
 }

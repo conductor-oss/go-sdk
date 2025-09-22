@@ -19,8 +19,8 @@ var _ MappedNullable = &IncomingBpmnFile{}
 
 // IncomingBpmnFile struct for IncomingBpmnFile
 type IncomingBpmnFile struct {
-	FileContent string `json:"fileContent"`
-	FileName    string `json:"fileName"`
+	FileContent string `json:"fileContent,omitempty"`
+	FileName    string `json:"fileName,omitempty"`
 }
 
 type _IncomingBpmnFile IncomingBpmnFile

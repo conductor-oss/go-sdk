@@ -40,9 +40,9 @@ type ExtendedWorkflowDef struct {
 	Restartable                   *bool                  `json:"restartable,omitempty"`
 	SchemaVersion                 *int32                 `json:"schemaVersion,omitempty"`
 	Tags                          []Tag                  `json:"tags,omitempty"`
-	Tasks                         []WorkflowTask         `json:"tasks"`
+	Tasks                         []WorkflowTask         `json:"tasks,omitempty"`
 	TimeoutPolicy                 *string                `json:"timeoutPolicy,omitempty"`
-	TimeoutSeconds                int64                  `json:"timeoutSeconds"`
+	TimeoutSeconds                int64                  `json:"timeoutSeconds,omitempty"`
 	UpdateTime                    *int64                 `json:"updateTime,omitempty"`
 	UpdatedBy                     *string                `json:"updatedBy,omitempty"`
 	Variables                     map[string]interface{} `json:"variables,omitempty"`

@@ -20,14 +20,14 @@ var _ MappedNullable = &SaveScheduleRequest{}
 // SaveScheduleRequest struct for SaveScheduleRequest
 type SaveScheduleRequest struct {
 	CreatedBy                   *string              `json:"createdBy,omitempty"`
-	CronExpression              string               `json:"cronExpression"`
+	CronExpression              string               `json:"cronExpression,omitempty"`
 	Description                 *string              `json:"description,omitempty"`
-	Name                        string               `json:"name"`
+	Name                        string               `json:"name,omitempty"`
 	Paused                      *bool                `json:"paused,omitempty"`
 	RunCatchupScheduleInstances *bool                `json:"runCatchupScheduleInstances,omitempty"`
 	ScheduleEndTime             *int64               `json:"scheduleEndTime,omitempty"`
 	ScheduleStartTime           *int64               `json:"scheduleStartTime,omitempty"`
-	StartWorkflowRequest        StartWorkflowRequest `json:"startWorkflowRequest"`
+	StartWorkflowRequest        StartWorkflowRequest `json:"startWorkflowRequest,omitempty"`
 	UpdatedBy                   *string              `json:"updatedBy,omitempty"`
 	ZoneId                      *string              `json:"zoneId,omitempty"`
 }

@@ -19,7 +19,7 @@ var _ MappedNullable = &SubjectRef{}
 
 // SubjectRef User, group or role which is granted/removed access
 type SubjectRef struct {
-	Id string `json:"id"`
+	Id string `json:"id,omitempty"`
 	// User, role or group
 	Type *string `json:"type,omitempty"`
 }

@@ -224,11 +224,21 @@ if command -v python3 &> /dev/null; then
     else
         echo -e "  ${YELLOW}⚠ Warning: fix_generated_code.py not found, skipping generated code fixes${NC}"
     fi
+
+    if [ -f "${SCRIPT_DIR}/add_omitempty_to_all_fields.py" ]; then
+        if python3 "${SCRIPT_DIR}/add_omitempty_to_all_fields.py" "${OUTPUT_DIR}" --verbose; then
+            echo -e "  ${GREEN}✓ Added omitempty tags to all fields successfully${NC}"
+        else
+            echo -e "  ${YELLOW}⚠ Warning: Failed to add omitempty tags${NC}"
+        fi
+    fi
+
 else
     echo -e "  ${YELLOW}⚠ Warning: Python3 not found, skipping post-processing${NC}"
     echo "  You can manually run:"
     echo "    python3 ${SCRIPT_DIR}/fix_map_types.py ${OUTPUT_DIR}"
     echo "    python3 ${SCRIPT_DIR}/fix_generated_code.py ${OUTPUT_DIR}"
+    echo "    python3 ${SCRIPT_DIR}/add_omitempty_to_all_fields.py ${OUTPUT_DIR}"
 fi
 
 # ========================================================================

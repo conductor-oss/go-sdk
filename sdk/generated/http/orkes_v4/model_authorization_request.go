@@ -19,11 +19,11 @@ var _ MappedNullable = &AuthorizationRequest{}
 
 // AuthorizationRequest struct for AuthorizationRequest
 type AuthorizationRequest struct {
-	Access []string `json:"access"`
+	Access []string `json:"access,omitempty"`
 	// User, group or role which is granted/removed access
-	Subject SubjectRef `json:"subject"`
+	Subject SubjectRef `json:"subject,omitempty"`
 	// The object over which access is being granted or removed
-	Target TargetRef `json:"target"`
+	Target TargetRef `json:"target,omitempty"`
 }
 
 type _AuthorizationRequest AuthorizationRequest

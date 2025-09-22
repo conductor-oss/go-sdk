@@ -20,7 +20,7 @@ var _ MappedNullable = &ConnectivityTestInput{}
 // ConnectivityTestInput struct for ConnectivityTestInput
 type ConnectivityTestInput struct {
 	Input map[string]interface{} `json:"input,omitempty"`
-	Sink  string                 `json:"sink"`
+	Sink  string                 `json:"sink,omitempty"`
 }
 
 type _ConnectivityTestInput ConnectivityTestInput

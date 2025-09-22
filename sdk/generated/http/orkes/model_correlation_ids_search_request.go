@@ -19,8 +19,8 @@ var _ MappedNullable = &CorrelationIdsSearchRequest{}
 
 // CorrelationIdsSearchRequest struct for CorrelationIdsSearchRequest
 type CorrelationIdsSearchRequest struct {
-	CorrelationIds []string `json:"correlationIds"`
-	WorkflowNames  []string `json:"workflowNames"`
+	CorrelationIds []string `json:"correlationIds,omitempty"`
+	WorkflowNames  []string `json:"workflowNames,omitempty"`
 }
 
 type _CorrelationIdsSearchRequest CorrelationIdsSearchRequest

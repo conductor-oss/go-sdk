@@ -41,7 +41,6 @@ type DescriptorProtoOrBuilder struct {
 	Name                        *string                         `json:"name,omitempty"`
 	NameBytes                   *ByteString                     `json:"nameBytes,omitempty"`
 	NestedTypeCount             *int32                          `json:"nestedTypeCount,omitempty"`
-	NestedTypeList              []map[string]interface{}        `json:"nestedTypeList,omitempty"`
 	OneofDeclCount              *int32                          `json:"oneofDeclCount,omitempty"`
 	OneofDeclList               []map[string]interface{}        `json:"oneofDeclList,omitempty"`
 	OneofDeclOrBuilderList      []OneofDescriptorProtoOrBuilder `json:"oneofDeclOrBuilderList,omitempty"`
@@ -716,38 +715,6 @@ func (o *DescriptorProtoOrBuilder) SetNestedTypeCount(v int32) {
 	o.NestedTypeCount = &v
 }
 
-// GetNestedTypeList returns the NestedTypeList field value if set, zero value otherwise.
-func (o *DescriptorProtoOrBuilder) GetNestedTypeList() []map[string]interface{} {
-	if o == nil || IsNil(o.NestedTypeList) {
-		var ret []map[string]interface{}
-		return ret
-	}
-	return o.NestedTypeList
-}
-
-// GetNestedTypeListOk returns a tuple with the NestedTypeList field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-func (o *DescriptorProtoOrBuilder) GetNestedTypeListOk() ([]map[string]interface{}, bool) {
-	if o == nil || IsNil(o.NestedTypeList) {
-		return nil, false
-	}
-	return o.NestedTypeList, true
-}
-
-// HasNestedTypeList returns a boolean if a field has been set.
-func (o *DescriptorProtoOrBuilder) HasNestedTypeList() bool {
-	if o != nil && !IsNil(o.NestedTypeList) {
-		return true
-	}
-
-	return false
-}
-
-// SetNestedTypeList gets a reference to the given []map[string]interface{} and assigns it to the NestedTypeList field.
-func (o *DescriptorProtoOrBuilder) SetNestedTypeList(v []map[string]interface{}) {
-	o.NestedTypeList = v
-}
-
 // GetOneofDeclCount returns the OneofDeclCount field value if set, zero value otherwise.
 func (o *DescriptorProtoOrBuilder) GetOneofDeclCount() int32 {
 	if o == nil || IsNil(o.OneofDeclCount) {
@@ -1169,9 +1136,6 @@ func (o DescriptorProtoOrBuilder) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.NestedTypeCount) {
 		toSerialize["nestedTypeCount"] = o.NestedTypeCount
-	}
-	if !IsNil(o.NestedTypeList) {
-		toSerialize["nestedTypeList"] = o.NestedTypeList
 	}
 	if !IsNil(o.OneofDeclCount) {
 		toSerialize["oneofDeclCount"] = o.OneofDeclCount

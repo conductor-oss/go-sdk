@@ -20,8 +20,8 @@ var _ MappedNullable = &GenerateTokenRequest{}
 // GenerateTokenRequest struct for GenerateTokenRequest
 type GenerateTokenRequest struct {
 	Expiration *int64 `json:"expiration,omitempty"`
-	KeyId      string `json:"keyId"`
-	KeySecret  string `json:"keySecret"`
+	KeyId      string `json:"keyId,omitempty"`
+	KeySecret  string `json:"keySecret,omitempty"`
 }
 
 type _GenerateTokenRequest GenerateTokenRequest

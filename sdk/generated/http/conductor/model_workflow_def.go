@@ -24,10 +24,10 @@ type WorkflowDef struct {
 	UpdateTime                    *int64                 `json:"updateTime,omitempty"`
 	CreatedBy                     *string                `json:"createdBy,omitempty"`
 	UpdatedBy                     *string                `json:"updatedBy,omitempty"`
-	Name                          string                 `json:"name"`
+	Name                          string                 `json:"name,omitempty"`
 	Description                   *string                `json:"description,omitempty"`
 	Version                       *int32                 `json:"version,omitempty"`
-	Tasks                         []WorkflowTask         `json:"tasks"`
+	Tasks                         []WorkflowTask         `json:"tasks,omitempty"`
 	InputParameters               []string               `json:"inputParameters,omitempty"`
 	OutputParameters              map[string]interface{} `json:"outputParameters,omitempty"`
 	FailureWorkflow               *string                `json:"failureWorkflow,omitempty"`
@@ -36,7 +36,7 @@ type WorkflowDef struct {
 	WorkflowStatusListenerEnabled *bool                  `json:"workflowStatusListenerEnabled,omitempty"`
 	OwnerEmail                    *string                `json:"ownerEmail,omitempty"`
 	TimeoutPolicy                 *string                `json:"timeoutPolicy,omitempty"`
-	TimeoutSeconds                int64                  `json:"timeoutSeconds"`
+	TimeoutSeconds                int64                  `json:"timeoutSeconds,omitempty"`
 	Variables                     map[string]interface{} `json:"variables,omitempty"`
 	InputTemplate                 map[string]interface{} `json:"inputTemplate,omitempty"`
 	WorkflowStatusListenerSink    *string                `json:"workflowStatusListenerSink,omitempty"`

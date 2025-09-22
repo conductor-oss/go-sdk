@@ -44,8 +44,8 @@ type TaskDef struct {
 	RetryDelaySeconds           *int32                 `json:"retryDelaySeconds,omitempty"`
 	RetryLogic                  *string                `json:"retryLogic,omitempty"`
 	TimeoutPolicy               *string                `json:"timeoutPolicy,omitempty"`
-	TimeoutSeconds              int64                  `json:"timeoutSeconds"`
-	TotalTimeoutSeconds         int64                  `json:"totalTimeoutSeconds"`
+	TimeoutSeconds              int64                  `json:"timeoutSeconds,omitempty"`
+	TotalTimeoutSeconds         int64                  `json:"totalTimeoutSeconds,omitempty"`
 	UpdateTime                  *int64                 `json:"updateTime,omitempty"`
 	UpdatedBy                   *string                `json:"updatedBy,omitempty"`
 }

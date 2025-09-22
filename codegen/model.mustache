@@ -39,7 +39,7 @@ package model
             {{#description}}
                 // {{{description}}}
             {{/description}}
-            {{name}} {{^isEnum}}{{^isPrimitiveType}}{{^isContainer}}{{^isDateTime}}*{{/isDateTime}}{{/isContainer}}{{/isPrimitiveType}}{{/isEnum}}{{{datatype}}} `json:"{{baseName}}{{^required}},omitempty{{/required}}"{{#withXml}} xml:"{{baseName}}"{{/withXml}}`
+            {{name}} {{^isEnum}}{{^isPrimitiveType}}{{^isContainer}}{{^isDateTime}}*{{/isDateTime}}{{/isContainer}}{{/isPrimitiveType}}{{/isEnum}}{{{datatype}}} `json:"{{baseName}},omitempty"{{#withXml}} xml:"{{baseName}}"{{/withXml}}`
         {{/vars}}
     {{/isComposedModel}}
     }{{/isEnum}}{{/model}}{{/models}}

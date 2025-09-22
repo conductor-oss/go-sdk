@@ -21,14 +21,14 @@ var _ MappedNullable = &HumanTaskTemplate{}
 type HumanTaskTemplate struct {
 	CreateTime *int64                 `json:"createTime,omitempty"`
 	CreatedBy  *string                `json:"createdBy,omitempty"`
-	JsonSchema map[string]interface{} `json:"jsonSchema"`
-	Name       string                 `json:"name"`
+	JsonSchema map[string]interface{} `json:"jsonSchema,omitempty"`
+	Name       string                 `json:"name,omitempty"`
 	OwnerApp   *string                `json:"ownerApp,omitempty"`
 	Tags       []Tag                  `json:"tags,omitempty"`
-	TemplateUI map[string]interface{} `json:"templateUI"`
+	TemplateUI map[string]interface{} `json:"templateUI,omitempty"`
 	UpdateTime *int64                 `json:"updateTime,omitempty"`
 	UpdatedBy  *string                `json:"updatedBy,omitempty"`
-	Version    int32                  `json:"version"`
+	Version    int32                  `json:"version,omitempty"`
 }
 
 type _HumanTaskTemplate HumanTaskTemplate

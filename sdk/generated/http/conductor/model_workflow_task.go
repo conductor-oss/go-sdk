@@ -19,8 +19,8 @@ var _ MappedNullable = &WorkflowTask{}
 
 // WorkflowTask struct for WorkflowTask
 type WorkflowTask struct {
-	Name                 string                 `json:"name"`
-	TaskReferenceName    string                 `json:"taskReferenceName"`
+	Name                 string                 `json:"name,omitempty"`
+	TaskReferenceName    string                 `json:"taskReferenceName,omitempty"`
 	Description          *string                `json:"description,omitempty"`
 	InputParameters      map[string]interface{} `json:"inputParameters,omitempty"`
 	Type                 *string                `json:"type,omitempty"`

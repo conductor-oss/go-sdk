@@ -25,7 +25,7 @@ type WorkflowTestRequest struct {
 	IdempotencyKey                  *string                        `json:"idempotencyKey,omitempty"`
 	IdempotencyStrategy             *string                        `json:"idempotencyStrategy,omitempty"`
 	Input                           map[string]interface{}         `json:"input,omitempty"`
-	Name                            string                         `json:"name"`
+	Name                            string                         `json:"name,omitempty"`
 	Priority                        *int32                         `json:"priority,omitempty"`
 	SubWorkflowTestRequest          map[string]WorkflowTestRequest `json:"subWorkflowTestRequest,omitempty"`
 	TaskRefToMockOutput             map[string]interface{}         `json:"taskRefToMockOutput,omitempty"`

@@ -27,7 +27,7 @@ type SaveScheduleRequest struct {
 	RunCatchupScheduleInstances *bool                `json:"runCatchupScheduleInstances,omitempty"`
 	ScheduleEndTime             *int64               `json:"scheduleEndTime,omitempty"`
 	ScheduleStartTime           *int64               `json:"scheduleStartTime,omitempty"`
-	StartWorkflowRequest        StartWorkflowRequest `json:"startWorkflowRequest"`
+	StartWorkflowRequest        StartWorkflowRequest `json:"startWorkflowRequest,omitempty"`
 	UpdatedBy                   *string              `json:"updatedBy,omitempty"`
 	ZoneId                      *string              `json:"zoneId,omitempty"`
 }

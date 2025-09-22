@@ -46,8 +46,8 @@ type ExtendedTaskDef struct {
 	RetryLogic                  *string                `json:"retryLogic,omitempty"`
 	Tags                        []Tag                  `json:"tags,omitempty"`
 	TimeoutPolicy               *string                `json:"timeoutPolicy,omitempty"`
-	TimeoutSeconds              int64                  `json:"timeoutSeconds"`
-	TotalTimeoutSeconds         int64                  `json:"totalTimeoutSeconds"`
+	TimeoutSeconds              int64                  `json:"timeoutSeconds,omitempty"`
+	TotalTimeoutSeconds         int64                  `json:"totalTimeoutSeconds,omitempty"`
 	UpdateTime                  *int64                 `json:"updateTime,omitempty"`
 	UpdatedBy                   *string                `json:"updatedBy,omitempty"`
 }

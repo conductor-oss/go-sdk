@@ -24,10 +24,10 @@ type TaskDef struct {
 	UpdateTime                  *int64                 `json:"updateTime,omitempty"`
 	CreatedBy                   *string                `json:"createdBy,omitempty"`
 	UpdatedBy                   *string                `json:"updatedBy,omitempty"`
-	Name                        string                 `json:"name"`
+	Name                        string                 `json:"name,omitempty"`
 	Description                 *string                `json:"description,omitempty"`
 	RetryCount                  *int32                 `json:"retryCount,omitempty"`
-	TimeoutSeconds              int64                  `json:"timeoutSeconds"`
+	TimeoutSeconds              int64                  `json:"timeoutSeconds,omitempty"`
 	InputKeys                   []string               `json:"inputKeys,omitempty"`
 	OutputKeys                  []string               `json:"outputKeys,omitempty"`
 	TimeoutPolicy               *string                `json:"timeoutPolicy,omitempty"`
@@ -44,7 +44,7 @@ type TaskDef struct {
 	PollTimeoutSeconds          *int32                 `json:"pollTimeoutSeconds,omitempty"`
 	BackoffScaleFactor          *int32                 `json:"backoffScaleFactor,omitempty"`
 	BaseType                    *string                `json:"baseType,omitempty"`
-	TotalTimeoutSeconds         int64                  `json:"totalTimeoutSeconds"`
+	TotalTimeoutSeconds         int64                  `json:"totalTimeoutSeconds,omitempty"`
 	InputSchema                 *SchemaDef             `json:"inputSchema,omitempty"`
 	OutputSchema                *SchemaDef             `json:"outputSchema,omitempty"`
 	EnforceSchema               *bool                  `json:"enforceSchema,omitempty"`

@@ -19,7 +19,7 @@ var _ MappedNullable = &StartWorkflowRequest{}
 
 // StartWorkflowRequest struct for StartWorkflowRequest
 type StartWorkflowRequest struct {
-	Name                            string                 `json:"name"`
+	Name                            string                 `json:"name,omitempty"`
 	Version                         *int32                 `json:"version,omitempty"`
 	CorrelationId                   *string                `json:"correlationId,omitempty"`
 	Input                           map[string]interface{} `json:"input,omitempty"`

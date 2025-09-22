@@ -19,8 +19,8 @@ var _ MappedNullable = &TaskResult{}
 
 // TaskResult struct for TaskResult
 type TaskResult struct {
-	WorkflowInstanceId               string                 `json:"workflowInstanceId"`
-	TaskId                           string                 `json:"taskId"`
+	WorkflowInstanceId               string                 `json:"workflowInstanceId,omitempty"`
+	TaskId                           string                 `json:"taskId,omitempty"`
 	ReasonForIncompletion            *string                `json:"reasonForIncompletion,omitempty"`
 	CallbackAfterSeconds             *int64                 `json:"callbackAfterSeconds,omitempty"`
 	WorkerId                         *string                `json:"workerId,omitempty"`

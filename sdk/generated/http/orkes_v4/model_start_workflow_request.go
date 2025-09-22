@@ -25,7 +25,7 @@ type StartWorkflowRequest struct {
 	IdempotencyKey                  *string                `json:"idempotencyKey,omitempty"`
 	IdempotencyStrategy             *string                `json:"idempotencyStrategy,omitempty"`
 	Input                           map[string]interface{} `json:"input,omitempty"`
-	Name                            string                 `json:"name"`
+	Name                            string                 `json:"name,omitempty"`
 	Priority                        *int32                 `json:"priority,omitempty"`
 	TaskToDomain                    map[string]string      `json:"taskToDomain,omitempty"`
 	Version                         *int32                 `json:"version,omitempty"`

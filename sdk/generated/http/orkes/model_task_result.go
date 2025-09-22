@@ -27,9 +27,9 @@ type TaskResult struct {
 	ReasonForIncompletion            *string                `json:"reasonForIncompletion,omitempty"`
 	Status                           *string                `json:"status,omitempty"`
 	SubWorkflowId                    *string                `json:"subWorkflowId,omitempty"`
-	TaskId                           string                 `json:"taskId"`
+	TaskId                           string                 `json:"taskId,omitempty"`
 	WorkerId                         *string                `json:"workerId,omitempty"`
-	WorkflowInstanceId               string                 `json:"workflowInstanceId"`
+	WorkflowInstanceId               string                 `json:"workflowInstanceId,omitempty"`
 }
 
 type _TaskResult TaskResult

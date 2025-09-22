@@ -42,7 +42,7 @@ type WorkflowTask struct {
 	JoinStatus                     *string                        `json:"joinStatus,omitempty"`
 	LoopCondition                  *string                        `json:"loopCondition,omitempty"`
 	LoopOver                       []WorkflowTask                 `json:"loopOver,omitempty"`
-	Name                           string                         `json:"name"`
+	Name                           string                         `json:"name,omitempty"`
 	OnStateChange                  *map[string][]StateChangeEvent `json:"onStateChange,omitempty"`
 	Optional                       *bool                          `json:"optional,omitempty"`
 	Permissive                     *bool                          `json:"permissive,omitempty"`
@@ -53,7 +53,7 @@ type WorkflowTask struct {
 	StartDelay                     *int32                         `json:"startDelay,omitempty"`
 	SubWorkflowParam               *SubWorkflowParams             `json:"subWorkflowParam,omitempty"`
 	TaskDefinition                 *TaskDef                       `json:"taskDefinition,omitempty"`
-	TaskReferenceName              string                         `json:"taskReferenceName"`
+	TaskReferenceName              string                         `json:"taskReferenceName,omitempty"`
 	Type                           *string                        `json:"type,omitempty"`
 	WorkflowTaskType               *string                        `json:"workflowTaskType,omitempty"`
 }

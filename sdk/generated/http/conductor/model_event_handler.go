@@ -19,10 +19,10 @@ var _ MappedNullable = &EventHandler{}
 
 // EventHandler struct for EventHandler
 type EventHandler struct {
-	Name          string   `json:"name"`
-	Event         string   `json:"event"`
+	Name          string   `json:"name,omitempty"`
+	Event         string   `json:"event,omitempty"`
 	Condition     *string  `json:"condition,omitempty"`
-	Actions       []Action `json:"actions"`
+	Actions       []Action `json:"actions,omitempty"`
 	Active        *bool    `json:"active,omitempty"`
 	EvaluatorType *string  `json:"evaluatorType,omitempty"`
 }
