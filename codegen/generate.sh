@@ -254,7 +254,7 @@ echo -e "${YELLOW}🧪 Verifying build after post-processing...${NC}"
 # ========================================================================
 echo ""
 echo "============================================"
-echo "🗑️ Removing unused directories"
+echo "🗑️ Removing unused files and directories"
 echo "============================================"
 
 # Remove api, docs, and test directories
@@ -276,8 +276,30 @@ if [ -d "${OUTPUT_DIR}/test" ]; then
     echo -e "  ${GREEN}✓ Test directory removed${NC}"
 fi
 
+# Remove git_push.sh script
+if [ -f "${OUTPUT_DIR}/git_push.sh" ]; then
+    echo "  Removing ${OUTPUT_DIR}/git_push.sh file..."
+    rm -f "${OUTPUT_DIR}/git_push.sh"
+    echo -e "  ${GREEN}✓ git_push.sh removed${NC}"
+fi
+
+# Remove README.md file
+if [ -f "${OUTPUT_DIR}/README.md" ]; then
+    echo "  Removing ${OUTPUT_DIR}/README.md file..."
+    rm -f "${OUTPUT_DIR}/README.md"
+    echo -e "  ${GREEN}✓ README.md removed${NC}"
+fi
+
+# Remove .bak files
+BAK_FILES=$(find "${OUTPUT_DIR}" -name "*.bak" -type f | wc -l)
+if [ "$BAK_FILES" -gt 0 ]; then
+    echo "  Removing ${BAK_FILES} .bak files..."
+    find "${OUTPUT_DIR}" -name "*.bak" -type f -delete
+    echo -e "  ${GREEN}✓ .bak files removed${NC}"
+fi
+
 echo ""
-echo -e "${GREEN}✅ Unused directories removed successfully!${NC}"
+echo -e "${GREEN}✅ Unused files and directories removed successfully!${NC}"
 
 # Now try to build SDK
 if (cd "${PROJECT_ROOT}" && go build ./sdk/...); then
