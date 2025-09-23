@@ -63,6 +63,17 @@ echo -e "${YELLOW}📝 Step 1: Fixing OpenAPI specification...${NC}"
 cd "$SCRIPT_DIR"
 python3 "${SCRIPT_DIR}/fix_spec.py" "$INPUT_SPEC" "$FIXED_SPEC"
 
+# If client version is orkes_v4, filter the spec to include only Integration API
+if [ "$CLIENT_VERSION" == "orkes_v4" ]; then
+    echo -e "${YELLOW}📋 Filtering specification for orkes_v4 (Integration API only)...${NC}"
+    python3 "${SCRIPT_DIR}/filter_integration_api.py" "$FIXED_SPEC" "$FIXED_SPEC"
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}❌ Failed to filter specification${NC}"
+        exit 1
+    fi
+    echo -e "${GREEN}✓ Specification filtered successfully${NC}"
+fi
+
 # ========================================================================
 # STEP 2: CHECK DOCKER
 # ========================================================================

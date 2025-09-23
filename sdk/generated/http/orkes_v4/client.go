@@ -48,63 +48,7 @@ type APIClient struct {
 
 	// API Services
 
-	AdminResourceAPI AdminResourceAPI
-
-	ApplicationResourceAPI ApplicationResourceAPI
-
-	AuthorizationResourceAPI AuthorizationResourceAPI
-
-	EnvironmentResourceAPI EnvironmentResourceAPI
-
-	EventExecutionResourceAPI EventExecutionResourceAPI
-
-	EventMessageResourceAPI EventMessageResourceAPI
-
-	EventResourceAPI EventResourceAPI
-
-	GroupResourceAPI GroupResourceAPI
-
-	HealthCheckResourceAPI HealthCheckResourceAPI
-
-	IncomingWebhookResourceAPI IncomingWebhookResourceAPI
-
 	IntegrationResourceAPI IntegrationResourceAPI
-
-	LimitsResourceAPI LimitsResourceAPI
-
-	MetadataResourceAPI MetadataResourceAPI
-
-	MetricsResourceAPI MetricsResourceAPI
-
-	MetricsTokenResourceAPI MetricsTokenResourceAPI
-
-	PromptResourceAPI PromptResourceAPI
-
-	QueueAdminResourceAPI QueueAdminResourceAPI
-
-	SchedulerBulkResourceAPI SchedulerBulkResourceAPI
-
-	SchedulerResourceAPI SchedulerResourceAPI
-
-	SchemaResourceAPI SchemaResourceAPI
-
-	SecretResourceAPI SecretResourceAPI
-
-	TagsAPI TagsAPI
-
-	TaskResourceAPI TaskResourceAPI
-
-	TokenResourceAPI TokenResourceAPI
-
-	UserResourceAPI UserResourceAPI
-
-	VersionResourceAPI VersionResourceAPI
-
-	WebhooksConfigResourceAPI WebhooksConfigResourceAPI
-
-	WorkflowBulkResourceAPI WorkflowBulkResourceAPI
-
-	WorkflowResourceAPI WorkflowResourceAPI
 }
 
 type service struct {
@@ -123,35 +67,7 @@ func NewAPIClient(cfg *Configuration) *APIClient {
 	c.common.client = c
 
 	// API Services
-	c.AdminResourceAPI = (*AdminResourceAPIService)(&c.common)
-	c.ApplicationResourceAPI = (*ApplicationResourceAPIService)(&c.common)
-	c.AuthorizationResourceAPI = (*AuthorizationResourceAPIService)(&c.common)
-	c.EnvironmentResourceAPI = (*EnvironmentResourceAPIService)(&c.common)
-	c.EventExecutionResourceAPI = (*EventExecutionResourceAPIService)(&c.common)
-	c.EventMessageResourceAPI = (*EventMessageResourceAPIService)(&c.common)
-	c.EventResourceAPI = (*EventResourceAPIService)(&c.common)
-	c.GroupResourceAPI = (*GroupResourceAPIService)(&c.common)
-	c.HealthCheckResourceAPI = (*HealthCheckResourceAPIService)(&c.common)
-	c.IncomingWebhookResourceAPI = (*IncomingWebhookResourceAPIService)(&c.common)
 	c.IntegrationResourceAPI = (*IntegrationResourceAPIService)(&c.common)
-	c.LimitsResourceAPI = (*LimitsResourceAPIService)(&c.common)
-	c.MetadataResourceAPI = (*MetadataResourceAPIService)(&c.common)
-	c.MetricsResourceAPI = (*MetricsResourceAPIService)(&c.common)
-	c.MetricsTokenResourceAPI = (*MetricsTokenResourceAPIService)(&c.common)
-	c.PromptResourceAPI = (*PromptResourceAPIService)(&c.common)
-	c.QueueAdminResourceAPI = (*QueueAdminResourceAPIService)(&c.common)
-	c.SchedulerBulkResourceAPI = (*SchedulerBulkResourceAPIService)(&c.common)
-	c.SchedulerResourceAPI = (*SchedulerResourceAPIService)(&c.common)
-	c.SchemaResourceAPI = (*SchemaResourceAPIService)(&c.common)
-	c.SecretResourceAPI = (*SecretResourceAPIService)(&c.common)
-	c.TagsAPI = (*TagsAPIService)(&c.common)
-	c.TaskResourceAPI = (*TaskResourceAPIService)(&c.common)
-	c.TokenResourceAPI = (*TokenResourceAPIService)(&c.common)
-	c.UserResourceAPI = (*UserResourceAPIService)(&c.common)
-	c.VersionResourceAPI = (*VersionResourceAPIService)(&c.common)
-	c.WebhooksConfigResourceAPI = (*WebhooksConfigResourceAPIService)(&c.common)
-	c.WorkflowBulkResourceAPI = (*WorkflowBulkResourceAPIService)(&c.common)
-	c.WorkflowResourceAPI = (*WorkflowResourceAPIService)(&c.common)
 
 	return c
 }
