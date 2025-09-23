@@ -31,9 +31,10 @@ func TestConcurrentWorkflowExecution(t *testing.T) {
 
 	concurrentLimit := int32(3)
 	duration := 3 * time.Second
-	rateLimitKey := "concurrent_test" + uuid.New().String()
+	uuid := uuid.New().String()
+	rateLimitKey := "concurrent_test" + uuid
 	// Create workflow with strict concurrency limit
-	workflowName := fmt.Sprintf("TEST_GO_WORKFLOW_CONCURRENT_%d-%s", time.Now().Unix(), uuid.New().String())
+	workflowName := fmt.Sprintf("TEST_GO_WORKFLOW_CONCURRENT_%s", uuid)
 	wf := workflow.NewConductorWorkflow(testWorkflowExecutor).
 		Name(workflowName).
 		Version(1).
@@ -113,9 +114,10 @@ func TestPerCustomerRateLimit(t *testing.T) {
 	testWorkflowExecutor := testdata.WorkflowExecutor
 	concurrentLimit := int32(3)
 	duration := 3 * time.Second
+	uuid := uuid.New().String()
 
 	// Create workflow with per-customer rate limiting
-	workflowName := fmt.Sprintf("TEST_GO_WORKFLOW_CONCURRENT_CUSTOMER_%d", time.Now().Unix())
+	workflowName := fmt.Sprintf("TEST_GO_WORKFLOW_CONCURRENT_CUSTOMER_%s", uuid)
 	wf := workflow.NewConductorWorkflow(testWorkflowExecutor).
 		Name(workflowName).
 		Version(1).
@@ -135,7 +137,7 @@ func TestPerCustomerRateLimit(t *testing.T) {
 		WorkflowID string
 	}
 
-	customers := []string{"customer_A", "customer_B"}
+	customers := []string{"customer_A_" + uuid, "customer_B_" + uuid}
 	workflowsPerCustomer := 6
 
 	allWorkflows := make([]CustomerWorkflow, 0)
