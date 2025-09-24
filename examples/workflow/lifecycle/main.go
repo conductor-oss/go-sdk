@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/antihax/optional"
 	"github.com/conductor-sdk/conductor-go/sdk/client"
 	"github.com/conductor-sdk/conductor-go/sdk/log"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
@@ -34,8 +33,6 @@ func runLifecycleDemo() error {
 	// Initialize Conductor clients
 	apiClient := client.NewAPIClientFromEnv()
 	workflowExecutor := executor.NewWorkflowExecutor(apiClient)
-	workflowClient := client.NewWorkflowClient(apiClient)
-	taskClient := client.NewTaskClient(apiClient)
 
 	// Register workflows
 	if err := registerWorkflows(workflowExecutor); err != nil {
@@ -104,9 +101,7 @@ func runLifecycleDemo() error {
 
 	// 2. Check workflow status
 	logger.Info("=== 2. Checking workflow status ===")
-	time.Sleep(2 * time.Second)
-	wf, _, err := workflowClient.GetExecutionStatus(ctx, workflowId,
-		&client.WorkflowResourceApiGetExecutionStatusOpts{IncludeTasks: optional.NewBool(true)})
+	wf, err := workflowExecutor.GetWorkflowWithContext(ctx, workflowId, true)
 	if err != nil {
 		logger.Error("Failed to get workflow status", zap.Error(err))
 		return err
@@ -127,15 +122,14 @@ func runLifecycleDemo() error {
 
 	// 3. Pause workflow
 	logger.Info("=== 3. Pausing workflow ===")
-	if _, err := workflowClient.PauseWorkflow(ctx, workflowId); err != nil {
+	if err := workflowExecutor.PauseWithContext(ctx, workflowId); err != nil {
 		logger.Error("Failed to pause workflow", zap.Error(err))
 		return err
 	}
 
 	logger.Info("Paused workflow")
-	time.Sleep(2 * time.Second)
 
-	wf, _, err = workflowClient.GetExecutionStatus(ctx, workflowId, nil)
+	wf, err = workflowExecutor.GetWorkflowWithContext(ctx, workflowId, true)
 	if err != nil {
 		logger.Error("Failed to get workflow status", zap.Error(err))
 		return err
@@ -144,7 +138,7 @@ func runLifecycleDemo() error {
 
 	// 4. Resume workflow
 	logger.Info("=== 4. Resuming workflow ===")
-	if _, err := workflowClient.ResumeWorkflow(ctx, workflowId); err != nil {
+	if err := workflowExecutor.ResumeWithContext(ctx, workflowId); err != nil {
 		logger.Error("Failed to resume workflow", zap.Error(err))
 		return err
 	}
@@ -152,9 +146,7 @@ func runLifecycleDemo() error {
 
 	// 5. Complete wait task manually (if exists)
 	logger.Info("=== 5. Checking for wait tasks to complete ===")
-	time.Sleep(2 * time.Second)
-	wf, _, err = workflowClient.GetExecutionStatus(ctx, workflowId,
-		&client.WorkflowResourceApiGetExecutionStatusOpts{IncludeTasks: optional.NewBool(true)})
+	wf, err = workflowExecutor.GetWorkflowWithContext(ctx, workflowId, true)
 	if err != nil {
 		logger.Error("Failed to get workflow status", zap.Error(err))
 		return err
@@ -167,14 +159,14 @@ func runLifecycleDemo() error {
 			taskResult := &model.TaskResult{
 				WorkflowInstanceId: workflowId,
 				TaskId:             task.TaskId,
-				Status:             "COMPLETED",
+				Status:             model.CompletedTask,
 				OutputData: map[string]interface{}{
 					"completed_by":    "lifecycle_demo",
 					"completion_time": time.Now().Unix(),
 				},
 			}
 
-			if _, _, err := taskClient.UpdateTask(ctx, taskResult); err != nil {
+			if err := workflowExecutor.UpdateTaskWithContext(ctx, task.TaskId, task.WorkflowInstanceId, task.Status, taskResult.OutputData); err != nil {
 				logger.Error("Failed to complete wait task", zap.Error(err))
 				return err
 			}
@@ -184,63 +176,40 @@ func runLifecycleDemo() error {
 		}
 	}
 
-	// 6. Search workflows by correlation ID
-	logger.Info("=== 6. Searching workflows by correlation ID ===")
-	workflows, _, err := workflowClient.GetWorkflowsByCorrelationId(ctx, workflow.LifecycleWorkflowName, correlationId, nil)
-	if err != nil {
-		logger.Error("Failed to search by correlation ID", zap.Error(err))
-		return err
-	} else {
-		logger.Info("Found workflows by correlation ID",
-			zap.Int("count", len(workflows)),
-			zap.String("correlation_id", correlationId))
-		for _, wf := range workflows {
-			logger.Info("  - Workflow",
-				zap.String("id", wf.WorkflowId),
-				zap.String("status", string(wf.Status)))
-		}
-	}
-
-	// 7. Terminate workflow
-	logger.Info("=== 7. Terminating workflow ===")
-	if err := workflowExecutor.Terminate(workflowId, "Terminating for retry demo"); err != nil {
+	// 6. Terminate workflow
+	logger.Info("=== 6. Terminating workflow ===")
+	if err := workflowExecutor.TerminateWithContext(ctx, workflowId, "Terminating for retry demo"); err != nil {
 		logger.Error("Failed to terminate workflow", zap.Error(err))
 		return err
 	}
 	logger.Info("Terminated workflow")
 
-	// 8. Retry workflow
-	logger.Info("=== 8. Retrying workflow ===")
-	time.Sleep(2 * time.Second)
-	if _, err := workflowClient.Retry(ctx, workflowId, nil); err != nil {
+	// 7. Retry workflow
+	logger.Info("=== 7. Retrying workflow ===")
+	if err := workflowExecutor.RetryWithContext(ctx, workflowId, false); err != nil {
 		logger.Error("Failed to retry workflow", zap.Error(err))
 		return err
 	}
 	logger.Info("Retried workflow")
 
-	// Wait a bit and pause to prevent completion
-	time.Sleep(500 * time.Millisecond)
-
 	// Try to pause quickly to prevent full completion
 	logger.Info("Pausing workflow to prevent immediate completion")
-	if _, err := workflowClient.PauseWorkflow(ctx, workflowId); err != nil {
+	if err := workflowExecutor.PauseWithContext(ctx, workflowId); err != nil {
 		logger.Error("Failed to pause after retry", zap.Error(err))
 		return err
 	}
 
-	time.Sleep(500 * time.Millisecond)
-
-	wf, _, err = workflowClient.GetExecutionStatus(ctx, workflowId, nil)
+	wf, err = workflowExecutor.GetWorkflowWithContext(ctx, workflowId, true)
 	if err != nil {
 		logger.Error("Failed to get workflow status", zap.Error(err))
 		return err
 	}
 	logger.Info("Workflow status after retry", zap.String("status", string(wf.Status)))
 
-	// 9. Terminate again for restart demo
-	logger.Info("=== 9. Terminating for restart demo ===")
+	// 8. Terminate again for restart demo
+	logger.Info("=== 8. Terminating for restart demo ===")
 	// Check current status before trying to terminate
-	wf, _, err = workflowClient.GetExecutionStatus(ctx, workflowId, nil)
+	wf, err = workflowExecutor.GetWorkflowWithContext(ctx, workflowId, true)
 	if err != nil {
 		logger.Error("Failed to get workflow status", zap.Error(err))
 		return err
@@ -257,20 +226,17 @@ func runLifecycleDemo() error {
 		logger.Info("Terminated workflow for restart")
 	}
 
-	// 10. Restart workflow
-	logger.Info("=== 10. Restarting workflow ===")
-	time.Sleep(1 * time.Second)
-	if _, err := workflowClient.Restart(ctx, workflowId, nil); err != nil {
+	// 9. Restart workflow
+	logger.Info("=== 9. Restarting workflow ===")
+	if err := workflowExecutor.RestartWithContext(ctx, workflowId, false); err != nil {
 		logger.Error("Failed to restart workflow", zap.Error(err))
 		return err
 	}
 	logger.Info("Restarted workflow")
 
-	// 11. Rerun from specific task
-	logger.Info("=== 11. Checking for rerun capability ===")
-	time.Sleep(2 * time.Second)
-	wf, _, err = workflowClient.GetExecutionStatus(ctx, workflowId,
-		&client.WorkflowResourceApiGetExecutionStatusOpts{IncludeTasks: optional.NewBool(true)})
+	// 10. Rerun from specific task
+	logger.Info("=== 10. Checking for rerun capability ===")
+	wf, err = workflowExecutor.GetWorkflowWithContext(ctx, workflowId, true)
 	if err != nil {
 		logger.Error("Failed to get workflow status", zap.Error(err))
 		return err
@@ -286,28 +252,28 @@ func runLifecycleDemo() error {
 			ReRunFromTaskId: secondTask.TaskId,
 		}
 
-		if _, _, err := workflowClient.Rerun(ctx, rerunRequest, workflowId); err != nil {
+		if id, err := workflowExecutor.ReRunWithContext(ctx, workflowId, rerunRequest); err != nil {
 			logger.Error("Failed to rerun from task", zap.Error(err))
 			return err
+		} else {
+			logger.Info("Rerun initiated from task", zap.String("id", id))
 		}
 		logger.Info("Rerun initiated from task")
 	} else {
 		logger.Warn("No tasks found in workflow", zap.String("workflow_id", workflowId))
 	}
 
-	// 12. Final termination with failure workflow trigger
-	logger.Info("=== 12. Terminating with failure workflow trigger ===")
-	time.Sleep(2 * time.Second)
+	// 11. Final termination with failure workflow trigger
+	logger.Info("=== 11. Terminating with failure workflow trigger ===")
 	if err := workflowExecutor.TerminateWithFailure(workflowId, "Final termination with failure workflow", true); err != nil {
 		logger.Error("Failed to terminate with failure", zap.Error(err))
 		return err
 	}
 	logger.Info("Terminated with failure workflow trigger")
 
-	// 13. Check final status
-	logger.Info("=== 13. Final status check ===")
-	time.Sleep(3 * time.Second)
-	wf, _, err = workflowClient.GetExecutionStatus(ctx, workflowId, nil)
+	// 12. Check final status
+	logger.Info("=== 12. Final status check ===")
+	wf, err = workflowExecutor.GetWorkflowWithContext(ctx, workflowId, true)
 	if err != nil {
 		logger.Error("Failed to get final status", zap.Error(err))
 		return err
@@ -318,33 +284,11 @@ func runLifecycleDemo() error {
 		zap.String("status", string(wf.Status)),
 		zap.String("reason_for_incompletion", wf.ReasonForIncompletion))
 
-	// 14. Check if failure workflow was triggered
-	logger.Info("=== 14. Checking for failure workflow execution ===")
-	// Note: Failure workflows with simple tasks complete very quickly
-	// We check immediately, but they may have already finished
-	time.Sleep(1 * time.Second)
-
-	// First check for running failure workflows
-	failureWorkflows, _, err := workflowClient.GetRunningWorkflow(ctx, workflow.FailureWorkflowName, nil)
-	if err != nil {
-		logger.Warn("Failed to get running workflows", zap.Error(err))
-		logger.Info("Note: Failure workflow check may not be supported in all Conductor versions")
-	} else {
-		if len(failureWorkflows) > 0 {
-			logger.Info("Found RUNNING failure workflow(s)", zap.Int("count", len(failureWorkflows)))
-			for _, fwId := range failureWorkflows {
-				logger.Info("  - Failure workflow", zap.String("id", fwId))
-			}
-		} else {
-			logger.Warn("No running failure workflows found")
-		}
-	}
-
-	// 15. Demonstrate RemoveWorkflow API
-	logger.Info("=== 15. Demonstrating RemoveWorkflow API ===")
+	// 13. Demonstrate RemoveWorkflow API
+	logger.Info("=== 13. Demonstrating RemoveWorkflow API ===")
 
 	logger.Info("Checking status of existing workflow before removal", zap.String("workflow_id", workflowId))
-	wf, _, err = workflowClient.GetExecutionStatus(ctx, workflowId, nil)
+	wf, err = workflowExecutor.GetWorkflowWithContext(ctx, workflowId, true)
 	if err != nil {
 		logger.Error("Failed to get existing workflow status", zap.Error(err))
 		return err
@@ -362,10 +306,8 @@ func runLifecycleDemo() error {
 
 	logger.Info("Workflow is in terminal state and ready for removal")
 
-	// Now demonstrate RemoveWorkflow API
-
 	logger.Info("Removing existing workflow from execution history")
-	err = workflowExecutor.RemoveWorkflow(workflowId)
+	err = workflowExecutor.RemoveWorkflowWithContext(ctx, workflowId)
 	if err != nil {
 		logger.Error("Failed to remove workflow", zap.Error(err))
 		return err
@@ -374,7 +316,7 @@ func runLifecycleDemo() error {
 
 	// Verify removal - this should fail
 	logger.Info("Verifying workflow removal by attempting to retrieve it")
-	_, _, err = workflowClient.GetExecutionStatus(ctx, workflowId, nil)
+	_, err = workflowExecutor.GetWorkflowWithContext(ctx, workflowId, true)
 	if err != nil {
 		logger.Info("Workflow successfully removed from history - retrieval failed as expected",
 			zap.String("error", err.Error()))
@@ -383,7 +325,7 @@ func runLifecycleDemo() error {
 	}
 
 	// Wait for real-time monitoring to complete
-	logger.Info("=== 16. Waiting for real-time monitoring to complete ===")
+	logger.Info("=== 14. Waiting for real-time monitoring to complete ===")
 	select {
 	case <-monitoringComplete:
 		logger.Info("Real-time monitoring completed successfully")

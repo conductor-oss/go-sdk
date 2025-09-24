@@ -16,8 +16,6 @@ type ConductorService struct {
 	Logger           *zap.Logger
 	APIClient        *client.APIClient
 	WorkflowExecutor *executor.WorkflowExecutor
-	WorkflowClient   client.WorkflowClient
-	TaskClient       client.TaskClient
 	TaskRunner       *worker.TaskRunner
 }
 
@@ -40,16 +38,12 @@ func NewConductorService(logger *zap.Logger) (*ConductorService, error) {
 
 	// Create clients
 	workflowExecutor := executor.NewWorkflowExecutor(apiClient)
-	workflowClient := client.NewWorkflowClient(apiClient)
-	taskClient := client.NewTaskClient(apiClient)
 	taskRunner := worker.NewTaskRunnerWithApiClient(apiClient)
 
 	return &ConductorService{
 		Logger:           logger,
 		APIClient:        apiClient,
 		WorkflowExecutor: workflowExecutor,
-		WorkflowClient:   workflowClient,
-		TaskClient:       taskClient,
 		TaskRunner:       taskRunner,
 	}, nil
 }
