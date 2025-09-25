@@ -17,4 +17,5 @@ type EventHandler struct {
 	Active        bool     `json:"active,omitempty"`
 	Description   string   `json:"description,omitempty"`
 	EvaluatorType string   `json:"evaluatorType,omitempty"`
+	Tags          []Tag    `json:"tags,omitempty"`
 }
