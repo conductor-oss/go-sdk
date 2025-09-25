@@ -772,11 +772,9 @@ func TestSignal_AllStrategies_Comprehensive(t *testing.T) {
 			// ========== WORKFLOW-SPECIFIC VALIDATIONS ==========
 			if tc.shouldValidateWorkflowFields {
 				// Validate workflow status and timestamps (allow empty Status: fallback to TargetWorkflowStatus)
-				if resp.Status == "" {
-					assert.NotEmpty(t, resp.TargetWorkflowStatus, "TargetWorkflowStatus should not be empty when Status is empty")
-				} else {
-					assert.NotEmpty(t, resp.Status, "Status should not be empty")
-				}
+
+				assert.NotEmpty(t, resp.Status, "Status should not be empty")
+
 				assert.Greater(t, resp.CreateTime, int64(0), "CreateTime should be greater than 0")
 				assert.Greater(t, resp.UpdateTime, int64(0), "UpdateTime should be greater than 0")
 				assert.GreaterOrEqual(t, resp.UpdateTime, resp.CreateTime, "UpdateTime should be >= CreateTime")
@@ -804,7 +802,7 @@ func TestSignal_AllStrategies_Comprehensive(t *testing.T) {
 				assert.NotEmpty(t, resp.ReferenceTaskName, "ReferenceTaskName should not be empty")
 				assert.NotEmpty(t, resp.TaskDefName, "TaskDefName should not be empty")
 				assert.NotEmpty(t, resp.WorkflowType, "WorkflowType should not be empty")
-				// For blocking strategies, Status may be empty. Allow empty here.
+				assert.NotEmpty(t, resp.Status, "Status should not be empty")
 			}
 
 			// ========== HELPER METHOD VALIDATIONS ==========
@@ -814,13 +812,8 @@ func TestSignal_AllStrategies_Comprehensive(t *testing.T) {
 				assert.NoError(t, err, "GetWorkflow should not return an error")
 				assert.NotNil(t, workflowFromResp, "Workflow should not be nil")
 
-				// Validate workflow data matches response (use effective status)
-				effectiveStatus := resp.Status
-				if effectiveStatus == "" {
-					effectiveStatus = resp.TargetWorkflowStatus
-				}
 				assert.Equal(t, resp.WorkflowId, workflowFromResp.WorkflowId, "Workflow ID should match")
-				assert.Equal(t, effectiveStatus, workflowFromResp.Status, "Workflow status should match")
+				assert.Equal(t, resp.Status, workflowFromResp.Status, "Workflow status should match")
 				assert.Equal(t, resp.CreateTime, workflowFromResp.CreateTime, "Create time should match")
 				assert.Equal(t, resp.UpdateTime, workflowFromResp.UpdateTime, "Update time should match")
 				assert.Equal(t, resp.CreatedBy, workflowFromResp.CreatedBy, "Created by should match")

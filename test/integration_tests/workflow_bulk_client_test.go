@@ -76,8 +76,6 @@ func TestWorkflowBulkDelete(t *testing.T) {
 	assert.True(t, len(response.BulkErrorResults) == 0 || len(response.BulkErrorResults) <= len(workflowIds),
 		"Bulk error results should not exceed workflow count")
 
-	time.Sleep(1 * time.Second)
-
 	// Verify workflows are deleted
 	for _, id := range workflowIds {
 		_, err := testdata.WorkflowExecutor.GetWorkflow(id, false)

@@ -342,9 +342,6 @@ func TestRetryWorkflow(t *testing.T) {
 	assert.NoError(t, err, "Failed to wait for workflow termination")
 	assert.Equal(t, model.TerminatedWorkflow, terminatedWorkflow.Status, "Workflow should be terminated")
 
-	// Wait a moment before retrying
-	time.Sleep(1 * time.Second)
-
 	// Retry the workflow with all available options
 	retryOpts := &client.WorkflowResourceApiRetryOpts{
 		ResumeSubworkflowTasks: optional.NewBool(false),
@@ -893,8 +890,8 @@ func TestGetRunningWorkflow(t *testing.T) {
 		assert.NoError(t, err, "Failed to remove workflow definition")
 	})
 
-	// Wait for workflows to be running
-	time.Sleep(500 * time.Millisecond)
+	err = testdata.WaitForMultipleWorkflowsStatus(workflowIds, []model.WorkflowStatus{model.RunningWorkflow}, testdata.ExtendedValidationTimeout)
+	assert.NoError(t, err, "Failed to wait for workflows to be running")
 
 	// Test GetRunningWorkflow
 	opts := &client.WorkflowResourceApiGetRunningWorkflowOpts{
@@ -984,9 +981,6 @@ func TestGetWorkflowsBatch(t *testing.T) {
 	})
 	err = testdata.WaitForMultipleWorkflowsCompletion(workflowIds, testdata.WorkflowValidationTimeout)
 	assert.NoError(t, err, "Failed to wait for workflow completion")
-
-	// Wait for indexing
-	time.Sleep(500 * time.Millisecond)
 
 	// Test GetWorkflowsBatch - create a map with specific keys expected by the API
 	// The API expects a map with "workflowNames" and "correlationIds" as keys
@@ -1090,9 +1084,6 @@ func TestGetWorkflowsByCorrelationId(t *testing.T) {
 	// Wait for workflows to complete
 	err = testdata.WaitForMultipleWorkflowsCompletion(workflowIds, 30*time.Second)
 	assert.NoError(t, err, "Failed to wait for workflows completion")
-
-	// Wait a moment for the update to be reflected
-	time.Sleep(1 * time.Second)
 
 	// Test GetWorkflowsByCorrelationId
 	opts := &client.WorkflowResourceApiGetWorkflowsOpts{
@@ -1287,12 +1278,8 @@ func TestResetWorkflowCallbackTime(t *testing.T) {
 	_, _, err = testdata.TaskClient.UpdateTask(context.Background(), taskResult)
 	assert.NoError(t, err, "Failed to update task to IN_PROGRESS")
 
-	// Wait a moment for the update to be reflected
-	time.Sleep(500 * time.Millisecond)
-
-	// Get the updated workflow
-	workflowWithTasks, err = testdata.WorkflowExecutor.GetWorkflow(workflowId, true)
-	assert.NoError(t, err, "Failed to get workflow after task update")
+	workflowWithTasks, err = testdata.WaitForWorkflowStatus(workflowId, []model.WorkflowStatus{model.RunningWorkflow, model.CompletedWorkflow}, testdata.ExtendedValidationTimeout)
+	assert.NoError(t, err, "Failed to wait for workflow to be running or completed")
 
 	// Find the updated task
 	var taskBeforeReset *model.Task
@@ -1873,9 +1860,6 @@ func TestGetWorkflows(t *testing.T) {
 	// Wait for workflows to complete
 	err = testdata.WaitForMultipleWorkflowsCompletion(workflowIds, testdata.WorkflowValidationTimeout)
 	assert.NoError(t, err, "Failed to wait for workflow to complete")
-
-	// Wait a moment for the update to be reflected
-	time.Sleep(1 * time.Second)
 
 	// Test GetWorkflows with batch correlation IDs
 	opts := &client.WorkflowResourceApiGetWorkflowsOpts{

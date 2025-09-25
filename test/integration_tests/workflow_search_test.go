@@ -35,9 +35,6 @@ func TestWorkflowSearch(t *testing.T) {
 	err := testdata.WaitForMultipleWorkflowsCompletion([]string{workflowId1, workflowId2}, testdata.WorkflowValidationTimeout)
 	assert.NoError(t, err, "Failed to wait for workflows completion")
 
-	// Additional wait for search indexing
-	time.Sleep(5 * time.Second)
-
 	// Table-driven tests
 	tests := []struct {
 		name               string

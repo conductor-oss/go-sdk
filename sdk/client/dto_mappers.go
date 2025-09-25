@@ -4701,6 +4701,10 @@ func toDomainSignalResponseFromGenerated(gen *orkes.SignalResponse) model.Signal
 		}
 	}
 
+	if resp.Status == "" {
+		resp.Status = resp.TargetWorkflowStatus
+	}
+
 	resp.UpdateTime = gen.UpdateTime
 
 	// Task-specific fields for BLOCKING_TASK strategies
