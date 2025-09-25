@@ -60,7 +60,7 @@ func TestConcurrentWorkflowExecution(t *testing.T) {
 				"index": idx,
 			}
 			var id string
-			err := testdata.RetryWithBackoff(3, 500*time.Millisecond, func() error {
+			err := testdata.RetryTimeout(3, 500*time.Millisecond, func() error {
 				var startErr error
 				id, startErr = wf.StartWorkflowWithInput(input)
 				return startErr
@@ -163,7 +163,7 @@ func TestPerCustomerRateLimit(t *testing.T) {
 				}
 
 				var id string
-				err := testdata.RetryWithBackoff(3, 500*time.Millisecond, func() error {
+				err := testdata.RetryTimeout(3, 500*time.Millisecond, func() error {
 					var startErr error
 					id, startErr = wf.StartWorkflowWithInput(input)
 					return startErr
@@ -199,7 +199,7 @@ func TestPerCustomerRateLimit(t *testing.T) {
 
 		// Check if workflow complete
 		var execution *model.Workflow
-		err := testdata.RetryWithBackoff(3, 500*time.Millisecond, func() error {
+		err := testdata.RetryTimeout(3, 500*time.Millisecond, func() error {
 			var getErr error
 			execution, getErr = testWorkflowExecutor.GetWorkflow(cw.WorkflowID, true)
 			return getErr

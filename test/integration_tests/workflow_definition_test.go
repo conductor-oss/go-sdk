@@ -871,7 +871,7 @@ func TestGetRunningWorkflow(t *testing.T) {
 		}
 
 		workflowId, err := testdata.WorkflowExecutor.StartWorkflow(startRequest)
-		assert.NoError(t, err, "Failed to start workflow instance %d", i)
+		require.NoError(t, err, "Failed to start workflow instance %d", i)
 		workflowIds[i] = workflowId
 	}
 
@@ -900,7 +900,18 @@ func TestGetRunningWorkflow(t *testing.T) {
 		EndTime:   optional.NewInt64(time.Now().Add(1*time.Hour).Unix() * 1000),  // 1 hour from now
 	}
 
-	runningWorkflows, _, err := testdata.WorkflowClient.GetRunningWorkflow(context.Background(), wf.GetName(), opts)
+	var (
+		runningWorkflows []string
+	)
+	err = testdata.RetryCondition(3, 1*time.Second,
+		func() error {
+			runningWorkflows, _, err = testdata.WorkflowClient.GetRunningWorkflow(context.Background(), wf.GetName(), opts)
+			return err
+		},
+		func() bool {
+			return len(runningWorkflows) == numWorkflows
+		})
+
 	assert.NoError(t, err, "Failed to get running workflows")
 	assert.NotNil(t, runningWorkflows, "Running workflows result should not be nil")
 
@@ -992,12 +1003,22 @@ func TestGetWorkflowsBatch(t *testing.T) {
 		IncludeClosed: optional.NewBool(true),
 		IncludeTasks:  optional.NewBool(false),
 	}
-
-	workflowsMap, _, err := testdata.WorkflowClient.GetWorkflowsBatch(
-		context.Background(),
-		batchRequest,
-		opts,
+	var (
+		workflowsMap map[string][]model.Workflow
 	)
+	err = testdata.RetryCondition(3, 1*time.Second,
+		func() error {
+			workflowsMap, _, err = testdata.WorkflowClient.GetWorkflowsBatch(
+				context.Background(),
+				batchRequest,
+				opts,
+			)
+			return err
+		},
+		func() bool {
+			return len(workflowsMap) == len(correlationIds)
+
+		})
 	assert.NoError(t, err, "Failed to get workflows batch")
 	assert.NotNil(t, workflowsMap, "Workflows map should not be nil")
 
@@ -1091,13 +1112,23 @@ func TestGetWorkflowsByCorrelationId(t *testing.T) {
 		IncludeTasks:  optional.NewBool(false),
 	}
 
-	workflows, _, err := testdata.WorkflowClient.GetWorkflowsByCorrelationId(
-		context.Background(),
-		wf.GetName(),
-		correlationId,
-		opts,
+	var (
+		workflows []model.Workflow
 	)
+	err = testdata.RetryCondition(3, 1*time.Second,
+		func() error {
+			workflows, _, err = testdata.WorkflowClient.GetWorkflowsByCorrelationId(
+				context.Background(),
+				wf.GetName(),
+				correlationId,
+				opts,
+			)
+			return err
+		},
+		func() bool {
+			return len(workflows) == len(workflowIds)
 
+		})
 	assert.NoError(t, err, "Failed to get workflows by correlation ID")
 	assert.NotNil(t, workflows, "Workflows should not be nil")
 	assert.Len(t, workflows, 3, "Should find 3 workflows with the correlation ID")
@@ -1867,12 +1898,24 @@ func TestGetWorkflows(t *testing.T) {
 		IncludeTasks:  optional.NewBool(false),
 	}
 
-	workflowsMap, _, err := testdata.WorkflowClient.GetWorkflows(
-		context.Background(),
-		correlationIds,
-		wf.GetName(),
-		opts,
+	var (
+		workflowsMap map[string][]model.Workflow
 	)
+	err = testdata.RetryCondition(3, 1*time.Second,
+		func() error {
+			workflowsMap, _, err = testdata.WorkflowClient.GetWorkflows(
+				context.Background(),
+				correlationIds,
+				wf.GetName(),
+				opts,
+			)
+			return err
+		},
+		func() bool {
+			return len(workflowsMap) == len(correlationIds)
+
+		})
+
 	assert.NoError(t, err, "Failed to get workflows by batch correlation IDs")
 	assert.NotNil(t, workflowsMap, "Workflows map should not be nil")
 

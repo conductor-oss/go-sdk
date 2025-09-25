@@ -10,15 +10,17 @@
 package testdata
 
 import (
+	"fmt"
+	"log"
 	"strings"
 	"time"
 )
 
-// RetryWithBackoff executes a function with retries in case of an error
+// RetryTimeout executes a function with retries in case of an error
 // maxRetries - maximum number of retry attempts
 // initialBackoff - initial delay between attempts
 // operation - function to execute
-func RetryWithBackoff(maxRetries int, initialBackoff time.Duration, operation func() error) error {
+func RetryTimeout(maxRetries int, initialBackoff time.Duration, operation func() error) error {
 	var err error
 	backoff := initialBackoff
 
@@ -36,6 +38,49 @@ func RetryWithBackoff(maxRetries int, initialBackoff time.Duration, operation fu
 		time.Sleep(backoff)
 
 		// Increase delay for next attempt (simple exponential delay)
+		backoff = backoff * 2
+	}
+
+	return err
+}
+
+// RetryCondition executes a function with retries until the result meets a condition
+// maxRetries - maximum number of retry attempts
+// initialBackoff - initial delay between attempts
+// operation - function to execute
+// condition - function that checks if the result meets the condition, returns true if satisfied
+func RetryCondition(maxRetries int, initialBackoff time.Duration,
+	operation func() error,
+	condition func() bool) error {
+
+	var err error
+	backoff := initialBackoff
+
+	for attempt := 0; attempt <= maxRetries; attempt++ {
+		err = operation()
+
+		// If there was an error, check if we can retry
+		if err != nil {
+			if attempt == maxRetries || !isRetryableError(err) {
+				return err
+			}
+			log.Printf("Attempt %d failed with error: %v. Retrying in %v...\n", attempt+1, err, backoff)
+		} else {
+			// If condition is met, return the result
+			if condition() {
+				return nil
+			}
+
+			// If condition is not met but we still have attempts, continue
+			if attempt < maxRetries {
+				log.Printf("Attempt %d: condition not satisfied. Retrying in %v...\n", attempt+1, backoff)
+			} else {
+				return fmt.Errorf("condition not satisfied after %d attempts", maxRetries+1)
+			}
+		}
+
+		time.Sleep(backoff)
+		// Increase delay for next attempt
 		backoff = backoff * 2
 	}
 
