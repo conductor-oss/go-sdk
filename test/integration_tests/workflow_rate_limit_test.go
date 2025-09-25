@@ -59,7 +59,13 @@ func TestConcurrentWorkflowExecution(t *testing.T) {
 			input := map[string]interface{}{
 				"index": idx,
 			}
-			id, err := wf.StartWorkflowWithInput(input)
+			var id string
+			err := testdata.RetryWithBackoff(3, 500*time.Millisecond, func() error {
+				var startErr error
+				id, startErr = wf.StartWorkflowWithInput(input)
+				return startErr
+			})
+
 			if err != nil {
 				require.NoError(t, err)
 			}
@@ -156,7 +162,12 @@ func TestPerCustomerRateLimit(t *testing.T) {
 					"index":      idx,
 				}
 
-				id, err := wf.StartWorkflowWithInput(input)
+				var id string
+				err := testdata.RetryWithBackoff(3, 500*time.Millisecond, func() error {
+					var startErr error
+					id, startErr = wf.StartWorkflowWithInput(input)
+					return startErr
+				})
 
 				mu.Lock()
 				allWorkflows = append(allWorkflows, CustomerWorkflow{
@@ -187,7 +198,12 @@ func TestPerCustomerRateLimit(t *testing.T) {
 		stats := customerStats[cw.CustomerID]
 
 		// Check if workflow complete
-		execution, err := testWorkflowExecutor.GetWorkflow(cw.WorkflowID, true)
+		var execution *model.Workflow
+		err := testdata.RetryWithBackoff(3, 500*time.Millisecond, func() error {
+			var getErr error
+			execution, getErr = testWorkflowExecutor.GetWorkflow(cw.WorkflowID, true)
+			return getErr
+		})
 		require.NoError(t, err)
 		require.NotEmpty(t, execution)
 

@@ -271,7 +271,12 @@ func WaitForWorkflowStatus(workflowId string, expectedStatuses []model.WorkflowS
 	deadline := time.Now().Add(timeout)
 
 	for time.Now().Before(deadline) {
-		workflow, err := WorkflowExecutor.GetWorkflow(workflowId, true)
+		var workflow *model.Workflow
+		err := RetryWithBackoff(2, 500*time.Millisecond, func() error {
+			var getErr error
+			workflow, getErr = WorkflowExecutor.GetWorkflow(workflowId, true)
+			return getErr
+		})
 		if err != nil {
 			time.Sleep(500 * time.Millisecond)
 			continue
@@ -320,7 +325,13 @@ func WaitForMultipleWorkflowsCompletion(workflowIds []string, timeout time.Durat
 		allCompleted := true
 
 		for _, workflowId := range workflowIds {
-			workflow, err := WorkflowExecutor.GetWorkflow(workflowId, false)
+			// Use RetryWithBackoff for executing request with retries
+			var workflow *model.Workflow
+			err := RetryWithBackoff(2, 500*time.Millisecond, func() error {
+				var getErr error
+				workflow, getErr = WorkflowExecutor.GetWorkflow(workflowId, false)
+				return getErr
+			})
 			if err != nil {
 				// Continue retrying on error
 				allCompleted = false
@@ -355,9 +366,16 @@ func WaitForMultipleWorkflowsStatus(workflowIds []string, expectedStatuses []mod
 		allReachedExpectedStatus := true
 
 		for _, workflowId := range workflowIds {
-			workflow, err := WorkflowExecutor.GetWorkflow(workflowId, false)
+			// Use RetryWithBackoff for executing request with retries
+			var workflow *model.Workflow
+			err := RetryWithBackoff(2, 500*time.Millisecond, func() error {
+				var getErr error
+				workflow, getErr = WorkflowExecutor.GetWorkflow(workflowId, false)
+				return getErr
+			})
+
 			if err != nil {
-				// Continue retrying on error
+				// Log error and continue
 				allReachedExpectedStatus = false
 				break
 			}

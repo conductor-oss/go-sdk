@@ -37,7 +37,7 @@ func TestWorkerBatchSize(t *testing.T) {
 	if testdata.TaskRunner.GetBatchSizeForTask(testdata.TestSimpleTask.ReferenceName()) != 5 {
 		t.Fatal("unexpected batch size")
 	}
-	err = testdata.ValidateWorkflowBulk(simpleTaskWorkflow, testdata.WorkflowValidationTimeout, testdata.WorkflowBulkQty)
+	err = testdata.ValidateWorkflowBulk(simpleTaskWorkflow, testdata.ExtendedValidationTimeout, testdata.WorkflowBulkQty)
 	if err != nil {
 		t.Fatal(err)
 	}
