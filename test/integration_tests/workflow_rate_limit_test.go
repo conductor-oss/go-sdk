@@ -102,7 +102,6 @@ func TestConcurrentWorkflowExecution(t *testing.T) {
 
 		err := wf.UnRegister()
 		assert.NoError(t, err, "Failed to unregister workflow")
-
 	})
 }
 
