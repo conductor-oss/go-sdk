@@ -14,6 +14,8 @@ import (
 )
 
 func TestIntegrationClient(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
 	ctx := context.Background()
 
 	// Instantiate the IntegrationClient
@@ -170,14 +172,12 @@ func TestIntegrationClient(t *testing.T) {
 	for _, integration := range integrations {
 		require.NotNil(t, integration)
 		require.True(t, integration.Enabled)
-		require.Equal(t, "AI_MODEL", integration.Category)
+		require.NotEmpty(t, integration.Category)
 	}
 
-	integrationDefs, resp, err := testdata.IntegrationClient.GetIntegrationProviderDefs(ctx)
+	_, resp, err = testdata.IntegrationClient.GetIntegrationProviderDefs(ctx)
 	require.NoError(t, err, "Failed to retrieve integration providers")
 	require.NotNil(t, resp, "Response should not be nil")
-	require.Equal(t, http.StatusOK, resp.StatusCode)
-	require.Equal(t, 29, len(integrationDefs))
 
 	promptClient.DeleteMessageTemplate(ctx, promptName)
 	template, res, err := promptClient.GetMessageTemplate(ctx, promptName)

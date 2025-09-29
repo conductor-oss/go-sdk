@@ -2,14 +2,15 @@ package integration_tests
 
 import (
 	"context"
+	"testing"
+	"time"
+
 	"github.com/antihax/optional"
 	"github.com/conductor-sdk/conductor-go/sdk/client"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/test/testdata"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 )
 
 const (
@@ -45,6 +46,8 @@ func (s *ServiceRegistryClientTestSuite) cleanup(t *testing.T) {
 }
 
 func TestServiceRegistryClient_HTTPService(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
+
 	suite := setupServiceRegistryTest(t)
 	defer suite.cleanup(t)
 
@@ -138,6 +141,8 @@ func TestServiceRegistryClient_HTTPService(t *testing.T) {
 }
 
 func TestServiceRegistryClient_GRPCService(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
+
 	suite := setupServiceRegistryTest(t)
 	defer suite.cleanup(t)
 
@@ -234,6 +239,8 @@ func TestServiceRegistryClient_GRPCService(t *testing.T) {
 }
 
 func TestServiceRegistryClient_CircuitBreaker(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
+
 	suite := setupServiceRegistryTest(t)
 	defer suite.cleanup(t)
 
@@ -272,6 +279,8 @@ func TestServiceRegistryClient_CircuitBreaker(t *testing.T) {
 }
 
 func TestServiceRegistryClient_MethodOperations(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
+
 	suite := setupServiceRegistryTest(t)
 	defer suite.cleanup(t)
 

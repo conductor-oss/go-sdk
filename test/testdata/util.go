@@ -14,6 +14,9 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"strconv"
+	"strings"
+	"testing"
 	"time"
 
 	"github.com/conductor-sdk/conductor-go/sdk/model/rbac"
@@ -26,6 +29,12 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/workflow/executor"
 
 	"github.com/conductor-sdk/conductor-go/sdk/log"
+	"go.uber.org/zap"
+)
+
+const (
+	VersionResourceV41 = "4.1"
+	VersionResourceV52 = "5.2"
 )
 
 var (
@@ -61,11 +70,26 @@ var (
 	SecretClient          = client.NewSecretsClient(apiClient)
 	WebhookClient         = client.NewWebhooksConfigClient(apiClient)
 	ServiceRegistryClient = client.NewServiceRegistryClient(apiClient)
+	VersionResourceClient = client.NewVersionResourceClient(apiClient)
 )
 
 var TaskRunner = worker.NewTaskRunnerWithApiClient(apiClient)
 
 var WorkflowExecutor = executor.NewWorkflowExecutor(apiClient)
+
+// VersionResource is the version of the Conductor server
+var VersionResource string
+
+func init() {
+	log.SetLogger(log.NewZap(zap.Must(zap.NewProduction())))
+
+	version, _, err := VersionResourceClient.GetVersion(context.Background())
+	if err != nil {
+		log.Fatal("Failed to get version", "error", err)
+	}
+
+	VersionResource = parseVersion(version)
+}
 
 func ReadFile(path string) ([]byte, error) {
 	data, err := os.ReadFile(path)
@@ -351,4 +375,45 @@ func ValidateWorkflowWithOutput(conductorWorkflow *workflow.ConductorWorkflow, t
 		return fmt.Errorf("workflow output is different than expected, workflowId: %s, output: %+v", workflowId, wf.Output)
 	}
 	return nil
+}
+
+func parseVersion(version string) string {
+	parts := strings.Split(version, ".")
+	if len(parts) >= 2 {
+		return parts[0] + "." + parts[1]
+	}
+	return version
+}
+
+func RequireAtLeast(t *testing.T, min string) {
+	t.Helper()
+	have := VersionResource
+
+	if !isVersionAtLeast(have, min) {
+		t.Skipf("skip: requires >= %s, have %s", min, have)
+	}
+}
+
+func isVersionAtLeast(have, min string) bool {
+	haveParts := strings.Split(have, ".")
+	minParts := strings.Split(min, ".")
+
+	if len(haveParts) > 0 && len(minParts) > 0 {
+		haveMajor, _ := strconv.Atoi(haveParts[0])
+		minMajor, _ := strconv.Atoi(minParts[0])
+		if haveMajor < minMajor {
+			return false
+		}
+		if haveMajor > minMajor {
+			return true
+		}
+	}
+
+	if len(haveParts) > 1 && len(minParts) > 1 {
+		haveMinor, _ := strconv.Atoi(haveParts[1])
+		minMinor, _ := strconv.Atoi(minParts[1])
+		return haveMinor >= minMinor
+	}
+
+	return true
 }

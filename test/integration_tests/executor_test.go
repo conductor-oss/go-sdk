@@ -17,6 +17,7 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/workflow"
 	"github.com/conductor-sdk/conductor-go/test/testdata"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -26,6 +27,8 @@ const (
 )
 
 func TestRetryNotFound(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
 	executor := testdata.WorkflowExecutor
 
 	err := executor.Retry(notFoundWorkflowId, true)
@@ -39,6 +42,8 @@ func TestRetryNotFound(t *testing.T) {
 }
 
 func TestRegisterWorkflow(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
 	executor := testdata.WorkflowExecutor
 
 	wf := workflow.ConductorWorkflow{}
@@ -68,6 +73,8 @@ func TestRegisterWorkflow(t *testing.T) {
 }
 
 func TestRegisterWorkflowWithTags(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
 	executor := testdata.WorkflowExecutor
 
 	wf := workflow.NewConductorWorkflow(executor)
@@ -140,6 +147,8 @@ func TestRegisterWorkflowWithTags(t *testing.T) {
 }
 
 func TestGetWorkflow(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
 	executor := testdata.WorkflowExecutor
 
 	wf, err := executor.GetWorkflow(notFoundWorkflowId, false)
@@ -150,6 +159,8 @@ func TestGetWorkflow(t *testing.T) {
 }
 
 func TestUpdateTaskByRefName(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
 	executor := testdata.WorkflowExecutor
 	err := executor.UpdateTaskByRefName("task_ref", notFoundWorkflowId, model.CompletedTask, map[string]interface{}{})
 	assert.Error(t, err, "UpdateTaskByRefName is expected to return an error")
@@ -161,6 +172,8 @@ func TestUpdateTaskByRefName(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
 	executor := testdata.WorkflowExecutor
 	err := executor.UpdateTask(notFoundTaskId, notFoundWorkflowId, model.CompletedTask, map[string]interface{}{})
 	assert.Error(t, err, "UpdateTask is expected to return an error")
@@ -172,6 +185,8 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestStartWorkflowWithContext(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
 	executor := testdata.WorkflowExecutor
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -224,6 +239,8 @@ func getSubWorkflow(t *testing.T) workflow.ConductorWorkflow {
 }
 
 func TestRegisterWorkflowWithWaitSignal(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
+
 	executor := testdata.WorkflowExecutor
 	wf := getSubWorkflow(t)
 
@@ -261,6 +278,8 @@ func TestRegisterWorkflowWithWaitSignal(t *testing.T) {
 }
 
 func TestSubWorkflowSignal(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
+
 	executor := testdata.WorkflowExecutor
 
 	subWf := getSubWorkflow(t)
@@ -349,6 +368,8 @@ func waitForWorkflowCompletion(executor *executor.WorkflowExecutor, workflowId s
 }
 
 func TestSubWorkflowSignalWithSyncConsistency(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
+
 	executor := testdata.WorkflowExecutor
 
 	// First, make sure the wait_signal_test workflow is registered
@@ -369,7 +390,8 @@ func TestSubWorkflowSignalWithSyncConsistency(t *testing.T) {
 		[]string{""},
 		10,
 	)
-	assert.NotNil(t, workflowRun)
+	require.NoError(t, err)
+	require.NotNil(t, workflowRun)
 
 	parentWorkflowId := workflowRun.WorkflowId
 
@@ -413,6 +435,8 @@ func TestSubWorkflowSignalWithSyncConsistency(t *testing.T) {
 }
 
 func TestSubWorkflowSignalWithDurableConsistency(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
+
 	executor := testdata.WorkflowExecutor
 
 	// Create the workflow start request
@@ -430,7 +454,8 @@ func TestSubWorkflowSignalWithDurableConsistency(t *testing.T) {
 		[]string{""},
 		10,
 	)
-	assert.NotNil(t, workflowRun)
+	require.NoError(t, err)
+	require.NotNil(t, workflowRun)
 
 	parentWorkflowId := workflowRun.WorkflowId
 
@@ -524,6 +549,8 @@ func getWorkflowDef(filename string) (*model.WorkflowDef, error) {
 }
 
 func TestSignal_AllStrategies_Comprehensive(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
+
 	registerComplexWorkflows()
 	testCases := []struct {
 		name                         string
@@ -673,8 +700,8 @@ func TestSignal_AllStrategies_Comprehensive(t *testing.T) {
 				10,
 			)
 
-			assert.Nil(t, err)
-			assert.NotEmpty(t, resp)
+			require.Nil(t, err)
+			require.NotEmpty(t, resp)
 			workflowId := resp.WorkflowId
 
 			t.Logf("Started complex workflow with ID: %s for strategy: %s, Consistency: %s", workflowId, tc.name, tc.consistency.String())
@@ -830,6 +857,8 @@ func TestSignal_AllStrategies_Comprehensive(t *testing.T) {
 
 // Add a separate test for default strategy to ensure it behaves like TARGET_WORKFLOW
 func TestSignal_DefaultStrategy_IsTargetWorkflow(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
+
 	// Setup workflow (same setup code as in your original test)
 	executor := testdata.WorkflowExecutor
 	registerComplexWorkflows()
@@ -847,7 +876,8 @@ func TestSignal_DefaultStrategy_IsTargetWorkflow(t *testing.T) {
 		[]string{""},
 		10,
 	)
-	assert.Nil(t, err)
+	require.Nil(t, err)
+	require.NotNil(t, workflowRun)
 	workflowId := workflowRun.WorkflowId
 
 	time.Sleep(20 * time.Millisecond)
@@ -881,6 +911,8 @@ func TestSignal_DefaultStrategy_IsTargetWorkflow(t *testing.T) {
 
 // Add a separate test for mixed strategy
 func TestSignal_MixedStrategy(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
+
 	// Setup workflow (same setup code as in your original test)
 	executor := testdata.WorkflowExecutor
 	registerComplexWorkflows()
@@ -898,7 +930,8 @@ func TestSignal_MixedStrategy(t *testing.T) {
 		[]string{""},
 		10,
 	)
-	assert.Nil(t, err)
+	require.Nil(t, err)
+	require.NotNil(t, workflowRun)
 	workflowId := workflowRun.WorkflowId
 
 	time.Sleep(20 * time.Millisecond)
@@ -911,8 +944,8 @@ func TestSignal_MixedStrategy(t *testing.T) {
 		})
 
 	// Should behave exactly like TARGET_WORKFLOW
-	assert.NoError(t, err)
-	assert.NotNil(t, resp)
+	require.NoError(t, err)
+	require.NotNil(t, resp)
 	assert.Equal(t, model.ReturnBlockingWorkflow, resp.ResponseType, "Default strategy should be BLOCKING_WORKFLOW")
 	assert.True(t, resp.IsBlockingWorkflow(), "Default should behave like BLOCKING_WORKFLOW")
 
@@ -936,6 +969,8 @@ func TestSignal_MixedStrategy(t *testing.T) {
 }
 
 func TestWfExecutionWithWaitForSec_Success(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
+
 	executor := testdata.WorkflowExecutor
 
 	wf := workflow.ConductorWorkflow{}
@@ -970,6 +1005,8 @@ func TestWfExecutionWithWaitForSec_Success(t *testing.T) {
 }
 
 func TestWfExecutionWithWaitForSec_ContextTimeout(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
 	wfClient := testdata.WorkflowClient
 	executor := testdata.WorkflowExecutor
 	// Create a very short context timeout

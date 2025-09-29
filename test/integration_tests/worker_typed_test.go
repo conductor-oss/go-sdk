@@ -51,6 +51,8 @@ func typedHandler(ctx worker.TaskContext, data testdata.TestDataIn) (testdata.Te
 
 // TestLegacyWorkerIntegration validates legacy StartWorker flow with raw map output.
 func TestLegacyWorkerIntegration(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
 	t.Parallel()
 	suffix := uniqueSuffix()
 	taskName := "TEST_GO_LEGACY_TASK_" + suffix
@@ -79,6 +81,8 @@ func TestLegacyWorkerIntegration(t *testing.T) {
 }
 
 func TestRegularWorkerIntegration(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
 	t.Parallel()
 	suffix := uniqueSuffix()
 	taskName := "TEST_GO_REGULAR_WORKER_" + suffix
@@ -112,6 +116,8 @@ func TestRegularWorkerIntegration(t *testing.T) {
 
 // TestTypedWorkerIntegration validates typed worker with struct input/output.
 func TestTypedWorkerIntegration(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
 	t.Parallel()
 	suffix := uniqueSuffix()
 	taskName := "TEST_GO_TYPED_TASK_" + suffix
@@ -151,6 +157,8 @@ func TestTypedWorkerIntegration(t *testing.T) {
 
 // TestSimpleTypedWorkerIntegration validates typed worker with generic map in/out.
 func TestSimpleTypedWorkerIntegration(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
 	t.Parallel()
 	suffix := uniqueSuffix()
 	taskName := "TEST_GO_TYPED_MAP_TASK_" + suffix
@@ -186,6 +194,8 @@ func TestSimpleTypedWorkerIntegration(t *testing.T) {
 
 // TestMultiTaskWorkflowIntegration validates a sequence of mixed legacy and typed workers.
 func TestMultiTaskWorkflowIntegration(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
 	t.Parallel()
 	suffix := uniqueSuffix()
 	t.Logf("Starting TestMultiTaskWorkflowIntegration with suffix: %s", suffix)
@@ -257,6 +267,8 @@ func TestMultiTaskWorkflowIntegration(t *testing.T) {
 
 // TestParallelExecutionIntegration validates fork-join with two typed workers.
 func TestParallelExecutionIntegration(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
 	t.Parallel()
 	suffix := uniqueSuffix()
 	taskName := "TEST_GO_PARALLEL_" + suffix
