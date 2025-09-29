@@ -30,7 +30,7 @@ func TestConcurrentWorkflowExecution(t *testing.T) {
 	testWorkflowExecutor := testdata.WorkflowExecutor
 
 	concurrentLimit := int32(3)
-	duration := 3 * time.Second
+	duration := 4 * time.Second
 	uuid := uuid.New().String()
 	rateLimitKey := "concurrent_test" + uuid
 	// Create workflow with strict concurrency limit
@@ -65,16 +65,14 @@ func TestConcurrentWorkflowExecution(t *testing.T) {
 				id, startErr = wf.StartWorkflowWithInput(input)
 				return startErr
 			})
-			if err != nil {
-				require.NoError(t, err)
-			}
+			require.NoError(t, err)
 			ids[idx] = id
 		}(i)
 	}
 
 	wg.Wait()
 
-	time.Sleep(duration + 500*time.Millisecond)
+	time.Sleep(duration + 1*time.Second)
 
 	completedCount := 0
 	for _, id := range ids {
@@ -103,9 +101,7 @@ func TestConcurrentWorkflowExecution(t *testing.T) {
 		}
 
 		err := wf.UnRegister()
-		if err != nil {
-			t.Logf("Failed to unregister workflow: %v", err)
-		}
+		assert.NoError(t, err, "Failed to unregister workflow")
 	})
 }
 
@@ -115,7 +111,7 @@ func TestPerCustomerRateLimit(t *testing.T) {
 
 	testWorkflowExecutor := testdata.WorkflowExecutor
 	concurrentLimit := int32(3)
-	duration := 3 * time.Second
+	duration := 4 * time.Second
 	uuid := uuid.New().String()
 
 	// Create workflow with per-customer rate limiting
@@ -179,7 +175,7 @@ func TestPerCustomerRateLimit(t *testing.T) {
 	wg.Wait()
 
 	// Wait for workflows to complete
-	time.Sleep(duration + 500*time.Millisecond)
+	time.Sleep(duration + 1*time.Second)
 
 	// Analyze results per customer
 	customerStats := make(map[string]struct {
@@ -241,8 +237,6 @@ func TestPerCustomerRateLimit(t *testing.T) {
 		}
 
 		err := wf.UnRegister()
-		if err != nil {
-			t.Logf("Failed to unregister workflow: %v", err)
-		}
+		assert.NoError(t, err, "Failed to unregister workflow")
 	})
 }
