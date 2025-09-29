@@ -31,6 +31,7 @@ func TestConcurrentWorkflowExecution(t *testing.T) {
 
 	concurrentLimit := int32(3)
 	duration := 4 * time.Second
+
 	uuid := uuid.New().String()
 	rateLimitKey := "concurrent_test" + uuid
 	// Create workflow with strict concurrency limit
