@@ -19,13 +19,19 @@ var (
 
 func main() {
 	logger = zap.Must(zap.NewProduction())
-	defer logger.Sync()
+	defer func() {
+		err := logger.Sync()
+		if err != nil {
+			logger.Warn("Failed to sync logger", zap.Error(err))
+		}
+	}()
 
 	if err := runLifecycleDemo(); err != nil {
 		logger.Fatal("Lifecycle demo failed", zap.Error(err))
 	}
 }
 
+//nolint:gocyclo,gocognit
 func runLifecycleDemo() error {
 	// Set SDK logger
 	log.SetLogger(log.NewZap(zap.Must(zap.NewProduction())))
@@ -122,7 +128,7 @@ func runLifecycleDemo() error {
 
 	// 3. Pause workflow
 	logger.Info("=== 3. Pausing workflow ===")
-	if err := workflowExecutor.PauseWithContext(ctx, workflowId); err != nil {
+	if err = workflowExecutor.PauseWithContext(ctx, workflowId); err != nil {
 		logger.Error("Failed to pause workflow", zap.Error(err))
 		return err
 	}
@@ -138,7 +144,7 @@ func runLifecycleDemo() error {
 
 	// 4. Resume workflow
 	logger.Info("=== 4. Resuming workflow ===")
-	if err := workflowExecutor.ResumeWithContext(ctx, workflowId); err != nil {
+	if err = workflowExecutor.ResumeWithContext(ctx, workflowId); err != nil {
 		logger.Error("Failed to resume workflow", zap.Error(err))
 		return err
 	}
@@ -166,7 +172,7 @@ func runLifecycleDemo() error {
 				},
 			}
 
-			if err := workflowExecutor.UpdateTaskWithContext(ctx, task.TaskId, task.WorkflowInstanceId, task.Status, taskResult.OutputData); err != nil {
+			if err = workflowExecutor.UpdateTaskWithContext(ctx, task.TaskId, task.WorkflowInstanceId, task.Status, taskResult.OutputData); err != nil {
 				logger.Error("Failed to complete wait task", zap.Error(err))
 				return err
 			}
@@ -178,7 +184,7 @@ func runLifecycleDemo() error {
 
 	// 6. Terminate workflow
 	logger.Info("=== 6. Terminating workflow ===")
-	if err := workflowExecutor.TerminateWithContext(ctx, workflowId, "Terminating for retry demo"); err != nil {
+	if err = workflowExecutor.TerminateWithContext(ctx, workflowId, "Terminating for retry demo"); err != nil {
 		logger.Error("Failed to terminate workflow", zap.Error(err))
 		return err
 	}
@@ -186,7 +192,7 @@ func runLifecycleDemo() error {
 
 	// 7. Retry workflow
 	logger.Info("=== 7. Retrying workflow ===")
-	if err := workflowExecutor.RetryWithContext(ctx, workflowId, false); err != nil {
+	if err = workflowExecutor.RetryWithContext(ctx, workflowId, false); err != nil {
 		logger.Error("Failed to retry workflow", zap.Error(err))
 		return err
 	}
@@ -194,7 +200,7 @@ func runLifecycleDemo() error {
 
 	// Try to pause quickly to prevent full completion
 	logger.Info("Pausing workflow to prevent immediate completion")
-	if err := workflowExecutor.PauseWithContext(ctx, workflowId); err != nil {
+	if err = workflowExecutor.PauseWithContext(ctx, workflowId); err != nil {
 		logger.Error("Failed to pause after retry", zap.Error(err))
 		return err
 	}
@@ -219,7 +225,7 @@ func runLifecycleDemo() error {
 		logger.Info("Workflow already in terminal state", zap.String("status", string(wf.Status)))
 		logger.Info("Skipping termination - will restart from completed state")
 	} else {
-		if err := workflowExecutor.Terminate(workflowId, "Terminating for restart demo"); err != nil {
+		if err = workflowExecutor.Terminate(workflowId, "Terminating for restart demo"); err != nil {
 			logger.Error("Failed to terminate workflow", zap.Error(err))
 			return err
 		}
@@ -228,7 +234,7 @@ func runLifecycleDemo() error {
 
 	// 9. Restart workflow
 	logger.Info("=== 9. Restarting workflow ===")
-	if err := workflowExecutor.RestartWithContext(ctx, workflowId, false); err != nil {
+	if err = workflowExecutor.RestartWithContext(ctx, workflowId, false); err != nil {
 		logger.Error("Failed to restart workflow", zap.Error(err))
 		return err
 	}
@@ -252,7 +258,9 @@ func runLifecycleDemo() error {
 			ReRunFromTaskId: secondTask.TaskId,
 		}
 
-		if id, err := workflowExecutor.ReRunWithContext(ctx, workflowId, rerunRequest); err != nil {
+		var id string
+		id, err = workflowExecutor.ReRunWithContext(ctx, workflowId, rerunRequest)
+		if err != nil {
 			logger.Error("Failed to rerun from task", zap.Error(err))
 			return err
 		} else {
@@ -265,7 +273,7 @@ func runLifecycleDemo() error {
 
 	// 11. Final termination with failure workflow trigger
 	logger.Info("=== 11. Terminating with failure workflow trigger ===")
-	if err := workflowExecutor.TerminateWithFailure(workflowId, "Final termination with failure workflow", true); err != nil {
+	if err = workflowExecutor.TerminateWithFailure(workflowId, "Final termination with failure workflow", true); err != nil {
 		logger.Error("Failed to terminate with failure", zap.Error(err))
 		return err
 	}
