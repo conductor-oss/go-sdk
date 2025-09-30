@@ -1933,8 +1933,16 @@ func TestGetWorkflows(t *testing.T) {
 			return err
 		},
 		func() bool {
-			return len(workflowsMap) == len(correlationIds)
-
+			if workflowsMap == nil {
+				return false
+			}
+			for _, corrId := range correlationIds {
+				workflows, exists := workflowsMap[corrId]
+				if !exists || len(workflows) != 2 {
+					return false
+				}
+			}
+			return true
 		})
 
 	assert.NoError(t, err, "Failed to get workflows by batch correlation IDs")
