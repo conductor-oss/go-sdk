@@ -11,10 +11,11 @@ package client
 
 import (
 	"context"
-	"github.com/antihax/optional"
-	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"net/http"
 	"net/url"
+
+	"github.com/antihax/optional"
+	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
 // Linger please
@@ -34,6 +35,11 @@ WorkflowBulkResourceApiService Pause the list of workflows
 @return http_model.BulkResponse
 */
 func (a *WorkflowBulkResourceApiService) PauseWorkflow1(ctx context.Context, body []string) (model.BulkResponse, *http.Response, error) {
+	return a.Pause(ctx, body)
+}
+
+// Pause pauses the list of workflows.
+func (a *WorkflowBulkResourceApiService) Pause(ctx context.Context, body []string) (model.BulkResponse, *http.Response, error) {
 	var result model.BulkResponse
 
 	localVarPath := "/workflow/bulk/pause"
@@ -90,6 +96,11 @@ WorkflowBulkResourceApiService Resume the list of workflows
 @return http_model.BulkResponse
 */
 func (a *WorkflowBulkResourceApiService) ResumeWorkflow1(ctx context.Context, body []string) (model.BulkResponse, *http.Response, error) {
+	return a.Resume(ctx, body)
+}
+
+// Resume resumes the list of workflows.
+func (a *WorkflowBulkResourceApiService) Resume(ctx context.Context, body []string) (model.BulkResponse, *http.Response, error) {
 	var result model.BulkResponse
 
 	path := "/workflow/bulk/resume"
@@ -151,6 +162,19 @@ func (a *WorkflowBulkResourceApiService) Terminate(ctx context.Context, body []s
 	}
 
 	resp, err := a.PostWithParams(ctx, path, queryParams, body, &result)
+	if err != nil {
+		return model.BulkResponse{}, resp, err
+	}
+	return result, resp, nil
+}
+
+// Delete permanently removes workflows from the system.
+func (a *WorkflowBulkResourceApiService) Delete(ctx context.Context, body []string) (model.BulkResponse, *http.Response, error) {
+	var result model.BulkResponse
+
+	path := "/workflow/bulk/delete"
+
+	resp, err := a.Post(ctx, path, body, &result)
 	if err != nil {
 		return model.BulkResponse{}, resp, err
 	}

@@ -274,6 +274,185 @@ func isWorkflowCompleted(workflow *model.Workflow, expectedStatus model.Workflow
 	return workflow.Status == expectedStatus
 }
 
+// WaitForWorkflowStatus waits for a workflow to reach any of the specified statuses
+func WaitForWorkflowStatus(workflowId string, expectedStatuses []model.WorkflowStatus, timeout time.Duration) (*model.Workflow, error) {
+	deadline := time.Now().Add(timeout)
+
+	for time.Now().Before(deadline) {
+		var workflow *model.Workflow
+		err := RetryTimeout(2, 500*time.Millisecond, func() error {
+			var getErr error
+			workflow, getErr = WorkflowExecutor.GetWorkflow(workflowId, true)
+			return getErr
+		})
+		if err != nil {
+			time.Sleep(500 * time.Millisecond)
+			continue
+		}
+		// Check if workflow has reached any of the expected statuses
+		for _, expectedStatus := range expectedStatuses {
+			if workflow.Status == expectedStatus {
+				return workflow, nil
+			}
+		}
+
+		// Check for terminal failure states if not explicitly expected
+		isFailureExpected := false
+		for _, expectedStatus := range expectedStatuses {
+			if expectedStatus == model.FailedWorkflow || expectedStatus == model.TerminatedWorkflow {
+				isFailureExpected = true
+				break
+			}
+		}
+
+		if !isFailureExpected && (workflow.Status == model.FailedWorkflow || workflow.Status == model.TerminatedWorkflow) {
+			return workflow, fmt.Errorf("workflow %s failed with unexpected status: %s", workflowId, workflow.Status)
+		}
+
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	return nil, fmt.Errorf("workflow %s didn't reach any of the expected statuses %v within %v", workflowId, expectedStatuses, timeout)
+}
+
+// WaitForWorkflowCompletion waits specifically for workflow completion
+func WaitForWorkflowCompletion(workflowId string, timeout time.Duration) (*model.Workflow, error) {
+	return WaitForWorkflowStatus(workflowId, []model.WorkflowStatus{model.CompletedWorkflow}, timeout)
+}
+
+// WaitForWorkflowRunning waits for workflow to reach RUNNING status
+func WaitForWorkflowRunning(workflowId string, timeout time.Duration) (*model.Workflow, error) {
+	return WaitForWorkflowStatus(workflowId, []model.WorkflowStatus{model.RunningWorkflow}, timeout)
+}
+
+// WaitForMultipleWorkflowsCompletion waits for multiple workflows to complete
+func WaitForMultipleWorkflowsCompletion(workflowIds []string, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+
+	for time.Now().Before(deadline) {
+		allCompleted := true
+
+		for _, workflowId := range workflowIds {
+			// Use RetryWithBackoff for executing request with retries
+			var workflow *model.Workflow
+			err := RetryTimeout(2, 500*time.Millisecond, func() error {
+				var getErr error
+				workflow, getErr = WorkflowExecutor.GetWorkflow(workflowId, false)
+				return getErr
+			})
+			if err != nil {
+				// Continue retrying on error
+				allCompleted = false
+				break
+			}
+
+			if workflow.Status == model.FailedWorkflow || workflow.Status == model.TerminatedWorkflow {
+				return fmt.Errorf("workflow %s failed with status: %s", workflowId, workflow.Status)
+			}
+
+			if workflow.Status != model.CompletedWorkflow {
+				allCompleted = false
+				break
+			}
+		}
+
+		if allCompleted {
+			return nil
+		}
+
+		time.Sleep(1 * time.Second)
+	}
+
+	return fmt.Errorf("not all workflows completed within %v", timeout)
+}
+
+// WaitForMultipleWorkflowsStatus waits for multiple workflows to reach any of the expected statuses
+func WaitForMultipleWorkflowsStatus(workflowIds []string, expectedStatuses []model.WorkflowStatus, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+
+	for time.Now().Before(deadline) {
+		allReachedExpectedStatus := true
+
+		for _, workflowId := range workflowIds {
+			// Use RetryWithBackoff for executing request with retries
+			var workflow *model.Workflow
+			err := RetryTimeout(2, 500*time.Millisecond, func() error {
+				var getErr error
+				workflow, getErr = WorkflowExecutor.GetWorkflow(workflowId, false)
+				return getErr
+			})
+
+			if err != nil {
+				// Log error and continue
+				allReachedExpectedStatus = false
+				break
+			}
+
+			// Check if current workflow status is in the expected statuses
+			statusMatched := false
+			for _, expectedStatus := range expectedStatuses {
+				if workflow.Status == expectedStatus {
+					statusMatched = true
+					break
+				}
+			}
+
+			// If workflow status is not in expected statuses
+			if !statusMatched {
+				// Check if failure is expected
+				isFailureExpected := false
+				for _, expectedStatus := range expectedStatuses {
+					if expectedStatus == model.FailedWorkflow || expectedStatus == model.TerminatedWorkflow {
+						isFailureExpected = true
+						break
+					}
+				}
+
+				// If failure is not expected but workflow failed
+				if !isFailureExpected && (workflow.Status == model.FailedWorkflow || workflow.Status == model.TerminatedWorkflow) {
+					return fmt.Errorf("workflow %s failed with unexpected status: %s", workflowId, workflow.Status)
+				}
+
+				allReachedExpectedStatus = false
+				break
+			}
+		}
+
+		if allReachedExpectedStatus {
+			return nil
+		}
+
+		time.Sleep(1 * time.Second)
+	}
+
+	return fmt.Errorf("not all workflows reached expected statuses %v within %v", expectedStatuses, timeout)
+}
+
+// WaitForTaskInWorkflow waits for a specific task within a workflow to reach a certain status
+func WaitForTaskInWorkflow(workflowId, taskReferenceName string, expectedTaskStatus model.TaskResultStatus, timeout time.Duration) (*model.Task, error) {
+	deadline := time.Now().Add(timeout)
+
+	for time.Now().Before(deadline) {
+		workflow, err := WorkflowExecutor.GetWorkflow(workflowId, true) // Include tasks
+		if err != nil {
+			time.Sleep(1 * time.Second)
+			continue
+		}
+
+		// Look for the specific task
+		for _, task := range workflow.Tasks {
+			if task.ReferenceTaskName == taskReferenceName && task.Status == expectedTaskStatus {
+				return &task, nil
+			}
+		}
+
+		time.Sleep(1 * time.Second)
+	}
+
+	return nil, fmt.Errorf("task %s with status %s not found in workflow %s within %v",
+		taskReferenceName, expectedTaskStatus, workflowId, timeout)
+}
+
 // Common Test Tasks
 const (
 	WorkflowValidationTimeout = 7 * time.Second
