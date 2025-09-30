@@ -8,10 +8,10 @@ type WorkflowRun struct {
 	Output               map[string]interface{} `json:"output,omitempty"`
 	Priority             int32                  `json:"priority,omitempty"`
 	RequestId            string                 `json:"requestId,omitempty"`
-	ResponseType         string                 `json:"responseType,omitempty"`
-	Status               string                 `json:"status,omitempty"`
+	ResponseType         ReturnStrategy         `json:"responseType,omitempty"`
+	Status               WorkflowStatus         `json:"status,omitempty"`
 	TargetWorkflowId     string                 `json:"targetWorkflowId,omitempty"`
-	TargetWorkflowStatus string                 `json:"targetWorkflowStatus,omitempty"`
+	TargetWorkflowStatus WorkflowStatus         `json:"targetWorkflowStatus,omitempty"`
 	Tasks                []Task                 `json:"tasks,omitempty"`
 	UpdateTime           int64                  `json:"updateTime,omitempty"`
 	Variables            map[string]interface{} `json:"variables,omitempty"`

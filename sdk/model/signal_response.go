@@ -14,6 +14,8 @@ type SignalResponse struct {
 	Output               map[string]interface{} `json:"output"`
 	Priority             int32                  `json:"priority,omitempty"`
 	Variables            map[string]interface{} `json:"variables,omitempty"`
+	CorrelationID        string                 `json:"correlationId,omitempty"`
+	RequestID            string                 `json:"requestId,omitempty"`
 
 	// Fields specific to TARGET_WORKFLOW & BLOCKING_WORKFLOW
 	Tasks      []Task         `json:"tasks,omitempty"`
@@ -79,12 +81,17 @@ func (r *SignalResponse) GetBlockingTask() (*Task, error) {
 	var taskStatus TaskResultStatus
 	switch r.Status {
 	case RunningWorkflow:
-		taskStatus = InProgressTask // Assuming you have InProgressTask in TaskResultStatus
+		taskStatus = InProgressTask
 	case CompletedWorkflow:
 		taskStatus = CompletedTask
 	case FailedWorkflow:
 		taskStatus = FailedTask
-	// Add other mappings as needed
+	case TimedOutWorkflow:
+		taskStatus = FailedTask
+	case TerminatedWorkflow:
+		taskStatus = FailedTask
+	case PausedWorkflow:
+		taskStatus = InProgressTask
 	default:
 		// Handle unmapped statuses or create a default mapping
 		taskStatus = TaskResultStatus(r.Status)
@@ -111,4 +118,76 @@ func (r *SignalResponse) GetTaskInput() (map[string]interface{}, error) {
 	}
 
 	return r.Input, nil
+}
+
+// GetTaskRun extracts task run details from a SignalResponse
+func (r *SignalResponse) GetTaskRun() TaskRun {
+	// Convert WorkflowStatus to TaskResultStatus with comprehensive mapping
+	var taskStatus TaskResultStatus
+	switch r.Status {
+	case RunningWorkflow:
+		taskStatus = InProgressTask
+	case CompletedWorkflow:
+		taskStatus = CompletedTask
+	case FailedWorkflow:
+		taskStatus = FailedTask
+	case TimedOutWorkflow:
+		taskStatus = FailedTask
+	case TerminatedWorkflow:
+		taskStatus = FailedTask
+	case PausedWorkflow:
+		taskStatus = InProgressTask
+	default:
+		if string(r.Status) != "" {
+			taskStatus = TaskResultStatus(r.Status)
+		} else {
+			taskStatus = InProgressTask
+		}
+	}
+
+	// Comprehensive field-by-field mapping from SignalResponse to TaskRun
+	return TaskRun{
+		// Core task identification fields
+		TaskId:            r.TaskId,
+		TaskType:          r.TaskType,
+		TaskDefName:       r.TaskDefName,
+		WorkflowType:      r.WorkflowType,
+		ReferenceTaskName: r.ReferenceTaskName,
+		RetryCount:        r.RetryCount,
+
+		// Status and execution fields
+		Status: taskStatus,
+
+		// Data fields
+		InputData:  r.Input,
+		OutputData: r.Output,
+		// Workflow context fields
+		Variables: r.Variables,
+		Priority:  int(r.Priority), // Convert int32 to int
+		// Timing fields
+		CreateTime: r.CreateTime,
+		UpdateTime: r.UpdateTime,
+		// Metadata fields
+		CreatedBy: r.CreatedBy,
+	}
+}
+
+// GetWorkflowRun extracts workflow run details from a SignalResponse
+func (r *SignalResponse) GetWorkflowRun() WorkflowRun {
+	return WorkflowRun{
+		WorkflowId:           r.WorkflowId,
+		CorrelationId:        r.CorrelationID,
+		Priority:             r.Priority,
+		Status:               r.Status,
+		Input:                r.Input,
+		Output:               r.Output,
+		Tasks:                r.Tasks,
+		CreatedBy:            r.CreatedBy,
+		CreateTime:           r.CreateTime,
+		UpdateTime:           r.UpdateTime,
+		Variables:            r.Variables,
+		ResponseType:         r.ResponseType,
+		TargetWorkflowId:     r.TargetWorkflowId,
+		TargetWorkflowStatus: r.TargetWorkflowStatus,
+	}
 }

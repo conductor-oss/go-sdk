@@ -9,7 +9,10 @@
 
 package model
 
+// SkipTaskRequest is the request body for the SkipTaskFromWorkflow.
 type SkipTaskRequest struct {
-	TaskInput  map[string]interface{} `json:"taskInput,omitempty"`
+	// TaskInput a map of inputs for the skipped task.
+	TaskInput map[string]interface{} `json:"taskInput,omitempty"`
+	// TaskOutput a map of outputs for the skipped task.
 	TaskOutput map[string]interface{} `json:"taskOutput,omitempty"`
 }

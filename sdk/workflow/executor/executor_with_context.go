@@ -292,7 +292,7 @@ func (e *WorkflowExecutor) PauseWithContext(ctx context.Context, workflowId stri
 		return err
 	}
 
-	_, err := e.workflowClient.PauseWorkflow(ctx, workflowId)
+	_, err := e.workflowClient.Pause(ctx, workflowId)
 	if err != nil {
 		return err
 	}
@@ -304,7 +304,7 @@ func (e *WorkflowExecutor) ResumeWithContext(ctx context.Context, workflowId str
 		return err
 	}
 
-	_, err := e.workflowClient.ResumeWorkflow(ctx, workflowId)
+	_, err := e.workflowClient.Resume(ctx, workflowId)
 	if err != nil {
 		return err
 	}
