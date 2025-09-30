@@ -171,7 +171,7 @@ func (a *WorkflowResourceApiService) GetWorkflows(ctx context.Context, body []st
 		queryParams.Add("includeTasks", parameterToString(opts.IncludeTasks.Value(), ""))
 	}
 
-	resp, err := a.Get(ctx, path, queryParams, &result)
+	resp, err := a.PostWithParams(ctx, path, queryParams, body, &result)
 	if err != nil {
 		return nil, resp, err
 	}
@@ -255,7 +255,7 @@ func (a *WorkflowResourceApiService) Rerun(ctx context.Context, body model.Rerun
 
 	path := fmt.Sprintf("/workflow/%s/rerun", workflowId)
 
-	resp, err := a.Post(ctx, path, body, nil)
+	resp, err := a.Post(ctx, path, body, &result)
 	if err != nil {
 		return "", resp, err
 	}
@@ -549,9 +549,8 @@ func (a *WorkflowResourceApiService) SkipTaskFromWorkflow(ctx context.Context, w
 	path := fmt.Sprintf("/workflow/%s/skiptask/%s", workflowId, taskReferenceName)
 
 	queryParams := url.Values{}
-	queryParams.Add("skipTaskRequest", parameterToString(skipTaskRequest, ""))
 
-	resp, err := a.PutWithParams(ctx, path, queryParams, nil, &model.SkipTaskRequest{})
+	resp, err := a.PutWithParams(ctx, path, queryParams, skipTaskRequest, &model.SkipTaskRequest{})
 	if err != nil {
 		return resp, err
 	}
@@ -804,13 +803,12 @@ func (a *WorkflowResourceApiService) ExecuteAndGetBlockingTask(
 	if err != nil {
 		return model.TaskRun{}, httpResponse, err
 	}
-
-	taskRun, ok := response.(model.TaskRun)
+	signalResponse, ok := response.(model.SignalResponse)
 	if !ok {
-		return model.TaskRun{}, httpResponse, fmt.Errorf("expected TaskRun but got %T", response)
+		return model.TaskRun{}, httpResponse, fmt.Errorf("expected SignalResponse but got %T", response)
 	}
 
-	return taskRun, httpResponse, nil
+	return signalResponse.GetTaskRun(), httpResponse, nil
 }
 
 // Enterprise: This feature requires Orkes Conductor Enterprise license, NOT AVAILABLE in OSS.
@@ -842,12 +840,12 @@ func (a *WorkflowResourceApiService) ExecuteAndGetBlockingTaskInput(
 		return model.TaskRun{}, httpResponse, err
 	}
 
-	taskRun, ok := response.(model.TaskRun)
+	signalResponse, ok := response.(model.SignalResponse)
 	if !ok {
-		return model.TaskRun{}, httpResponse, fmt.Errorf("expected TaskRun but got %T", response)
+		return model.TaskRun{}, httpResponse, fmt.Errorf("expected SignalResponse but got %T", response)
 	}
 
-	return taskRun, httpResponse, nil
+	return signalResponse.GetTaskRun(), httpResponse, nil
 }
 
 // Enterprise: This feature requires Orkes Conductor Enterprise license, NOT AVAILABLE in OSS.
@@ -879,12 +877,12 @@ func (a *WorkflowResourceApiService) ExecuteAndGetBlockingWorkflow(
 		return model.WorkflowRun{}, httpResponse, err
 	}
 
-	workflowRun, ok := response.(model.WorkflowRun)
+	signalResponse, ok := response.(model.SignalResponse)
 	if !ok {
-		return model.WorkflowRun{}, httpResponse, fmt.Errorf("expected WorkflowRun but got %T", response)
+		return model.WorkflowRun{}, httpResponse, fmt.Errorf("expected SignalResponse but got %T", response)
 	}
 
-	return workflowRun, httpResponse, nil
+	return signalResponse.GetWorkflowRun(), httpResponse, nil
 }
 
 // Enterprise: This feature requires Orkes Conductor Enterprise license, NOT AVAILABLE in OSS.
@@ -916,12 +914,12 @@ func (a *WorkflowResourceApiService) ExecuteAndGetTarget(
 		return model.WorkflowRun{}, httpResponse, err
 	}
 
-	workflowRun, ok := response.(model.WorkflowRun)
+	signalResponse, ok := response.(model.SignalResponse)
 	if !ok {
-		return model.WorkflowRun{}, httpResponse, fmt.Errorf("expected WorkflowRun but got %T", response)
+		return model.WorkflowRun{}, httpResponse, fmt.Errorf("expected SignalResponse but got %T", response)
 	}
 
-	return workflowRun, httpResponse, nil
+	return signalResponse.GetWorkflowRun(), httpResponse, nil
 }
 
 // StartWorkflowWithRequest starts a workflow with request
@@ -1084,7 +1082,7 @@ func (a *WorkflowResourceApiService) GetExecutionStatusTaskList(ctx context.Cont
 func (a *WorkflowResourceApiService) UpdateWorkflowState(ctx context.Context, body map[string]interface{}, workflowID string) (model.Workflow, *http.Response, error) {
 	var result model.Workflow
 
-	path := fmt.Sprintf("/workflow/%s/state", workflowID)
+	path := fmt.Sprintf("/workflow/%s/variables", workflowID)
 
 	resp, err := a.Post(ctx, path, body, &result)
 	if err != nil {

@@ -106,6 +106,7 @@ type WorkflowClient interface {
 	UpdateWorkflowState(ctx context.Context, body map[string]interface{}, workflowID string) (model.Workflow, *http.Response, error)
 }
 
+// NewWorkflowClient creates a new WorkflowClient
 func NewWorkflowClient(apiClient *APIClient) WorkflowClient {
 	return &WorkflowResourceApiService{apiClient}
 }

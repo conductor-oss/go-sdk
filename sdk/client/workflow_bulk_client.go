@@ -14,7 +14,7 @@ type WorkflowBulkClient interface {
 	// Pause pauses the list of workflows.
 	Pause(ctx context.Context, workflowIds []string) (model.BulkResponse, *http.Response, error)
 	// Restart restarts the list of completed workflow.
-	Restart(ctx context.Context, workflowIds []string, opts *WorkflowBulkResourceApiRestart1Opts) (model.BulkResponse, *http.Response, error)
+	Restart(ctx context.Context, workflowIds []string, opts *WorkflowBulkResourceApiRestartOpts) (model.BulkResponse, *http.Response, error)
 	// Resume resumes the list of workflows.
 	Resume(ctx context.Context, workflowIds []string) (model.BulkResponse, *http.Response, error)
 	// Deprecated: Use Resume instead.
@@ -29,6 +29,7 @@ type WorkflowBulkClient interface {
 	Delete(ctx context.Context, workflowIDs []string) (model.BulkResponse, *http.Response, error)
 }
 
+// NewWorkflowBulkClient creates a new WorkflowBulkClient
 func NewWorkflowBulkClient(client *APIClient) WorkflowBulkClient {
 	return &WorkflowBulkResourceApiService{client}
 }

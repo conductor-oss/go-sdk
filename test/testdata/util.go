@@ -71,6 +71,7 @@ var (
 	WebhookClient         = client.NewWebhooksConfigClient(apiClient)
 	ServiceRegistryClient = client.NewServiceRegistryClient(apiClient)
 	VersionResourceClient = client.NewVersionResourceClient(apiClient)
+	WorkflowBulkClient    = client.NewWorkflowBulkClient(apiClient)
 )
 
 var TaskRunner = worker.NewTaskRunnerWithApiClient(apiClient)
