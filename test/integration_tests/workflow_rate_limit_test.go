@@ -189,14 +189,9 @@ func TestPerCustomerRateLimit(t *testing.T) {
 		stats := customerStats[cw.CustomerID]
 
 		// Check if workflow complete
-		var execution *model.Workflow
-		err := testdata.RetryTimeout(3, 500*time.Millisecond, func() error {
-			var getErr error
-			execution, getErr = testWorkflowExecutor.GetWorkflow(cw.WorkflowID, true)
-			return getErr
-		})
+		execution, err := testWorkflowExecutor.GetWorkflow(cw.WorkflowID, true)
 		require.NoError(t, err)
-		require.NotEmpty(t, execution)
+		require.NotNil(t, execution)
 
 		switch execution.Status {
 		case model.CompletedWorkflow:
