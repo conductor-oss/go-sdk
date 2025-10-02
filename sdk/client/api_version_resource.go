@@ -27,11 +27,10 @@ func NewVersionResourceAPIService(apiClient *APIClient) *VersionResourceAPIServi
 
 // GetVersion gets the server's version
 func (a *VersionResourceAPIService) GetVersion(ctx context.Context) (string, *http.Response, error) {
-	var result string
-	path := "/version"
-	resp, err := a.Get(ctx, path, nil, &result)
+	genResult, resp, err := a.http_orkes.VersionResourceAPI.GetVersion(ctx).Execute()
 	if err != nil {
-		return "", resp, err
+		return "", resp, wrapGeneratedError(err, resp)
 	}
-	return result, resp, nil
+
+	return genResult, resp, nil
 }

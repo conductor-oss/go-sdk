@@ -11,77 +11,48 @@ package client
 
 import (
 	"context"
-	"fmt"
 	"net/http"
-	"net/url"
 	"os"
-	"strings"
 	"sync"
 
 	"github.com/antihax/optional"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
-var hostname string
-var once sync.Once
-
-// Linger please
 var (
-	_ context.Context
+	hostname string
+	once     sync.Once
 )
 
+// TaskResourceApiService is the service for the task resource.
 type TaskResourceApiService struct {
 	*APIClient
 }
 
-/*
-TaskResourceApiService Get the details about each queue
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-
-@return map[string]int64
-*/
+// All gets all task queue sizes.
 func (a *TaskResourceApiService) All(ctx context.Context) (map[string]int64, *http.Response, error) {
-	var result map[string]int64
-
-	path := "/tasks/queue/all"
-
-	resp, err := a.Get(ctx, path, nil, &result)
+	// Use Orkes client
+	result, resp, err := a.http_orkes.TaskResourceAPI.All(ctx).Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
 	return result, resp, nil
 }
 
-/*
-TaskResourceApiService Get the details about each queue
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-
-@return map[string]map[string]map[string]int64
-*/
+// AllVerbose gets all tasks with details.
 func (a *TaskResourceApiService) AllVerbose(ctx context.Context) (map[string]map[string]map[string]int64, *http.Response, error) {
-	var result map[string]map[string]map[string]int64
-
-	path := "/tasks/queue/all/verbose"
-
-	resp, err := a.Get(ctx, path, nil, &result)
+	// Use Orkes client
+	result, resp, err := a.http_orkes.TaskResourceAPI.AllVerbose(ctx).Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
-	return result, resp, nil
+	if result != nil {
+		return *result, resp, nil
+	}
+	return nil, resp, nil
 }
 
-/*
-TaskResourceApiService Batch poll for a task of a certain type
- * @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param tasktype
- * @param optional nil or *TaskResourceApiBatchPollOpts - Optional Parameters:
-     * @param "Workerid" (optional.String) -
-     * @param "Domain" (optional.String) -
-     * @param "Count" (optional.Int32) -
-     * @param "Timeout" (optional.Int32) -
-@return []Task
-*/
-
+// TaskResourceApiBatchPollOpts are the options for the BatchPoll method
 type TaskResourceApiBatchPollOpts struct {
 	Workerid optional.String
 	Domain   optional.String
@@ -89,219 +60,167 @@ type TaskResourceApiBatchPollOpts struct {
 	Timeout  optional.Int32
 }
 
-func (a *TaskResourceApiService) BatchPoll(ctx context.Context, tasktype string, localVarOptionals *TaskResourceApiBatchPollOpts) ([]model.Task, *http.Response, error) {
-	var result []model.Task
+// BatchPoll batch poll for tasks.
+func (a *TaskResourceApiService) BatchPoll(ctx context.Context, tasktype string, opts *TaskResourceApiBatchPollOpts) ([]model.Task, *http.Response, error) {
+	// Use Orkes client
+	req := a.http_orkes.TaskResourceAPI.BatchPoll(ctx, tasktype)
 
-	path := fmt.Sprintf("/tasks/poll/batch/%s", tasktype)
+	if opts != nil {
+		if opts.Workerid.IsSet() {
+			req = req.Workerid(opts.Workerid.Value())
+		}
+		if opts.Count.IsSet() {
+			req = req.Count(opts.Count.Value())
+		}
+		if opts.Timeout.IsSet() {
+			req = req.Timeout(opts.Timeout.Value())
+		}
+		if opts.Domain.IsSet() {
+			req = req.Domain(opts.Domain.Value())
+		}
+	}
 
-	queryParams := url.Values{}
-	if localVarOptionals != nil && localVarOptionals.Workerid.IsSet() {
-		queryParams.Add("workerid", parameterToString(localVarOptionals.Workerid.Value(), ""))
-	}
-	if localVarOptionals != nil && localVarOptionals.Domain.IsSet() {
-		queryParams.Add("domain", parameterToString(localVarOptionals.Domain.Value(), ""))
-	}
-	if localVarOptionals != nil && localVarOptionals.Count.IsSet() {
-		queryParams.Add("count", parameterToString(localVarOptionals.Count.Value(), ""))
-	}
-	if localVarOptionals != nil && localVarOptionals.Timeout.IsSet() {
-		queryParams.Add("timeout", parameterToString(localVarOptionals.Timeout.Value(), ""))
-	}
-
-	resp, err := a.Get(ctx, path, queryParams, &result)
+	genTasks, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
-	return result, resp, nil
+
+	// Convert tasks using mapper
+	tasks := toDomainTasksFromGenerated(genTasks)
+	return tasks, resp, nil
 }
 
-/*
-TaskResourceApiService Get the last poll data for all task types
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-
-@return []PollData
-*/
+// GetAllPollData gets poll data for all task types.
 func (a *TaskResourceApiService) GetAllPollData(ctx context.Context) ([]model.PollData, *http.Response, error) {
-	var result []model.PollData
-
-	path := "/tasks/queue/polldata/all"
-
-	resp, err := a.Get(ctx, path, nil, &result)
+	// Use Orkes client
+	result, resp, err := a.http_orkes.TaskResourceAPI.GetAllPollData(ctx).Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
-	return result, resp, nil
+
+	// Convert map result to []model.PollData using mapper
+	pollData := make([]model.PollData, 0)
+	for _, data := range result {
+		pd := toDomainPollDataFromMap(data)
+		pollData = append(pollData, pd)
+	}
+
+	return pollData, resp, nil
 }
 
-/*
-TaskResourceApiService Get the external uri where the task payload is to be stored
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param path
-  - @param operation
-  - @param payloadType
-
-@return ExternalStorageLocation
-*/
-func (a *TaskResourceApiService) GetExternalStorageLocation1(ctx context.Context, path string, operation string, payloadType string) (model.ExternalStorageLocation, *http.Response, error) {
-	var result model.ExternalStorageLocation
-
-	http_path := "/tasks/externalstoragelocation"
-
-	queryParams := url.Values{}
-
-	queryParams.Add("path", parameterToString(path, ""))
-	queryParams.Add("operation", parameterToString(operation, ""))
-	queryParams.Add("payloadType", parameterToString(payloadType, ""))
-
-	resp, err := a.Get(ctx, http_path, queryParams, &result)
-	if err != nil {
-		return model.ExternalStorageLocation{}, resp, err
-	}
-	return result, resp, nil
-}
-
-/*
-TaskResourceApiService Get the last poll data for a given task type
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param taskType
-
-@return []PollData
-*/
+// GetPollData gets poll data for a task type.
 func (a *TaskResourceApiService) GetPollData(ctx context.Context, taskType string) ([]model.PollData, *http.Response, error) {
-	var result []model.PollData
-
-	path := "/tasks/queue/polldata"
-
-	queryParams := url.Values{}
-	queryParams.Add("taskType", parameterToString(taskType, ""))
-
-	resp, err := a.Get(ctx, path, queryParams, &result)
-	if err != nil {
-		return nil, resp, err
+	// Use Orkes client
+	req := a.http_orkes.TaskResourceAPI.GetPollData(ctx)
+	if taskType != "" {
+		req = req.TaskType(taskType)
 	}
-	return result, resp, nil
+	genPollData, resp, err := req.Execute()
+	if err != nil {
+		return nil, resp, wrapGeneratedError(err, resp)
+	}
+
+	// Convert poll data using mapper
+	pollData := toDomainPollDataListFromGenerated(genPollData)
+	return pollData, resp, nil
 }
 
-/*
-TaskResourceApiService Get task by Id
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param taskId
+func (a *TaskResourceApiService) GetExternalStorageLocation(ctx context.Context, path string, operation string, payloadType string) (model.ExternalStorageLocation, *http.Response, error) {
+	// Use Conductor client as this method may not be available in Orkes
+	result, resp, err := a.http_conductor.TaskResourceAPI.GetExternalStorageLocation3(ctx).
+		Path(path).
+		Operation(operation).
+		PayloadType(payloadType).
+		Execute()
+	if err != nil {
+		return model.ExternalStorageLocation{}, resp, wrapGeneratedError(err, resp)
+	}
 
-@return Task
-*/
+	// Convert using existing mapper
+	domainLoc := toDomainExternalStorageLocation(result)
+	return domainLoc, resp, nil
+}
+
+// Deprecated: Use GetExternalStorageLocation instead.
+func (a *TaskResourceApiService) GetExternalStorageLocation1(ctx context.Context, path string, operation string, payloadType string) (model.ExternalStorageLocation, *http.Response, error) {
+	return a.GetExternalStorageLocation(ctx, path, operation, payloadType)
+}
+
+// GetTask gets task details by task ID.
 func (a *TaskResourceApiService) GetTask(ctx context.Context, taskId string) (model.Task, *http.Response, error) {
-	var result model.Task
-
-	path := fmt.Sprintf("/tasks/%s", taskId)
-	resp, err := a.Get(ctx, path, nil, &result)
+	// Use Orkes client
+	genTask, resp, err := a.http_orkes.TaskResourceAPI.GetTask(ctx, taskId).Execute()
 	if err != nil {
-		return model.Task{}, resp, err
+		return model.Task{}, resp, wrapGeneratedError(err, resp)
 	}
 
-	return result, resp, nil
+	task := toDomainTask(genTask)
+	return task, resp, nil
 }
 
-/*
-TaskResourceApiService Get Task Execution Logs
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param taskId
-
-@return []TaskExecLog
-*/
-func (a *TaskResourceApiService) GetTaskLogs(ctx context.Context, taskId string) ([]model.TaskExecLog, *http.Response, error) {
-	var result []model.TaskExecLog
-
-	path := fmt.Sprintf("/tasks/%s/log", taskId)
-	resp, err := a.Get(ctx, path, nil, &result)
-	if err != nil {
-		return nil, resp, err
-	}
-	return result, resp, nil
-}
-
-/*
-TaskResourceApiService Log Task Execution Details
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-  - @param taskId
-*/
+// Log adds a log to a task.
 func (a *TaskResourceApiService) Log(ctx context.Context, body string, taskId string) (*http.Response, error) {
-
-	path := fmt.Sprintf("/tasks/%s/log", taskId)
-	resp, err := a.Post(ctx, path, body, nil)
+	// Use Orkes client
+	resp, err := a.http_orkes.TaskResourceAPI.Log(ctx, taskId).Body(body).Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
 
-/*
-TaskResourceApiService Poll for a task of a certain type
- * @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param tasktype
- * @param optional nil or *TaskResourceApiPollOpts - Optional Parameters:
-     * @param "Workerid" (optional.String) -
-     * @param "Domain" (optional.String) -
-@return Task
-*/
+// GetTaskLogs gets task execution logs.
+func (a *TaskResourceApiService) GetTaskLogs(ctx context.Context, taskId string) ([]model.TaskExecLog, *http.Response, error) {
+	// Use Orkes client
+	genLogs, resp, err := a.http_orkes.TaskResourceAPI.GetTaskLogs(ctx, taskId).Execute()
+	if err != nil {
+		return nil, resp, wrapGeneratedError(err, resp)
+	}
 
+	// Convert logs using mapper
+	logs := toDomainTaskExecLogsFromGenerated(genLogs)
+	return logs, resp, nil
+}
+
+// TaskResourceApiPollOpts are the options for the Poll method.
 type TaskResourceApiPollOpts struct {
 	Workerid optional.String
 	Domain   optional.String
 }
 
+// Poll polls for a task.
 func (a *TaskResourceApiService) Poll(ctx context.Context, tasktype string, opts *TaskResourceApiPollOpts) (model.Task, *http.Response, error) {
-	var result model.Task
+	// Use Orkes client
+	req := a.http_orkes.TaskResourceAPI.Poll(ctx, tasktype)
 
-	path := fmt.Sprintf("/tasks/poll/%s", tasktype)
-
-	queryParams := url.Values{}
-
-	if opts != nil && opts.Workerid.IsSet() {
-		queryParams.Add("workerid", parameterToString(opts.Workerid.Value(), ""))
+	if opts != nil {
+		if opts.Workerid.IsSet() {
+			req = req.Workerid(opts.Workerid.Value())
+		}
+		if opts.Domain.IsSet() {
+			req = req.Domain(opts.Domain.Value())
+		}
 	}
-	if opts != nil && opts.Domain.IsSet() {
-		queryParams.Add("domain", parameterToString(opts.Domain.Value(), ""))
-	}
 
-	resp, err := a.Get(ctx, path, queryParams, &result)
+	genTask, resp, err := req.Execute()
 	if err != nil {
-		return model.Task{}, resp, err
+		return model.Task{}, resp, wrapGeneratedError(err, resp)
 	}
-	return result, resp, nil
+
+	task := toDomainTask(genTask)
+	return task, resp, nil
 }
 
-/*
-TaskResourceApiService Requeue pending tasks
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param taskType
-
-@return string
-*/
+// RequeuePendingTask requeues a pending task by task type.
 func (a *TaskResourceApiService) RequeuePendingTask(ctx context.Context, taskType string) (string, *http.Response, error) {
-	var result string
-
-	path := fmt.Sprintf("/tasks/queue/requeue/%s", taskType)
-	resp, err := a.Post(ctx, path, nil, &result)
+	// Use Orkes client
+	result, resp, err := a.http_orkes.TaskResourceAPI.RequeuePendingTask(ctx, taskType).Execute()
 	if err != nil {
-		return "", resp, err
+		return "", resp, wrapGeneratedError(err, resp)
 	}
 	return result, resp, nil
 }
 
-/*
-TaskResourceApiService Search for tasks based in payload and other parameters
-use sort options as sort&#x3D;&lt;field&gt;:ASC|DESC e.g. sort&#x3D;name&amp;sort&#x3D;workflowId:DESC. If order is not specified, defaults to ASC
- * @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param optional nil or *TaskResourceApiSearch1Opts - Optional Parameters:
-     * @param "Start" (optional.Int32) -
-     * @param "Size" (optional.Int32) -
-     * @param "Sort" (optional.String) -
-     * @param "FreeText" (optional.String) -
-     * @param "Query" (optional.String) -
-@return SearchResultTaskSummary
-*/
-
+// TaskResourceApiSearch1Opts are the options for the Search method
 type TaskResourceApiSearch1Opts struct {
 	Start    optional.Int32
 	Size     optional.Int32
@@ -310,48 +229,40 @@ type TaskResourceApiSearch1Opts struct {
 	Query    optional.String
 }
 
+// Search searches for tasks.
 func (a *TaskResourceApiService) Search(ctx context.Context, opts *TaskResourceApiSearch1Opts) (model.SearchResultTaskSummary, *http.Response, error) {
-	var result model.SearchResultTaskSummary
+	// Use Orkes client
+	req := a.http_orkes.TaskResourceAPI.Search2(ctx)
 
-	path := "/tasks/search"
+	if opts != nil {
+		if opts.Start.IsSet() {
+			req = req.Start(opts.Start.Value())
+		}
+		if opts.Size.IsSet() {
+			req = req.Size(opts.Size.Value())
+		}
+		if opts.Sort.IsSet() {
+			req = req.Sort(opts.Sort.Value())
+		}
+		if opts.FreeText.IsSet() {
+			req = req.FreeText(opts.FreeText.Value())
+		}
+		if opts.Query.IsSet() {
+			req = req.Query(opts.Query.Value())
+		}
+	}
 
-	queryParams := url.Values{}
-	if opts != nil && opts.Start.IsSet() {
-		queryParams.Add("start", parameterToString(opts.Start.Value(), ""))
-	}
-	if opts != nil && opts.Size.IsSet() {
-		queryParams.Add("size", parameterToString(opts.Size.Value(), ""))
-	}
-	if opts != nil && opts.Sort.IsSet() {
-		queryParams.Add("sort", parameterToString(opts.Sort.Value(), ""))
-	}
-	if opts != nil && opts.FreeText.IsSet() {
-		queryParams.Add("freeText", parameterToString(opts.FreeText.Value(), ""))
-	}
-	if opts != nil && opts.Query.IsSet() {
-		queryParams.Add("query", parameterToString(opts.Query.Value(), ""))
-	}
-
-	resp, err := a.Get(ctx, path, queryParams, &result)
+	genResult, resp, err := req.Execute()
 	if err != nil {
-		return model.SearchResultTaskSummary{}, resp, err
+		return model.SearchResultTaskSummary{}, resp, wrapGeneratedError(err, resp)
 	}
+
+	// Convert generated result to domain model using mapper
+	result := toDomainSearchResultTaskSummaryFromGenerated(genResult)
 	return result, resp, nil
 }
 
-/*
-TaskResourceApiService Search for tasks based in payload and other parameters
-use sort options as sort&#x3D;&lt;field&gt;:ASC|DESC e.g. sort&#x3D;name&amp;sort&#x3D;workflowId:DESC. If order is not specified, defaults to ASC
- * @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param optional nil or *TaskResourceApiSearchV21Opts - Optional Parameters:
-     * @param "Start" (optional.Int32) -
-     * @param "Size" (optional.Int32) -
-     * @param "Sort" (optional.String) -
-     * @param "FreeText" (optional.String) -
-     * @param "Query" (optional.String) -
-@return SearchResultTask
-*/
-
+// TaskResourceApiSearchV21Opts are the options for the SearchV2 method
 type TaskResourceApiSearchV21Opts struct {
 	Start    optional.Int32
 	Size     optional.Int32
@@ -360,202 +271,128 @@ type TaskResourceApiSearchV21Opts struct {
 	Query    optional.String
 }
 
+// SearchV2 searches for tasks.
 func (a *TaskResourceApiService) SearchV2(ctx context.Context, opts *TaskResourceApiSearchV21Opts) (model.SearchResultTask, *http.Response, error) {
-	var result model.SearchResultTask
+	// Use Conductor client as this method may not be available in Orkes
+	req := a.http_conductor.TaskResourceAPI.SearchV21(ctx)
 
-	path := "/tasks/search-v2"
+	if opts != nil {
+		if opts.Start.IsSet() {
+			req = req.Start(opts.Start.Value())
+		}
+		if opts.Size.IsSet() {
+			req = req.Size(opts.Size.Value())
+		}
+		if opts.Sort.IsSet() {
+			req = req.Sort(opts.Sort.Value())
+		}
+		if opts.FreeText.IsSet() {
+			req = req.FreeText(opts.FreeText.Value())
+		}
+		if opts.Query.IsSet() {
+			req = req.Query(opts.Query.Value())
+		}
+	}
 
-	queryParams := url.Values{}
-	if opts != nil && opts.Start.IsSet() {
-		queryParams.Add("start", parameterToString(opts.Start.Value(), ""))
-	}
-	if opts != nil && opts.Size.IsSet() {
-		queryParams.Add("size", parameterToString(opts.Size.Value(), ""))
-	}
-	if opts != nil && opts.Sort.IsSet() {
-		queryParams.Add("sort", parameterToString(opts.Sort.Value(), ""))
-	}
-	if opts != nil && opts.FreeText.IsSet() {
-		queryParams.Add("freeText", parameterToString(opts.FreeText.Value(), ""))
-	}
-	if opts != nil && opts.Query.IsSet() {
-		queryParams.Add("query", parameterToString(opts.Query.Value(), ""))
-	}
-
-	resp, err := a.Get(ctx, path, queryParams, &result)
+	genResult, resp, err := req.Execute()
 	if err != nil {
-		return model.SearchResultTask{}, resp, err
+		return model.SearchResultTask{}, resp, wrapGeneratedError(err, resp)
 	}
+
+	// Convert generated result to domain model using mapper
+	result := toDomainSearchResultTask(genResult)
 	return result, resp, nil
 }
 
-/*
-TaskResourceApiService Get Task type queue sizes
- * @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param optional nil or *TaskResourceApiSizeOpts - Optional Parameters:
-     * @param "TaskType" (optional.Interface of []string) -
-@return map[string]int32
-*/
-
+// TaskResourceApiSizeOpts are the options for the Size method
 type TaskResourceApiSizeOpts struct {
 	TaskType optional.Interface
 }
 
+// Size gets the size of the task type.
 func (a *TaskResourceApiService) Size(ctx context.Context, opts *TaskResourceApiSizeOpts) (map[string]int32, *http.Response, error) {
-	var result map[string]int32
+	req := a.http_orkes.TaskResourceAPI.Size(ctx)
 
-	path := "/tasks/queue/sizes"
-
-	queryParams := url.Values{}
 	if opts != nil && opts.TaskType.IsSet() {
-		queryParams.Add("taskType", parameterToString(opts.TaskType.Value(), "multi"))
+		if taskType, ok := opts.TaskType.Value().([]string); ok {
+			req = req.TaskType(taskType)
+		}
 	}
 
-	resp, err := a.Get(ctx, path, queryParams, &result)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
+
 	return result, resp, nil
 }
 
-/*
-TaskResourceApiService Update a task
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-
-@return string
-*/
+// UpdateTask updates a task.
 func (a *TaskResourceApiService) UpdateTask(ctx context.Context, taskResult *model.TaskResult) (string, *http.Response, error) {
-	var result string
+	// Convert to generated model using mapper
+	genBody := toGeneratedTaskResult(taskResult)
 
-	path := "/tasks"
-
-	resp, err := a.Post(ctx, path, taskResult, &result)
+	// Use Orkes client
+	result, resp, err := a.http_orkes.TaskResourceAPI.UpdateTask(ctx).TaskResult(*genBody).Execute()
 	if err != nil {
-		return "", resp, err
+		return "", resp, wrapGeneratedError(err, resp)
 	}
+
 	return result, resp, nil
 }
 
-/*
-TaskResourceApiService Update a task By Ref Name synchronously. The output data is merged if data from a previous API call already exists.
- * @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param body
- * @param workflowId
- * @param taskRefName
- * @param status
- * @param optional nil or *TaskResourceApiUpdateTaskSyncOpts - Optional Parameters:
-     * @param "Workerid" (optional.String) -
-@return Workflow
-*/
-
+// TaskResourceApiUpdateTaskSyncOpts are the options for the UpdateTaskSync method.
 type TaskResourceApiUpdateTaskSyncOpts struct {
 	Workerid optional.String
 }
 
+// UpdateTaskSync updates a task synchronously.
 func (a *TaskResourceApiService) UpdateTaskSync(ctx context.Context, body map[string]interface{}, workflowId string, taskRefName string, status string, localVarOptionals *TaskResourceApiUpdateTaskSyncOpts) (model.Workflow, *http.Response, error) {
-	var result model.Workflow
+	req := a.http_orkes.TaskResourceAPI.UpdateTaskSync(ctx, workflowId, taskRefName, status).
+		RequestBody(body)
 
-	path := fmt.Sprintf("/tasks/%v/%v/%v/sync", workflowId, taskRefName, status)
-
-	resp, err := a.Post(ctx, path, body, &result)
-	if err != nil {
-		return model.Workflow{}, resp, err
+	if localVarOptionals != nil {
+		if localVarOptionals.Workerid.IsSet() {
+			req = req.Workerid(localVarOptionals.Workerid.Value())
+		}
 	}
-	return result, resp, nil
+
+	result, resp, err := req.Execute()
+	if err != nil {
+		return model.Workflow{}, resp, wrapGeneratedError(err, resp)
+	}
+
+	// Create minimal task response
+	workflow := toDomainWorkflow(result)
+	return workflow, resp, nil
 }
 
-/*
-Enterprise Feature: This feature requires Orkes Conductor Enterprise license, NOT AVAILABLE in OSS.
-TaskResourceApiService SignalAsync workflow to update running task in the workflow with given status and output asynchronously
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-  - @param workflowId
-  - @param status
-*/
+// SignalAsync signals a task asynchronously.
 func (a *TaskResourceApiService) SignalAsync(ctx context.Context, body map[string]interface{}, workflowId string, status string) (*http.Response, error) {
 	// create path and map variables
-	path := fmt.Sprintf("/tasks/%v/%v/signal", workflowId, status)
-
-	resp, err := a.Post(ctx, path, body, &struct{}{})
+	resp, err := a.http_orkes.TaskResourceAPI.SignalWorkflowTaskASync(ctx, workflowId, status).
+		RequestBody(body).
+		Execute()
 	if err != nil {
-		return nil, err
+		return resp, wrapGeneratedError(err, resp)
 	}
+
 	return resp, nil
 }
 
-/*
-TaskResourceApiService Internal method that signals a workflow task with a specific return strategy
-*/
-func (a *TaskResourceApiService) signalWorkflowTaskWithReturnStrategy(
-	ctx context.Context,
-	body map[string]interface{},
-	workflowId string,
-	status string,
-	returnStrategy string) (interface{}, *http.Response, error) {
-
-	var (
-		localVarHttpMethod  = strings.ToUpper("Post")
-		localVarPostBody    interface{}
-		localVarFileName    string
-		localVarFileBytes   []byte
-		localVarReturnValue interface{}
-	)
-
-	// create path and map variables
-	localVarPath := fmt.Sprintf("/tasks/%v/%v/signal/sync", workflowId, status)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
-
-	// Add returnStrategy parameter
-	localVarQueryParams.Add("returnStrategy", returnStrategy)
-
-	// body params
-	localVarPostBody = &body
-
-	r, err := a.prepareRequest(ctx, localVarPath, localVarHttpMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHttpResponse, err := a.callAPI(r)
-	if err != nil || localVarHttpResponse == nil {
-		return nil, localVarHttpResponse, err
-	}
-
-	localVarBody, err := getDecompressedBody(localVarHttpResponse)
-	if err != nil {
-		return nil, localVarHttpResponse, err
-	}
-
-	if isSuccessfulStatus(localVarHttpResponse.StatusCode) {
-		// Decode directly into SignalResponse since API returns unified format
-		var signalResponse model.SignalResponse
-		err = a.decode(&signalResponse, localVarBody, localVarHttpResponse.Header.Get("Content-Type"))
-		localVarReturnValue = signalResponse
-	} else {
-		newErr := NewGenericSwaggerError(localVarBody, string(localVarBody), nil, localVarHttpResponse.StatusCode)
-		return nil, localVarHttpResponse, newErr
-	}
-
-	return localVarReturnValue, localVarHttpResponse, err
-}
-
-// SignalTaskOpts contains options for the Signal method
+// SignalTaskOpts contains options for the Signal method.
 type SignalTaskOpts struct {
 	ReturnStrategy model.ReturnStrategy
 }
 
-// DefaultSignalTaskOpts returns the default options for Signal
+// DefaultSignalTaskOpts returns the default options for Signal.
 func DefaultSignalTaskOpts() SignalTaskOpts {
 	return SignalTaskOpts{
 		ReturnStrategy: model.ReturnTargetWorkflow, // Set TARGET_WORKFLOW as default
 	}
 }
 
-// SignalTask signals a task in a workflow synchronously with the specified return strategy
+// SignalTask signals a task in a workflow synchronously with the specified return strategy.
 func (a *TaskResourceApiService) Signal(ctx context.Context, body map[string]interface{}, workflowID string, status model.WorkflowStatus, opts ...SignalTaskOpts) (*model.SignalResponse, error) {
 	// Get options with defaults
 	options := DefaultSignalTaskOpts()
@@ -563,72 +400,39 @@ func (a *TaskResourceApiService) Signal(ctx context.Context, body map[string]int
 		options = opts[0]
 	}
 
-	// Call the existing internal method
-	response, _, err := a.signalWorkflowTaskWithReturnStrategy(
-		ctx,
-		body,
-		workflowID,
-		string(status),                 // Convert WorkflowStatus enum to string
-		string(options.ReturnStrategy), // Convert ReturnStrategy enum to string
-	)
+	// Use the generated method directly
+	response, _, err := a.http_orkes.TaskResourceAPI.SignalWorkflowTaskSync(ctx, workflowID, string(status)).
+		RequestBody(body).
+		ReturnStrategy(string(options.ReturnStrategy)).
+		Execute()
 	if err != nil {
-		return nil, err
+		return nil, wrapGeneratedError(err, nil)
 	}
 
-	// Type assert to SignalResponse
-	signalResponse, ok := response.(model.SignalResponse)
-	if !ok {
-		return nil, fmt.Errorf("expected SignalResponse but got %T", response)
-	}
-
-	return &signalResponse, nil
+	// Convert generated SignalResponse to domain model
+	domainResponse := toDomainSignalResponseFromGenerated(response)
+	return &domainResponse, nil
 }
 
-/*
-TaskResourceApiService Update a task By Ref Name
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-  - @param workflowId
-  - @param taskRefName
-  - @param status
-
-@return string
-*/
+// UpdateTaskByRefName updates a task by reference name.
 func (a *TaskResourceApiService) UpdateTaskByRefName(ctx context.Context, body map[string]interface{}, workflowId string, taskRefName string, status string) (string, *http.Response, error) {
-	return a.updateTaskByRefName(ctx, body, workflowId, taskRefName, status, optional.EmptyString())
+	return a.UpdateTaskByRefNameWithWorkerId(ctx, body, workflowId, taskRefName, status, optional.EmptyString())
 }
 
-/*
-TaskResourceApiService Update a task By Ref Name
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-  - @param workflowId
-  - @param taskRefName
-  - @param status
-  - @param workerId
-
-@return string
-*/
+// UpdateTaskByRefNameWithWorkerId updates a task by reference name with worker ID.
 func (a *TaskResourceApiService) UpdateTaskByRefNameWithWorkerId(ctx context.Context, body map[string]interface{}, workflowId string, taskRefName string, status string, workerId optional.String) (string, *http.Response, error) {
+	req := a.http_orkes.TaskResourceAPI.UpdateTask1(ctx, workflowId, taskRefName, status).
+		RequestBody(body)
+
 	if workerId.IsSet() {
-		return a.updateTaskByRefName(ctx, body, workflowId, taskRefName, status, workerId)
-	}
-	return a.updateTaskByRefName(ctx, body, workflowId, taskRefName, status, optional.NewString(getHostname()))
-}
-
-func (a *TaskResourceApiService) updateTaskByRefName(ctx context.Context, body map[string]interface{}, workflowId string, taskRefName string, status string, workerId optional.String) (string, *http.Response, error) {
-	var result string
-
-	localVarPath := fmt.Sprintf("/tasks/%s/%s/%s", workflowId, taskRefName, status)
-
-	queryParams := url.Values{}
-	if workerId.IsSet() {
-		queryParams.Add("workerid", workerId.Value())
+		req = req.Workerid(workerId.Value())
+	} else {
+		req = req.Workerid(getHostname())
 	}
 
-	resp, err := a.PostWithParams(ctx, localVarPath, queryParams, body, &result)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return "", resp, err
+		return "", resp, wrapGeneratedError(err, resp)
 	}
 	return result, resp, nil
 }

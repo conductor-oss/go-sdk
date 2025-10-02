@@ -11,214 +11,120 @@ package client
 
 import (
 	"context"
-	"fmt"
-	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"net/http"
+
+	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
+// SecretResourceApiService is the service for the secret resource.
 type SecretResourceApiService struct {
 	*APIClient
 }
 
-/*
-SecretResourceApiService Clear local cache
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-    @return map[string]string
-*/
+// ClearLocalCache clears the local cache.
 func (a *SecretResourceApiService) ClearLocalCache(ctx context.Context) (map[string]string, *http.Response, error) {
-	var result map[string]string
-	path := "/secrets/clearLocalCache"
-
-	resp, err := a.Get(ctx, path, nil, &result)
+	result, resp, err := a.http_orkes.SecretResourceAPI.ClearLocalCache(ctx).Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
 	return result, resp, nil
 }
 
-/*
-SecretResourceApiService Clear redis cache
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-    @return map[string]string
-*/
+// ClearRedisCache clears the redis cache.
 func (a *SecretResourceApiService) ClearRedisCache(ctx context.Context) (map[string]string, *http.Response, error) {
-	var result map[string]string
-
-	path := "/secrets/clearRedisCache"
-
-	resp, err := a.Get(ctx, path, nil, &result)
+	result, resp, err := a.http_orkes.SecretResourceAPI.ClearRedisCache(ctx).Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
 	return result, resp, nil
 }
 
-/*
-SecretResourceApiService Delete a secret value by key
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param key
-    @return interface{}
-*/
+// DeleteSecret deletes a secret value by key.
 func (a *SecretResourceApiService) DeleteSecret(ctx context.Context, key string) (interface{}, *http.Response, error) {
-	var result interface{}
-
-	path := fmt.Sprintf("/secrets/%s", key)
-	resp, err := a.Delete(ctx, path, nil, &result)
+	result, resp, err := a.http_orkes.SecretResourceAPI.DeleteSecret(ctx, key).Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
 	return result, resp, nil
 }
 
-/*
-SecretResourceApiService Delete tags of the secret
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-  - @param key
-*/
+// DeleteTagForSecret deletes tags of the secret.
 func (a *SecretResourceApiService) DeleteTagForSecret(ctx context.Context, body []model.Tag, key string) (*http.Response, error) {
-	path := fmt.Sprintf("/secrets/%s/tags", key)
-
-	resp, err := a.DeleteWithBody(ctx, path, body, nil)
-	if err != nil {
-		return resp, err
-	}
-	return resp, nil
+	genTags := toGeneratedTags(body)
+	resp, err := a.http_orkes.SecretResourceAPI.DeleteTagForSecret(ctx, key).Tag(genTags).Execute()
+	return resp, wrapGeneratedError(err, resp)
 }
 
-/*
-SecretResourceApiService Get secret value by key
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param key
-    @return string
-*/
+// GetSecret gets the secret value by key.
 func (a *SecretResourceApiService) GetSecret(ctx context.Context, key string) (string, *http.Response, error) {
-	var result string
-
-	path := fmt.Sprintf("/secrets/%s", key)
-
-	resp, err := a.Get(ctx, path, nil, &result)
+	result, resp, err := a.http_orkes.SecretResourceAPI.GetSecret(ctx, key).Execute()
 	if err != nil {
-		return "", resp, err
+		return "", resp, wrapGeneratedError(err, resp)
 	}
 	return result, resp, nil
 }
 
-/*
-SecretResourceApiService Get tags by secret
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param key
-    @return []model.Tag
-*/
+// GetTags gets tags by secret.
 func (a *SecretResourceApiService) GetTags(ctx context.Context, key string) ([]model.Tag, *http.Response, error) {
-	var result []model.Tag
-
-	path := fmt.Sprintf("/secrets/%s/tags", key)
-	resp, err := a.Get(ctx, path, nil, &result)
+	genResult, resp, err := a.http_orkes.SecretResourceAPI.GetTags(ctx, key).Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
+
+	result := toDomainTagsFromGenerated(genResult)
 	return result, resp, nil
 }
 
-/*
-SecretResourceApiService List all secret names
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-    @return []string
-*/
+// ListAllSecretNames list all secret names.
 func (a *SecretResourceApiService) ListAllSecretNames(ctx context.Context) ([]string, *http.Response, error) {
-	var result []string
-
-	path := "/secrets"
-
-	resp, err := a.Post(ctx, path, nil, &result)
+	result, resp, err := a.http_orkes.SecretResourceAPI.ListAllSecretNames(ctx).Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
 	return result, resp, nil
 }
 
-/*
-SecretResourceApiService List all secret names user can grant access to
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-    @return []string
-*/
+// ListSecretsThatUserCanGrantAccessTo list all secret names user can grant access to.
 func (a *SecretResourceApiService) ListSecretsThatUserCanGrantAccessTo(ctx context.Context) ([]string, *http.Response, error) {
-	var result []string
-
-	path := "/secrets"
-
-	resp, err := a.Get(ctx, path, nil, &result)
+	result, resp, err := a.http_orkes.SecretResourceAPI.ListSecretsThatUserCanGrantAccessTo(ctx).Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
 	return result, resp, nil
 }
 
-/*
-SecretResourceApiService List all secret names along with tags user can grant access to
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-    @return []model.Secret
-*/
+// ListSecretsWithTagsThatUserCanGrantAccessTo list all secret names along with tags user can grant access to.
 func (a *SecretResourceApiService) ListSecretsWithTagsThatUserCanGrantAccessTo(ctx context.Context) ([]model.Secret, *http.Response, error) {
-	var result []model.Secret
-
-	path := "/secrets-v2"
-
-	resp, err := a.Get(ctx, path, nil, &result)
+	genResult, resp, err := a.http_orkes.SecretResourceAPI.ListSecretsWithTagsThatUserCanGrantAccessTo(ctx).Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
+
+	result := toDomainSecretsFromGenerated(genResult)
 	return result, resp, nil
 }
 
-/*
-SecretResourceApiService Put a secret value by key
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-  - @param key
-    @return interface{}
-*/
+// PutSecret puts a secret value by key.
 func (a *SecretResourceApiService) PutSecret(ctx context.Context, body string, key string) (interface{}, *http.Response, error) {
-	var result interface{}
-
-	path := fmt.Sprintf("/secrets/%s", key)
-	resp, err := a.Put(ctx, path, body, &result)
+	result, resp, err := a.http_orkes.SecretResourceAPI.PutSecret(ctx, key).Body(body).Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
 	return result, resp, nil
 }
 
-/*
-SecretResourceApiService Tag a secret
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-  - @param key
-*/
+// PutTagForSecret tag a secret.
 func (a *SecretResourceApiService) PutTagForSecret(ctx context.Context, body []model.Tag, key string) (*http.Response, error) {
-	path := fmt.Sprintf("/secrets/%s/tags", key)
-
-	resp, err := a.Put(ctx, path, body, nil)
-	if err != nil {
-		return resp, err
-	}
-	return resp, nil
+	genTags := toGeneratedTags(body)
+	resp, err := a.http_orkes.SecretResourceAPI.PutTagForSecret(ctx, key).Tag(genTags).Execute()
+	return resp, wrapGeneratedError(err, resp)
 }
 
-/*
-SecretResourceApiService Check if secret exists
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param key
-    @return interface{}
-*/
+// SecretExists checks if secret exists.
 func (a *SecretResourceApiService) SecretExists(ctx context.Context, key string) (interface{}, *http.Response, error) {
-	var result interface{}
-
-	path := fmt.Sprintf("/secrets/%s/exists", key)
-	resp, err := a.Get(ctx, path, nil, &result)
+	result, resp, err := a.http_orkes.SecretResourceAPI.SecretExists(ctx, key).Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
 	return result, resp, nil
 }

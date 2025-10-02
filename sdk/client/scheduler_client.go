@@ -2,8 +2,9 @@ package client
 
 import (
 	"context"
-	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"net/http"
+
+	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
 type SchedulerClient interface {
@@ -13,6 +14,7 @@ type SchedulerClient interface {
 	GetNextFewSchedules(ctx context.Context, cronExpression string, optionals *SchedulerResourceApiGetNextFewSchedulesOpts) ([]int64, *http.Response, error)
 	GetSchedule(ctx context.Context, name string) (model.WorkflowSchedule, *http.Response, error)
 	GetTagsForSchedule(ctx context.Context, name string) ([]model.Tag, *http.Response, error)
+	GetSchedulesByTag(ctx context.Context, tag string) ([]model.WorkflowScheduleModel, *http.Response, error)
 	PauseAllSchedules(ctx context.Context) (map[string]interface{}, *http.Response, error)
 	PauseSchedule(ctx context.Context, name string) (interface{}, *http.Response, error)
 	PutTagForSchedule(ctx context.Context, body []model.Tag, name string) (*http.Response, error)

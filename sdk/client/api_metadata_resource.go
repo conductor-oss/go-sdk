@@ -11,345 +11,272 @@ package client
 
 import (
 	"context"
-	"fmt"
-	"github.com/antihax/optional"
-	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"net/http"
-	"net/url"
-	"strconv"
+
+	"github.com/antihax/optional"
+	"github.com/conductor-sdk/conductor-go/sdk/generated/http/orkes"
+	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
-// Linger please
-var (
-	_ context.Context
-)
-
+// MetadataResourceApiService is the service for the metadata resource.
 type MetadataResourceApiService struct {
 	*APIClient
 }
 
-/*
-MetadataResourceApiService Create a new workflow definition
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-*/
+// RegisterWorkflowDef registers workflow definition.
 func (a *MetadataResourceApiService) RegisterWorkflowDef(ctx context.Context, overwrite bool, body model.WorkflowDef) (*http.Response, error) {
-	path := "/metadata/workflow"
+	extDef := toExtendedWorkflowDef(&body)
 
-	queryParams := url.Values{
-		"overwrite": []string{strconv.FormatBool(overwrite)},
+	req := a.http_orkes.MetadataResourceAPI.Create(ctx).ExtendedWorkflowDef(extDef)
+	if overwrite {
+		req = req.Overwrite(overwrite)
 	}
-	resp, err := a.PostWithParams(ctx, path, queryParams, body, nil)
+
+	_, resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
+
 	return resp, nil
 }
 
-/*
-MetadataResourceApiService Create a new workflow definition with tags
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-*/
+// RegisterWorkflowDefWithTags registers workflow definition with tags.
 func (a *MetadataResourceApiService) RegisterWorkflowDefWithTags(ctx context.Context, overwrite bool, body model.WorkflowDef, tags []model.MetadataTag) (*http.Response, error) {
-	path := "/metadata/workflow"
+	// Convert domain model to extended workflow def with tags
+	extDef := toExtendedWorkflowDefWithTags(&body, tags, true)
 
-	params := url.Values{
-		"overwrite": []string{strconv.FormatBool(overwrite)},
-	}
-	tagObjects := []model.TagObject{}
-	for i := 0; i < len(tags); i++ {
-		tagObjects = append(tagObjects, model.NewTagObject(tags[i]))
-	}
-	workflowDefWithTags := body
-	workflowDefWithTags.Tags = tagObjects
-	workflowDefWithTags.OverwriteTags = true
+	req := a.http_orkes.MetadataResourceAPI.Create(ctx).Overwrite(overwrite).ExtendedWorkflowDef(extDef)
 
-	resp, err := a.PostWithParams(ctx, path, params, workflowDefWithTags, nil)
+	_, resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
+
 	return resp, nil
 }
 
-/*
-MetadataResourceApiService Retrieves workflow definition along with blueprint
- * @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param name
- * @param optional nil or *MetadataResourceApiGetOpts - Optional Parameters:
-     * @param "Version" (optional.Int32) -
-@return http_model.WorkflowDef
-*/
+// RegisterTaskDefWithTags registers task definition with tags.
+func (a *MetadataResourceApiService) RegisterTaskDefWithTags(ctx context.Context, body model.TaskDef, tags []model.MetadataTag) (*http.Response, error) {
+	// Convert domain model to extended task def with tags
+	extDef := toExtendedTaskDefWithTags(&body, tags, true)
 
+	req := a.http_orkes.MetadataResourceAPI.RegisterTaskDef(ctx).ExtendedTaskDef([]orkes.ExtendedTaskDef{extDef})
+
+	_, resp, err := req.Execute()
+	if err != nil {
+		return resp, wrapGeneratedError(err, resp)
+	}
+
+	return resp, nil
+}
+
+// UpdateTaskDefWithTags updates task definition with tags.
+func (a *MetadataResourceApiService) UpdateTaskDefWithTags(ctx context.Context, body model.TaskDef, tags []model.MetadataTag, overwriteTags bool) (*http.Response, error) {
+	// Convert domain model to extended task def with tags
+	extDef := toExtendedTaskDefWithTags(&body, tags, overwriteTags)
+
+	req := a.http_orkes.MetadataResourceAPI.UpdateTaskDef(ctx).ExtendedTaskDef(extDef)
+
+	_, resp, err := req.Execute()
+	if err != nil {
+		return resp, wrapGeneratedError(err, resp)
+	}
+
+	return resp, nil
+}
+
+// UpdateWorkflowDefWithTags updates workflow definition with tags.
+func (a *MetadataResourceApiService) UpdateWorkflowDefWithTags(ctx context.Context, body model.WorkflowDef, tags []model.MetadataTag, overwriteTags bool) (*http.Response, error) {
+	// Convert domain model to extended workflow def with tags
+	extDef := toExtendedWorkflowDefWithTags(&body, tags, overwriteTags)
+
+	req := a.http_orkes.MetadataResourceAPI.Update(ctx).ExtendedWorkflowDef([]orkes.ExtendedWorkflowDef{extDef})
+
+	_, resp, err := req.Execute()
+	if err != nil {
+		return resp, wrapGeneratedError(err, resp)
+	}
+
+	return resp, nil
+}
+
+// GetTagsForWorkflowDef gets tags for workflow definition.
+func (a *MetadataResourceApiService) GetTagsForWorkflowDef(ctx context.Context, name string) ([]model.MetadataTag, error) {
+	req := a.http_orkes.TagsAPI.GetWorkflowTags(ctx, name)
+
+	genTags, resp, err := req.Execute()
+	if err != nil {
+		return nil, wrapGeneratedError(err, resp)
+	}
+
+	// Convert generated tags to domain metadata tags
+	result := toDomainMetadataTagsFromGenerated(genTags)
+	return result, nil
+}
+
+// GetTagsForTaskDef gets tags for task definition.
+func (a *MetadataResourceApiService) GetTagsForTaskDef(ctx context.Context, tasktype string) ([]model.MetadataTag, error) {
+	req := a.http_orkes.TagsAPI.GetTaskTags(ctx, tasktype)
+
+	genTags, resp, err := req.Execute()
+	if err != nil {
+		return nil, wrapGeneratedError(err, resp)
+	}
+
+	// Convert generated tags to domain metadata tags
+	result := toDomainMetadataTagsFromGenerated(genTags)
+	return result, nil
+}
+
+// SetTaskTags sets all tags for task definition.
+func (a *MetadataResourceApiService) SetTaskTags(ctx context.Context, taskName string, tags []model.MetadataTag) (*http.Response, error) {
+	genTags := toGeneratedTagsFromMetadataTags(tags)
+
+	req := a.http_orkes.TagsAPI.SetTaskTags(ctx, taskName).Tag(genTags)
+
+	_, resp, err := req.Execute()
+	if err != nil {
+		return resp, wrapGeneratedError(err, resp)
+	}
+
+	return resp, nil
+}
+
+// MetadataResourceApiGetOpts optional parameters.
 type MetadataResourceApiGetOpts struct {
 	Version optional.Int32
 }
 
+// Get gets workflow definition.
 func (a *MetadataResourceApiService) Get(ctx context.Context, name string, localVarOptionals *MetadataResourceApiGetOpts) (model.WorkflowDef, *http.Response, error) {
-	var result model.WorkflowDef
+	req := a.http_orkes.MetadataResourceAPI.Get1(ctx, name)
 
-	path := fmt.Sprintf("/metadata/workflow/%s", name)
-
-	queryParams := url.Values{}
-
+	// Apply optional parameters
 	if localVarOptionals != nil && localVarOptionals.Version.IsSet() {
-		queryParams.Add("version", parameterToString(localVarOptionals.Version.Value(), ""))
+		req = req.Version(localVarOptionals.Version.Value())
 	}
 
-	resp, err := a.APIClient.Get(ctx, path, queryParams, &result)
+	genDef, resp, err := req.Execute()
 	if err != nil {
-		return model.WorkflowDef{}, resp, err
+		return model.WorkflowDef{}, resp, wrapGeneratedError(err, resp)
 	}
-	return result, resp, nil
+
+	// Convert to model
+	def := toDomainWorkflowDefFromGenerated(genDef)
+	return def, resp, nil
 }
 
-/*
-MetadataResourceApiService Retrieves all workflow definition along with blueprint
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-
-@return []http_model.WorkflowDef
-*/
+// GetAll gets all workflow definitions.
 func (a *MetadataResourceApiService) GetAll(ctx context.Context) ([]model.WorkflowDef, *http.Response, error) {
-	var result []model.WorkflowDef
-
-	path := "/metadata/workflow"
-
-	queryParams := url.Values{}
-
-	resp, err := a.APIClient.Get(ctx, path, queryParams, &result)
+	req := a.http_orkes.MetadataResourceAPI.GetWorkflowDefs(ctx)
+	genDefs, resp, err := req.Execute()
 	if err != nil {
-		return []model.WorkflowDef{}, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
-	return result, resp, nil
+
+	// Convert all definitions
+	defs := make([]model.WorkflowDef, len(genDefs))
+	for i, genDef := range genDefs {
+		converted := toDomainWorkflowDefFromGenerated(&genDef)
+		defs[i] = converted
+	}
+
+	return defs, resp, nil
 }
 
-/*
-MetadataResourceApiService Gets the task definition
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param tasktype
-
-@return http_model.TaskDef
-*/
+// GetTaskDef gets task definition.
 func (a *MetadataResourceApiService) GetTaskDef(ctx context.Context, tasktype string) (model.TaskDef, *http.Response, error) {
-	var result model.TaskDef
-	path := fmt.Sprintf("/metadata/taskdefs/%s", tasktype)
-
-	resp, err := a.APIClient.Get(ctx, path, nil, &result)
+	req := a.http_orkes.MetadataResourceAPI.GetTaskDef(ctx, tasktype)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return model.TaskDef{}, resp, err
+		return model.TaskDef{}, resp, wrapGeneratedError(err, resp)
 	}
 
-	return result, resp, nil
+	// Convert using mapper
+	def := toDomainTaskDef(result)
+	return def, resp, nil
 }
 
-/*
-MetadataResourceApiService Gets all task definition
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-
-@return []http_model.TaskDef
-*/
+// GetTaskDefs gets all task definitions.
 func (a *MetadataResourceApiService) GetTaskDefs(ctx context.Context) ([]model.TaskDef, *http.Response, error) {
-	var result []model.TaskDef
-
-	path := "/metadata/taskdefs"
-
-	resp, err := a.APIClient.Get(ctx, path, nil, &result)
+	req := a.http_orkes.MetadataResourceAPI.GetTaskDefs(ctx)
+	genDefs, resp, err := req.Execute()
 	if err != nil {
-		return []model.TaskDef{}, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
-	return result, resp, nil
+
+	// Convert all definitions
+	defs := make([]model.TaskDef, len(genDefs))
+	for i, genDef := range genDefs {
+		defs[i] = toDomainTaskDefPtr(&genDef)
+	}
+
+	return defs, resp, nil
 }
 
-/*
-MetadataResourceApiService Update an existing task
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-*/
-func (a *MetadataResourceApiService) UpdateTaskDef(ctx context.Context, body model.TaskDef) (*http.Response, error) {
-	path := "/metadata/taskdefs"
-
-	resp, err := a.APIClient.Put(ctx, path, body, nil)
-	if err != nil {
-		return resp, err
-	}
-	return resp, nil
-}
-
-/*
-MetadataResourceApiService Update an existing task along with tags
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-*/
-func (a *MetadataResourceApiService) UpdateTaskDefWithTags(ctx context.Context, body model.TaskDef, tags []model.MetadataTag, overwriteTags bool) (*http.Response, error) {
-	path := "/metadata/taskdefs"
-
-	tagObjects := []model.TagObject{}
-	for i := 0; i < len(tags); i++ {
-		tagObjects = append(tagObjects, model.NewTagObject(tags[i]))
-	}
-
-	taskDefWithTags := body
-	taskDefWithTags.Tags = tagObjects
-	taskDefWithTags.OverwriteTags = overwriteTags
-
-	resp, err := a.APIClient.Put(ctx, path, taskDefWithTags, nil)
-	if err != nil {
-		return resp, err
-	}
-	return resp, nil
-}
-
-/*
-MetadataResourceApiService Create new task definition(s)
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-*/
+// RegisterTaskDef registers task definitions.
 func (a *MetadataResourceApiService) RegisterTaskDef(ctx context.Context, body []model.TaskDef) (*http.Response, error) {
-	path := "/metadata/taskdefs"
+	// Convert to ExtendedTaskDef models
+	genDefs := make([]orkes.ExtendedTaskDef, len(body))
+	for i, def := range body {
+		extTaskDef := toExtendedTaskDef(&def)
+		genDefs[i] = extTaskDef
+	}
 
-	resp, err := a.APIClient.Post(ctx, path, body, nil)
+	req := a.http_orkes.MetadataResourceAPI.RegisterTaskDef(ctx).ExtendedTaskDef(genDefs)
+	_, resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
 
-/*
-MetadataResourceApiService Create new task definition with tags
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body model.TaskDef
-  - @param tags []model.MetadataTag
-*/
-func (a *MetadataResourceApiService) RegisterTaskDefWithTags(ctx context.Context, body model.TaskDef, tags []model.MetadataTag) (*http.Response, error) {
-	path := "/metadata/taskdefs"
-
-	tagObjects := []model.TagObject{}
-	for i := 0; i < len(tags); i++ {
-		tagObjects = append(tagObjects, model.NewTagObject(tags[i]))
-	}
-
-	taskDefWithTags := body
-	taskDefWithTags.Tags = tagObjects
-	taskDefWithTags.OverwriteTags = true
-	taskDefs := []model.TaskDef{taskDefWithTags}
-
-	resp, err := a.APIClient.Post(ctx, path, taskDefs, nil)
+// UnregisterTaskDef unregisters task definition.
+func (a *MetadataResourceApiService) UnregisterTaskDef(ctx context.Context, tasktype string) (*http.Response, error) {
+	req := a.http_orkes.MetadataResourceAPI.UnregisterTaskDef(ctx, tasktype)
+	resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
 
-/*
-MetadataResourceApiService Remove a task definition
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param tasktype
-*/
-func (a *MetadataResourceApiService) UnregisterTaskDef(ctx context.Context, taskType string) (*http.Response, error) {
-	path := fmt.Sprintf("/metadata/taskdefs/%s", taskType)
-
-	resp, err := a.APIClient.Delete(ctx, path, nil, nil)
-	if err != nil {
-		return resp, err
-	}
-	return resp, nil
-}
-
-/*
-MetadataResourceApiService Removes workflow definition. It does not remove workflows associated with the definition.
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param name
-  - @param version
-*/
+// UnregisterWorkflowDef unregisters workflow definition.
 func (a *MetadataResourceApiService) UnregisterWorkflowDef(ctx context.Context, name string, version int32) (*http.Response, error) {
-	path := fmt.Sprintf("/metadata/workflow/%s/%d", name, version)
-
-	resp, err := a.APIClient.Delete(ctx, path, nil, nil)
+	req := a.http_orkes.MetadataResourceAPI.UnregisterWorkflowDef(ctx, name, version)
+	resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
 
-/*
-MetadataResourceApiService Create or update workflow definition
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-*/
+// Update updates an existing workflow.
 func (a *MetadataResourceApiService) Update(ctx context.Context, body []model.WorkflowDef) (*http.Response, error) {
-	path := "/metadata/workflow"
+	// Convert to ExtendedWorkflowDef models
+	genDefs := make([]orkes.ExtendedWorkflowDef, len(body))
+	for i, def := range body {
+		extDef := toExtendedWorkflowDef(&def)
+		genDefs[i] = extDef
+	}
 
-	resp, err := a.APIClient.Put(ctx, path, body, nil)
+	req := a.http_orkes.MetadataResourceAPI.Update(ctx).ExtendedWorkflowDef(genDefs)
+	_, resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
 
-/*
-MetadataResourceApiService Create or update workflow definition along with tags
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-*/
-func (a *MetadataResourceApiService) UpdateWorkflowDefWithTags(ctx context.Context, body model.WorkflowDef, tags []model.MetadataTag, overwriteTags bool) (*http.Response, error) {
-	path := "/metadata/workflow"
+// UpdateTaskDef updates an existing task.
+func (a *MetadataResourceApiService) UpdateTaskDef(ctx context.Context, body model.TaskDef) (*http.Response, error) {
+	// Convert to ExtendedTaskDef
+	extDef := toExtendedTaskDef(&body)
 
-	tagObjects := []model.TagObject{}
-	for i := 0; i < len(tags); i++ {
-		tagObjects = append(tagObjects, model.NewTagObject(tags[i]))
-	}
-	workflowDefWithTags := body
-	workflowDefWithTags.Tags = tagObjects
-	workflowDefWithTags.OverwriteTags = overwriteTags
-	workflowDefs := []model.WorkflowDef{workflowDefWithTags}
-
-	resp, err := a.APIClient.Put(ctx, path, workflowDefs, nil)
+	req := a.http_orkes.MetadataResourceAPI.UpdateTaskDef(ctx).ExtendedTaskDef(extDef)
+	_, resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
-}
-
-func (a *MetadataResourceApiService) GetTagsForWorkflowDef(ctx context.Context, name string) ([]model.MetadataTag, error) {
-	path := fmt.Sprintf("/metadata/workflow/%s?metadata=true", name)
-
-	var workflowDef model.WorkflowDef
-	_, err := a.APIClient.Get(ctx, path, nil, &workflowDef)
-	if err != nil {
-		return nil, err
-	}
-
-	// Extract and convert tags as in your original implementation
-	var result []model.MetadataTag
-	for _, tag := range workflowDef.Tags {
-		value := fmt.Sprintf("%v", tag.Value)
-		result = append(result, model.MetadataTag{
-			Key:   tag.Key,
-			Value: value,
-		})
-	}
-
-	return result, nil
-}
-
-func (a *MetadataResourceApiService) GetTagsForTaskDef(ctx context.Context, tasktype string) ([]model.MetadataTag, error) {
-	path := fmt.Sprintf("/metadata/taskdefs/%s?metadata=true", tasktype)
-
-	var taskDef model.WorkflowDef
-	_, err := a.APIClient.Get(ctx, path, nil, &taskDef)
-	if err != nil {
-		return nil, err
-	}
-
-	// Extract and convert tags as in your original implementation
-	var result []model.MetadataTag
-	for _, tag := range taskDef.Tags {
-		value := fmt.Sprintf("%v", tag.Value)
-		result = append(result, model.MetadataTag{
-			Key:   tag.Key,
-			Value: value,
-		})
-	}
-
-	return result, nil
 }

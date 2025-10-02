@@ -2,16 +2,12 @@ package client
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/antihax/optional"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/sdk/model/integration"
-	"net/http"
 )
-
-type GetIntegrationProvidersOpts struct {
-	Category   optional.String
-	ActiveOnly optional.Bool
-}
 
 type IntegrationClient interface {
 

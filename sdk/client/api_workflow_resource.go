@@ -12,31 +12,27 @@ package client
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 
 	"github.com/antihax/optional"
+	"github.com/conductor-sdk/conductor-go/sdk/generated/http/orkes"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
-// Linger please
-var (
-	_ context.Context
-)
-
+// WorkflowResourceApiService is the service for the workflow resource.
 type WorkflowResourceApiService struct {
 	*APIClient
 }
 
 // Decide starts the decision task for a workflow.
 func (a *WorkflowResourceApiService) Decide(ctx context.Context, workflowId string) (*http.Response, error) {
-	path := fmt.Sprintf("/workflow/decide/%s", workflowId)
-
-	resp, err := a.Put(ctx, path, nil, nil)
+	req := a.http_orkes.WorkflowResourceAPI.Decide(ctx, workflowId)
+	resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
@@ -47,18 +43,17 @@ type WorkflowResourceApiDeleteOpts struct {
 	ArchiveWorkflow optional.Bool
 }
 
-// Delete deletes the workflow from the system
+// Delete deletes the workflow from the system.
 func (a *WorkflowResourceApiService) Delete(ctx context.Context, workflowId string, localVarOptionals *WorkflowResourceApiDeleteOpts) (*http.Response, error) {
-	path := fmt.Sprintf("/workflow/%s/remove", workflowId)
+	req := a.http_orkes.WorkflowResourceAPI.Delete1(ctx, workflowId)
 
-	queryParams := url.Values{}
 	if localVarOptionals != nil && localVarOptionals.ArchiveWorkflow.IsSet() {
-		queryParams.Add("archiveWorkflow", parameterToString(localVarOptionals.ArchiveWorkflow.Value(), ""))
+		req = req.ArchiveWorkflow(localVarOptionals.ArchiveWorkflow.Value())
 	}
 
-	resp, err := a.APIClient.Delete(ctx, path, queryParams, nil)
+	resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
@@ -69,58 +64,53 @@ type WorkflowResourceApiGetExecutionStatusOpts struct {
 	IncludeTasks optional.Bool
 }
 
-// GetExecutionStatus gets the workflow by workflow id
+// GetExecutionStatus gets the workflow by workflow id.
 func (a *WorkflowResourceApiService) GetExecutionStatus(ctx context.Context, workflowId string, opts *WorkflowResourceApiGetExecutionStatusOpts) (model.Workflow, *http.Response, error) {
-	var result model.Workflow
+	// Use conductor client instead of orkes client to avoid JSON unmarshaling issues
+	req := a.http_orkes.WorkflowResourceAPI.GetExecutionStatus(ctx, workflowId)
 
-	path := fmt.Sprintf("/workflow/%s", workflowId)
-
-	queryParams := url.Values{}
 	if opts != nil && opts.IncludeTasks.IsSet() {
-		queryParams.Add("includeTasks", parameterToString(opts.IncludeTasks.Value(), ""))
+		req = req.IncludeTasks(opts.IncludeTasks.Value())
 	}
 
-	resp, err := a.Get(ctx, path, queryParams, &result)
+	genWorkflow, resp, err := req.Execute()
 	if err != nil {
-		return model.Workflow{}, resp, err
+		return model.Workflow{}, resp, wrapGeneratedError(err, resp)
 	}
 
-	return result, resp, nil
+	// Convert generated model to our model using mapper
+	workflow := toDomainWorkflow(genWorkflow)
+	return workflow, resp, nil
 }
 
-// GetWorkflowState gets the workflow state
+// GetWorkflowState gets the workflow state.
 func (a *WorkflowResourceApiService) GetWorkflowState(ctx context.Context, workflowId string, includeOutput bool, includeVariables bool) (model.WorkflowState, *http.Response, error) {
-	var result model.WorkflowState
+	req := a.http_orkes.WorkflowResourceAPI.GetWorkflowStatusSummary(ctx, workflowId).
+		IncludeOutput(includeOutput).
+		IncludeVariables(includeVariables)
 
-	path := fmt.Sprintf("/workflow/%s/status", workflowId)
-
-	queryParams := url.Values{}
-	queryParams.Add("includeOutput", parameterToString(includeOutput, ""))
-	queryParams.Add("includeVariables", parameterToString(includeVariables, ""))
-
-	resp, err := a.Get(ctx, path, queryParams, &result)
+	genResult, resp, err := req.Execute()
 	if err != nil {
-		return model.WorkflowState{}, resp, err
+		return model.WorkflowState{}, resp, wrapGeneratedError(err, resp)
 	}
+
+	result := toDomainWorkflowStateFromGenerated(*genResult)
 	return result, resp, nil
 }
 
 // GetExternalStorageLocation gets external storage location.
 func (a *WorkflowResourceApiService) GetExternalStorageLocation(ctx context.Context, path string, operation string, payloadType string) (model.ExternalStorageLocation, *http.Response, error) {
-	var result model.ExternalStorageLocation
+	// Use conductor generated client
+	req := a.http_conductor.WorkflowResourceAPI.GetExternalStorageLocation1(ctx)
+	req = req.Path(path).Operation(operation).PayloadType(payloadType)
 
-	urlPath := "/workflow/externalstoragelocation"
-
-	queryParams := url.Values{}
-	queryParams.Add("path", parameterToString(path, ""))
-	queryParams.Add("operation", parameterToString(operation, ""))
-	queryParams.Add("payloadType", parameterToString(payloadType, ""))
-
-	resp, err := a.Get(ctx, urlPath, queryParams, &result)
+	conductorLoc, resp, err := req.Execute()
 	if err != nil {
-		return model.ExternalStorageLocation{}, resp, err
+		return model.ExternalStorageLocation{}, resp, wrapGeneratedError(err, resp)
 	}
-	return result, resp, nil
+
+	domainLoc := toDomainExternalStorageLocation(conductorLoc)
+	return domainLoc, resp, nil
 }
 
 // WorkflowResourceApiGetRunningWorkflowOpts contains optional parameters for GetRunningWorkflow
@@ -135,67 +125,103 @@ type WorkflowResourceApiGetRunningWorkflowOpts struct {
 
 // GetRunningWorkflow gets running workflows.
 func (a *WorkflowResourceApiService) GetRunningWorkflow(ctx context.Context, name string, opts *WorkflowResourceApiGetRunningWorkflowOpts) ([]string, *http.Response, error) {
-	var result []string
+	req := a.http_orkes.WorkflowResourceAPI.GetRunningWorkflow(ctx, name)
 
-	path := fmt.Sprintf("/workflow/running/%s", name)
+	if opts != nil {
+		if opts.Version.IsSet() {
+			req = req.Version(opts.Version.Value())
+		}
+		if opts.StartTime.IsSet() {
+			req = req.StartTime(opts.StartTime.Value())
+		}
+		if opts.EndTime.IsSet() {
+			req = req.EndTime(opts.EndTime.Value())
+		}
+	}
 
-	queryParams := url.Values{}
-	if opts != nil && opts.Version.IsSet() {
-		queryParams.Add("version", parameterToString(opts.Version.Value(), ""))
-	}
-	if opts != nil && opts.StartTime.IsSet() {
-		queryParams.Add("startTime", parameterToString(opts.StartTime.Value(), ""))
-	}
-	if opts != nil && opts.EndTime.IsSet() {
-		queryParams.Add("endTime", parameterToString(opts.EndTime.Value(), ""))
-	}
-
-	resp, err := a.Get(ctx, path, queryParams, &result)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
 	return result, resp, nil
 }
 
 // GetWorkflows gets workflows by correlation IDs.
 func (a *WorkflowResourceApiService) GetWorkflows(ctx context.Context, body []string, name string, opts *WorkflowResourceApiGetWorkflowsOpts) (map[string][]model.Workflow, *http.Response, error) {
-	var result map[string][]model.Workflow
+	req := a.http_orkes.WorkflowResourceAPI.GetWorkflows(ctx, name).RequestBody(body)
 
-	path := fmt.Sprintf("/workflow/%s/correlated", name)
-
-	queryParams := url.Values{}
-	if opts != nil && opts.IncludeClosed.IsSet() {
-		queryParams.Add("includeClosed", parameterToString(opts.IncludeClosed.Value(), ""))
+	if opts != nil {
+		if opts.IncludeClosed.IsSet() {
+			req = req.IncludeClosed(opts.IncludeClosed.Value())
+		}
+		if opts.IncludeTasks.IsSet() {
+			req = req.IncludeTasks(opts.IncludeTasks.Value())
+		}
 	}
-	if opts != nil && opts.IncludeTasks.IsSet() {
-		queryParams.Add("includeTasks", parameterToString(opts.IncludeTasks.Value(), ""))
-	}
 
-	resp, err := a.PostWithParams(ctx, path, queryParams, body, &result)
+	genResult, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
+
+	if genResult == nil {
+		return nil, resp, fmt.Errorf("nil result from GetWorkflows")
+	}
+
+	result := make(map[string][]model.Workflow)
+
+	// The generated API returns a map of workflow arrays, convert each orkes.Workflow to model.Workflow
+	for key, workflows := range *genResult {
+		converted := make([]model.Workflow, len(workflows))
+		for i, w := range workflows {
+			converted[i] = toDomainWorkflow(&w)
+		}
+		result[key] = converted
+	}
+
 	return result, resp, nil
 }
 
 // GetWorkflowsBatch gets workflows by correlation IDs.
 func (a *WorkflowResourceApiService) GetWorkflowsBatch(ctx context.Context, body map[string][]string, localVarOptionals *WorkflowResourceApiGetWorkflowsOpts) (map[string][]model.Workflow, *http.Response, error) {
-	var result map[string][]model.Workflow
-
-	path := "/workflow/correlated/batch"
-
-	queryParams := url.Values{}
-	if localVarOptionals != nil && localVarOptionals.IncludeClosed.IsSet() {
-		queryParams.Add("includeClosed", parameterToString(localVarOptionals.IncludeClosed.Value(), ""))
-	}
-	if localVarOptionals != nil && localVarOptionals.IncludeTasks.IsSet() {
-		queryParams.Add("includeTasks", parameterToString(localVarOptionals.IncludeTasks.Value(), ""))
+	// Convert body to CorrelationIdsSearchRequest
+	genBody := orkes.CorrelationIdsSearchRequest{
+		CorrelationIds: body["correlationIds"],
+		WorkflowNames:  body["workflowNames"],
 	}
 
-	resp, err := a.PostWithParams(ctx, path, queryParams, body, &result)
+	req := a.http_orkes.WorkflowResourceAPI.GetWorkflows1(ctx).CorrelationIdsSearchRequest(genBody)
+
+	if localVarOptionals != nil {
+		if localVarOptionals.IncludeClosed.IsSet() {
+			req = req.IncludeClosed(localVarOptionals.IncludeClosed.Value())
+		}
+		if localVarOptionals.IncludeTasks.IsSet() {
+			req = req.IncludeTasks(localVarOptionals.IncludeTasks.Value())
+		}
+	}
+
+	genResult, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
+
+	if genResult == nil {
+		return nil, resp, fmt.Errorf("nil result from GetWorkflowsBatch")
+	}
+
+	// Convert result - GetWorkflows returns *map[string][]orkes.Workflow
+	result := make(map[string][]model.Workflow)
+
+	// The generated API returns a map of workflow arrays, convert each orkes.Workflow to model.Workflow
+	for key, workflows := range *genResult {
+		converted := make([]model.Workflow, len(workflows))
+		for i, w := range workflows {
+			converted[i] = toDomainWorkflow(&w)
+		}
+		result[key] = converted
+	}
+
 	return result, resp, nil
 }
 
@@ -214,21 +240,26 @@ func (a *WorkflowResourceApiService) GetWorkflowsByCorrelationId(ctx context.Con
 
 // Deprecated: Use GetWorkflowsByCorrelationId instead.
 func (a *WorkflowResourceApiService) GetWorkflows1(ctx context.Context, name string, correlationId string, opts *WorkflowResourceApiGetWorkflowsOpts) ([]model.Workflow, *http.Response, error) {
-	var result []model.Workflow
+	req := a.http_orkes.WorkflowResourceAPI.GetWorkflows2(ctx, name, correlationId)
 
-	localVarPath := fmt.Sprintf("/workflow/%s/correlated/%s", name, correlationId)
-
-	queryParams := url.Values{}
-	if opts != nil && opts.IncludeClosed.IsSet() {
-		queryParams.Add("includeClosed", parameterToString(opts.IncludeClosed.Value(), ""))
+	if opts != nil {
+		if opts.IncludeClosed.IsSet() {
+			req = req.IncludeClosed(opts.IncludeClosed.Value())
+		}
+		if opts.IncludeTasks.IsSet() {
+			req = req.IncludeTasks(opts.IncludeTasks.Value())
+		}
 	}
-	if opts != nil && opts.IncludeTasks.IsSet() {
-		queryParams.Add("includeTasks", parameterToString(opts.IncludeTasks.Value(), ""))
-	}
 
-	resp, err := a.Get(ctx, localVarPath, queryParams, &result)
+	genResult, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
+	}
+
+	// Convert result using mapper
+	result := make([]model.Workflow, len(genResult))
+	for i, gen := range genResult {
+		result[i] = toDomainWorkflow(&gen)
 	}
 	return result, resp, nil
 }
@@ -240,24 +271,23 @@ func (a *WorkflowResourceApiService) PauseWorkflow(ctx context.Context, workflow
 
 // Pause pauses an ongoing workflow execution.
 func (a *WorkflowResourceApiService) Pause(ctx context.Context, workflowId string) (*http.Response, error) {
-	path := fmt.Sprintf("/workflow/%s/pause", workflowId)
-
-	resp, err := a.Put(ctx, path, nil, nil)
+	req := a.http_orkes.WorkflowResourceAPI.PauseWorkflow(ctx, workflowId)
+	resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
 
 // Rerun reruns the workflow from a specific task.
 func (a *WorkflowResourceApiService) Rerun(ctx context.Context, body model.RerunWorkflowRequest, workflowId string) (string, *http.Response, error) {
-	var result string
+	// Convert model using mapper
+	genBody := toGeneratedRerunWorkflowRequest(&body)
 
-	path := fmt.Sprintf("/workflow/%s/rerun", workflowId)
-
-	resp, err := a.Post(ctx, path, body, &result)
+	req := a.http_orkes.WorkflowResourceAPI.Rerun(ctx, workflowId).RerunWorkflowRequest(genBody)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return "", resp, err
+		return "", resp, wrapGeneratedError(err, resp)
 	}
 	return result, resp, nil
 }
@@ -269,11 +299,10 @@ func (a *WorkflowResourceApiService) ResetWorkflow(ctx context.Context, workflow
 
 // Reset resets the callback times of all IN_PROGRESS tasks to 0 for the given workflow.
 func (a *WorkflowResourceApiService) Reset(ctx context.Context, workflowId string) (*http.Response, error) {
-	path := fmt.Sprintf("/workflow/%s/resetcallbacks", workflowId)
-
-	resp, err := a.Post(ctx, path, nil, nil)
+	req := a.http_orkes.WorkflowResourceAPI.ResetWorkflow(ctx, workflowId)
+	resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
@@ -286,16 +315,15 @@ type WorkflowResourceApiRestartOpts struct {
 
 // Restart restarts a completed workflow.
 func (a *WorkflowResourceApiService) Restart(ctx context.Context, workflowId string, opts *WorkflowResourceApiRestartOpts) (*http.Response, error) {
-	path := fmt.Sprintf("/workflow/%s/restart", workflowId)
+	req := a.http_orkes.WorkflowResourceAPI.Restart(ctx, workflowId)
 
-	queryParams := url.Values{}
 	if opts != nil && opts.UseLatestDefinitions.IsSet() {
-		queryParams.Add("useLatestDefinitions", parameterToString(opts.UseLatestDefinitions.Value(), ""))
+		req = req.UseLatestDefinitions(opts.UseLatestDefinitions.Value())
 	}
 
-	resp, err := a.PostWithParams(ctx, path, queryParams, nil, nil)
+	resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
@@ -307,11 +335,10 @@ func (a *WorkflowResourceApiService) ResumeWorkflow(ctx context.Context, workflo
 
 // Resume resumes a paused workflow execution.
 func (a *WorkflowResourceApiService) Resume(ctx context.Context, workflowId string) (*http.Response, error) {
-	path := fmt.Sprintf("/workflow/%s/resume", workflowId)
-
-	resp, err := a.Put(ctx, path, nil, nil)
+	req := a.http_orkes.WorkflowResourceAPI.ResumeWorkflow(ctx, workflowId)
+	resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
@@ -327,19 +354,18 @@ type WorkflowResourceApiRetryOpts struct {
 
 // Retry retries the last failed task.
 func (a *WorkflowResourceApiService) Retry(ctx context.Context, workflowId string, opts *WorkflowResourceApiRetryOpts) (*http.Response, error) {
-	path := fmt.Sprintf("/workflow/%s/retry", workflowId)
+	req := a.http_orkes.WorkflowResourceAPI.Retry(ctx, workflowId)
 
-	queryParams := url.Values{}
 	if opts != nil && opts.ResumeSubworkflowTasks.IsSet() {
-		queryParams.Add("resumeSubworkflowTasks", parameterToString(opts.ResumeSubworkflowTasks.Value(), ""))
+		req = req.ResumeSubworkflowTasks(opts.ResumeSubworkflowTasks.Value())
 	}
 	if opts != nil && opts.RetryIfRetriedByParent.IsSet() {
-		queryParams.Add("retryIfRetriedByParent", parameterToString(opts.RetryIfRetriedByParent.Value(), ""))
+		req = req.RetryIfRetriedByParent(opts.RetryIfRetriedByParent.Value())
 	}
 
-	resp, err := a.PostWithParams(ctx, path, queryParams, nil, nil)
+	resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
@@ -372,81 +398,80 @@ type WorkflowResourceApiSearchOpts struct {
 // Search searches for workflows.
 
 func (a *WorkflowResourceApiService) Search(ctx context.Context, opts *WorkflowResourceApiSearchOpts) (model.SearchResultWorkflowSummary, *http.Response, error) {
-	var result model.SearchResultWorkflowSummary
+	req := a.http_orkes.WorkflowResourceAPI.Search1(ctx)
 
-	path := "/workflow/search"
+	if opts != nil {
+		if opts.Start.IsSet() {
+			req = req.Start(opts.Start.Value())
+		}
+		if opts.Size.IsSet() {
+			req = req.Size(opts.Size.Value())
+		}
+		if opts.Sort.IsSet() {
+			req = req.Sort(opts.Sort.Value())
+		}
+		if opts.FreeText.IsSet() {
+			req = req.FreeText(opts.FreeText.Value())
+		}
+		if opts.Query.IsSet() {
+			req = req.Query(opts.Query.Value())
+		}
+	}
 
-	queryParams := url.Values{}
-	if opts != nil && opts.Start.IsSet() {
-		queryParams.Add("start", parameterToString(opts.Start.Value(), ""))
-	}
-	if opts != nil && opts.Size.IsSet() {
-		queryParams.Add("size", parameterToString(opts.Size.Value(), ""))
-	}
-	if opts != nil && opts.Sort.IsSet() {
-		queryParams.Add("sort", parameterToString(opts.Sort.Value(), ""))
-	}
-	if opts != nil && opts.FreeText.IsSet() {
-		queryParams.Add("freeText", parameterToString(opts.FreeText.Value(), ""))
-	}
-	if opts != nil && opts.Query.IsSet() {
-		queryParams.Add("query", parameterToString(opts.Query.Value(), ""))
-	}
-
-	resp, err := a.Get(ctx, path, queryParams, &result)
+	genResult, resp, err := req.Execute()
 	if err != nil {
-		return model.SearchResultWorkflowSummary{}, resp, err
+		return model.SearchResultWorkflowSummary{}, resp, wrapGeneratedError(err, resp)
 	}
+
+	// Convert result using mapper
+	result := toDomainSearchResultWorkflowSummary(genResult)
 	return result, resp, nil
 }
 
-/*
-WorkflowResourceApiService Search for workflows based on payload and other parameters
-use sort options as sort&#x3D;&lt;field&gt;:ASC|DESC e.g. sort&#x3D;name&amp;sort&#x3D;workflowId:DESC. If order is not specified, defaults to ASC.
- * @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param optional nil or *WorkflowResourceApiSearchV2Opts - Optional Parameters:
-     * @param "Start" (optional.Int32) -
-     * @param "Size" (optional.Int32) -
-     * @param "Sort" (optional.String) -
-     * @param "FreeText" (optional.String) -
-     * @param "Query" (optional.String) -
-@return http_model.SearchResultWorkflow
-*/
-
 type WorkflowResourceApiSearchV2Opts struct {
-	Start    optional.Int32
-	Size     optional.Int32
-	Sort     optional.String
+	// Start starts of the search results list, which is used for pagination. Default is 0.
+	Start optional.Int32
+	// Size the number of workflows to return. Default is 100.
+	Size optional.Int32
+	// Sort the field to sort the results by.
+	Sort optional.String
+	// FreeText the free text associated with the workflow execution
+	// (workflow input values, workflow output values, workflow variable values, task output values, correlation ID, and reason for incompletion).
 	FreeText optional.String
-	Query    optional.String
+	// Query the query expression in the format FIELD = VALUE or FIELD IN (value1, value2).
+	// Supported fields for querying:
+	// workflowId, correlationId, workflowType, status, startTime, modifiedTime.
+	Query optional.String
 }
 
+// SearchV2 searches for workflows.
 func (a *WorkflowResourceApiService) SearchV2(ctx context.Context, opts *WorkflowResourceApiSearchV2Opts) (model.SearchResultWorkflow, *http.Response, error) {
-	var result model.SearchResultWorkflow
+	req := a.http_conductor.WorkflowResourceAPI.SearchV2(ctx)
 
-	path := "/workflow/search-v2"
+	if opts != nil {
+		if opts.Start.IsSet() {
+			req = req.Start(opts.Start.Value())
+		}
+		if opts.Size.IsSet() {
+			req = req.Size(opts.Size.Value())
+		}
+		if opts.Sort.IsSet() {
+			req = req.Sort(opts.Sort.Value())
+		}
+		if opts.FreeText.IsSet() {
+			req = req.FreeText(opts.FreeText.Value())
+		}
+		if opts.Query.IsSet() {
+			req = req.Query(opts.Query.Value())
+		}
+	}
 
-	queryParams := url.Values{}
-	if opts != nil && opts.Start.IsSet() {
-		queryParams.Add("start", parameterToString(opts.Start.Value(), ""))
-	}
-	if opts != nil && opts.Size.IsSet() {
-		queryParams.Add("size", parameterToString(opts.Size.Value(), ""))
-	}
-	if opts != nil && opts.Sort.IsSet() {
-		queryParams.Add("sort", parameterToString(opts.Sort.Value(), ""))
-	}
-	if opts != nil && opts.FreeText.IsSet() {
-		queryParams.Add("freeText", parameterToString(opts.FreeText.Value(), ""))
-	}
-	if opts != nil && opts.Query.IsSet() {
-		queryParams.Add("query", parameterToString(opts.Query.Value(), ""))
-	}
-
-	resp, err := a.Get(ctx, path, queryParams, &result)
+	genResult, resp, err := req.Execute()
 	if err != nil {
-		return model.SearchResultWorkflow{}, resp, err
+		return model.SearchResultWorkflow{}, resp, wrapGeneratedError(err, resp)
 	}
+
+	result := toDomainSearchResultWorkflowFromConductorGenerated(genResult)
 	return result, resp, nil
 }
 
@@ -469,31 +494,32 @@ type WorkflowResourceApiSearchWorkflowsByTasksOpts struct {
 
 // SearchWorkflowsByTasks search workflows by tasks.
 func (a *WorkflowResourceApiService) SearchWorkflowsByTasks(ctx context.Context, opts *WorkflowResourceApiSearchWorkflowsByTasksOpts) (model.SearchResultWorkflowSummary, *http.Response, error) {
-	var result model.SearchResultWorkflowSummary
+	req := a.http_conductor.WorkflowResourceAPI.SearchWorkflowsByTasks(ctx)
 
-	localVarPath := "/workflow/search-by-tasks"
+	if opts != nil {
+		if opts.Start.IsSet() {
+			req = req.Start(opts.Start.Value())
+		}
+		if opts.Size.IsSet() {
+			req = req.Size(opts.Size.Value())
+		}
+		if opts.Sort.IsSet() {
+			req = req.Sort(opts.Sort.Value())
+		}
+		if opts.FreeText.IsSet() {
+			req = req.FreeText(opts.FreeText.Value())
+		}
+		if opts.Query.IsSet() {
+			req = req.Query(opts.Query.Value())
+		}
+	}
 
-	queryParams := url.Values{}
-	if opts != nil && opts.Start.IsSet() {
-		queryParams.Add("start", parameterToString(opts.Start.Value(), ""))
-	}
-	if opts != nil && opts.Size.IsSet() {
-		queryParams.Add("size", parameterToString(opts.Size.Value(), ""))
-	}
-	if opts != nil && opts.Sort.IsSet() {
-		queryParams.Add("sort", parameterToString(opts.Sort.Value(), ""))
-	}
-	if opts != nil && opts.FreeText.IsSet() {
-		queryParams.Add("freeText", parameterToString(opts.FreeText.Value(), ""))
-	}
-	if opts != nil && opts.Query.IsSet() {
-		queryParams.Add("query", parameterToString(opts.Query.Value(), ""))
-	}
-
-	resp, err := a.Get(ctx, localVarPath, queryParams, &result)
+	genResult, resp, err := req.Execute()
 	if err != nil {
-		return model.SearchResultWorkflowSummary{}, resp, err
+		return model.SearchResultWorkflowSummary{}, resp, wrapGeneratedError(err, resp)
 	}
+
+	result := toDomainSearchResultWorkflowSummaryFromConductorGenerated(genResult)
 	return result, resp, nil
 }
 
@@ -516,43 +542,44 @@ type WorkflowResourceApiSearchWorkflowsByTasksV2Opts struct {
 
 // SearchWorkflowsByTasksV2 search workflows by tasks V2.
 func (a *WorkflowResourceApiService) SearchWorkflowsByTasksV2(ctx context.Context, opts *WorkflowResourceApiSearchWorkflowsByTasksV2Opts) (model.SearchResultWorkflow, *http.Response, error) {
-	var result model.SearchResultWorkflow
+	req := a.http_conductor.WorkflowResourceAPI.SearchWorkflowsByTasksV2(ctx)
 
-	localVarPath := "/workflow/search-by-tasks-v2"
+	if opts != nil {
+		if opts.Start.IsSet() {
+			req = req.Start(opts.Start.Value())
+		}
+		if opts.Size.IsSet() {
+			req = req.Size(opts.Size.Value())
+		}
+		if opts.Sort.IsSet() {
+			req = req.Sort(opts.Sort.Value())
+		}
+		if opts.FreeText.IsSet() {
+			req = req.FreeText(opts.FreeText.Value())
+		}
+		if opts.Query.IsSet() {
+			req = req.Query(opts.Query.Value())
+		}
+	}
 
-	queryParams := url.Values{}
-	if opts != nil && opts.Start.IsSet() {
-		queryParams.Add("start", parameterToString(opts.Start.Value(), ""))
-	}
-	if opts != nil && opts.Size.IsSet() {
-		queryParams.Add("size", parameterToString(opts.Size.Value(), ""))
-	}
-	if opts != nil && opts.Sort.IsSet() {
-		queryParams.Add("sort", parameterToString(opts.Sort.Value(), ""))
-	}
-	if opts != nil && opts.FreeText.IsSet() {
-		queryParams.Add("freeText", parameterToString(opts.FreeText.Value(), ""))
-	}
-	if opts != nil && opts.Query.IsSet() {
-		queryParams.Add("query", parameterToString(opts.Query.Value(), ""))
-	}
-
-	resp, err := a.Get(ctx, localVarPath, queryParams, &result)
+	genResult, resp, err := req.Execute()
 	if err != nil {
-		return model.SearchResultWorkflow{}, resp, err
+		return model.SearchResultWorkflow{}, resp, wrapGeneratedError(err, resp)
 	}
+
+	result := toDomainSearchResultWorkflowFromConductorGenerated(genResult)
 	return result, resp, nil
 }
 
 // SkipTaskFromWorkflow skip task from workflow.
 func (a *WorkflowResourceApiService) SkipTaskFromWorkflow(ctx context.Context, workflowId string, taskReferenceName string, skipTaskRequest model.SkipTaskRequest) (*http.Response, error) {
-	path := fmt.Sprintf("/workflow/%s/skiptask/%s", workflowId, taskReferenceName)
+	// Convert model using mapper
+	genBody := toGeneratedSkipTaskRequest(&skipTaskRequest)
 
-	queryParams := url.Values{}
-
-	resp, err := a.PutWithParams(ctx, path, queryParams, skipTaskRequest, &model.SkipTaskRequest{})
+	req := a.http_orkes.WorkflowResourceAPI.SkipTaskFromWorkflow(ctx, workflowId, taskReferenceName).SkipTaskRequest(genBody)
+	resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
@@ -570,105 +597,94 @@ type WorkflowResourceApiStartWorkflowOpts struct {
 
 // StartWorkflow starts a workflow execution.
 func (a *WorkflowResourceApiService) StartWorkflow(ctx context.Context, body map[string]interface{}, name string, opts *WorkflowResourceApiStartWorkflowOpts) (string, *http.Response, error) {
-	var result string
+	req := a.http_orkes.WorkflowResourceAPI.StartWorkflow1(ctx, name).RequestBody(body)
 
-	path := fmt.Sprintf("/workflow/%s", name)
+	if opts != nil {
+		if opts.Version.IsSet() {
+			req = req.Version(opts.Version.Value())
+		}
+		if opts.CorrelationId.IsSet() {
+			req = req.CorrelationId(opts.CorrelationId.Value())
+		}
+		if opts.Priority.IsSet() {
+			req = req.Priority(opts.Priority.Value())
+		}
+	}
 
-	queryParams := url.Values{}
-	if opts != nil && opts.Version.IsSet() {
-		queryParams.Add("version", parameterToString(opts.Version.Value(), ""))
-	}
-	if opts != nil && opts.CorrelationId.IsSet() {
-		queryParams.Add("correlationId", parameterToString(opts.CorrelationId.Value(), ""))
-	}
-	if opts != nil && opts.Priority.IsSet() {
-		queryParams.Add("priority", parameterToString(opts.Priority.Value(), ""))
-	}
-
-	resp, err := a.PostWithParams(ctx, path, queryParams, body, &result)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return "", resp, err
+		return "", resp, wrapGeneratedError(err, resp)
 	}
 	return result, resp, nil
 }
 
-func (a *WorkflowResourceApiService) executeWorkflowImpl(
+func (a *WorkflowResourceApiService) executeWorkflowWithReturnStrategy(
 	ctx context.Context,
 	body model.StartWorkflowRequest,
-	requestId string,
-	name string,
-	version int32,
-	waitUntilTask []string,
-	waitForSeconds int,
-	consistency string,
-	returnStrategy string) (interface{}, *http.Response, error) {
-
-	var (
-		localVarHttpMethod  = strings.ToUpper("Post")
-		localVarPostBody    interface{}
-		localVarFileName    string
-		localVarFileBytes   []byte
-		localVarReturnValue interface{}
-	)
-
-	path := fmt.Sprintf("/workflow/execute/%s/%d", name, version)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarHeaderParams["Accept"] = "application/json"
-	localVarHeaderParams["Content-Type"] = "application/json"
-
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
-
-	if requestId != "" {
-		localVarQueryParams.Add("requestId", parameterToString(requestId, ""))
+	opts ExecuteWorkflowOpts) (
+	*model.SignalResponse, *http.Response, error) {
+	// Apply defaults if not specified
+	if opts.Consistency == "" {
+		opts.Consistency = model.DurableConsistency
+	}
+	if opts.ReturnStrategy == "" {
+		opts.ReturnStrategy = model.ReturnTargetWorkflow
+	}
+	if opts.WaitForSeconds <= 0 {
+		opts.WaitForSeconds = 10
 	}
 
-	if len(waitUntilTask) > 0 {
-		localVarQueryParams.Add("waitUntilTaskRef", strings.Join(waitUntilTask, ","))
+	// Create a new context with timeout
+	var cancelFunc context.CancelFunc
+	effectiveCtx := ctx
+	if opts.WaitForSeconds > 0 {
+		// Add buffer time for HTTP overhead
+		bufferSeconds := 10
+		totalTimeout := time.Duration(opts.WaitForSeconds+bufferSeconds) * time.Second
+		effectiveCtx, cancelFunc = context.WithTimeout(ctx, totalTimeout)
+		defer cancelFunc()
 	}
 
-	if waitForSeconds > 0 {
-		localVarQueryParams.Add("waitForSeconds", parameterToString(waitForSeconds, ""))
+	// Use orkes generated client
+	req := a.http_orkes.WorkflowResourceAPI.ExecuteWorkflow(effectiveCtx, body.Name, int32(body.Version))
+
+	if opts.RequestID != "" {
+		req = req.RequestId(opts.RequestID)
 	}
 
-	if consistency != "" {
-		localVarQueryParams.Add("consistency", parameterToString(consistency, ""))
+	// Convert domain model to orkes model using mapper
+	orkesRequest := toGeneratedStartWorkflowRequestForExecute(&body)
+	req = req.StartWorkflowRequest(orkesRequest)
+
+	// Set optional parameters
+	if len(opts.WaitUntilTaskRef) > 0 {
+		req = req.WaitUntilTaskRef(strings.Join(opts.WaitUntilTaskRef, ","))
+	}
+	if opts.WaitForSeconds > 0 {
+		// Check for overflow before conversion
+		if opts.WaitForSeconds <= math.MaxInt32 {
+			req = req.WaitForSeconds(int32(opts.WaitForSeconds))
+		}
+
 	}
 
-	if returnStrategy != "" {
-		localVarQueryParams.Add("returnStrategy", parameterToString(returnStrategy, ""))
+	if opts.Consistency != "" {
+		req = req.Consistency(opts.Consistency.String())
+	}
+	if opts.ReturnStrategy != "" {
+		req = req.ReturnStrategy(opts.ReturnStrategy.String())
 	}
 
-	localVarPostBody = &body
-	r, err := a.prepareRequest(ctx, path, localVarHttpMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFileName, localVarFileBytes)
+	// Execute the request
+	signalResponseGenerated, resp, err := req.Execute()
 	if err != nil {
-		return nil, nil, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
 
-	localVarHttpResponse, err := a.callAPI(r)
-	if err != nil || localVarHttpResponse == nil {
-		return nil, localVarHttpResponse, err
-	}
+	// Convert orkes.WorkflowRun to model.SignalResponse using mapper
+	signalResponse := toDomainSignalResponseFromGenerated(signalResponseGenerated)
 
-	localVarBody, err := getDecompressedBody(localVarHttpResponse)
-
-	localVarHttpResponse.Body.Close()
-	if err != nil {
-		return nil, localVarHttpResponse, err
-	}
-
-	if isSuccessfulStatus(localVarHttpResponse.StatusCode) {
-		// Decode directly into SignalResponse since API returns unified format
-		var signalResponse model.SignalResponse
-		err = a.decode(&signalResponse, localVarBody, localVarHttpResponse.Header.Get("Content-Type"))
-		localVarReturnValue = signalResponse
-	} else {
-		newErr := NewGenericSwaggerError(localVarBody, localVarHttpResponse.Status, nil, localVarHttpResponse.StatusCode)
-		return nil, localVarHttpResponse, newErr
-	}
-
-	return localVarReturnValue, localVarHttpResponse, err
+	return &signalResponse, resp, nil
 }
 
 // ExecuteWorkflowOpts contains optional parameters for ExecuteWorkflow
@@ -699,80 +715,37 @@ func DefaultExecuteWorkflowOpts() ExecuteWorkflowOpts {
 
 // ExecuteWorkflowWithReturnStrategy executes a workflow with the specified return strategy
 func (a *WorkflowResourceApiService) ExecuteWorkflowWithReturnStrategy(ctx context.Context, body model.StartWorkflowRequest, opts ExecuteWorkflowOpts) (*model.SignalResponse, error) {
-	// Apply defaults if not specified
-	if opts.Consistency == "" {
-		opts.Consistency = model.DurableConsistency
-	}
-	if opts.ReturnStrategy == "" {
-		opts.ReturnStrategy = model.ReturnTargetWorkflow
-	}
-	if opts.WaitForSeconds <= 0 {
-		opts.WaitForSeconds = 10
-	}
-
-	// Validate required fields
-	if body.Name == "" {
-		return nil, fmt.Errorf("workflow name is required")
-	}
-	if body.Version <= 0 {
-		return nil, fmt.Errorf("workflow version must be greater than 0")
-	}
-
-	// Create a new context with the same timeout as waitForSeconds
-	var cancelFunc context.CancelFunc
-	var effectiveCtx context.Context
-	if opts.WaitForSeconds > 0 {
-		// Add buffer time: 5 seconds for HTTP overhead + API processing
-		// This ensures the context doesn't timeout before the API can respond
-		bufferSeconds := 10
-		totalTimeout := time.Duration(opts.WaitForSeconds+bufferSeconds) * time.Second
-
-		effectiveCtx, cancelFunc = context.WithTimeout(ctx, totalTimeout)
-		defer cancelFunc()
-
-	}
-
-	// Call the existing internal method
-	response, _, err := a.executeWorkflowImpl(
-		effectiveCtx,
-		body,
-		opts.RequestID,
-		body.Name,
-		body.Version,
-		opts.WaitUntilTaskRef,
-		opts.WaitForSeconds,
-		string(opts.Consistency),
-		string(opts.ReturnStrategy),
-	)
+	signalResponse, _, err := a.executeWorkflowWithReturnStrategy(ctx, body, opts)
 	if err != nil {
 		return nil, err
 	}
-
-	signalResponse, ok := response.(model.SignalResponse)
-	if !ok {
-		return nil, fmt.Errorf("expected SignalResponse but got %T", response)
-	}
-
-	return &signalResponse, nil
+	return signalResponse, nil
 }
 
 // ExecuteWorkflow execute workflow synchronously.
 func (a *WorkflowResourceApiService) ExecuteWorkflow(ctx context.Context, body model.StartWorkflowRequest, requestId string, name string, version int32, waitUntilTask string) (model.WorkflowRun, *http.Response, error) {
-	var result model.WorkflowRun
+	// Convert model using mapper
+	genBody := toGeneratedStartWorkflowRequestForExecute(&body)
 
-	path := fmt.Sprintf("/workflow/execute/%s/%d", name, version)
+	// Build request
+	req := a.http_orkes.WorkflowResourceAPI.ExecuteWorkflow(ctx, name, version).
+		StartWorkflowRequest(genBody).
+		RequestId(requestId)
 
-	queryParams := url.Values{}
-	queryParams.Add("requestId", parameterToString(requestId, ""))
-	if len(waitUntilTask) > 0 {
-		queryParams.Add("waitUntilTaskRef", parameterToString(waitUntilTask, ""))
+	if waitUntilTask != "" {
+		req = req.WaitUntilTaskRef(waitUntilTask)
 	}
 
-	resp, err := a.PostWithParams(ctx, path, queryParams, body, &result)
+	// Execute
+	genResult, resp, err := req.Execute()
 	if err != nil {
-		return model.WorkflowRun{}, resp, err
+		return model.WorkflowRun{}, resp, wrapGeneratedError(err, resp)
 	}
-	return result, resp, nil
+
+	// Convert result using mapper
+	signalResponse := toDomainSignalResponseFromGenerated(genResult)
+
+	return signalResponse.GetWorkflowRun(), resp, nil
 }
 
 // Enterprise: This feature requires Orkes Conductor Enterprise license, NOT AVAILABLE in OSS.
@@ -785,30 +758,21 @@ func (a *WorkflowResourceApiService) ExecuteAndGetBlockingTask(
 	waitUntilTask []string,
 	waitForSeconds int,
 	consistency string) (model.TaskRun, *http.Response, error) {
+	// Use ExecuteWorkflowWithReturnStrategy with BLOCKING_TASK
+	opts := ExecuteWorkflowOpts{
+		RequestID:        requestId,
+		WaitUntilTaskRef: waitUntilTask,
+		WaitForSeconds:   waitForSeconds,
+		Consistency:      model.WorkflowConsistency(consistency),
+		ReturnStrategy:   model.ReturnBlockingTask,
+	}
 
-	returnStrategy := "BLOCKING_TASK"
-
-	response, httpResponse, err := a.executeWorkflowImpl(
-		ctx,
-		body,
-		requestId,
-		name,
-		version,
-		waitUntilTask,
-		waitForSeconds,
-		consistency,
-		returnStrategy,
-	)
-
+	signal, resp, err := a.executeWorkflowWithReturnStrategy(ctx, body, opts)
 	if err != nil {
-		return model.TaskRun{}, httpResponse, err
-	}
-	signalResponse, ok := response.(model.SignalResponse)
-	if !ok {
-		return model.TaskRun{}, httpResponse, fmt.Errorf("expected SignalResponse but got %T", response)
+		return model.TaskRun{}, nil, err
 	}
 
-	return signalResponse.GetTaskRun(), httpResponse, nil
+	return signal.GetTaskRun(), resp, nil
 }
 
 // Enterprise: This feature requires Orkes Conductor Enterprise license, NOT AVAILABLE in OSS.
@@ -821,31 +785,21 @@ func (a *WorkflowResourceApiService) ExecuteAndGetBlockingTaskInput(
 	waitUntilTask []string,
 	waitForSeconds int,
 	consistency string) (model.TaskRun, *http.Response, error) {
+	// Use ExecuteWorkflowWithReturnStrategy with BLOCKING_TASK_INPUT
+	opts := ExecuteWorkflowOpts{
+		RequestID:        requestId,
+		WaitUntilTaskRef: waitUntilTask,
+		WaitForSeconds:   waitForSeconds,
+		Consistency:      model.WorkflowConsistency(consistency),
+		ReturnStrategy:   model.ReturnBlockingTaskInput,
+	}
 
-	returnStrategy := "BLOCKING_TASK_INPUT"
-
-	response, httpResponse, err := a.executeWorkflowImpl(
-		ctx,
-		body,
-		requestId,
-		name,
-		version,
-		waitUntilTask,
-		waitForSeconds,
-		consistency,
-		returnStrategy,
-	)
-
+	signal, resp, err := a.executeWorkflowWithReturnStrategy(ctx, body, opts)
 	if err != nil {
-		return model.TaskRun{}, httpResponse, err
+		return model.TaskRun{}, nil, err
 	}
 
-	signalResponse, ok := response.(model.SignalResponse)
-	if !ok {
-		return model.TaskRun{}, httpResponse, fmt.Errorf("expected SignalResponse but got %T", response)
-	}
-
-	return signalResponse.GetTaskRun(), httpResponse, nil
+	return signal.GetTaskRun(), resp, nil
 }
 
 // Enterprise: This feature requires Orkes Conductor Enterprise license, NOT AVAILABLE in OSS.
@@ -858,31 +812,21 @@ func (a *WorkflowResourceApiService) ExecuteAndGetBlockingWorkflow(
 	waitUntilTask []string,
 	waitForSeconds int,
 	consistency string) (model.WorkflowRun, *http.Response, error) {
+	// Use ExecuteWorkflowWithReturnStrategy with BLOCKING_WORKFLOW
+	opts := ExecuteWorkflowOpts{
+		RequestID:        requestId,
+		WaitUntilTaskRef: waitUntilTask,
+		WaitForSeconds:   waitForSeconds,
+		Consistency:      model.WorkflowConsistency(consistency),
+		ReturnStrategy:   model.ReturnBlockingWorkflow,
+	}
 
-	returnStrategy := "BLOCKING_WORKFLOW"
-
-	response, httpResponse, err := a.executeWorkflowImpl(
-		ctx,
-		body,
-		requestId,
-		name,
-		version,
-		waitUntilTask,
-		waitForSeconds,
-		consistency,
-		returnStrategy,
-	)
-
+	signal, resp, err := a.executeWorkflowWithReturnStrategy(ctx, body, opts)
 	if err != nil {
-		return model.WorkflowRun{}, httpResponse, err
+		return model.WorkflowRun{}, nil, err
 	}
 
-	signalResponse, ok := response.(model.SignalResponse)
-	if !ok {
-		return model.WorkflowRun{}, httpResponse, fmt.Errorf("expected SignalResponse but got %T", response)
-	}
-
-	return signalResponse.GetWorkflowRun(), httpResponse, nil
+	return signal.GetWorkflowRun(), resp, nil
 }
 
 // Enterprise: This feature requires Orkes Conductor Enterprise license, NOT AVAILABLE in OSS.
@@ -895,42 +839,32 @@ func (a *WorkflowResourceApiService) ExecuteAndGetTarget(
 	waitUntilTask []string,
 	waitForSeconds int,
 	consistency string) (model.WorkflowRun, *http.Response, error) {
+	// Use ExecuteWorkflowWithReturnStrategy with TARGET_WORKFLOW
+	opts := ExecuteWorkflowOpts{
+		RequestID:        requestId,
+		WaitUntilTaskRef: waitUntilTask,
+		WaitForSeconds:   waitForSeconds,
+		Consistency:      model.WorkflowConsistency(consistency),
+		ReturnStrategy:   model.ReturnTargetWorkflow,
+	}
 
-	returnStrategy := "TARGET_WORKFLOW"
-
-	response, httpResponse, err := a.executeWorkflowImpl(
-		ctx,
-		body,
-		requestId,
-		name,
-		version,
-		waitUntilTask,
-		waitForSeconds,
-		consistency,
-		returnStrategy,
-	)
-
+	signal, resp, err := a.executeWorkflowWithReturnStrategy(ctx, body, opts)
 	if err != nil {
-		return model.WorkflowRun{}, httpResponse, err
+		return model.WorkflowRun{}, nil, err
 	}
 
-	signalResponse, ok := response.(model.SignalResponse)
-	if !ok {
-		return model.WorkflowRun{}, httpResponse, fmt.Errorf("expected SignalResponse but got %T", response)
-	}
-
-	return signalResponse.GetWorkflowRun(), httpResponse, nil
+	return signal.GetWorkflowRun(), resp, nil
 }
 
 // StartWorkflowWithRequest starts a workflow with request
 func (a *WorkflowResourceApiService) StartWorkflowWithRequest(ctx context.Context, body model.StartWorkflowRequest) (string, *http.Response, error) {
-	var result string
+	// Convert model to generated model using mapper
+	genBody := toGeneratedStartWorkflowRequestForExecute(&body)
 
-	path := "/workflow"
-
-	resp, err := a.Post(ctx, path, body, &result)
+	req := a.http_orkes.WorkflowResourceAPI.StartWorkflow(ctx).StartWorkflowRequest(genBody)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return "", resp, err
+		return "", resp, wrapGeneratedError(err, resp)
 	}
 	return result, resp, nil
 }
@@ -945,19 +879,20 @@ type WorkflowResourceApiTerminateOpts struct {
 
 // Terminate terminates a workflow execution.
 func (a *WorkflowResourceApiService) Terminate(ctx context.Context, workflowId string, opts *WorkflowResourceApiTerminateOpts) (*http.Response, error) {
-	path := fmt.Sprintf("/workflow/%s", workflowId)
+	req := a.http_orkes.WorkflowResourceAPI.Terminate1(ctx, workflowId)
 
-	queryParams := url.Values{}
-	if opts != nil && opts.Reason.IsSet() {
-		queryParams.Add("reason", parameterToString(opts.Reason.Value(), ""))
-	}
-	if opts != nil && opts.TriggerFailureWorkflow.IsSet() {
-		queryParams.Add("triggerFailureWorkflow", parameterToString(opts.TriggerFailureWorkflow.Value(), ""))
+	if opts != nil {
+		if opts.Reason.IsSet() {
+			req = req.Reason(opts.Reason.Value())
+		}
+		if opts.TriggerFailureWorkflow.IsSet() {
+			req = req.TriggerFailureWorkflow(opts.TriggerFailureWorkflow.Value())
+		}
 	}
 
-	resp, err := a.APIClient.Delete(ctx, path, queryParams, nil)
+	resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
@@ -970,16 +905,18 @@ type WorkflowResourceApiJumpToTaskOpts struct {
 
 // JumpToTask jumps to a specific task in a running workflow.
 func (a *WorkflowResourceApiService) JumpToTask(ctx context.Context, body map[string]interface{}, workflowId string, optionals *WorkflowResourceApiJumpToTaskOpts) (*http.Response, error) {
-	path := fmt.Sprintf("/workflow/%s/jump/{taskReferenceName}", workflowId)
+	// Build request with required body and path parameter
+	req := a.http_orkes.WorkflowResourceAPI.
+		JumpToTask(ctx, workflowId).
+		RequestBody(body)
 
-	queryParams := url.Values{}
 	if optionals != nil && optionals.TaskReferenceName.IsSet() {
-		queryParams.Add("taskReferenceName", parameterToString(optionals.TaskReferenceName.Value(), ""))
+		req = req.TaskReferenceName(optionals.TaskReferenceName.Value())
 	}
 
-	resp, err := a.PostWithParams(ctx, path, queryParams, body, nil)
+	resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 
 	return resp, nil
@@ -995,51 +932,50 @@ type WorkflowResourceApiUpdateWorkflowAndTaskStateOpts struct {
 
 // UpdateWorkflowAndTaskState update workflow and task state.
 func (a *WorkflowResourceApiService) UpdateWorkflowAndTaskState(ctx context.Context, body model.WorkflowStateUpdate, requestId string, workflowId string, optionals *WorkflowResourceApiUpdateWorkflowAndTaskStateOpts) (model.WorkflowRun, *http.Response, error) {
-	var result model.WorkflowRun
+	genBody := toGeneratedWorkflowStateUpdate(&body)
 
-	// create path and map variables
-	path := fmt.Sprintf("/workflow/%s/state", workflowId)
+	req := a.http_orkes.WorkflowResourceAPI.UpdateWorkflowAndTaskState(ctx, workflowId)
+	req = req.WorkflowStateUpdate(genBody)
+	req = req.RequestId(requestId)
 
-	queryParams := url.Values{}
-	queryParams.Add("requestId", parameterToString(requestId, ""))
+	// Handle optional parameters
 	if optionals != nil && optionals.WaitUntilTaskRef.IsSet() {
-		queryParams.Add("waitUntilTaskRef", parameterToString(optionals.WaitUntilTaskRef.Value(), ""))
+		req = req.WaitUntilTaskRef(optionals.WaitUntilTaskRef.Value())
 	}
 	if optionals != nil && optionals.WaitForSeconds.IsSet() {
-		queryParams.Add("waitForSeconds", parameterToString(optionals.WaitForSeconds.Value(), ""))
+		req = req.WaitForSeconds(optionals.WaitForSeconds.Value())
 	}
 
-	resp, err := a.PostWithParams(ctx, path, queryParams, body, &result)
+	resp, httpResp, err := req.Execute()
 	if err != nil {
-		return result, resp, err
+		return model.WorkflowRun{}, httpResp, wrapGeneratedError(err, httpResp)
 	}
-	return result, resp, nil
+
+	// Convert the response to domain model
+	domainResp := toDomainWorkflowRun(resp)
+	return domainResp, httpResp, nil
 }
 
 // UpgradeRunningWorkflowToVersion upgrade running workflow to newer version.
 func (a *WorkflowResourceApiService) UpgradeRunningWorkflowToVersion(ctx context.Context, body model.UpgradeWorkflowRequest, workflowId string) (*http.Response, error) {
-	// create path and map variables
-	path := fmt.Sprintf("/workflow/%s/upgrade", workflowId)
+	genBody := toGeneratedUpgradeWorkflowRequest(&body)
 
-	resp, err := a.Post(ctx, path, body, nil)
+	resp, err := a.http_orkes.WorkflowResourceAPI.UpgradeRunningWorkflowToVersion(ctx, workflowId).UpgradeWorkflowRequest(genBody).Execute()
 	if err != nil {
-		return resp, err
+		return nil, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
 
 // TestWorkflow tests workflow execution using mock data.
 func (a *WorkflowResourceApiService) TestWorkflow(ctx context.Context, body model.WorkflowTestRequest) (model.Workflow, *http.Response, error) {
-	var result model.Workflow
+	genBody := toGeneratedWorkflowTestRequest(&body)
 
-	// create path and map variables
-	path := "/workflow/test"
-
-	resp, err := a.Post(ctx, path, body, &result)
+	resp, httpResp, err := a.http_orkes.WorkflowResourceAPI.TestWorkflow(ctx).WorkflowTestRequest(genBody).Execute()
 	if err != nil {
-		return model.Workflow{}, resp, err
+		return model.Workflow{}, httpResp, wrapGeneratedError(err, httpResp)
 	}
-	return result, resp, nil
+	return toDomainWorkflow(resp), httpResp, nil
 }
 
 // WorkflowResourceAPIGetExecutionStatusTaskListOpts contains optional parameters for GetExecutionStatusTaskList
@@ -1054,39 +990,56 @@ type WorkflowResourceAPIGetExecutionStatusTaskListOpts struct {
 
 // GetExecutionStatusTaskList gets execution task list.
 func (a *WorkflowResourceApiService) GetExecutionStatusTaskList(ctx context.Context, workflowID string, opts *WorkflowResourceAPIGetExecutionStatusTaskListOpts) (model.TaskListSearchResultSummary, *http.Response, error) {
-	var result model.TaskListSearchResultSummary
+	req := a.http_orkes.WorkflowResourceAPI.GetExecutionStatusTaskList(ctx, workflowID)
 
-	path := fmt.Sprintf("/workflow/%s/tasks", workflowID)
-
-	queryParams := url.Values{}
 	if opts != nil && opts.Start.IsSet() {
-		queryParams.Add("start", parameterToString(opts.Start.Value(), ""))
+		req = req.Start(opts.Start.Value())
 	}
 	if opts != nil && opts.Count.IsSet() {
-		queryParams.Add("count", parameterToString(opts.Count.Value(), ""))
-	}
-	if opts != nil && opts.Status.IsSet() {
-		queryParams.Add("status", parameterToString(opts.Status.Value(), ""))
+		req = req.Count(opts.Count.Value())
 	}
 
-	resp, err := a.Get(ctx, path, queryParams, &result)
-	if err != nil {
-		return model.TaskListSearchResultSummary{}, resp, err
+	if opts != nil && opts.Status.IsSet() {
+		// Accept string or []string and convert to []string for the generated client
+		switch v := opts.Status.Value().(type) {
+		case []string:
+			req = req.Status(v)
+		case string:
+			req = req.Status([]string{v})
+		case []interface{}:
+			var ss []string
+			for _, it := range v {
+				if s, ok := it.(string); ok {
+					ss = append(ss, s)
+				}
+			}
+			if len(ss) > 0 {
+				req = req.Status(ss)
+			}
+		default:
+			// ignore unsupported types
+		}
 	}
-	return result, resp, nil
+
+	resp, httpResp, err := req.Execute()
+	if err != nil {
+		return model.TaskListSearchResultSummary{}, nil, wrapGeneratedError(err, httpResp)
+	}
+
+	return toDomainTaskListSearchResultSummaryFromConductorGenerated(resp), httpResp, nil
 }
 
 // UpdateWorkflowStateUpdates updates workflow variables for a running workflow.
 //
 // This method is similar to the Set Variable task, except the variables can be updated anytime in real time.
 func (a *WorkflowResourceApiService) UpdateWorkflowState(ctx context.Context, body map[string]interface{}, workflowID string) (model.Workflow, *http.Response, error) {
-	var result model.Workflow
+	req := a.http_orkes.WorkflowResourceAPI.UpdateWorkflowState(ctx, workflowID)
+	req = req.RequestBody(body)
 
-	path := fmt.Sprintf("/workflow/%s/variables", workflowID)
-
-	resp, err := a.Post(ctx, path, body, &result)
+	resp, httpResp, err := req.Execute()
 	if err != nil {
-		return result, resp, err
+		return model.Workflow{}, nil, wrapGeneratedError(err, httpResp)
 	}
-	return result, resp, nil
+
+	return toDomainWorkflow(resp), httpResp, nil
 }

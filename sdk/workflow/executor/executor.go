@@ -18,6 +18,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/antihax/optional"
 	"github.com/conductor-sdk/conductor-go/sdk/client"
 	"github.com/conductor-sdk/conductor-go/sdk/concurrency"
 	"github.com/conductor-sdk/conductor-go/sdk/event/queue"
@@ -27,11 +28,11 @@ import (
 )
 
 type WorkflowExecutor struct {
-	metadataClient *client.MetadataResourceApiService
-	taskClient     *client.TaskResourceApiService
-	tagsClient     *client.TagsApiService
-	workflowClient *client.WorkflowResourceApiService
-	eventClient    *client.EventResourceApiService
+	metadataClient client.MetadataClient
+	taskClient     client.TaskClient
+	tagsClient     client.TagsClient
+	workflowClient client.WorkflowClient
+	eventClient    client.EventHandlerClient
 
 	workflowMonitor *WorkflowMonitor
 
@@ -46,21 +47,18 @@ const (
 
 // NewWorkflowExecutor Create a new workflow executor
 func NewWorkflowExecutor(apiClient *client.APIClient) *WorkflowExecutor {
-	metadataClient := client.MetadataResourceApiService{
-		APIClient: apiClient,
-	}
-	tagsClient := client.TagsApiService{
-		APIClient: apiClient,
-	}
-	taskClient := client.TaskResourceApiService{
-		APIClient: apiClient,
-	}
+	metadataClient := client.NewMetadataClient(apiClient)
+
+	tagsClient := client.NewTagsClient(apiClient)
+
+	taskClient := client.NewTaskClient(apiClient)
+
 	workflowClient := client.WorkflowResourceApiService{
 		APIClient: apiClient,
 	}
-	eventClient := client.EventResourceApiService{
-		APIClient: apiClient,
-	}
+
+	eventClient := client.NewEventHandlerClient(apiClient)
+
 	startWorkflowBatchSize, err := getEnvInt(startWorkflowBatchSizeEnv)
 	if err != nil {
 		startWorkflowBatchSize = 256
@@ -70,11 +68,11 @@ func NewWorkflowExecutor(apiClient *client.APIClient) *WorkflowExecutor {
 		waitForWorkflowBatchSize = 256
 	}
 	workflowExecutor := WorkflowExecutor{
-		metadataClient:           &metadataClient,
-		tagsClient:               &tagsClient,
-		taskClient:               &taskClient,
+		metadataClient:           metadataClient,
+		tagsClient:               tagsClient,
+		taskClient:               taskClient,
 		workflowClient:           &workflowClient,
-		eventClient:              &eventClient,
+		eventClient:              eventClient,
 		workflowMonitor:          NewWorkflowMonitor(&workflowClient),
 		startWorkflowBatchSize:   startWorkflowBatchSize,
 		waitForWorkflowBatchSize: waitForWorkflowBatchSize,
@@ -352,6 +350,84 @@ func (e *WorkflowExecutor) SignalWorkflowTaskAsync(workflowId string, status mod
 // Signal signals a task and returns the target workflow
 func (e *WorkflowExecutor) Signal(workflowId string, status model.WorkflowStatus, output interface{}, opts ...client.SignalTaskOpts) (*model.SignalResponse, error) {
 	return e.SignalWithContext(context.Background(), workflowId, status, output, opts...)
+}
+
+// Decide starts the decision task for a workflow
+func (e *WorkflowExecutor) Decide(ctx context.Context, workflowId string) error {
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return ctxErr
+	}
+	_, err := e.workflowClient.Decide(ctx, workflowId)
+	return err
+}
+
+// ResetWorkflow resets the callback times of all IN_PROGRESS tasks to 0 for the given workflow
+func (e *WorkflowExecutor) ResetWorkflow(ctx context.Context, workflowId string) error {
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return ctxErr
+	}
+	_, err := e.workflowClient.Reset(ctx, workflowId)
+	return err
+}
+
+// JumpToTask jumps to a specific task in a running workflow
+func (e *WorkflowExecutor) JumpToTask(ctx context.Context, workflowId string, taskReferenceName string, input map[string]interface{}) error {
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return ctxErr
+	}
+
+	opts := &client.WorkflowResourceApiJumpToTaskOpts{}
+	opts.TaskReferenceName = optional.NewString(taskReferenceName)
+
+	_, err := e.workflowClient.JumpToTask(ctx, input, workflowId, opts)
+	return err
+}
+
+// UpdateWorkflowAndTaskState updates the state of a workflow and its tasks
+func (e *WorkflowExecutor) UpdateWorkflowAndTaskState(ctx context.Context, workflowId string, requestId string, stateUpdate model.WorkflowStateUpdate) (model.WorkflowRun, error) {
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return model.WorkflowRun{}, ctxErr
+	}
+	workflowRun, _, err := e.workflowClient.UpdateWorkflowAndTaskState(ctx, stateUpdate, requestId, workflowId, nil)
+	return workflowRun, err
+}
+
+// UpgradeRunningWorkflowToVersion upgrades a running workflow to a different version
+func (e *WorkflowExecutor) UpgradeRunningWorkflowToVersion(ctx context.Context, workflowId string, upgradeRequest model.UpgradeWorkflowRequest) error {
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return ctxErr
+	}
+	_, err := e.workflowClient.UpgradeRunningWorkflowToVersion(ctx, upgradeRequest, workflowId)
+	return err
+}
+
+// GetExecutionStatusTaskList gets the workflow tasks by workflow id
+func (e *WorkflowExecutor) GetExecutionStatusTaskList(ctx context.Context, workflowId string, options *client.WorkflowResourceAPIGetExecutionStatusTaskListOpts) (model.TaskListSearchResultSummary, error) {
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return model.TaskListSearchResultSummary{}, ctxErr
+	}
+
+	result, _, err := e.workflowClient.GetExecutionStatusTaskList(ctx, workflowId, options)
+	return result, err
+}
+
+// UpdateWorkflowState updates workflow variables for a running workflow
+func (e *WorkflowExecutor) UpdateWorkflowState(ctx context.Context, workflowId string, variables map[string]interface{}) (model.Workflow, error) {
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return model.Workflow{}, ctxErr
+	}
+	workflow, _, err := e.workflowClient.UpdateWorkflowState(ctx, variables, workflowId)
+	return workflow, err
+}
+
+// GetRunningWorkflow gets a list of running workflows for the given name
+func (e *WorkflowExecutor) GetRunningWorkflow(ctx context.Context, workflowName string, options *client.WorkflowResourceApiGetRunningWorkflowOpts) ([]string, error) {
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return nil, ctxErr
+	}
+
+	result, _, err := e.workflowClient.GetRunningWorkflow(ctx, workflowName, options)
+	return result, err
 }
 
 func getEnvStr(key string) (string, error) {

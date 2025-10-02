@@ -11,125 +11,102 @@ package client
 
 import (
 	"context"
-	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"net/http"
 
-	"fmt"
+	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
+// EnvironmentResourceApiService is the service for the environment resource.
 type EnvironmentResourceApiService struct {
 	*APIClient
 }
 
-/*
-EnvironmentResourceApiService Create or update an environment variable (requires metadata or admin role)
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-  - @param key
-*/
+// CreateOrUpdateEnvVariable creates or update an environment variable.
 func (a *EnvironmentResourceApiService) CreateOrUpdateEnvVariable(ctx context.Context, body string, key string) (*http.Response, error) {
-	path := fmt.Sprintf("/environment/%s", key)
+	req := a.http_orkes.EnvironmentResourceAPI.CreateOrUpdateEnvVariable(ctx, key).Body(body)
 
-	resp, err := a.PutWithContentType(ctx, path, body, "text/plain", nil)
+	resp, err := req.Execute()
 	if err != nil {
-		return nil, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
 
-/*
-EnvironmentResourceApiService Delete an environment variable (requires metadata or admin role)
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param key
-    @return string
-*/
+// DeleteEnvVariable delete an environment variable.
 func (a *EnvironmentResourceApiService) DeleteEnvVariable(ctx context.Context, key string) (string, *http.Response, error) {
-	var result string
-	path := fmt.Sprintf("/environment/%s", key)
+	req := a.http_orkes.EnvironmentResourceAPI.DeleteEnvVariable(ctx, key)
 
-	resp, err := a.Delete(ctx, path, nil, &result)
-
+	result, resp, err := req.Execute()
 	if err != nil {
-		return "", resp, err
+		return "", resp, wrapGeneratedError(err, resp)
 	}
-
 	return result, resp, nil
 }
 
-/*
-EnvironmentResourceApiService Delete a tag for environment variable name
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-  - @param name
-*/
+// DeleteTagForEnvVar delete tags for environment variable.
 func (a *EnvironmentResourceApiService) DeleteTagForEnvVar(ctx context.Context, body []model.Tag, name string) (*http.Response, error) {
-	path := fmt.Sprintf("/environment/%s/tags", name)
-	resp, err := a.DeleteWithBody(ctx, path, body, nil)
-	return resp, err
+	// Convert domain tags to generated tags
+	genTags := toGeneratedTags(body)
+
+	req := a.http_orkes.EnvironmentResourceAPI.DeleteTagForEnvVar(ctx, name).Tag(genTags)
+
+	resp, err := req.Execute()
+	if err != nil {
+		return resp, wrapGeneratedError(err, resp)
+	}
+	return resp, nil
 }
 
-/*
-EnvironmentResourceApiService Get the environment value by key
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param key
-    @return string
-*/
+// Get get the environment value by key.
 func (a *EnvironmentResourceApiService) Get(ctx context.Context, key string) (string, *http.Response, error) {
-	var result string
-	path := fmt.Sprintf("/environment/%s", key)
+	req := a.http_orkes.EnvironmentResourceAPI.Get3(ctx, key)
 
-	resp, err := a.APIClient.Get(ctx, path, nil, &result)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return "", resp, err
+		return "", resp, wrapGeneratedError(err, resp)
 	}
 	return result, resp, nil
 }
 
-/*
-EnvironmentResourceApiService List all the environment variables
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-    @return []model.EnvironmentVariable
-*/
+// GetAll list all the environment variables.
 func (a *EnvironmentResourceApiService) GetAll(ctx context.Context) ([]model.EnvironmentVariable, *http.Response, error) {
-	var result []model.EnvironmentVariable
-	resp, err := a.APIClient.Get(ctx, "/environment", nil, &result)
+	req := a.http_orkes.EnvironmentResourceAPI.GetAll(ctx)
 
+	genEnvVars, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
 
+	// Convert using mapper
+	result := toDomainEnvironmentVariables(genEnvVars)
 	return result, resp, nil
 }
 
-/*
-EnvironmentResourceApiService Get tags by environment variable name
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param name
-    @return []Tag
-*/
+// GetTagsForEnvVar get tags by environment variable name.
 func (a *EnvironmentResourceApiService) GetTagsForEnvVar(ctx context.Context, name string) ([]model.Tag, *http.Response, error) {
-	var result []model.Tag
-	path := fmt.Sprintf("/environment/%s/tags", name)
-	resp, err := a.APIClient.Get(ctx, path, nil, &result)
+	req := a.http_orkes.EnvironmentResourceAPI.GetTagsForEnvVar(ctx, name)
 
+	genTags, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
+
+	// Convert generated tags to domain tags
+	result := toDomainTags(genTags)
 
 	return result, resp, nil
 }
 
-/*
-EnvironmentResourceApiService Put a tag to environment variable name
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-  - @param name
-*/
+// PutTagForEnvVar update tags for environment variable.
 func (a *EnvironmentResourceApiService) PutTagForEnvVar(ctx context.Context, body []model.Tag, name string) (*http.Response, error) {
-	path := fmt.Sprintf("/environment/%s/tags", name)
-	resp, err := a.Put(ctx, path, body, nil)
+	// Convert domain tags to generated tags
+	genTags := toGeneratedTags(body)
+
+	req := a.http_orkes.EnvironmentResourceAPI.PutTagForEnvVar(ctx, name).Tag(genTags)
+
+	resp, err := req.Execute()
 	if err != nil {
-		return nil, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }

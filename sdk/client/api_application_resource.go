@@ -11,211 +11,206 @@ package client
 
 import (
 	"context"
-	"fmt"
+	"net/http"
+
+	"github.com/conductor-sdk/conductor-go/sdk/generated/http/orkes"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/sdk/model/rbac"
-	"net/http"
 )
 
+// ApplicationResourceApiService is the service for the application resource.
 type ApplicationResourceApiService struct {
 	*APIClient
 }
 
-/*
-ApplicationResourceApiService
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param applicationId
-  - @param role
-    @return interface{}
-*/
+// AddRoleToApplicationUser adds role to application user.
 func (a *ApplicationResourceApiService) AddRoleToApplicationUser(ctx context.Context, applicationId string, role string) (interface{}, *http.Response, error) {
-	var result interface{}
-	path := fmt.Sprintf("/applications/%s/roles/%s", applicationId, role)
-	resp, err := a.Post(ctx, path, nil, &result)
+	req := a.http_orkes.ApplicationResourceAPI.AddRoleToApplicationUser(ctx, applicationId, role)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
 	return result, resp, nil
 }
 
-/*
-ApplicationResourceApiService Create an access key for an application
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param id
-    @return interface{}
-*/
+// CreateAccessKey creates an access key for an application.
 func (a *ApplicationResourceApiService) CreateAccessKey(ctx context.Context, id string) (*rbac.ConductorApplication, *http.Response, error) {
-	var result rbac.ConductorApplication
-	path := fmt.Sprintf("/applications/%s/accessKeys", id)
-	resp, err := a.Post(ctx, path, nil, &result)
+	req := a.http_orkes.ApplicationResourceAPI.CreateAccessKey(ctx, id)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
 
-	return &result, resp, nil
+	// Convert result using mapper
+	app := toDomainConductorApplication(result)
+	return app, resp, nil
 }
 
-/*
-ApplicationResourceApiService Create an application
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-    @return interface{}
-*/
+// CreateApplication creates an application.
 func (a *ApplicationResourceApiService) CreateApplication(ctx context.Context, body rbac.CreateOrUpdateApplicationRequest) (*rbac.ConductorApplication, *http.Response, error) {
-	var result rbac.ConductorApplication
-	resp, err := a.Post(ctx, "/applications", body, &result)
-
-	if err != nil {
-		return nil, resp, err
+	// Convert to generated model
+	genBody := orkes.CreateOrUpdateApplicationRequest{
+		Name: body.Name,
 	}
 
-	return &result, resp, nil
+	req := a.http_orkes.ApplicationResourceAPI.CreateApplication(ctx).CreateOrUpdateApplicationRequest(genBody)
+	result, resp, err := req.Execute()
+	if err != nil {
+		return nil, resp, wrapGeneratedError(err, resp)
+	}
+
+	// Convert result from map[string]interface{}
+	app := toDomainConductorApplication(result)
+	return app, resp, nil
 }
 
-/*
-ApplicationResourceApiService Delete an access key
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param applicationId
-  - @param keyId
-    @return interface{}
-*/
+// DeleteAccessKey deletes an access key.
 func (a *ApplicationResourceApiService) DeleteAccessKey(ctx context.Context, applicationId string, keyId string) (*http.Response, error) {
-	path := fmt.Sprintf("/applications/%s/accessKeys/%s", applicationId, keyId)
-	resp, err := a.Delete(ctx, path, nil, nil)
+	req := a.http_orkes.ApplicationResourceAPI.DeleteAccessKey(ctx, applicationId, keyId)
+	_, resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
-
 	return resp, nil
 }
 
-/*
-ApplicationResourceApiService Delete an application
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param id
-    @return interface{}
-*/
+// DeleteApplication deletes an application.
 func (a *ApplicationResourceApiService) DeleteApplication(ctx context.Context, id string) (interface{}, *http.Response, error) {
-	var result interface{}
-	path := fmt.Sprintf("/applications/%s", id)
-	resp, err := a.Delete(ctx, path, nil, &result)
+	req := a.http_orkes.ApplicationResourceAPI.DeleteApplication(ctx, id)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
 	return result, resp, nil
 }
 
-/*
-ApplicationResourceApiService Delete a tag for application
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-  - @param id
-*/
+// DeleteTagForApplication removes tags from the application.
 func (a *ApplicationResourceApiService) DeleteTagForApplication(ctx context.Context, body []model.Tag, id string) (*http.Response, error) {
-	path := fmt.Sprintf("/applications/%s/tags", id)
-	resp, err := a.DeleteWithBody(ctx, path, body, nil)
+	// Convert tags
+	genTags := toGeneratedTags(body)
+
+	req := a.http_orkes.ApplicationResourceAPI.DeleteTagForApplication(ctx, id).Tag(genTags)
+	resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
 
-// GetAccessKeys gets all access keys for an application
+// GetAccessKeys gets access keys for an application.
 func (a *ApplicationResourceApiService) GetAccessKeys(ctx context.Context, id string) ([]rbac.AccessKeyResponse, *http.Response, error) {
-	var result []rbac.AccessKeyResponse
-	path := fmt.Sprintf("/applications/%s/accessKeys", id)
-	resp, err := a.Get(ctx, path, nil, &result)
+	// Fallback to generated client in case server behavior changes
+	req := a.http_orkes.ApplicationResourceAPI.GetAccessKeys(ctx, id)
+	genKeys, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
-	return result, resp, nil
+	// Convert the generic map into domain slice
+	mapped := toDomainAccessKeysResponseFromGenerated(genKeys)
+	if len(mapped) > 0 {
+		return mapped, resp, nil
+	}
+	return nil, resp, nil
 }
 
-// GetAppByAccessKeyId gets an application by access key ID
+// GetAppByAccessKeyId gets an application by access key ID.
 func (a *ApplicationResourceApiService) GetAppByAccessKeyId(ctx context.Context, accessKeyId string) (interface{}, *http.Response, error) {
-	var result interface{}
-	path := fmt.Sprintf("/applications/key/%s", accessKeyId)
-	resp, err := a.Get(ctx, path, nil, &result)
+	req := a.http_orkes.ApplicationResourceAPI.GetAppByAccessKeyId(ctx, accessKeyId)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
 	return result, resp, nil
 }
 
-// GetApplication gets an application by ID
+// GetApplication gets an application by ID.
 func (a *ApplicationResourceApiService) GetApplication(ctx context.Context, id string) (*rbac.ConductorApplication, *http.Response, error) {
-	var result rbac.ConductorApplication
-	path := fmt.Sprintf("/applications/%s", id)
-	resp, err := a.Get(ctx, path, nil, &result)
+	req := a.http_orkes.ApplicationResourceAPI.GetApplication(ctx, id)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
 
-	return &result, resp, err
+	app := toDomainConductorApplication(result)
+	return app, resp, nil
 }
 
-// GetTagsForApplication gets all tags for an application
+// GetTagsForApplication gets all tags for an application.
 func (a *ApplicationResourceApiService) GetTagsForApplication(ctx context.Context, id string) ([]model.Tag, *http.Response, error) {
-	var result []model.Tag
-	path := fmt.Sprintf("/applications/%s/tags", id)
-	resp, err := a.Get(ctx, path, nil, &result)
+	req := a.http_orkes.ApplicationResourceAPI.GetTagsForApplication(ctx, id)
+	genTags, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
-	return result, resp, nil
+
+	// Convert tags back to model
+	tags := toDomainTags(genTags)
+	return tags, resp, nil
 }
 
-// ListApplications lists all applications
+// ListApplications lists all applications.
 func (a *ApplicationResourceApiService) ListApplications(ctx context.Context) ([]rbac.ConductorApplication, *http.Response, error) {
-	var result []rbac.ConductorApplication
-	resp, err := a.Get(ctx, "/applications", nil, &result)
+	req := a.http_orkes.ApplicationResourceAPI.ListApplications(ctx)
+	genApps, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
-	return result, resp, nil
+
+	// Convert to []rbac.ConductorApplication
+	apps := make([]rbac.ConductorApplication, len(genApps))
+	for i, genApp := range genApps {
+		apps[i] = toConductorApplicationFromExtendedConductorApplication(&genApp)
+	}
+
+	return apps, resp, nil
 }
 
-// PutTagForApplication adds tags to an application
+// PutTagForApplication adds tags to the application.
 func (a *ApplicationResourceApiService) PutTagForApplication(ctx context.Context, body []model.Tag, id string) (*http.Response, error) {
-	path := fmt.Sprintf("/applications/%s/tags", id)
-	resp, err := a.Put(ctx, path, body, nil)
+	// Convert tags
+	genTags := toGeneratedTags(body)
+
+	req := a.http_orkes.ApplicationResourceAPI.PutTagForApplication(ctx, id).Tag(genTags)
+	resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
 
-// RemoveRoleFromApplicationUser removes a role from an application user
+// RemoveRoleFromApplicationUser removes a role from an application user.
 func (a *ApplicationResourceApiService) RemoveRoleFromApplicationUser(ctx context.Context, applicationId string, role string) (interface{}, *http.Response, error) {
-	var result interface{}
-	path := fmt.Sprintf("/applications/%s/roles/%s", applicationId, role)
-	resp, err := a.Delete(ctx, path, nil, &result)
+	req := a.http_orkes.ApplicationResourceAPI.RemoveRoleFromApplicationUser(ctx, applicationId, role)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
 	return result, resp, nil
 }
 
-// ToggleAccessKeyStatus toggles the status of an access key
+// ToggleAccessKeyStatus toggles the status of an access key.
 func (a *ApplicationResourceApiService) ToggleAccessKeyStatus(ctx context.Context, applicationId string, keyId string) (interface{}, *http.Response, error) {
-	var result interface{}
-	path := fmt.Sprintf("/applications/%s/accessKeys/%s/status", applicationId, keyId)
-	resp, err := a.Post(ctx, path, nil, &result)
+	req := a.http_orkes.ApplicationResourceAPI.ToggleAccessKeyStatus(ctx, applicationId, keyId)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
 	return result, resp, nil
 }
 
-// UpdateApplication updates an application
+// UpdateApplication updates an application.
 func (a *ApplicationResourceApiService) UpdateApplication(ctx context.Context, body rbac.CreateOrUpdateApplicationRequest, id string) (*rbac.ConductorApplication, *http.Response, error) {
-	var result rbac.ConductorApplication
-	path := fmt.Sprintf("/applications/%s", id)
-	resp, err := a.Put(ctx, path, body, &result)
-
-	if err != nil {
-		return nil, resp, err
+	// Convert to generated model
+	genBody := orkes.CreateOrUpdateApplicationRequest{
+		Name: body.Name,
 	}
 
-	return &result, resp, nil
+	req := a.http_orkes.ApplicationResourceAPI.UpdateApplication(ctx, id).CreateOrUpdateApplicationRequest(genBody)
+	result, resp, err := req.Execute()
+	if err != nil {
+		return nil, resp, wrapGeneratedError(err, resp)
+	}
+
+	app := toDomainConductorApplication(result)
+	return app, resp, nil
 }

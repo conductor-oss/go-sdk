@@ -16,3 +16,7 @@ const (
 	ReturnExisting IdempotencyStrategy = "RETURN_EXISTING"
 	FailOnRunning  IdempotencyStrategy = "FAIL_ON_RUNNING"
 )
+
+func (i IdempotencyStrategy) String() string {
+	return string(i)
+}

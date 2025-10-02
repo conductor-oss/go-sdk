@@ -11,145 +11,132 @@ package client
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 
 	"net/http"
 )
 
+// WebhooksConfigResourceApiService
 type WebhooksConfigResourceApiService struct {
 	*APIClient
 }
 
-/*
-WebhooksConfigResourceApiService
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-    @return WebhookConfig
-*/
+// CreateWebhook creates a new webhook.
 func (a *WebhooksConfigResourceApiService) CreateWebhook(ctx context.Context, body model.WebhookConfig) (model.WebhookConfig, *http.Response, error) {
-	var result model.WebhookConfig
+	genBody := toGeneratedWebhookConfig(body)
 
-	path := "/metadata/webhook"
+	req := a.http_orkes.WebhooksConfigResourceAPI.CreateWebhook(ctx).WebhookConfig(genBody)
 
-	resp, err := a.Post(ctx, path, body, &result)
+	genWebhook, resp, err := req.Execute()
 	if err != nil {
-		return model.WebhookConfig{}, resp, err
+		return model.WebhookConfig{}, resp, wrapGeneratedError(err, resp)
 	}
+
+	if genWebhook == nil {
+		return model.WebhookConfig{}, resp, wrapGeneratedError(errors.New("webhook not found"), resp)
+	}
+
+	// Convert using mapper
+	result := toDomainWebhookConfigFromGenerated(genWebhook)
 	return result, resp, nil
 }
 
-/*
-WebhooksConfigResourceApiService Delete a tag for webhook id
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-*/
+// DeleteTagForWebhook implements WebhooksConfigClient.
 func (a *WebhooksConfigResourceApiService) DeleteTagForWebhook(ctx context.Context, id string, body []model.Tag) (*http.Response, error) {
-	path := fmt.Sprintf("/metadata/webhook/%s/tags", id)
+	genTags := toGeneratedTags(body)
 
-	resp, err := a.DeleteWithBody(ctx, path, body, nil)
+	req := a.http_orkes.WebhooksConfigResourceAPI.DeleteTagForWebhook(ctx, id).Tag(genTags)
+	resp, err := req.Execute()
 	if err != nil {
-		return nil, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
 
-/*
-WebhooksConfigResourceApiService
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param id
-*/
+// DeleteWebhook delete webhook.
 func (a *WebhooksConfigResourceApiService) DeleteWebhook(ctx context.Context, id string) (*http.Response, error) {
-	path := fmt.Sprintf("/metadata/webhook/%s", id)
+	req := a.http_orkes.WebhooksConfigResourceAPI.DeleteWebhook(ctx, id)
 
-	resp, err := a.Delete(ctx, path, nil, nil)
+	resp, err := req.Execute()
 	if err != nil {
-		return nil, err
+		return resp, wrapGeneratedError(err, resp)
 	}
+
 	return resp, nil
 }
 
-/*
-WebhooksConfigResourceApiService
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-    @return []WebhookConfig
-*/
+// GetAllWebhook implements WebhooksConfigClient.
 func (a *WebhooksConfigResourceApiService) GetAllWebhook(ctx context.Context) ([]model.WebhookConfig, *http.Response, error) {
-	var result []model.WebhookConfig
+	req := a.http_orkes.WebhooksConfigResourceAPI.GetAllWebhook(ctx)
 
-	path := "/metadata/webhook"
-
-	resp, err := a.Get(ctx, path, nil, &result)
+	genWebhooks, resp, err := req.Execute()
 	if err != nil {
-		return []model.WebhookConfig{}, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
+
+	// Convert using mapper
+	result := toDomainWebhookConfigsFromGenerated(genWebhooks)
 	return result, resp, nil
 }
 
-/*
-WebhooksConfigResourceApiService Get tags by webhook id
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param id
-    @return []Tag
-*/
+// GetTagsForWebhook implements WebhooksConfigClient.
 func (a *WebhooksConfigResourceApiService) GetTagsForWebhook(ctx context.Context, id string) ([]model.Tag, *http.Response, error) {
-	var result []model.Tag
+	req := a.http_orkes.WebhooksConfigResourceAPI.GetTagsForWebhook(ctx, id)
 
-	path := fmt.Sprintf("/metadata/webhook/%s/tags", id)
-	resp, err := a.Get(ctx, path, nil, &result)
+	genTags, resp, err := req.Execute()
 	if err != nil {
-		return []model.Tag{}, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
+
+	// Convert using mapper
+	result := toDomainTagsFromGenerated(genTags)
 	return result, resp, nil
 }
 
-/*
-WebhooksConfigResourceApiService
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param id
-    @return WebhookConfig
-*/
+// GetWebhook gets webhook.
 func (a *WebhooksConfigResourceApiService) GetWebhook(ctx context.Context, id string) (model.WebhookConfig, *http.Response, error) {
-	var result model.WebhookConfig
+	req := a.http_orkes.WebhooksConfigResourceAPI.GetWebhook(ctx, id)
 
-	path := fmt.Sprintf("/metadata/webhook/%s", id)
-	resp, err := a.Get(ctx, path, nil, &result)
+	genWebhook, resp, err := req.Execute()
 	if err != nil {
-		return model.WebhookConfig{}, resp, err
+		return model.WebhookConfig{}, resp, wrapGeneratedError(err, resp)
 	}
+
+	if genWebhook == nil {
+		return model.WebhookConfig{}, resp, wrapGeneratedError(errors.New("webhook not found"), resp)
+	}
+
+	// Convert using mapper
+	result := toDomainWebhookConfigFromGenerated(genWebhook)
 	return result, resp, nil
 }
 
-/*
-WebhooksConfigResourceApiService Put a tag to webhook id
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-  - @param id
-*/
+// PutTagForWebhook adds a tag to webhook.
 func (a *WebhooksConfigResourceApiService) PutTagForWebhook(ctx context.Context, body []model.Tag, id string) (*http.Response, error) {
-	path := fmt.Sprintf("/metadata/webhook/%s/tags", id)
-	resp, err := a.Put(ctx, path, body, nil)
+	genBody := toGeneratedTags(body)
+
+	resp, err := a.http_orkes.WebhooksConfigResourceAPI.PutTagForWebhook(ctx, id).Tag(genBody).Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
 
-/*
-WebhooksConfigResourceApiService
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-  - @param id
-    @return WebhookConfig
-*/
+// UpdateWebhook updates webhook.
 func (a *WebhooksConfigResourceApiService) UpdateWebhook(ctx context.Context, body model.WebhookConfig, id string) (model.WebhookConfig, *http.Response, error) {
-	var result model.WebhookConfig
+	// Convert domain model to generated model
+	genBody := toGeneratedWebhookConfig(body)
 
-	path := fmt.Sprintf("/metadata/webhook/%s", id)
-	resp, err := a.Put(ctx, path, body, &result)
+	req := a.http_orkes.WebhooksConfigResourceAPI.UpdateWebhook(ctx, id).WebhookConfig(genBody)
+
+	genWebhook, resp, err := req.Execute()
 	if err != nil {
-		return model.WebhookConfig{}, resp, err
+		return model.WebhookConfig{}, resp, wrapGeneratedError(err, resp)
 	}
+
+	// Convert using mapper
+	result := toDomainWebhookConfigFromGenerated(genWebhook)
 	return result, resp, nil
 }

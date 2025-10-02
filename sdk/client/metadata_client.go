@@ -2,8 +2,9 @@ package client
 
 import (
 	"context"
-	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"net/http"
+
+	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
 type MetadataClient interface {
@@ -23,6 +24,7 @@ type MetadataClient interface {
 	UpdateWorkflowDefWithTags(ctx context.Context, body model.WorkflowDef, tags []model.MetadataTag, overwriteTags bool) (*http.Response, error)
 	GetTagsForWorkflowDef(ctx context.Context, name string) ([]model.MetadataTag, error)
 	GetTagsForTaskDef(ctx context.Context, tasktype string) ([]model.MetadataTag, error)
+	SetTaskTags(ctx context.Context, taskName string, tags []model.MetadataTag) (*http.Response, error)
 }
 
 func NewMetadataClient(apiClient *APIClient) MetadataClient {

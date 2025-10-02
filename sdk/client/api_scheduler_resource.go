@@ -11,284 +11,207 @@ package client
 
 import (
 	"context"
-	"fmt"
+	"net/http"
+
 	"github.com/antihax/optional"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
-	"net/http"
-	"net/url"
 )
 
+// SchedulerResourceApiService is the service for the scheduler resource.
 type SchedulerResourceApiService struct {
 	*APIClient
 }
 
-/*
-SchedulerResourceApiService Deletes an existing workflow schedule by name
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param name
-    @return interface{}
-*/
+// DeleteSchedule deletes a schedule.
 func (a *SchedulerResourceApiService) DeleteSchedule(ctx context.Context, name string) (interface{}, *http.Response, error) {
-	var result interface{}
-
-	path := fmt.Sprintf("/scheduler/schedules/%s", name)
-
-	resp, err := a.Delete(ctx, path, nil, &result)
+	req := a.http_orkes.SchedulerResourceAPI.DeleteSchedule(ctx, name)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
 	return result, resp, nil
 }
 
-/*
-SchedulerResourceApiService Delete a tag for schedule
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-  - @param name
-*/
+// DeleteTagForSchedule removes tag from schedule.
 func (a *SchedulerResourceApiService) DeleteTagForSchedule(ctx context.Context, body []model.Tag, name string) (*http.Response, error) {
-	path := fmt.Sprintf("/scheduler/schedules/%s/tags", name)
+	// Convert tags
+	genTags := toGeneratedTags(body)
 
-	resp, err := a.DeleteWithBody(ctx, path, body, nil)
+	req := a.http_orkes.SchedulerResourceAPI.DeleteTagForSchedule(ctx, name).Tag(genTags)
+	resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
 
-/*
-   SchedulerResourceApiService Get all existing workflow schedules and optionally filter by workflow name
-   * @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-    * @param optional nil or *SchedulerResourceApiGetAllSchedulesOpts - Optional Parameters:
-        * @param "WorkflowName" (optional.String) -
-   @return []WorkflowScheduleModel
-*/
-
+// SchedulerResourceApiGetAllSchedulesOpts - Optional parameters for GetAllSchedules.
 type SchedulerResourceApiGetAllSchedulesOpts struct {
 	WorkflowName optional.String
 }
 
+// GetAllSchedules with options.
 func (a *SchedulerResourceApiService) GetAllSchedules(ctx context.Context, optionals *SchedulerResourceApiGetAllSchedulesOpts) ([]model.WorkflowScheduleModel, *http.Response, error) {
-	var result []model.WorkflowScheduleModel
-
-	path := "/scheduler/schedules"
-	queryParams := url.Values{}
+	req := a.http_orkes.SchedulerResourceAPI.GetAllSchedules(ctx)
 	if optionals != nil && optionals.WorkflowName.IsSet() {
-		queryParams.Add("workflowName", parameterToString(optionals.WorkflowName.Value(), ""))
+		req = req.WorkflowName(optionals.WorkflowName.Value())
 	}
 
-	resp, err := a.Get(ctx, path, queryParams, &result)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
-	return result, resp, nil
+
+	// Convert result - result is []WorkflowScheduleModel
+	schedules := make([]model.SaveScheduleRequest, 0)
+	for _, scheduleModel := range result {
+		schedule := toDomainSaveScheduleRequestFromModel(&scheduleModel)
+		schedules = append(schedules, schedule)
+	}
+
+	// Convert SaveSchedule	Request to WorkflowScheduleModel
+	workflowScheduleModels := toDomainWorkflowScheduleModelsFromSaveRequests(schedules)
+
+	return workflowScheduleModels, resp, nil
 }
 
-/*
-   SchedulerResourceApiService Get list of the next x (default 3, max 5) execution times for a scheduler
-   * @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-    * @param cronExpression
-    * @param optional nil or *SchedulerResourceApiGetNextFewSchedulesOpts - Optional Parameters:
-        * @param "ScheduleStartTime" (optional.Int64) -
-    * @param "ScheduleEndTime" (optional.Int64) -
-    * @param "Limit" (optional.Int32) -
-   @return []int64
-*/
-
+// SchedulerResourceApiGetNextFewSchedulesOpts - Optional parameters for GetNextFewSchedules.
 type SchedulerResourceApiGetNextFewSchedulesOpts struct {
 	ScheduleStartTime optional.Int64
 	ScheduleEndTime   optional.Int64
 	Limit             optional.Int32
 }
 
+// GetNextFewSchedules with options.
 func (a *SchedulerResourceApiService) GetNextFewSchedules(ctx context.Context, cronExpression string, optionals *SchedulerResourceApiGetNextFewSchedulesOpts) ([]int64, *http.Response, error) {
-	var result []int64
-	path := "/scheduler/nextFewSchedules"
+	req := a.http_orkes.SchedulerResourceAPI.GetNextFewSchedules(ctx)
+	req = req.CronExpression(cronExpression)
 
-	queryParams := url.Values{}
-	queryParams.Add("cronExpression", parameterToString(cronExpression, ""))
-	if optionals != nil && optionals.ScheduleStartTime.IsSet() {
-		queryParams.Add("scheduleStartTime", parameterToString(optionals.ScheduleStartTime.Value(), ""))
-	}
-	if optionals != nil && optionals.ScheduleEndTime.IsSet() {
-		queryParams.Add("scheduleEndTime", parameterToString(optionals.ScheduleEndTime.Value(), ""))
-	}
-	if optionals != nil && optionals.Limit.IsSet() {
-		queryParams.Add("limit", parameterToString(optionals.Limit.Value(), ""))
+	if optionals != nil {
+		if optionals.ScheduleEndTime.IsSet() {
+			req = req.ScheduleEndTime(optionals.ScheduleEndTime.Value())
+		}
+		if optionals.ScheduleStartTime.IsSet() {
+			req = req.ScheduleStartTime(optionals.ScheduleStartTime.Value())
+		}
+		if optionals.Limit.IsSet() {
+			req = req.Limit(optionals.Limit.Value())
+		}
 	}
 
-	resp, err := a.Get(ctx, path, queryParams, &result)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
+
 	return result, resp, nil
 }
 
-/*
-SchedulerResourceApiService Get an existing workflow schedule by name
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param name
-    @return WorkflowSchedule
-*/
+// GetSchedule interface method.
 func (a *SchedulerResourceApiService) GetSchedule(ctx context.Context, name string) (model.WorkflowSchedule, *http.Response, error) {
-	var result model.WorkflowSchedule
-	path := fmt.Sprintf("/scheduler/schedules/%s", name)
-
-	resp, err := a.Get(ctx, path, nil, &result)
+	req := a.http_orkes.SchedulerResourceAPI.GetSchedule(ctx, name)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return model.WorkflowSchedule{}, nil, err
+		return model.WorkflowSchedule{}, resp, wrapGeneratedError(err, resp)
 	}
-	return result, resp, nil
+
+	schedule := toDomainWorkflowScheduleFromWorkflowSchedule(result)
+
+	return schedule, resp, nil
 }
 
-/*
-SchedulerResourceApiService Get tags by schedule
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param name
-    @return []Tag
-*/
+// GetTagsForSchedule gets tags for schedule.
 func (a *SchedulerResourceApiService) GetTagsForSchedule(ctx context.Context, name string) ([]model.Tag, *http.Response, error) {
-	var result []model.Tag
-	path := fmt.Sprintf("/scheduler/schedules/%s/tags", name)
-
-	resp, err := a.Get(ctx, path, nil, &result)
+	req := a.http_orkes.SchedulerResourceAPI.GetTagsForSchedule(ctx, name)
+	genTags, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
-	return result, resp, nil
+
+	// Convert tags back to model
+	tags := toDomainTags(genTags)
+	return tags, resp, nil
 }
 
-/*
-SchedulerResourceApiService Pause all scheduling in a single conductor server instance (for debugging only)
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-    @return map[string]interface{}
-*/
+// PauseAllSchedules pauses all schedules.
 func (a *SchedulerResourceApiService) PauseAllSchedules(ctx context.Context) (map[string]interface{}, *http.Response, error) {
-	var result map[string]interface{}
-
-	path := "/scheduler/admin/pause"
-
-	resp, err := a.Post(ctx, path, nil, &result)
+	req := a.http_orkes.SchedulerResourceAPI.PauseAllSchedules(ctx)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
+
 	return result, resp, nil
 }
 
-/*
-SchedulerResourceApiService Pauses an existing schedule by name
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param name
-    @return interface{}
-*/
+// PauseSchedule pauses a schedule.
 func (a *SchedulerResourceApiService) PauseSchedule(ctx context.Context, name string) (interface{}, *http.Response, error) {
-	var result interface{}
-	path := fmt.Sprintf("/scheduler/schedules/%s/pause", name)
-
-	resp, err := a.Get(ctx, path, nil, &result)
+	req := a.http_orkes.SchedulerResourceAPI.PauseSchedule(ctx, name)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
 	return result, resp, nil
 }
 
-/*
-SchedulerResourceApiService Put a tag to schedule
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-  - @param name
-*/
+// PutTagForSchedule adds tag to schedule.
 func (a *SchedulerResourceApiService) PutTagForSchedule(ctx context.Context, body []model.Tag, name string) (*http.Response, error) {
-	path := fmt.Sprintf("/scheduler/schedules/%s/tags", name)
+	// Convert tags
+	genTags := toGeneratedTags(body)
 
-	resp, err := a.Put(ctx, path, body, nil)
+	req := a.http_orkes.SchedulerResourceAPI.PutTagForSchedule(ctx, name).Tag(genTags)
+	resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
 
-/*
-SchedulerResourceApiService Requeue all execution records
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-    @return map[string]interface{}
-*/
+// RequeueAllExecutionRecords requeues all execution records.
 func (a *SchedulerResourceApiService) RequeueAllExecutionRecords(ctx context.Context) (map[string]interface{}, *http.Response, error) {
-	var result map[string]interface{}
-
-	path := "/scheduler/admin/requeue"
-
-	resp, err := a.Get(ctx, path, nil, &result)
+	genResult, resp, err := a.http_orkes.SchedulerResourceAPI.RequeueAllExecutionRecords(ctx).Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
-	return result, resp, nil
+
+	return genResult, resp, nil
 }
 
-/*
-SchedulerResourceApiService Resume all scheduling
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-    @return map[string]interface{}
-*/
+// ResumeAllSchedules resumes all schedules.
 func (a *SchedulerResourceApiService) ResumeAllSchedules(ctx context.Context) (map[string]interface{}, *http.Response, error) {
-	var result map[string]interface{}
-
-	path := "/scheduler/admin/resume"
-
-	resp, err := a.Get(ctx, path, nil, &result)
+	req := a.http_orkes.SchedulerResourceAPI.ResumeAllSchedules(ctx)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
+
 	return result, resp, nil
 }
 
-/*
-SchedulerResourceApiService Resume a paused schedule by name
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param name
-    @return interface{}
-*/
+// ResumeSchedule resumes a schedule.
 func (a *SchedulerResourceApiService) ResumeSchedule(ctx context.Context, name string) (interface{}, *http.Response, error) {
-	var result interface{}
-
-	path := fmt.Sprintf("/scheduler/schedules/%s/resume", name)
-	resp, err := a.Get(ctx, path, nil, &result)
+	req := a.http_orkes.SchedulerResourceAPI.ResumeSchedule(ctx, name)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
 	return result, resp, nil
 }
 
-/*
-SchedulerResourceApiService Create or update a schedule for a specified workflow with a corresponding start workflow request
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-    @return interface{}
-*/
+// SaveSchedule saves a schedule.
 func (a *SchedulerResourceApiService) SaveSchedule(ctx context.Context, body model.SaveScheduleRequest) (interface{}, *http.Response, error) {
-	var result interface{}
-	path := "/scheduler/schedules"
+	// Convert to generated model
+	genSchedule := toGeneratedSaveScheduleRequest(&body)
 
-	resp, err := a.Post(ctx, path, body, &result)
+	req := a.http_orkes.SchedulerResourceAPI.SaveSchedule(ctx).SaveScheduleRequest(genSchedule)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
 	return result, resp, nil
 }
 
-/*
-   SchedulerResourceApiService Search for workflows based on payload and other parameters
-       use sort options as sort&#x3D;&lt;field&gt;:ASC|DESC e.g. sort&#x3D;name&amp;sort&#x3D;workflowId:DESC. If order is not specified, defaults to ASC.
-   * @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-    * @param optional nil or *SchedulerSearchOpts - Optional Parameters:
-        * @param "Start" (optional.Int32) -
-    * @param "Size" (optional.Int32) -
-    * @param "Sort" (optional.String) -
-    * @param "FreeText" (optional.String) -
-    * @param "Query" (optional.String) -
-   @return SearchResultWorkflowSchedule
-*/
-
+// SchedulerSearchOpts defines the options for searching schedules
 type SchedulerSearchOpts struct {
 	Start    optional.Int32
 	Size     optional.Int32
@@ -297,53 +220,46 @@ type SchedulerSearchOpts struct {
 	Query    optional.String
 }
 
-func (a *SchedulerResourceApiService) SearchV2(ctx context.Context, optionals *SchedulerSearchOpts) (model.SearchResultWorkflowSchedule, *http.Response, error) {
-	var result model.SearchResultWorkflowSchedule
+// SearchV2 performs a V2 search.
+func (a *SchedulerResourceApiService) SearchV2(ctx context.Context, opts *SchedulerSearchOpts) (model.SearchResultWorkflowSchedule, *http.Response, error) {
+	// Use the generated client method
+	req := a.http_orkes.SchedulerResourceAPI.SearchV2(ctx)
 
-	path := "/scheduler/search/executions"
+	if opts != nil {
+		if opts.Start.IsSet() {
+			req = req.Start(opts.Start.Value())
+		}
+		if opts.Size.IsSet() {
+			req = req.Size(opts.Size.Value())
+		}
+		if opts.Sort.IsSet() {
+			req = req.Sort(opts.Sort.Value())
+		}
+		if opts.FreeText.IsSet() {
+			req = req.FreeText(opts.FreeText.Value())
+		}
+		if opts.Query.IsSet() {
+			req = req.Query(opts.Query.Value())
+		}
+	}
 
-	queryParams := url.Values{}
-	if optionals != nil && optionals.Start.IsSet() {
-		queryParams.Add("start", parameterToString(optionals.Start.Value(), ""))
-	}
-	if optionals != nil && optionals.Size.IsSet() {
-		queryParams.Add("size", parameterToString(optionals.Size.Value(), ""))
-	}
-	if optionals != nil && optionals.Sort.IsSet() {
-		queryParams.Add("sort", parameterToString(optionals.Sort.Value(), ""))
-	}
-	if optionals != nil && optionals.FreeText.IsSet() {
-		queryParams.Add("freeText", parameterToString(optionals.FreeText.Value(), ""))
-	}
-	if optionals != nil && optionals.Query.IsSet() {
-		queryParams.Add("query", parameterToString(optionals.Query.Value(), ""))
-	}
-
-	resp, err := a.Get(ctx, path, queryParams, &result)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return model.SearchResultWorkflowSchedule{}, resp, err
+		return model.SearchResultWorkflowSchedule{}, resp, wrapGeneratedError(err, resp)
 	}
-	return result, resp, nil
+
+	domainResult := toDomainSearchResultWorkflowScheduleFromGenerated(result)
+	return domainResult, resp, nil
 }
 
-/*
-SchedulerResourceApiService Get schedules by tag
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param tag
-    @return []WorkflowScheduleModel
-*/
+// GetSchedulesByTag gets schedules by tag.
 func (a *SchedulerResourceApiService) GetSchedulesByTag(ctx context.Context, tag string) ([]model.WorkflowScheduleModel, *http.Response, error) {
-	var result []model.WorkflowScheduleModel
-
-	// create path and map variables
-	path := "/scheduler/schedules/tags"
-
-	queryParams := url.Values{}
-	queryParams.Add("tag", parameterToString(tag, ""))
-
-	resp, err := a.Get(ctx, path, nil, &result)
+	req := a.http_orkes.SchedulerResourceAPI.GetSchedulesByTag(ctx).Tag(tag)
+	genSchedules, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
+
+	result := toDomainWorkflowScheduleModelsFromGenerated(genSchedules)
 	return result, resp, nil
 }

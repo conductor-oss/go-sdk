@@ -1,298 +1,199 @@
-// Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
-// the License. You may obtain a copy of the License at
+//  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+//  the License. You may obtain a copy of the License at
 //
-// http://www.apache.org/licenses/LICENSE-2.0
+//  http://www.apache.org/licenses/LICENSE-2.0
 //
-// Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
-// an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
-// specific language governing permissions and limitations under the License.
+//  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+//  an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+//  specific language governing permissions and limitations under the License.
+
 package client
 
 import (
 	"context"
-	"fmt"
+	"net/http"
+
 	"github.com/antihax/optional"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
-	"net/http"
-	"net/url"
 )
 
+// ServiceRegistryResourceApiService is the service for the service registry resource.
 type ServiceRegistryResourceApiService struct {
 	*APIClient
 }
 
-/*
-ServiceRegistryResourceApiService
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-  - @param registryName
-*/
+// AddOrUpdateService adds or updates a service.
+func (a *ServiceRegistryResourceApiService) AddOrUpdateService(ctx context.Context, serviceRegistry model.ServiceRegistry) (*http.Response, error) {
+	genRequest := toGeneratedServiceRegistry(&serviceRegistry)
+	resp, err := a.http_orkes.ServiceRegistryResourceAPI.AddOrUpdateService(ctx).
+		ServiceRegistry(*genRequest).
+		Execute()
+	if err != nil {
+		return resp, wrapGeneratedError(err, resp)
+	}
+
+	return resp, nil
+}
+
+// AddOrUpdateMethod adds or updates a method.
 func (a *ServiceRegistryResourceApiService) AddOrUpdateMethod(ctx context.Context, body model.ServiceMethod, registryName string) (*http.Response, error) {
-	var fileBytes []byte
-
-	// create path and map variables
-	path := fmt.Sprintf("/registry/service/%s/methods", registryName)
-
-	resp, err := a.Post(ctx, path, body, &fileBytes)
+	genRequest := toGeneratedServiceMethod(&body)
+	resp, err := a.http_orkes.ServiceRegistryResourceAPI.AddOrUpdateMethod(ctx, registryName).
+		ServiceMethod(genRequest).
+		Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
 
-/*
-ServiceRegistryResourceApiService
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-*/
-func (a *ServiceRegistryResourceApiService) AddOrUpdateService(ctx context.Context, body model.ServiceRegistry) (*http.Response, error) {
-	// create path and map variables
-	path := "/registry/service"
-
-	resp, err := a.Post(ctx, path, body, nil)
+// GetService gets a service by name and version.
+func (a *ServiceRegistryResourceApiService) GetService(ctx context.Context, serviceName string) (model.ServiceRegistry, *http.Response, error) {
+	genResult, resp, err := a.http_orkes.ServiceRegistryResourceAPI.GetService(ctx, serviceName).Execute()
 	if err != nil {
-		return resp, err
+		return model.ServiceRegistry{}, resp, wrapGeneratedError(err, resp)
 	}
-	return resp, nil
+
+	result := toDomainServiceRegistryFromGenerated(genResult)
+	return result, resp, nil
 }
 
-/*
-ServiceRegistryResourceApiService
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param name
-    @return CircuitBreakerTransitionResponse
-*/
+// GetServices gets all services.
+func (a *ServiceRegistryResourceApiService) GetServices(ctx context.Context) ([]model.ServiceRegistry, *http.Response, error) {
+	genResult, resp, err := a.http_orkes.ServiceRegistryResourceAPI.GetRegisteredServices(ctx).Execute()
+	if err != nil {
+		return nil, resp, wrapGeneratedError(err, resp)
+	}
+
+	result := toDomainServiceRegistriesFromGenerated(genResult)
+	return result, resp, nil
+}
+
 func (a *ServiceRegistryResourceApiService) CloseCircuitBreaker(ctx context.Context, name string) (model.CircuitBreakerTransitionResponse, *http.Response, error) {
-	var transitionResp model.CircuitBreakerTransitionResponse
-
-	// create path and map variables
-	path := fmt.Sprintf("/registry/service/%s/circuit-breaker/close", name)
-
-	resp, err := a.Post(ctx, path, nil, &transitionResp)
+	result, resp, err := a.http_orkes.ServiceRegistryResourceAPI.CloseCircuitBreaker(ctx, name).Execute()
 	if err != nil {
-		return model.CircuitBreakerTransitionResponse{}, resp, err
+		return model.CircuitBreakerTransitionResponse{}, resp, wrapGeneratedError(err, resp)
 	}
-	return transitionResp, resp, nil
+	return toDomainCircuitBreakerTransitionResponseFromGenerated(result), resp, nil
 }
 
-/*
-ServiceRegistryResourceApiService
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param registryName
-  - @param filename
-*/
+// DeleteProto deletes a proto by registry name and filename.
 func (a *ServiceRegistryResourceApiService) DeleteProto(ctx context.Context, registryName string, filename string) (*http.Response, error) {
-
-	// create path and map variables
-	path := fmt.Sprintf("/registry/service/protos/%s/%s", registryName, filename)
-
-	resp, err := a.Delete(ctx, path, nil, nil)
+	resp, err := a.http_orkes.ServiceRegistryResourceAPI.DeleteProto(ctx, registryName, filename).Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
 
-/*
-   ServiceRegistryResourceApiService
-   * @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-    * @param name
-    * @param optional nil or *ServiceRegistryResourceApiDiscoverOpts - Optional Parameters:
-        * @param "Create" (optional.Bool) -
-   @return []ServiceMethod
-*/
-
+// DiscoverOpts are the options for the Discover method
 type ServiceRegistryResourceApiDiscoverOpts struct {
 	Create optional.Bool
 }
 
+// Discover discovers a service by name.
 func (a *ServiceRegistryResourceApiService) Discover(ctx context.Context, name string, optionals *ServiceRegistryResourceApiDiscoverOpts) ([]model.ServiceMethod, *http.Response, error) {
-	var returnValue []model.ServiceMethod
-
-	// create path and map variables
-	path := fmt.Sprintf("/registry/service/%s/discover", name)
-
-	queryParams := url.Values{}
+	req := a.http_orkes.ServiceRegistryResourceAPI.Discover(ctx, name)
 
 	if optionals != nil && optionals.Create.IsSet() {
-		queryParams.Add("create", parameterToString(optionals.Create.Value(), ""))
+		req = req.Create(optionals.Create.Value())
 	}
 
-	resp, err := a.Get(ctx, path, queryParams, &returnValue)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
-	return returnValue, resp, nil
+	return toDomainServiceMethodsFromGenerated(result), resp, nil
 }
 
-/*
-ServiceRegistryResourceApiService
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param registryName
-    @return []ProtoRegistryEntry
-*/
+// GetAllProtos gets all protos by registry name.
 func (a *ServiceRegistryResourceApiService) GetAllProtos(ctx context.Context, registryName string) ([]model.ProtoRegistryEntry, *http.Response, error) {
-	var returnValue []model.ProtoRegistryEntry
+	req := a.http_orkes.ServiceRegistryResourceAPI.GetAllProtos(ctx, registryName)
 
-	// create path and map variables
-	path := fmt.Sprintf("/registry/service/protos/%s", registryName)
-
-	resp, err := a.Get(ctx, path, nil, &returnValue)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
-	return returnValue, resp, nil
+	return toDomainProtoRegistryEntriesFromGenerated(result), resp, nil
 }
 
-/*
-ServiceRegistryResourceApiService
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param name
-    @return CircuitBreakerTransitionResponse
-*/
+// GetCircuitBreakerStatus gets the circuit breaker status by name.
 func (a *ServiceRegistryResourceApiService) GetCircuitBreakerStatus(ctx context.Context, name string) (model.CircuitBreakerTransitionResponse, *http.Response, error) {
-	var returnValue model.CircuitBreakerTransitionResponse
+	req := a.http_orkes.ServiceRegistryResourceAPI.GetCircuitBreakerStatus(ctx, name)
 
-	// create path and map variables
-	path := fmt.Sprintf("/registry/service/%s/circuit-breaker/status", name)
-
-	resp, err := a.Get(ctx, path, nil, &returnValue)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return model.CircuitBreakerTransitionResponse{}, resp, err
+		return model.CircuitBreakerTransitionResponse{}, resp, wrapGeneratedError(err, resp)
 	}
-	return returnValue, resp, nil
+	return toDomainCircuitBreakerTransitionResponseFromGenerated(result), resp, nil
 }
 
-/*
-ServiceRegistryResourceApiService
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param registryName
-  - @param filename
-    @return string
-*/
+// GetProtoData gets the proto data by registry name and filename.
 func (a *ServiceRegistryResourceApiService) GetProtoData(ctx context.Context, registryName string, filename string) (string, *http.Response, error) {
-	var returnValue string
+	req := a.http_orkes.ServiceRegistryResourceAPI.GetProtoData(ctx, registryName, filename)
 
-	// create path and map variables
-	path := fmt.Sprintf("/registry/service/protos/%s/%s", registryName, filename)
-
-	resp, err := a.Get(ctx, path, nil, &returnValue)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return "", resp, err
+		return "", resp, wrapGeneratedError(err, resp)
 	}
-	return returnValue, resp, nil
+	return result, resp, nil
 }
 
-/*
-ServiceRegistryResourceApiService
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-    @return []ServiceRegistry
-*/
+// GetRegisteredServices gets all services.
 func (a *ServiceRegistryResourceApiService) GetRegisteredServices(ctx context.Context) ([]model.ServiceRegistry, *http.Response, error) {
-	var returnValue []model.ServiceRegistry
+	req := a.http_orkes.ServiceRegistryResourceAPI.GetRegisteredServices(ctx)
 
-	// create path and map variables
-	path := "/registry/service"
-
-	resp, err := a.Get(ctx, path, nil, &returnValue)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
-	return returnValue, resp, nil
+	return toDomainServiceRegistriesFromGenerated(result), resp, nil
 }
 
-/*
-ServiceRegistryResourceApiService
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param name
-    @return ServiceRegistry
-*/
-func (a *ServiceRegistryResourceApiService) GetService(ctx context.Context, name string) (model.ServiceRegistry, *http.Response, error) {
-	var returnValue model.ServiceRegistry
-
-	// create path and map variables
-	path := fmt.Sprintf("/registry/service/%s", name)
-	resp, err := a.Get(ctx, path, nil, &returnValue)
-	if err != nil {
-		return model.ServiceRegistry{}, resp, err
-	}
-	return returnValue, resp, nil
-}
-
-/*
-ServiceRegistryResourceApiService
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param name
-    @return CircuitBreakerTransitionResponse
-*/
+// OpenCircuitBreaker opens a circuit breaker by name.
 func (a *ServiceRegistryResourceApiService) OpenCircuitBreaker(ctx context.Context, name string) (model.CircuitBreakerTransitionResponse, *http.Response, error) {
-	var returnValue model.CircuitBreakerTransitionResponse
+	req := a.http_orkes.ServiceRegistryResourceAPI.OpenCircuitBreaker(ctx, name)
 
-	// create path and map variables
-	path := fmt.Sprintf("/registry/service/%s/circuit-breaker/open", name)
-
-	resp, err := a.Post(ctx, path, nil, &returnValue)
+	result, resp, err := req.Execute()
 	if err != nil {
-		return model.CircuitBreakerTransitionResponse{}, resp, err
+		return model.CircuitBreakerTransitionResponse{}, resp, wrapGeneratedError(err, resp)
 	}
-	return returnValue, resp, nil
+	return toDomainCircuitBreakerTransitionResponseFromGenerated(result), resp, nil
 }
 
-/*
-ServiceRegistryResourceApiService
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param registryName
-  - @param serviceName
-  - @param method
-  - @param methodType
-*/
+// RemoveMethod removes a method by registry name, service name, method name and method type.
 func (a *ServiceRegistryResourceApiService) RemoveMethod(ctx context.Context, registryName string, serviceName string, method string, methodType string) (*http.Response, error) {
-	// create path and map variables
-	path := fmt.Sprintf("/registry/service/%s/methods", registryName)
+	req := a.http_orkes.ServiceRegistryResourceAPI.RemoveMethod(ctx, registryName)
 
-	queryParams := url.Values{}
-	queryParams.Add("serviceName", parameterToString(serviceName, ""))
-	queryParams.Add("method", parameterToString(method, ""))
-	queryParams.Add("methodType", parameterToString(methodType, ""))
+	req = req.ServiceName(serviceName).Method(method).MethodType(methodType)
 
-	resp, err := a.Delete(ctx, path, queryParams, nil)
+	resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
 
-/*
-ServiceRegistryResourceApiService
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param name
-*/
+// RemoveService removes a service by name.
 func (a *ServiceRegistryResourceApiService) RemoveService(ctx context.Context, name string) (*http.Response, error) {
-	// create path and map variables
-	path := fmt.Sprintf("/registry/service/%s", name)
+	req := a.http_orkes.ServiceRegistryResourceAPI.RemoveService(ctx, name)
 
-	resp, err := a.Delete(ctx, path, nil, nil)
+	resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }
 
-/*
-ServiceRegistryResourceApiService
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-  - @param registryName
-  - @param filename
-*/
+// SetProtoData sets the proto data by registry name and filename.
 func (a *ServiceRegistryResourceApiService) SetProtoData(ctx context.Context, body string, registryName string, filename string) (*http.Response, error) {
+	req := a.http_orkes.ServiceRegistryResourceAPI.SetProtoData(ctx, registryName, filename)
 
-	// create path and map variables
-	path := fmt.Sprintf("/registry/service/protos/%s/%s", registryName, filename)
+	req = req.Body(body)
 
-	resp, err := a.PostWithContentType(ctx, path, body, "application/octet-stream", nil)
+	resp, err := req.Execute()
 	if err != nil {
-		return resp, err
+		return resp, wrapGeneratedError(err, resp)
 	}
 	return resp, nil
 }

@@ -8,17 +8,16 @@
 // specific language governing permissions and limitations under the License.
 package model
 
-    
-    type IntegrationApi struct {
-            Api string `json:"api,omitempty"`
-            Configuration map[string]interface{} `json:"configuration,omitempty"`
-            CreateTime int64 `json:"createTime,omitempty"`
-            CreatedBy string `json:"createdBy,omitempty"`
-            Description string `json:"description,omitempty"`
-            Enabled bool `json:"enabled,omitempty"`
-            IntegrationName string `json:"integrationName,omitempty"`
-            OwnerApp string `json:"ownerApp,omitempty"`
-            Tags []Tag `json:"tags,omitempty"`
-            UpdateTime int64 `json:"updateTime,omitempty"`
-            UpdatedBy string `json:"updatedBy,omitempty"`
-    }
+type IntegrationApi struct {
+	Api             string                 `json:"api,omitempty"`
+	Configuration   map[string]interface{} `json:"configuration,omitempty"`
+	CreateTime      int64                  `json:"createTime,omitempty"`
+	CreatedBy       string                 `json:"createdBy,omitempty"`
+	Description     string                 `json:"description,omitempty"`
+	Enabled         bool                   `json:"enabled,omitempty"`
+	IntegrationName string                 `json:"integrationName,omitempty"`
+	OwnerApp        string                 `json:"ownerApp,omitempty"`
+	Tags            []Tag                  `json:"tags,omitempty"`
+	UpdateTime      int64                  `json:"updateTime,omitempty"`
+	UpdatedBy       string                 `json:"updatedBy,omitempty"`
+}

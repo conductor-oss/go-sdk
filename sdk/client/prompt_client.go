@@ -2,12 +2,14 @@ package client
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/sdk/model/integration"
-	"net/http"
 )
 
 type PromptClient interface {
+	CreateMessageTemplates(ctx context.Context, templates []integration.PromptTemplate) (*http.Response, error)
 	DeleteMessageTemplate(ctx context.Context, name string) (*http.Response, error)
 	DeleteTagForPromptTemplate(ctx context.Context, tags []model.Tag, name string) (*http.Response, error)
 	GetMessageTemplate(ctx context.Context, name string) (*integration.PromptTemplate, *http.Response, error)

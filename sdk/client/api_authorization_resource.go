@@ -11,61 +11,35 @@ package client
 
 import (
 	"context"
-	"fmt"
-	"github.com/conductor-sdk/conductor-go/sdk/model/rbac"
 	"net/http"
+
+	"github.com/conductor-sdk/conductor-go/sdk/model/rbac"
 )
 
+// AuthorizationResourceApiService is the service for the authorization resource.
 type AuthorizationResourceApiService struct {
 	*APIClient
 }
 
-/*
-AuthorizationResourceApiService Get the access that have been granted over the given object
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param type_
-  - @param id
-    @return interface{}
-*/
+// GetPermissions Get the access that have been granted over the given object.
 func (a *AuthorizationResourceApiService) GetPermissions(ctx context.Context, type_ string, id string) (interface{}, *http.Response, error) {
-	var result interface{}
-	path := fmt.Sprintf("/auth/authorization/%s/%s", type_, id)
-	resp, err := a.Get(ctx, path, nil, &result)
-
-	// Return nil result if there's an error to match original behavior
+	result, resp, err := a.http_orkes.AuthorizationResourceAPI.GetPermissions(ctx, type_, id).Execute()
 	if err != nil {
-		return nil, resp, err
+		return nil, resp, wrapGeneratedError(err, resp)
 	}
-
 	return result, resp, nil
 }
 
-/*
-AuthorizationResourceApiService Grant access to a user over the target
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-    @return Response
-*/
+// GrantPermissions Grant access to a user over the target.
 func (a *AuthorizationResourceApiService) GrantPermissions(ctx context.Context, body rbac.AuthorizationRequest) (*http.Response, error) {
-	path := "/auth/authorization"
-	resp, err := a.Post(ctx, path, body, nil)
-	if err != nil {
-		return resp, err
-	}
-	return resp, nil
+	genRequest := toGeneratedAuthorizationRequest(body)
+	_, resp, err := a.http_orkes.AuthorizationResourceAPI.GrantPermissions(ctx).AuthorizationRequest(genRequest).Execute()
+	return resp, wrapGeneratedError(err, resp)
 }
 
-/*
-AuthorizationResourceApiService Remove user&#x27;s access over the target
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-    @return Response
-*/
+// RemovePermissions Remove user's access over the target.
 func (a *AuthorizationResourceApiService) RemovePermissions(ctx context.Context, body rbac.AuthorizationRequest) (*http.Response, error) {
-	path := "/auth/authorization"
-	resp, err := a.DeleteWithBody(ctx, path, body, nil)
-	if err != nil {
-		return resp, err
-	}
-	return resp, nil
+	genRequest := toGeneratedAuthorizationRequest(body)
+	_, resp, err := a.http_orkes.AuthorizationResourceAPI.RemovePermissions(ctx).AuthorizationRequest(genRequest).Execute()
+	return resp, wrapGeneratedError(err, resp)
 }

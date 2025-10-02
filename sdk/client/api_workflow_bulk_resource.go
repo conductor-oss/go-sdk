@@ -11,18 +11,14 @@ package client
 
 import (
 	"context"
+	"errors"
 	"net/http"
-	"net/url"
 
 	"github.com/antihax/optional"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
-// Linger please
-var (
-	_ context.Context
-)
-
+// WorkflowBulkResourceApiService is the service for the workflow bulk resource.
 type WorkflowBulkResourceApiService struct {
 	*APIClient
 }
@@ -34,14 +30,18 @@ func (a *WorkflowBulkResourceApiService) PauseWorkflow1(ctx context.Context, bod
 
 // Pause pauses the list of workflows.
 func (a *WorkflowBulkResourceApiService) Pause(ctx context.Context, body []string) (model.BulkResponse, *http.Response, error) {
-	var result model.BulkResponse
+	req := a.http_orkes.WorkflowBulkResourceAPI.PauseWorkflow1(ctx).RequestBody(body)
 
-	localVarPath := "/workflow/bulk/pause"
-
-	resp, err := a.Put(ctx, localVarPath, body, &result)
+	genResp, resp, err := req.Execute()
 	if err != nil {
-		return model.BulkResponse{}, resp, err
+		return model.BulkResponse{}, resp, wrapGeneratedError(err, resp)
 	}
+
+	if genResp == nil {
+		return model.BulkResponse{}, resp, wrapGeneratedError(errors.New("bulk response not found"), resp)
+	}
+
+	result := toDomainBulkResponseFromGenerated(genResp)
 	return result, resp, nil
 }
 
@@ -53,19 +53,21 @@ type WorkflowBulkResourceApiRestartOpts struct {
 
 // Restart restarts the list of workflows.
 func (a *WorkflowBulkResourceApiService) Restart(ctx context.Context, body []string, localVarOptionals *WorkflowBulkResourceApiRestartOpts) (model.BulkResponse, *http.Response, error) {
-	var result model.BulkResponse
+	req := a.http_orkes.WorkflowBulkResourceAPI.Restart1(ctx).RequestBody(body)
 
-	path := "/workflow/bulk/restart"
-
-	queryParams := url.Values{}
 	if localVarOptionals != nil && localVarOptionals.UseLatestDefinitions.IsSet() {
-		queryParams.Add("useLatestDefinitions", parameterToString(localVarOptionals.UseLatestDefinitions.Value(), ""))
+		req = req.UseLatestDefinitions(localVarOptionals.UseLatestDefinitions.Value())
+	}
+	genResp, resp, err := req.Execute()
+	if err != nil {
+		return model.BulkResponse{}, resp, wrapGeneratedError(err, resp)
 	}
 
-	resp, err := a.PostWithParams(ctx, path, queryParams, body, &result)
-	if err != nil {
-		return model.BulkResponse{}, resp, err
+	if genResp == nil {
+		return model.BulkResponse{}, resp, wrapGeneratedError(errors.New("bulk response not found"), resp)
 	}
+
+	result := toDomainBulkResponseFromGenerated(genResp)
 	return result, resp, nil
 }
 
@@ -76,27 +78,35 @@ func (a *WorkflowBulkResourceApiService) ResumeWorkflow(ctx context.Context, bod
 
 // Resume resumes the list of workflows.
 func (a *WorkflowBulkResourceApiService) Resume(ctx context.Context, body []string) (model.BulkResponse, *http.Response, error) {
-	var result model.BulkResponse
+	req := a.http_orkes.WorkflowBulkResourceAPI.ResumeWorkflow1(ctx).RequestBody(body)
 
-	path := "/workflow/bulk/resume"
-
-	resp, err := a.Put(ctx, path, body, &result)
+	genResp, resp, err := req.Execute()
 	if err != nil {
-		return model.BulkResponse{}, resp, err
+		return model.BulkResponse{}, resp, wrapGeneratedError(err, resp)
 	}
+
+	if genResp == nil {
+		return model.BulkResponse{}, resp, wrapGeneratedError(errors.New("bulk response not found"), resp)
+	}
+
+	result := toDomainBulkResponseFromGenerated(genResp)
 	return result, resp, nil
 }
 
 // Retry retries the last failed task for each workflow from the list.
 func (a *WorkflowBulkResourceApiService) Retry(ctx context.Context, body []string) (model.BulkResponse, *http.Response, error) {
-	var result model.BulkResponse
+	req := a.http_orkes.WorkflowBulkResourceAPI.Retry1(ctx).RequestBody(body)
 
-	path := "/workflow/bulk/retry"
-
-	resp, err := a.Post(ctx, path, body, &result)
+	genResp, resp, err := req.Execute()
 	if err != nil {
-		return model.BulkResponse{}, resp, err
+		return model.BulkResponse{}, resp, wrapGeneratedError(err, resp)
 	}
+
+	if genResp == nil {
+		return model.BulkResponse{}, resp, wrapGeneratedError(errors.New("bulk response not found"), resp)
+	}
+
+	result := toDomainBulkResponseFromGenerated(genResp)
 	return result, resp, nil
 }
 
@@ -115,34 +125,37 @@ type WorkflowBulkResourceApiTerminateOpts struct {
 
 // Terminate terminates workflows execution.
 func (a *WorkflowBulkResourceApiService) Terminate(ctx context.Context, body []string, opts *WorkflowBulkResourceApiTerminateOpts) (model.BulkResponse, *http.Response, error) {
-	var result model.BulkResponse
+	req := a.http_orkes.WorkflowBulkResourceAPI.Terminate(ctx).RequestBody(body)
 
-	path := "/workflow/bulk/terminate"
-
-	queryParams := url.Values{}
 	if opts != nil && opts.Reason.IsSet() {
-		queryParams.Add("reason", parameterToString(opts.Reason.Value(), ""))
+		req = req.Reason(opts.Reason.Value())
 	}
 	if opts != nil && opts.TriggerFailureWorkflow.IsSet() {
-		queryParams.Add("triggerFailureWorkflow", parameterToString(opts.TriggerFailureWorkflow.Value(), ""))
+		req = req.TriggerFailureWorkflow(opts.TriggerFailureWorkflow.Value())
 	}
 
-	resp, err := a.PostWithParams(ctx, path, queryParams, body, &result)
+	genResp, resp, err := req.Execute()
 	if err != nil {
-		return model.BulkResponse{}, resp, err
+		return model.BulkResponse{}, resp, wrapGeneratedError(err, resp)
 	}
+
+	if genResp == nil {
+		return model.BulkResponse{}, resp, wrapGeneratedError(errors.New("bulk response not found"), resp)
+	}
+
+	result := toDomainBulkResponseFromGenerated(genResp)
 	return result, resp, nil
 }
 
 // Delete permanently removes workflows from the system.
 func (a *WorkflowBulkResourceApiService) Delete(ctx context.Context, body []string) (model.BulkResponse, *http.Response, error) {
-	var result model.BulkResponse
+	req := a.http_orkes.WorkflowBulkResourceAPI.Delete(ctx).RequestBody(body)
 
-	path := "/workflow/bulk/delete"
-
-	resp, err := a.Post(ctx, path, body, &result)
+	genResp, resp, err := req.Execute()
 	if err != nil {
-		return model.BulkResponse{}, resp, err
+		return model.BulkResponse{}, resp, wrapGeneratedError(err, resp)
 	}
+
+	result := toDomainBulkResponseFromGenerated(genResp)
 	return result, resp, nil
 }
