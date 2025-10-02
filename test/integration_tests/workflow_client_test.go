@@ -2,16 +2,19 @@ package integration_tests
 
 import (
 	"context"
+	"net/http"
+	"testing"
+
 	"github.com/antihax/optional"
 	"github.com/conductor-sdk/conductor-go/sdk/client"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/sdk/workflow"
 	"github.com/conductor-sdk/conductor-go/test/testdata"
-	"net/http"
-	"testing"
 )
 
 func TestWorkflowTest(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
 	httpTaskWorkflow := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).
 		Name("TEST_GO_WORKFLOW_TEST").
 		Version(1).
@@ -82,6 +85,8 @@ func TestWorkflowTest(t *testing.T) {
 }
 
 func TestJumpToTask(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
+
 	input := workflow.HttpInput{
 		Method: "GET",
 		Uri:    "http://httpbin:8081/api/hello?name=Test123",

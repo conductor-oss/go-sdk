@@ -18,6 +18,8 @@ import (
 const retryLimit = 5
 
 func TestWorkflowCreation(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
 	executor := testdata.WorkflowExecutor
 
 	wf := workflow.NewConductorWorkflow(executor).
@@ -71,6 +73,8 @@ func TestWorkflowCreation(t *testing.T) {
 }
 
 func TestRemoveWorkflow(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
 	executor := testdata.WorkflowExecutor
 	wf := workflow.NewConductorWorkflow(executor)
 	wf.Name("temp_wf_" + strconv.Itoa(time.Now().Nanosecond())).Version(1)
@@ -102,6 +106,8 @@ func TestRemoveWorkflow(t *testing.T) {
 }
 
 func TestExecuteWorkflow(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
 	executor := testdata.WorkflowExecutor
 	wf := workflow.NewConductorWorkflow(executor).
 		Name("temp_wf_2_" + strconv.Itoa(time.Now().Nanosecond())).
@@ -138,6 +144,8 @@ func TestExecuteWorkflow(t *testing.T) {
 }
 
 func TestExecuteWorkflowWithCorrelationIds(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
 	executor := testdata.WorkflowExecutor
 	correlationId1 := "correlationId1-" + uuid.New().String()
 	correlationId2 := "correlationId2-" + uuid.New().String()
@@ -175,6 +183,7 @@ func TestExecuteWorkflowWithCorrelationIds(t *testing.T) {
 }
 
 func TestTerminateWorkflowWithFailure(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 
 	executor := testdata.WorkflowExecutor
 	wf := workflow.NewConductorWorkflow(executor).
@@ -212,6 +221,8 @@ func TestTerminateWorkflowWithFailure(t *testing.T) {
 }
 
 func TestExecuteWorkflowSync(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
 	executor := testdata.WorkflowExecutor
 	wf := workflow.NewConductorWorkflow(executor).
 		Name("temp_wf_3_" + strconv.Itoa(time.Now().Nanosecond())).

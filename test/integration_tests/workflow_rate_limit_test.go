@@ -18,19 +18,23 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/sdk/workflow"
 	"github.com/conductor-sdk/conductor-go/test/testdata"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // TestConcurrentWorkflowExecution tests actual concurrent execution with rate limits
 func TestConcurrentWorkflowExecution(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
 	testWorkflowExecutor := testdata.WorkflowExecutor
 
 	concurrentLimit := int32(3)
-	duration := 3 * time.Second
-	rateLimitKey := "concurrent_test"
+	duration := 4 * time.Second
+	uuid := uuid.New().String()
+	rateLimitKey := "concurrent_test" + uuid
 	// Create workflow with strict concurrency limit
-	workflowName := fmt.Sprintf("TEST_GO_WORKFLOW_CONCURRENT_%d", time.Now().Unix())
+	workflowName := fmt.Sprintf("TEST_GO_WORKFLOW_CONCURRENT_%s", uuid)
 	wf := workflow.NewConductorWorkflow(testWorkflowExecutor).
 		Name(workflowName).
 		Version(1).
@@ -44,15 +48,7 @@ func TestConcurrentWorkflowExecution(t *testing.T) {
 	err := wf.Register(true)
 	assert.NoError(t, err)
 
-	// Clean up workflow after test
-	defer func() {
-		err := wf.UnRegister()
-		if err != nil {
-			t.Logf("Failed to unregister workflow: %v", err)
-		}
-	}()
-
-	// Start 15 workflows simultaneously
+	// Start 10 workflows simultaneously
 	var wg sync.WaitGroup
 	ids := make([]string, 10)
 
@@ -63,21 +59,27 @@ func TestConcurrentWorkflowExecution(t *testing.T) {
 			input := map[string]interface{}{
 				"index": idx,
 			}
-			id, err := wf.StartWorkflowWithInput(input)
-			if err != nil {
-				t.Logf("Failed to start workflow: %v", err)
-			}
+			var id string
+			err := testdata.RetryTimeout(3, 500*time.Millisecond, func() error {
+				var startErr error
+				id, startErr = wf.StartWorkflowWithInput(input)
+				return startErr
+			})
+			require.NoError(t, err)
 			ids[idx] = id
 		}(i)
 	}
 
 	wg.Wait()
 
-	time.Sleep(duration + 500*time.Millisecond)
+	time.Sleep(duration + 1*time.Second)
 
 	completedCount := 0
 	for _, id := range ids {
-		execution, _ := testWorkflowExecutor.GetWorkflow(id, true)
+		execution, err := testWorkflowExecutor.GetWorkflow(id, true)
+		require.NoError(t, err)
+		require.NotNil(t, execution)
+
 		switch execution.Status {
 		case model.CompletedWorkflow:
 			completedCount++
@@ -91,16 +93,29 @@ func TestConcurrentWorkflowExecution(t *testing.T) {
 
 	assert.GreaterOrEqual(t, completedCount, int(concurrentLimit), "Completed count should be equal to concurrent limit")
 	assert.Less(t, completedCount, len(ids), "Completed count should be less than or equal to the number of workflows")
+
+	t.Cleanup(func() {
+		for _, id := range ids {
+			err = testdata.WorkflowExecutor.RemoveWorkflow(id)
+			assert.NoError(t, err, "Failed to remove workflow %s", id)
+		}
+
+		err := wf.UnRegister()
+		assert.NoError(t, err, "Failed to unregister workflow")
+	})
 }
 
 // TestPerCustomerRateLimit tests rate limiting per customer ID
 func TestPerCustomerRateLimit(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
 	testWorkflowExecutor := testdata.WorkflowExecutor
 	concurrentLimit := int32(3)
-	duration := 3 * time.Second
+	duration := 4 * time.Second
+	uuid := uuid.New().String()
 
 	// Create workflow with per-customer rate limiting
-	workflowName := fmt.Sprintf("TEST_GO_WORKFLOW_CONCURRENT_CUSTOMER_%d", time.Now().Unix())
+	workflowName := fmt.Sprintf("TEST_GO_WORKFLOW_CONCURRENT_CUSTOMER_%s", uuid)
 	wf := workflow.NewConductorWorkflow(testWorkflowExecutor).
 		Name(workflowName).
 		Version(1).
@@ -115,20 +130,12 @@ func TestPerCustomerRateLimit(t *testing.T) {
 	err := wf.Register(true)
 	assert.NoError(t, err)
 
-	// Clean up workflow after test
-	defer func() {
-		err := wf.UnRegister()
-		if err != nil {
-			t.Logf("Failed to unregister workflow: %v", err)
-		}
-	}()
-
 	type CustomerWorkflow struct {
 		CustomerID string
 		WorkflowID string
 	}
 
-	customers := []string{"customer_A", "customer_B"}
+	customers := []string{"customer_A_" + uuid, "customer_B_" + uuid}
 	workflowsPerCustomer := 6
 
 	allWorkflows := make([]CustomerWorkflow, 0)
@@ -147,7 +154,13 @@ func TestPerCustomerRateLimit(t *testing.T) {
 					"index":      idx,
 				}
 
-				id, err := wf.StartWorkflowWithInput(input)
+				var id string
+				err := testdata.RetryTimeout(3, 500*time.Millisecond, func() error {
+					var startErr error
+					id, startErr = wf.StartWorkflowWithInput(input)
+					return startErr
+				})
+				require.NoError(t, err)
 
 				mu.Lock()
 				allWorkflows = append(allWorkflows, CustomerWorkflow{
@@ -155,8 +168,6 @@ func TestPerCustomerRateLimit(t *testing.T) {
 					WorkflowID: id,
 				})
 				mu.Unlock()
-
-				assert.NoError(t, err)
 			}(customerId, i)
 		}
 	}
@@ -164,7 +175,7 @@ func TestPerCustomerRateLimit(t *testing.T) {
 	wg.Wait()
 
 	// Wait for workflows to complete
-	time.Sleep(duration + 500*time.Millisecond)
+	time.Sleep(duration + 1*time.Second)
 
 	// Analyze results per customer
 	customerStats := make(map[string]struct {
@@ -179,8 +190,9 @@ func TestPerCustomerRateLimit(t *testing.T) {
 
 		// Check if workflow complete
 		execution, err := testWorkflowExecutor.GetWorkflow(cw.WorkflowID, true)
-
 		require.NoError(t, err)
+		require.NotNil(t, execution)
+
 		switch execution.Status {
 		case model.CompletedWorkflow:
 			stats.Completed++
@@ -212,4 +224,14 @@ func TestPerCustomerRateLimit(t *testing.T) {
 			"Customer %s should have %d running workflows, got %d",
 			customerId, workflowsPerCustomer-stats.Completed, stats.Running)
 	}
+
+	t.Cleanup(func() {
+		for _, id := range allWorkflows {
+			err = testdata.WorkflowExecutor.RemoveWorkflow(id.WorkflowID)
+			assert.NoError(t, err, "Failed to remove workflow %s", id)
+		}
+
+		err := wf.UnRegister()
+		assert.NoError(t, err, "Failed to unregister workflow")
+	})
 }

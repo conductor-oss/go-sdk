@@ -3,14 +3,17 @@ package integration_tests
 import (
 	"context"
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/test/testdata"
 	"github.com/stretchr/testify/assert"
-	"testing"
-	"time"
 )
 
 func TestSecretResourceApiService(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
 	// Setup
 	secretClient := testdata.SecretClient // Assuming this exists in your testdata package
 	ctx := context.Background()
