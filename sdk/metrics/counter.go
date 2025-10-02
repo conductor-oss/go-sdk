@@ -10,6 +10,7 @@
 package metrics
 
 import (
+	"github.com/conductor-sdk/conductor-go/sdk/log"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -192,8 +193,12 @@ func getCounter(metricName MetricName, labelValues []string) *prometheus.Counter
 	if !ok {
 		return nil
 	}
-	counter, _ := counterVec.GetMetricWithLabelValues(
+	counter, err := counterVec.GetMetricWithLabelValues(
 		labelValues...,
 	)
+	if err != nil {
+		log.Error("Failed to get counter metric", "error", err, "metricName", metricName)
+		return nil
+	}
 	return &counter
 }

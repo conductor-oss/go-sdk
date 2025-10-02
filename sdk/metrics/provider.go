@@ -12,6 +12,7 @@ package metrics
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -51,7 +52,19 @@ func ProvideMetrics(metricsSettings *settings.MetricsSettings) {
 		),
 	)
 	portString := strconv.Itoa(metricsSettings.Port)
-	http.ListenAndServe(":"+portString, nil)
+
+	// Create a server with timeouts
+	server := &http.Server{
+		Addr:         ":" + portString,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  120 * time.Second,
+	}
+
+	// #nosec G114 - We're setting timeouts above
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Error("Failed to start metrics server", "error", err)
+	}
 }
 
 func handlePanicError(message string) {

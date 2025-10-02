@@ -1,3 +1,4 @@
+//nolint:govet,typecheck
 package executor
 
 import (

@@ -16,7 +16,7 @@ type TagObject struct {
 }
 
 func NewTagObject(metadataTag MetadataTag) TagObject {
-	var value string = metadataTag.Value
+	var value = metadataTag.Value
 
 	return TagObject{
 		Key:   metadataTag.Key,

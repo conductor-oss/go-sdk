@@ -16,6 +16,7 @@ import (
 	"sync"
 
 	"github.com/antihax/optional"
+	"github.com/conductor-sdk/conductor-go/sdk/log"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
@@ -443,5 +444,9 @@ func getHostname() string {
 }
 
 func updateHostname() {
-	hostname, _ = os.Hostname()
+	var err error
+	hostname, err = os.Hostname()
+	if err != nil {
+		log.Warn("Failed to get hostname", "error", err)
+	}
 }

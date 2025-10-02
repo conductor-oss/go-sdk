@@ -2,6 +2,7 @@ package src
 
 import (
 	"fmt"
+
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 

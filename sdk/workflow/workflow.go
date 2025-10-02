@@ -320,7 +320,10 @@ func getInputAsMap(input interface{}) map[string]interface{} {
 		return nil
 	}
 	var parsedInput map[string]interface{}
-	json.Unmarshal(data, &parsedInput)
+	if err := json.Unmarshal(data, &parsedInput); err != nil {
+		log.Error("Failed to unmarshal workflow input", "error", err)
+		return nil
+	}
 	return parsedInput
 }
 

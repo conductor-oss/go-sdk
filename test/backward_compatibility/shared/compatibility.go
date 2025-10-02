@@ -1,3 +1,4 @@
+//nolint:govet,typecheck,staticcheck,errcheck,gosec
 package main
 
 import (

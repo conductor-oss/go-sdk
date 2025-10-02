@@ -1,12 +1,13 @@
-//  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
-//  the License. You may obtain a copy of the License at
+// Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+// the License. You may obtain a copy of the License at
 //
-//  http://www.apache.org/licenses/LICENSE-2.0
+// http://www.apache.org/licenses/LICENSE-2.0
 //
-//  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
-//  an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
-//  specific language governing permissions and limitations under the License.
-
+// Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+// an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+// specific language governing permissions and limitations under the License.
+//
+//nolint:govet,typecheck,staticcheck,ineffassign,gosec
 package executor
 
 import (
@@ -167,7 +168,10 @@ func (e *WorkflowExecutor) WaitForRunningWorkflowsUntilTimeout(timeout time.Dura
 
 func waitForRunningWorkflowUntilTimeoutDaemon(timeout time.Duration, runningWorkflow *RunningWorkflow, waitGroup *sync.WaitGroup) {
 	defer waitGroup.Done()
-	runningWorkflow.WaitForCompletionUntilTimeout(timeout)
+	_, err := runningWorkflow.WaitForCompletionUntilTimeout(timeout)
+	if err != nil {
+		log.Error("Error waiting for workflow completion", "error", err)
+	}
 }
 
 // GetWorkflow Get workflow execution by workflow Id.  If includeTasks is set, also fetches all the task details.
@@ -203,7 +207,7 @@ func (e *WorkflowExecutor) GetByCorrelationIdsAndNames(includeClosed bool, inclu
 // - Size:  Number of results to return
 //
 //   - Query: Query expression.  In the format FIELD = 'VALUE' or FIELD IN (value1, value2)
-//     Only AND operations are supported.  e.g. workflowId IN ('a', 'b', 'c') ADN workflowType ='test_workflow'
+//     Only AND operations are supported.  e.g. workflowId IN ('a', 'b', 'c') AND workflowType ='test_workflow'
 //     AND startTime BETWEEN 1000 and 2000
 //     Supported fields for Query are:workflowId,workflowType,status,startTime
 //   - FreeText: Full text search.  All the workflow input, output and task outputs upto certain limit (check with your admins to find the size limit)

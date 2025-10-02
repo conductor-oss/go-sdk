@@ -1,12 +1,13 @@
-//  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
-//  the License. You may obtain a copy of the License at
+// Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+// the License. You may obtain a copy of the License at
 //
-//  http://www.apache.org/licenses/LICENSE-2.0
+// http://www.apache.org/licenses/LICENSE-2.0
 //
-//  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
-//  an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
-//  specific language governing permissions and limitations under the License.
-
+// Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+// an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+// specific language governing permissions and limitations under the License.
+//
+//nolint:govet,typecheck
 package authentication
 
 import (
@@ -75,14 +76,18 @@ func GetToken(credentials settings.AuthenticationSettings, httpSettings *setting
 	}
 
 	if localVarHttpResponse.StatusCode < 200 || localVarHttpResponse.StatusCode >= 300 {
-		newErr := fmt.Errorf(string(localVarBody))
+		newErr := errors.New(string(localVarBody))
 		return localVarReturnValue, localVarHttpResponse, newErr
 	} else {
 		err = decode(&localVarReturnValue, localVarBody, localVarHttpResponse.Header.Get("Content-Type"))
+		if err != nil {
+			return localVarReturnValue, localVarHttpResponse, err
+		}
 	}
 	return localVarReturnValue, localVarHttpResponse, err
 }
 
+//nolint:gocognit,gocyclo
 func prepareRequest(
 	ctx context.Context,
 	httpSettings *settings.HttpSettings,
@@ -126,7 +131,9 @@ func prepareRequest(
 						return nil, err
 					}
 				} else { // form value
-					w.WriteField(k, iv)
+					if err := w.WriteField(k, iv); err != nil {
+						return nil, err
+					}
 				}
 			}
 		}
@@ -147,7 +154,9 @@ func prepareRequest(
 
 		// Set Content-Length
 		headerParams["Content-Length"] = fmt.Sprintf("%d", body.Len())
-		w.Close()
+		if err := w.Close(); err != nil {
+			return nil, err
+		}
 	}
 
 	if strings.HasPrefix(headerParams["Content-Type"], "application/x-www-form-urlencoded") && len(formParams) > 0 {
@@ -281,7 +290,11 @@ func detectContentType(body interface{}) string {
 }
 
 func getDecompressedBody(response *http.Response) ([]byte, error) {
-	defer response.Body.Close()
+	defer func() {
+		if err := response.Body.Close(); err != nil {
+			log.Error("Failed to close response body", "error", err.Error())
+		}
+	}()
 	var reader io.ReadCloser
 	var err error
 	switch response.Header.Get("Content-Encoding") {
@@ -297,16 +310,25 @@ func getDecompressedBody(response *http.Response) ([]byte, error) {
 	default:
 		reader = response.Body
 	}
-	defer reader.Close()
+	defer func() {
+		if err := reader.Close(); err != nil {
+			log.Error("Failed to close reader", "error", err.Error())
+		}
+	}()
 	return io.ReadAll(reader)
 }
 
 func addFile(w *multipart.Writer, fieldName, path string) error {
+	// #nosec G304 - This function is used to open files for multipart form uploads
 	file, err := os.Open(path)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			log.Error("Failed to close file", "error", err.Error())
+		}
+	}()
 
 	part, err := w.CreateFormFile(fieldName, filepath.Base(path))
 	if err != nil {

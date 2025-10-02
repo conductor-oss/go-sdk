@@ -11,6 +11,7 @@ package model
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"sync"
 
@@ -80,7 +81,9 @@ func ConvertToMap(input interface{}) (map[string]interface{}, error) {
 		return nil, err
 	}
 	var parsedInput map[string]interface{}
-	json.Unmarshal(data, &parsedInput)
+	if err := json.Unmarshal(data, &parsedInput); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal task input: %w", err)
+	}
 	return parsedInput, nil
 }
 
@@ -90,5 +93,9 @@ func getHostname() string {
 }
 
 func updateHostname() {
-	hostname, _ = os.Hostname()
+	var err error
+	hostname, err = os.Hostname()
+	if err != nil {
+		log.Warn("Failed to get hostname", "error", err)
+	}
 }

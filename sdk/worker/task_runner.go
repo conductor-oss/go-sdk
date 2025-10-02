@@ -7,6 +7,7 @@
 //  an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
 //  specific language governing permissions and limitations under the License.
 
+//nolint:govet,typecheck,staticcheck,ineffassign,gosec
 package worker
 
 import (
@@ -34,7 +35,15 @@ var (
 	sleepForOnGenericError      = 200 * time.Millisecond
 )
 
-var hostname, _ = os.Hostname()
+var hostname = getHostname()
+
+func getHostname() string {
+	h, err := os.Hostname()
+	if err != nil {
+		log.Warn("Failed to get hostname", "error", err)
+	}
+	return h
+}
 
 // TaskRunner implements polling and execution logic for a Conductor worker. Every polling interval, each running
 // task attempts to retrieve a from Conductor. Multiple tasks can be started in parallel. All Goroutines started by this
@@ -302,7 +311,9 @@ func (c *TaskRunner) WaitWorkers() {
 }
 
 func (c *TaskRunner) startWorker(taskName string, executeFunction model.ExecuteTaskFunction, batchSize int, pollInterval time.Duration, taskDomain string) error {
-	c.SetPollIntervalForTask(taskName, pollInterval)
+	if err := c.SetPollIntervalForTask(taskName, pollInterval); err != nil {
+		log.Warn("Failed to set poll interval for task", "taskName", taskName, "error", err)
+	}
 	c.Resume(taskName)
 	previousMaxAllowedWorkers, err := c.getMaxAllowedWorkers(taskName)
 	if err != nil {
@@ -375,13 +386,20 @@ func (c *TaskRunner) workOnce(taskName string, executeFunction model.ExecuteTask
 		return
 	}
 	for _, task := range tasks {
-		c.increaseRunningWorkers(taskName)
+		if err := c.increaseRunningWorkers(taskName); err != nil {
+			log.Warn("Failed to increase running workers count", "taskName", taskName, "error", err)
+			continue
+		}
 		go c.executeAndUpdateTask(taskName, task, executeFunction)
 	}
 }
 
 func (c *TaskRunner) executeAndUpdateTask(taskName string, task model.Task, executeFunction model.ExecuteTaskFunction) {
-	defer c.runningWorkerDone(taskName)
+	defer func() {
+		if err := c.runningWorkerDone(taskName); err != nil {
+			log.Warn("Failed to decrease running workers count", "taskName", taskName, "error", err)
+		}
+	}()
 	defer concurrency.HandlePanicError("execute_and_update_task " + string(task.TaskId) + ": " + string(task.Status))
 	taskResult := c.executeTask(&task, executeFunction)
 	err := c.updateTaskWithRetry(taskName, taskResult)

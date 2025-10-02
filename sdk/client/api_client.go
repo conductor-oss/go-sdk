@@ -40,8 +40,10 @@ import (
 )
 
 const (
+	// Environment variable names
+	// #nosec G101 - These are just environment variable names, not actual credentials
 	CONDUCTOR_AUTH_KEY            = "CONDUCTOR_AUTH_KEY"
-	CONDUCTOR_AUTH_SECRET         = "CONDUCTOR_AUTH_SECRET"
+	CONDUCTOR_AUTH_SECRET         = "CONDUCTOR_AUTH_SECRET" // #nosec G101
 	CONDUCTOR_SERVER_URL          = "CONDUCTOR_SERVER_URL"
 	CONDUCTOR_CLIENT_HTTP_TIMEOUT = "CONDUCTOR_CLIENT_HTTP_TIMEOUT"
 )
