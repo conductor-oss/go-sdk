@@ -31,15 +31,15 @@ func TestEventHandlerCreate(t *testing.T) {
 		Tags: []model.Tag{
 			{
 				Key:   "TestTag",
-				Type:  "TestType",
+				Type_: "TestType",
 				Value: "TestValue",
 			},
 		},
 	}
-	_, err := testdata.EventHandlerClient.AddEventHandler(ctx, initEventHandler)
+	_, err := testdata.EventClient.AddEventHandler(ctx, initEventHandler)
 	require.NoError(t, err)
 
-	events, _, err := testdata.EventHandlerClient.GetEventHandlersForEvent(ctx, eventName, &client.EventResourceApiGetEventHandlersForEventOpts{
+	events, _, err := testdata.EventClient.GetEventHandlersForEvent(ctx, eventName, &client.EventResourceApiGetEventHandlersForEventOpts{
 		ActiveOnly: optional.NewBool(false),
 	})
 	require.NoError(t, err)
@@ -60,11 +60,11 @@ func TestEventHandlerCreate(t *testing.T) {
 	require.Equal(t, len(receivedEventHandler.Tags), len(initEventHandler.Tags))
 	receivedTag := receivedEventHandler.Tags[0]
 	require.Equal(t, receivedTag.Key, initEventHandler.Tags[0].Key)
-	require.Equal(t, receivedTag.Type, initEventHandler.Tags[0].Type)
+	require.Equal(t, receivedTag.Type_, initEventHandler.Tags[0].Type_)
 	require.Equal(t, receivedTag.Value, initEventHandler.Tags[0].Value)
 
 	t.Cleanup(func() {
-		_, err := testdata.EventHandlerClient.RemoveEventHandler(ctx, eventHandlerName)
+		_, err := testdata.EventClient.RemoveEventHandler(ctx, eventHandlerName)
 		require.NoError(t, err)
 	})
 }
