@@ -86,6 +86,8 @@ func (task *Task) toWorkflowTask() []model.WorkflowTask {
 			InputParameters:   inputParams,
 			Optional:          task.optional,
 			Type_:             string(task.taskType),
+			DecisionCases:     map[string][]model.WorkflowTask{},
+			DefaultCase:       []model.WorkflowTask{},
 		},
 	}
 }
