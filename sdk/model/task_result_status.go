@@ -18,3 +18,7 @@ const (
 	CompletedTask               TaskResultStatus = "COMPLETED"
 	ScheduledTask               TaskResultStatus = "SCHEDULED"
 )
+
+func (t TaskResultStatus) String() string {
+	return string(t)
+}

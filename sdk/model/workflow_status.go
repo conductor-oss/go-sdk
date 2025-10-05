@@ -20,6 +20,10 @@ const (
 	PausedWorkflow     WorkflowStatus = "PAUSED"
 )
 
+func (w WorkflowStatus) String() string {
+	return string(w)
+}
+
 var (
 	WorkflowTerminalStates = []WorkflowStatus{
 		CompletedWorkflow,
