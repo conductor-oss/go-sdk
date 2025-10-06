@@ -12,6 +12,7 @@ package integration_tests
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/sdk/workflow"
@@ -324,6 +325,26 @@ func TestComplexSwitchWorkflow(t *testing.T) {
 			"Failed to delete workflow. Reason: ", err.Error(),
 		)
 	}
+}
+
+func TestRegisterWorkflow_SwitchEmptyDefaultCase(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
+	wf := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).
+		Name("TEST_GO_SWITCH_EMPTY_DEFAULT_" + time.Now().Format("150405")).
+		Version(1).
+		Description("A test workflow").OwnerEmail("owner@example.com")
+
+	switchTest := workflow.NewSwitchTask("test_switch", "function() { return 'true'; }").
+		UseJavascript(true).
+		Input("myInput", "foo").
+		DefaultCase().
+		SwitchCase("true", workflow.NewJQTask("jq_true", ".").Optional(true))
+
+	wf.Add(switchTest)
+
+	err := wf.Register(true)
+	assert.NoError(t, err)
 }
 
 func countMultipleSwitchInnerTasks(tasks ...model.WorkflowTask) int {

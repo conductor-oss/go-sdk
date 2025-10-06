@@ -19,11 +19,11 @@ type WorkflowTask struct {
 	CaseValueParam                 string                    `json:"caseValueParam,omitempty"`
 	CaseExpression                 string                    `json:"caseExpression,omitempty"`
 	ScriptExpression               string                    `json:"scriptExpression,omitempty"`
-	DecisionCases                  map[string][]WorkflowTask `json:"decisionCases,omitempty"`
+	DecisionCases                  map[string][]WorkflowTask `json:"decisionCases"`
 	DynamicForkJoinTasksParam      string                    `json:"dynamicForkJoinTasksParam,omitempty"`
 	DynamicForkTasksParam          string                    `json:"dynamicForkTasksParam,omitempty"`
 	DynamicForkTasksInputParamName string                    `json:"dynamicForkTasksInputParamName,omitempty"`
-	DefaultCase                    []WorkflowTask            `json:"defaultCase,omitempty"`
+	DefaultCase                    []WorkflowTask            `json:"defaultCase"`
 	ForkTasks                      [][]WorkflowTask          `json:"forkTasks,omitempty"`
 	StartDelay                     int32                     `json:"startDelay,omitempty"`
 	SubWorkflowParam               *SubWorkflowParams        `json:"subWorkflowParam,omitempty"`

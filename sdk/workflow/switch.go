@@ -57,13 +57,23 @@ func (task *SwitchTask) DefaultCase(tasks ...TaskInterface) *SwitchTask {
 func (task *SwitchTask) toWorkflowTask() []model.WorkflowTask {
 	var DecisionCases = map[string][]model.WorkflowTask{}
 	for caseValue, tasks := range task.DecisionCases {
+		// Ensure empty cases serialize as [] rather than null
+		if len(tasks) == 0 {
+			DecisionCases[caseValue] = []model.WorkflowTask{}
+			continue
+		}
 		for _, task := range tasks {
 			DecisionCases[caseValue] = append(DecisionCases[caseValue], task.toWorkflowTask()...)
 		}
 	}
 	var defaultCase []model.WorkflowTask
-	for _, task := range task.defaultCase {
-		defaultCase = append(defaultCase, task.toWorkflowTask()...)
+	if len(task.defaultCase) == 0 {
+		// Ensure we serialize as [] and not null when no default tasks are provided
+		defaultCase = []model.WorkflowTask{}
+	} else {
+		for _, task := range task.defaultCase {
+			defaultCase = append(defaultCase, task.toWorkflowTask()...)
+		}
 	}
 	workflowTasks := task.Task.toWorkflowTask()
 	workflowTasks[0].DecisionCases = DecisionCases
