@@ -188,6 +188,7 @@ func TestPerCustomerRateLimit(t *testing.T) {
 	for _, cw := range allWorkflows {
 		stats := customerStats[cw.CustomerID]
 
+		// Check if workflow complete
 		execution, err := testWorkflowExecutor.GetWorkflow(cw.WorkflowID, true)
 		require.NoError(t, err)
 		require.NotNil(t, execution)
