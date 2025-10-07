@@ -53,6 +53,7 @@ const (
 	KAFKA_PUBLISH     TaskType = "KAFKA_PUBLISH"
 	JSON_JQ_TRANSFORM TaskType = "JSON_JQ_TRANSFORM"
 	SET_VARIABLE      TaskType = "SET_VARIABLE"
+	GET_WORKFLOW      TaskType = "GET_WORKFLOW"
 )
 
 type TaskInterface interface {
