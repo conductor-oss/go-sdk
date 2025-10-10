@@ -473,7 +473,7 @@ func TestGetWorkflowTaskWithDynamicInput(t *testing.T) {
 	// The workflowId will be passed as input to the workflow
 	getWorkflowTask := workflow.NewGetWorkflowTask("get_workflow_ref", "${workflow.input.targetWorkflowId}", true)
 	getWorkflowWF := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).
-		Name("TEST_GO_WORKFLOW_GET_WORKFLOW_DYNAMIC").
+		Name("TEST_GO_WORKFLOW_GET_WORKFLOW_DYNAMIC_" + uuid).
 		Version(1).
 		Add(getWorkflowTask)
 
