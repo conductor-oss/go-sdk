@@ -132,6 +132,35 @@ bulkResp, resp, err := bulkClient.Retry1(ctx, workflowIds)
 bulkResp, resp, err := bulkClient.Retry(ctx, workflowIds)
 ```
 
+### 4. WorkflowBulkResourceApiRestart1Opts → WorkflowBulkResourceApiRestartOpts
+
+**Deprecated Type:**
+```go
+type WorkflowBulkResourceApiRestart1Opts struct {
+    UseLatestDefinitions optional.Bool
+}
+```
+
+**Replacement:**
+```go
+type WorkflowBulkResourceApiRestartOpts struct {
+    UseLatestDefinitions optional.Bool
+}
+```
+
+**Migration:**
+```go
+// Before
+opts := &client.WorkflowBulkResourceApiRestart1Opts{
+    UseLatestDefinitions: optional.NewBool(true),
+}
+
+// After
+opts := &client.WorkflowBulkResourceApiRestartOpts{
+    UseLatestDefinitions: optional.NewBool(true),
+}
+```
+
 ## Additional Notes
 
 ### ArchiveWorkflow Parameter (Deprecated)

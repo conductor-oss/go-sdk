@@ -100,7 +100,7 @@ type WorkflowClient interface {
 	TestWorkflow(ctx context.Context, body model.WorkflowTestRequest) (model.Workflow, *http.Response, error)
 	// GetExecutionStatusTaskList gets the workflow tasks by workflow id.
 	GetExecutionStatusTaskList(ctx context.Context, workflowID string, opts *WorkflowResourceAPIGetExecutionStatusTaskListOpts) (model.TaskListSearchResultSummary, *http.Response, error)
-	// UpdateWorkflowStateUpdates updates workflow variables for a running workflow.
+	// UpdateWorkflowState updates workflow variables for a running workflow.
 	//
 	// This method is similar to the Set Variable task, except the variables can be updated anytime in real time.
 	UpdateWorkflowState(ctx context.Context, body map[string]interface{}, workflowID string) (model.Workflow, *http.Response, error)

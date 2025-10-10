@@ -51,6 +51,9 @@ type WorkflowBulkResourceApiRestartOpts struct {
 	UseLatestDefinitions optional.Bool
 }
 
+// Deprecated: Use WorkflowBulkResourceApiRestartOpts instead.
+type WorkflowBulkResourceApiRestart1Opts = WorkflowBulkResourceApiRestartOpts
+
 // Restart restarts the list of workflows.
 func (a *WorkflowBulkResourceApiService) Restart(ctx context.Context, body []string, localVarOptionals *WorkflowBulkResourceApiRestartOpts) (model.BulkResponse, *http.Response, error) {
 	var result model.BulkResponse

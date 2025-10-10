@@ -72,9 +72,9 @@ func TestWorkflowBulkDelete(t *testing.T) {
 	require.NoError(t, err, "Failed to delete workflows in bulk")
 
 	// Verify bulk response
-	assert.NotNil(t, response, "Bulk response should not be nil")
-	assert.True(t, len(response.BulkErrorResults) == 0 || len(response.BulkErrorResults) <= len(workflowIds),
-		"Bulk error results should not exceed workflow count")
+	assert.Equal(t, len(response.BulkErrorResults), 0, "Bulk error results should be empty")
+	assert.Equal(t, len(response.BulkSuccessfulResults), len(workflowIds),
+		"Bulk successful results should be equal to workflow count")
 
 	// Verify workflows are deleted
 	for _, id := range workflowIds {
@@ -140,9 +140,9 @@ func TestWorkflowBulkPause(t *testing.T) {
 	require.NoError(t, err, "Failed to pause workflows in bulk")
 
 	// Verify bulk response
-	assert.NotNil(t, response, "Bulk response should not be nil")
-	assert.True(t, len(response.BulkErrorResults) == 0 || len(response.BulkErrorResults) <= len(workflowIds),
-		"Bulk error results should not exceed workflow count")
+	assert.Equal(t, len(response.BulkErrorResults), 0, "Bulk error results should be empty")
+	assert.Equal(t, len(response.BulkSuccessfulResults), len(workflowIds),
+		"Bulk successful results should be equal to workflow count")
 
 	// Verify workflows are paused
 	for _, id := range workflowIds {
@@ -219,9 +219,9 @@ func TestWorkflowBulkResume(t *testing.T) {
 	require.NoError(t, err, "Failed to resume workflows in bulk")
 
 	// Verify bulk response
-	assert.NotNil(t, response, "Bulk response should not be nil")
-	assert.True(t, len(response.BulkErrorResults) == 0 || len(response.BulkErrorResults) <= len(workflowIds),
-		"Bulk error results should not exceed workflow count")
+	assert.Equal(t, len(response.BulkErrorResults), 0, "Bulk error results should be empty")
+	assert.Equal(t, len(response.BulkSuccessfulResults), len(workflowIds),
+		"Bulk successful results should be equal to workflow count")
 
 	// Verify workflows are running again
 	for _, id := range workflowIds {
@@ -297,7 +297,9 @@ func TestWorkflowBulkRestart(t *testing.T) {
 
 	responseV1, _, err := testdata.WorkflowBulkClient.Restart(ctx, workflowIds, optsV1)
 	require.NoError(t, err, "Failed to restart workflows in bulk with v1")
-	assert.NotNil(t, responseV1, "Bulk response should not be nil")
+	assert.Equal(t, len(responseV1.BulkErrorResults), 0, "Bulk error results should be empty")
+	assert.Equal(t, len(responseV1.BulkSuccessfulResults), len(workflowIds),
+		"Bulk successful results should be equal to workflow count")
 
 	// Wait for restarted workflows to complete with v1
 	for _, id := range workflowIds {
@@ -323,7 +325,9 @@ func TestWorkflowBulkRestart(t *testing.T) {
 
 	responseV2, _, err := testdata.WorkflowBulkClient.Restart(ctx, workflowIds, optsV2)
 	require.NoError(t, err, "Failed to restart workflows in bulk with v2")
-	assert.NotNil(t, responseV2, "Bulk response should not be nil")
+	assert.Equal(t, len(responseV2.BulkErrorResults), 0, "Bulk error results should be empty")
+	assert.Equal(t, len(responseV2.BulkSuccessfulResults), len(workflowIds),
+		"Bulk successful results should be equal to workflow count")
 
 	// Wait for restarted workflows to complete with v2
 	for _, id := range workflowIds {
@@ -389,7 +393,7 @@ func TestWorkflowBulkRetry(t *testing.T) {
 		assert.NoError(t, err, "Failed to remove workflow definition")
 	}()
 
-	// Wait for workflows to fail
+	// Wait for workflows to be running
 	for _, id := range workflowIds {
 		runningWorkflow, err := testdata.WaitForWorkflowRunning(id, testdata.WorkflowValidationTimeout)
 		assert.NoError(t, err, "Failed to wait for workflow to be running")
@@ -413,13 +417,13 @@ func TestWorkflowBulkRetry(t *testing.T) {
 	require.NoError(t, err, "Failed to retry workflows in bulk")
 
 	// Verify bulk response
-	assert.NotNil(t, response, "Bulk response should not be nil")
-	assert.True(t, len(response.BulkErrorResults) == 0 || len(response.BulkErrorResults) <= len(workflowIds),
-		"Bulk error results should not exceed workflow count")
+	assert.Equal(t, len(response.BulkErrorResults), 0, "Bulk error results should be empty")
+	assert.Equal(t, len(response.BulkSuccessfulResults), len(workflowIds),
+		"Bulk successful results should be equal to workflow count")
 
 	// Wait for retried workflows to be running or completed
 	for _, id := range workflowIds {
-		workflow, err := testdata.WaitForWorkflowStatus(id, []model.WorkflowStatus{model.RunningWorkflow, model.CompletedWorkflow, model.FailedWorkflow}, testdata.WorkflowValidationTimeout)
+		workflow, err := testdata.WaitForWorkflowStatus(id, []model.WorkflowStatus{model.RunningWorkflow, model.CompletedWorkflow}, testdata.WorkflowValidationTimeout)
 		require.NoError(t, err, "Failed to get workflow %s", id)
 		assert.Contains(t, []model.WorkflowStatus{model.RunningWorkflow, model.CompletedWorkflow},
 			workflow.Status, "Workflow %s should be running, completed, or failed after retry", id)
@@ -486,9 +490,9 @@ func TestWorkflowBulkTerminate(t *testing.T) {
 	require.NoError(t, err, "Failed to terminate workflows in bulk")
 
 	// Verify bulk response
-	assert.NotNil(t, response, "Bulk response should not be nil")
-	assert.True(t, len(response.BulkErrorResults) == 0 || len(response.BulkErrorResults) <= len(workflowIds),
-		"Bulk error results should not exceed workflow count")
+	assert.Equal(t, len(response.BulkErrorResults), 0, "Bulk error results should be empty")
+	assert.Equal(t, len(response.BulkSuccessfulResults), len(workflowIds),
+		"Bulk successful results should be equal to workflow count")
 
 	// Verify workflows are terminated
 	for _, id := range workflowIds {

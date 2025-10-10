@@ -1076,7 +1076,7 @@ func (a *WorkflowResourceApiService) GetExecutionStatusTaskList(ctx context.Cont
 	return result, resp, nil
 }
 
-// UpdateWorkflowStateUpdates updates workflow variables for a running workflow.
+// UpdateWorkflowState updates workflow variables for a running workflow.
 //
 // This method is similar to the Set Variable task, except the variables can be updated anytime in real time.
 func (a *WorkflowResourceApiService) UpdateWorkflowState(ctx context.Context, body map[string]interface{}, workflowID string) (model.Workflow, *http.Response, error) {

@@ -162,20 +162,23 @@ func runLifecycleDemo() error {
 		if task.TaskType == "WAIT" && task.Status == model.InProgressTask {
 			logger.Info("Found WAIT task to complete", zap.String("task_id", task.TaskId))
 
-			taskResult := &model.TaskResult{
-				WorkflowInstanceId: workflowId,
-				TaskId:             task.TaskId,
-				Status:             model.CompletedTask,
-				OutputData: map[string]interface{}{
-					"completed_by":    "lifecycle_demo",
-					"completion_time": time.Now().Unix(),
-				},
+			outputData := map[string]interface{}{
+				"completed_by":    "lifecycle_demo",
+				"completion_time": time.Now().Unix(),
 			}
 
-			if err = workflowExecutor.UpdateTaskWithContext(ctx, task.TaskId, task.WorkflowInstanceId, task.Status, taskResult.OutputData); err != nil {
+			if err = workflowExecutor.UpdateTaskWithContext(ctx, task.TaskId, task.WorkflowInstanceId, model.CompletedTask, outputData); err != nil {
 				logger.Error("Failed to complete wait task", zap.Error(err))
 				return err
 			}
+
+			updatedTask, err := workflowExecutor.GetTaskWithContext(ctx, task.TaskId)
+			if err != nil {
+				logger.Error("Failed to get task", zap.Error(err))
+				return err
+			}
+
+			logger.Info("Task status after completion", zap.String("status", string(updatedTask.Status)))
 
 			logger.Info("Completed wait task manually")
 			break
@@ -266,7 +269,6 @@ func runLifecycleDemo() error {
 		} else {
 			logger.Info("Rerun initiated from task", zap.String("id", id))
 		}
-		logger.Info("Rerun initiated from task")
 	} else {
 		logger.Warn("No tasks found in workflow", zap.String("workflow_id", workflowId))
 	}
@@ -314,6 +316,15 @@ func runLifecycleDemo() error {
 
 	logger.Info("Workflow is in terminal state and ready for removal")
 
+	// Wait for real-time monitoring to complete
+	logger.Info("=== 14. Waiting for real-time monitoring to complete ===")
+	select {
+	case <-monitoringComplete:
+		logger.Info("Real-time monitoring completed successfully")
+	case <-time.After(5 * time.Second):
+		logger.Warn("Real-time monitoring timed out (workflow may have completed before final operations)")
+	}
+
 	logger.Info("Removing existing workflow from execution history")
 	err = workflowExecutor.RemoveWorkflowWithContext(ctx, workflowId)
 	if err != nil {
@@ -330,15 +341,6 @@ func runLifecycleDemo() error {
 			zap.String("error", err.Error()))
 	} else {
 		logger.Warn("Unexpected: workflow still exists after removal")
-	}
-
-	// Wait for real-time monitoring to complete
-	logger.Info("=== 14. Waiting for real-time monitoring to complete ===")
-	select {
-	case <-monitoringComplete:
-		logger.Info("Real-time monitoring completed successfully")
-	case <-time.After(5 * time.Second):
-		logger.Warn("Real-time monitoring timed out (workflow may have completed before final operations)")
 	}
 
 	logger.Info("=== Lifecycle demo completed successfully ===")

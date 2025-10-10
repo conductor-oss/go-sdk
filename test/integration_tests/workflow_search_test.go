@@ -22,6 +22,7 @@ import (
 	"github.com/conductor-sdk/conductor-go/test/testdata"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestWorkflowSearch tests the basic Search API endpoint (/api/workflow/search)
@@ -56,9 +57,9 @@ func TestWorkflowSearch(t *testing.T) {
 			name: "BasicSearch",
 			searchOpts: &client.WorkflowResourceApiSearchOpts{
 				Start: optional.NewInt32(0),
-				Size:  optional.NewInt32(100),
+				Size:  optional.NewInt32(10),
 			},
-			expectMinResults: 0,
+			expectMinResults: 2,
 			validateResults: func(t *testing.T, results []model.WorkflowSummary, workflowId1, workflowId2, wf1Name string) {
 				// Basic search should return some results (no specific validation needed)
 			},
@@ -191,58 +192,107 @@ func TestWorkflowSearch(t *testing.T) {
 			},
 			expectMinResults: 1,
 			validateResults: func(t *testing.T, results []model.WorkflowSummary, workflowId1, workflowId2, wf1Name string) {
-				// Note: Since StartTime is a string, we'll just verify the search executes successfully
-				// Time range validation is complex with string timestamps
+				// Define the time range used in the search query
+				startTimeRange := time.Now().Add(-1 * time.Hour)
+				endTimeRange := time.Now()
+
+				t.Logf("Search time range (local): %s to %s", startTimeRange.Format(time.RFC3339), endTimeRange.Format(time.RFC3339))
+				t.Logf("Search time range (UTC):   %s to %s", startTimeRange.UTC().Format(time.RFC3339), endTimeRange.UTC().Format(time.RFC3339))
+				t.Logf("Search time range (ms):    %d to %d", startTimeRange.Unix()*1000, endTimeRange.Unix()*1000)
+				t.Logf("Found %d results:\n", len(results))
+
+				for _, result := range results {
+					// Every result should have a StartTime
+					require.NotEmpty(t, result.StartTime, "Result should have a StartTime")
+
+					// Parse the ISO timestamp and validate it's within range
+					parsedTime, err := time.Parse(time.RFC3339, result.StartTime)
+					require.NoError(t, err, "Failed to parse StartTime '%s'", result.StartTime)
+
+					t.Logf("Result StartTime (raw):   %s", result.StartTime)
+					t.Logf("Result StartTime (UTC):   %s", parsedTime.UTC().Format(time.RFC3339))
+					t.Logf("Result StartTime (ms):    %d", parsedTime.Unix()*1000)
+
+					// Validate the timestamp is within the search range
+					require.False(t, parsedTime.Before(startTimeRange),
+						"StartTime %s (UTC) should not be before search range start %s (UTC)",
+						parsedTime.UTC().Format(time.RFC3339), startTimeRange.UTC().Format(time.RFC3339))
+					require.False(t, parsedTime.After(endTimeRange),
+						"StartTime %s (UTC) should not be after search range end %s (UTC)",
+						parsedTime.UTC().Format(time.RFC3339), endTimeRange.UTC().Format(time.RFC3339))
+
+					t.Logf("✓ StartTime is within range")
+				}
 			},
 		},
 		{
-			name: "SearchWithFreeText",
+			name: "SearchWithFreeText_NoExactMatch",
 			searchOpts: &client.WorkflowResourceApiSearchOpts{
 				FreeText: optional.NewString("TEST_GO_WORKFLOW_SEARCH"),
 				Start:    optional.NewInt32(0),
 				Size:     optional.NewInt32(10),
 			},
-			expectMinResults: 0, // Free text search might not return results
+			expectMinResults: 0,
 			validateResults: func(t *testing.T, results []model.WorkflowSummary, workflowId1, workflowId2, wf1Name string) {
-				t.Logf("Free text search found %d results", len(results))
+				//Free text search only searches for exact matches.
 			},
 		},
 		{
-			name: "SearchWithSkipCache",
+			name: "SearchWithFreeText_WorkflowInputValues",
 			searchOpts: &client.WorkflowResourceApiSearchOpts{
-				Query: optional.NewString(fmt.Sprintf("workflowId = %s", workflowId1)),
-				Start: optional.NewInt32(0),
-				Size:  optional.NewInt32(10),
+				FreeText: optional.NewString("search_value_1" + uniqueSuffix), // Search in workflow input values
+				Start:    optional.NewInt32(0),
+				Size:     optional.NewInt32(10),
 			},
-			expectExactResults: 1,
+			expectMinResults: 1, // Should find at least one workflow with this input value
 			validateResults: func(t *testing.T, results []model.WorkflowSummary, workflowId1, workflowId2, wf1Name string) {
-				assert.Equal(t, workflowId1, results[0].WorkflowId, "Should find the correct workflow")
+				// Verify we found the correct workflow
+				found := false
+				for _, result := range results {
+					if result.WorkflowId == workflowId1 {
+						found = true
+						break
+					}
+				}
+				assert.True(t, found, "Should find workflow by FreeText search in workflow input values")
 			},
 		},
 		{
 			name: "SearchWithPagination",
 			searchOpts: &client.WorkflowResourceApiSearchOpts{
-				Query: optional.NewString("status = COMPLETED"),
+				Query: optional.NewString(fmt.Sprintf("status = COMPLETED AND workflowType IN (%s, %s)", wf1Name, wf2Name)),
 				Start: optional.NewInt32(0),
-				Size:  optional.NewInt32(5),
+				Size:  optional.NewInt32(1),
 			},
-			expectMinResults: 0,
+			expectMinResults: 1,
 			validateResults: func(t *testing.T, results []model.WorkflowSummary, workflowId1, workflowId2, wf1Name string) {
-				// Test pagination by making a second request
+				// Test pagination with page size 1 - first page should have one result
+				assert.Len(t, results, 1, "First page should have exactly 1 result")
+
+				// Verify the first page contains one of our test workflows
+				firstPageWorkflowId := results[0].WorkflowId
+				assert.True(t, firstPageWorkflowId == workflowId1 || firstPageWorkflowId == workflowId2,
+					"First page should contain one of our test workflows")
+
+				// Test second page with size 1
 				opts2 := &client.WorkflowResourceApiSearchOpts{
-					Query: optional.NewString("status = COMPLETED"),
-					Start: optional.NewInt32(5),
-					Size:  optional.NewInt32(5),
+					Query: optional.NewString(fmt.Sprintf("status = COMPLETED AND workflowType IN (%s, %s)", wf1Name, wf2Name)),
+					Start: optional.NewInt32(1),
+					Size:  optional.NewInt32(1),
 				}
 
 				searchResult2, _, err := testdata.WorkflowClient.Search(context.Background(), opts2)
 				assert.NoError(t, err, "Failed to search second page")
+				assert.Len(t, searchResult2.Results, 1, "Second page should have exactly 1 result")
 
-				// Verify pagination works (different results)
-				if len(results) > 0 && len(searchResult2.Results) > 0 {
-					assert.NotEqual(t, results[0].WorkflowId, searchResult2.Results[0].WorkflowId,
-						"Different pages should return different results")
-				}
+				// Verify the second page contains the other test workflow
+				secondPageWorkflowId := searchResult2.Results[0].WorkflowId
+				assert.True(t, secondPageWorkflowId == workflowId1 || secondPageWorkflowId == workflowId2,
+					"Second page should contain one of our test workflows")
+
+				// Verify different workflows on different pages
+				assert.NotEqual(t, firstPageWorkflowId, secondPageWorkflowId,
+					"First and second pages should contain different workflows")
 			},
 		},
 		{
@@ -265,11 +315,7 @@ func TestWorkflowSearch(t *testing.T) {
 			searchResult, _, err := testdata.WorkflowClient.Search(context.Background(), tt.searchOpts)
 
 			if tt.expectError {
-				if err != nil {
-					assert.Error(t, err, "Search should return error")
-				} else {
-					assert.Fail(t, "Search should return error but got nil")
-				}
+				assert.Error(t, err, "Search should return error for invalid query")
 				return
 			}
 
@@ -313,7 +359,7 @@ func setupTestWorkflows(t *testing.T, uniqueSuffix, correlationId string) (workf
 		Name:    wf1.GetName(),
 		Version: 1,
 		Input: map[string]interface{}{
-			"search_key": "search_value_1",
+			"search_key": "search_value_1" + uniqueSuffix,
 			"category":   "test_search",
 		},
 	}

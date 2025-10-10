@@ -38,7 +38,7 @@ func runDynamicWorkflowDemo(logger *zap.Logger) error {
 
 	// Scenario 1: Simple workflow
 	logger.Info("=== Scenario 1: Simple workflow ===")
-	simpleWf := workflow.CreateEmptyDynamicWorkflow(conductorService.WorkflowExecutor)
+	simpleWf := workflow.CreateEmptyDynamicWorkflow(conductorService.WorkflowExecutor, "simple_dynamic_workflow")
 
 	simpleWf.OwnerEmail("owner@example.com")
 
@@ -63,7 +63,7 @@ func runDynamicWorkflowDemo(logger *zap.Logger) error {
 
 	// Scenario 2: Complex workflow with HTTP task
 	logger.Info("=== Scenario 2: Complex with HTTP task ===")
-	complexWf := workflow.CreateEmptyDynamicWorkflow(conductorService.WorkflowExecutor)
+	complexWf := workflow.CreateEmptyDynamicWorkflow(conductorService.WorkflowExecutor, "complex_dynamic_workflow")
 
 	complexWf.OwnerEmail("owner@example.com")
 
@@ -97,7 +97,7 @@ func runDynamicWorkflowDemo(logger *zap.Logger) error {
 
 	// Scenario 3: Conditional task addition based on runtime decision
 	logger.Info("=== Scenario 3: Conditional task addition ===")
-	conditionalWf := workflow.CreateEmptyDynamicWorkflow(conductorService.WorkflowExecutor)
+	conditionalWf := workflow.CreateEmptyDynamicWorkflow(conductorService.WorkflowExecutor, "conditional_dynamic_workflow")
 
 	conditionalWf.OwnerEmail("owner@example.com")
 
@@ -162,7 +162,7 @@ func executeWorkflow(conductorService *service.ConductorService, wf *sdkworkflow
 
 	// Execute the workflow
 	workflowId, err := conductorService.WorkflowExecutor.StartWorkflow(&model.StartWorkflowRequest{
-		Name:    workflow.DynamicWorkflowName,
+		Name:    wf.GetName(),
 		Version: 1,
 		Input: map[string]interface{}{
 			"userid": userid,

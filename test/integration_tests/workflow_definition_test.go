@@ -1230,7 +1230,7 @@ func TestPauseResumeWorkflow(t *testing.T) {
 	assert.Equal(t, model.RunningWorkflow, runningWorkflow.Status, "Workflow should be running")
 
 	// Pause the workflow
-	_, err = testdata.WorkflowClient.PauseWorkflow(context.Background(), workflowId)
+	_, err = testdata.WorkflowClient.Pause(context.Background(), workflowId)
 	assert.NoError(t, err, "Failed to pause workflow")
 
 	// Verify workflow is paused
@@ -1314,7 +1314,7 @@ func TestResetWorkflowCallbackTime(t *testing.T) {
 		}
 	}
 	assert.NotNil(t, scheduledTask, "Should find the scheduled task")
-	assert.Equal(t, scheduledTask.CallbackAfterSeconds, int64(0), "Task should have non-zero CallbackAfterSeconds")
+	assert.Equal(t, int64(0), scheduledTask.CallbackAfterSeconds, "Task should have zero CallbackAfterSeconds")
 
 	// Manually update the task to IN_PROGRESS status with CallbackAfterSeconds = 45
 	taskResult := &model.TaskResult{
@@ -1347,11 +1347,11 @@ func TestResetWorkflowCallbackTime(t *testing.T) {
 	originalCallbackAfterSeconds := taskBeforeReset.CallbackAfterSeconds
 
 	// Verify we got non-zero CallbackAfterSeconds (should be 45)
-	assert.Equal(t, originalCallbackAfterSeconds, int64(45),
+	assert.Equal(t, int64(45), originalCallbackAfterSeconds,
 		"Task should have non-zero CallbackAfterSeconds after manual update, got: %d", originalCallbackAfterSeconds)
 
-	// Call ResetWorkflow - this should reset callback times for non-terminal tasks
-	_, err = testdata.WorkflowClient.ResetWorkflow(context.Background(), workflowId)
+	// Call Reset - this should reset callback times for non-terminal tasks
+	_, err = testdata.WorkflowClient.Reset(context.Background(), workflowId)
 	assert.NoError(t, err, "Failed to reset workflow")
 
 	// Get workflow after reset
