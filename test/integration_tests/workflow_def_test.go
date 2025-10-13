@@ -546,6 +546,71 @@ func TestGetWorkflowTaskWithDynamicInput(t *testing.T) {
 	})
 }
 
+func TestYieldTask(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
+
+	uid := uuid.New().String()
+	wf := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).
+		Name("TEST_GO_WORKFLOW_YIELD_" + uid).
+		OwnerEmail("owner@example.com").
+		Version(1).
+		Add(testdata.TestHttpTask).
+		Add(workflow.NewYieldTask("simple_ref_1" + uid))
+
+	// Register workflow
+	err := testdata.ValidateWorkflowRegistration(wf)
+	require.NoError(t, err)
+
+	// Start workflow
+	workflowId, err := wf.StartWorkflowWithInput(map[string]interface{}{"key": "value"})
+	require.NoError(t, err)
+
+	// Monitor execution
+	ch, err := testdata.WorkflowExecutor.MonitorExecution(workflowId)
+	require.NoError(t, err)
+
+	output := map[string]interface{}{
+		"taskOutPut": "Output passed using the API",
+	}
+	err = testdata.WorkflowExecutor.SignalWorkflowTaskAsync(workflowId, model.CompletedTask, output)
+	require.NoError(t, err)
+
+	// Wait for completion
+	_, err = executor.WaitForWorkflowCompletionUntilTimeout(ch, testdata.WorkflowValidationTimeout)
+	require.NoError(t, err)
+
+	wfAfter, wfErr := testdata.WorkflowExecutor.GetWorkflow(workflowId, true)
+	require.NoError(t, wfErr)
+	require.NotNil(t, wfAfter)
+
+	// Validate the YIELD task output was set via the signal
+	var yieldTask *model.Task
+	for i := range wfAfter.Tasks {
+		if wfAfter.Tasks[i].ReferenceTaskName == "simple_ref_1"+uid {
+			yieldTask = &wfAfter.Tasks[i]
+			break
+		}
+	}
+	require.NotNil(t, yieldTask, "expected to find YIELD task by reference name")
+	assert.Equal(t, "YIELD", yieldTask.TaskType)
+	assert.Equal(t, model.CompletedTask, yieldTask.Status)
+
+	var out string
+	if v, ok := yieldTask.OutputData["taskOutPut"].(string); ok {
+		out = v
+	}
+	assert.Equal(t, "Output passed using the API", out)
+
+	t.Cleanup(func() {
+		_ = testdata.WorkflowExecutor.RemoveWorkflow(workflowId)
+		_, _ = testdata.MetadataClient.UnregisterWorkflowDef(
+			context.Background(),
+			wf.GetName(),
+			wf.GetVersion(),
+		)
+	})
+}
+
 func countMultipleSwitchInnerTasks(tasks ...model.WorkflowTask) int {
 	counter := 0
 	for _, task := range tasks {
