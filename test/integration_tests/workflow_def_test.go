@@ -602,12 +602,14 @@ func TestYieldTask(t *testing.T) {
 	assert.Equal(t, "Output passed using the API", out)
 
 	t.Cleanup(func() {
-		_ = testdata.WorkflowExecutor.RemoveWorkflow(workflowId)
-		_, _ = testdata.MetadataClient.UnregisterWorkflowDef(
+		err = testdata.WorkflowExecutor.RemoveWorkflow(workflowId)
+		assert.NoError(t, err, "Failed to remove workflow")
+		_, err = testdata.MetadataClient.UnregisterWorkflowDef(
 			context.Background(),
 			wf.GetName(),
 			wf.GetVersion(),
 		)
+		assert.NoError(t, err, "Failed to remove workflow definition")
 	})
 }
 
