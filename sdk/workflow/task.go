@@ -118,12 +118,20 @@ func (task *Task) OutputRef(path string) string {
 
 // Input to the task.  See https://conductor.netflix.com/how-tos/Tasks/task-inputs.html for details
 func (task *Task) Input(key string, value interface{}) *Task {
+	if task.inputParameters == nil {
+		task.inputParameters = make(map[string]interface{})
+	}
+
 	task.inputParameters[key] = value
 	return task
 }
 
 // InputMap to the task.  See https://conductor.netflix.com/how-tos/Tasks/task-inputs.html for details
 func (task *Task) InputMap(inputMap map[string]interface{}) *Task {
+	if task.inputParameters == nil {
+		task.inputParameters = make(map[string]interface{})
+	}
+
 	for k, v := range inputMap {
 		task.inputParameters[k] = v
 	}

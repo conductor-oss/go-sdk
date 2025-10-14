@@ -25,7 +25,7 @@ This directory contains integration tests for the Conductor Workflow API endpoin
 | `POST` | `/api/workflow/{name}` | Start a new workflow | Multiple tests |
 | `POST` | `/api/workflow/execute/{name}/{version}` | Execute a workflow and wait for completion | `TestExecuteWorkflow`, `TestExecuteWorkflowSync` |
 | `POST` | `/api/workflow` | Start a workflow with a StartWorkflowRequest | Multiple tests `TestStartWorkflowWithRequest` |
-| `POST` | `/api/workflow/execute/{name}/{version}` | Execute workflow with specified return strategy | `TestSignal_AllStrategies_Comprehensive` |
+| `POST` | `/api/workflow/execute/{name}/{version}` | Execute workflow with specified return strategy | `TestExecuteWorkflowWithReturnStrategy` |
 | `POST` | `/api/workflow/{workflowId}/jump/{taskReferenceName}` | Jump workflow execution to a given task | `TestJumpToTask` |
 | `POST` | `/api/workflow/{workflowId}/state` | Update workflow variables, tasks and trigger evaluation | `TestUpdateWorkflowAndTaskState` |
 | `POST` | `/api/workflow/{workflowId}/upgrade` | Upgrade running workflow to newer version | `TestUpgradeRunningWorkflowToVersion` |

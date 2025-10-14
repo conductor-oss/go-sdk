@@ -1,6 +1,10 @@
 package model
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/conductor-sdk/conductor-go/sdk/log"
+)
 
 // SignalResponse represents a unified response from the signal API
 // It directly maps to the JSON response from the API
@@ -18,11 +22,11 @@ type SignalResponse struct {
 	RequestID            string                 `json:"requestId,omitempty"`
 
 	// Fields specific to TARGET_WORKFLOW & BLOCKING_WORKFLOW
-	Tasks      []Task         `json:"tasks,omitempty"`
-	CreatedBy  string         `json:"createdBy,omitempty"`
-	CreateTime int64          `json:"createTime,omitempty"`
-	Status     WorkflowStatus `json:"status,omitempty"`
-	UpdateTime int64          `json:"updateTime,omitempty"`
+	Tasks      []Task `json:"tasks,omitempty"`
+	CreatedBy  string `json:"createdBy,omitempty"`
+	CreateTime int64  `json:"createTime,omitempty"`
+	Status     string `json:"status,omitempty"`
+	UpdateTime int64  `json:"updateTime,omitempty"`
 
 	// Fields specific to BLOCKING_TASK & BLOCKING_TASK_INPUT
 	TaskType          string `json:"taskType,omitempty"`
@@ -55,10 +59,15 @@ func (r *SignalResponse) GetWorkflow() (*Workflow, error) {
 	if r.ResponseType != ReturnTargetWorkflow && r.ResponseType != ReturnBlockingWorkflow {
 		return nil, fmt.Errorf("response type %s does not contain workflow details", r.ResponseType)
 	}
+	workflowStatus, err := ParseWorkflowStatus(r.Status)
+	if err != nil {
+		log.Error("failed to parse workflow status", "error", err)
+		workflowStatus = WorkflowStatus(r.Status)
+	}
 
 	return &Workflow{
 		WorkflowId: r.WorkflowId,
-		Status:     r.Status,
+		Status:     workflowStatus,
 		Tasks:      r.Tasks,
 		CreatedBy:  r.CreatedBy,
 		CreateTime: r.CreateTime,
@@ -76,24 +85,9 @@ func (r *SignalResponse) GetBlockingTask() (*Task, error) {
 		return nil, fmt.Errorf("response type %s does not contain task details", r.ResponseType)
 	}
 
-	// Convert WorkflowStatus to TaskResultStatus if needed
-	// You'll need to map between the two enum types based on your TaskResultStatus definition
-	var taskStatus TaskResultStatus
-	switch r.Status {
-	case RunningWorkflow:
-		taskStatus = InProgressTask
-	case CompletedWorkflow:
-		taskStatus = CompletedTask
-	case FailedWorkflow:
-		taskStatus = FailedTask
-	case TimedOutWorkflow:
-		taskStatus = FailedTask
-	case TerminatedWorkflow:
-		taskStatus = FailedTask
-	case PausedWorkflow:
-		taskStatus = InProgressTask
-	default:
-		// Handle unmapped statuses or create a default mapping
+	taskStatus, err := ParseTaskResultStatus(r.Status)
+	if err != nil {
+		log.Error("failed to parse task result status", "error", err)
 		taskStatus = TaskResultStatus(r.Status)
 	}
 
@@ -122,27 +116,10 @@ func (r *SignalResponse) GetTaskInput() (map[string]interface{}, error) {
 
 // GetTaskRun extracts task run details from a SignalResponse
 func (r *SignalResponse) GetTaskRun() TaskRun {
-	// Convert WorkflowStatus to TaskResultStatus with comprehensive mapping
-	var taskStatus TaskResultStatus
-	switch r.Status {
-	case RunningWorkflow:
-		taskStatus = InProgressTask
-	case CompletedWorkflow:
-		taskStatus = CompletedTask
-	case FailedWorkflow:
-		taskStatus = FailedTask
-	case TimedOutWorkflow:
-		taskStatus = FailedTask
-	case TerminatedWorkflow:
-		taskStatus = FailedTask
-	case PausedWorkflow:
-		taskStatus = InProgressTask
-	default:
-		if string(r.Status) != "" {
-			taskStatus = TaskResultStatus(r.Status)
-		} else {
-			taskStatus = InProgressTask
-		}
+	taskStatus, err := ParseTaskResultStatus(r.Status)
+	if err != nil {
+		log.Error("failed to parse task result status", "error", err)
+		taskStatus = TaskResultStatus(r.Status)
 	}
 
 	// Comprehensive field-by-field mapping from SignalResponse to TaskRun
@@ -152,11 +129,13 @@ func (r *SignalResponse) GetTaskRun() TaskRun {
 		TaskType:          r.TaskType,
 		TaskDefName:       r.TaskDefName,
 		WorkflowType:      r.WorkflowType,
+		WorkflowId:        r.WorkflowId,
 		ReferenceTaskName: r.ReferenceTaskName,
 		RetryCount:        r.RetryCount,
 
 		// Status and execution fields
-		Status: taskStatus,
+		Status:               taskStatus,
+		TargetWorkflowStatus: r.TargetWorkflowStatus,
 
 		// Data fields
 		InputData:  r.Input,
@@ -174,11 +153,17 @@ func (r *SignalResponse) GetTaskRun() TaskRun {
 
 // GetWorkflowRun extracts workflow run details from a SignalResponse
 func (r *SignalResponse) GetWorkflowRun() WorkflowRun {
+	workflowStatus, err := ParseWorkflowStatus(r.Status)
+	if err != nil {
+		log.Error("failed to parse workflow status", "error", err)
+		workflowStatus = WorkflowStatus(r.Status)
+	}
+
 	return WorkflowRun{
 		WorkflowId:           r.WorkflowId,
 		CorrelationId:        r.CorrelationID,
 		Priority:             r.Priority,
-		Status:               r.Status,
+		Status:               workflowStatus,
 		Input:                r.Input,
 		Output:               r.Output,
 		Tasks:                r.Tasks,

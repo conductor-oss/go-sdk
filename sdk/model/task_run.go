@@ -13,6 +13,7 @@ type TaskRun struct {
 	TaskDefName           string                 `json:"taskDefName,omitempty"`
 	RetriedTaskId         string                 `json:"retriedTaskId,omitempty"`
 	WorkflowType          string                 `json:"workflowType,omitempty"`
+	WorkflowId            string                 `json:"workflowId,omitempty"`
 	ReasonForIncompletion string                 `json:"reasonForIncompletion,omitempty"`
 	Priority              int                    `json:"priority,omitempty"`
 	Variables             map[string]interface{} `json:"variables,omitempty"`
@@ -21,6 +22,7 @@ type TaskRun struct {
 	CreateTime            int64                  `json:"createTime,omitempty"`
 	UpdateTime            int64                  `json:"updateTime,omitempty"`
 	Status                TaskResultStatus       `json:"status,omitempty"`
+	TargetWorkflowStatus  WorkflowStatus         `json:"targetWorkflowStatus,omitempty"`
 	InputData             map[string]interface{} `json:"inputData,omitempty"`
 	OutputData            map[string]interface{} `json:"outputData,omitempty"`
 }

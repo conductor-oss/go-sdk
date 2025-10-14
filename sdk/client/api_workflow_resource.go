@@ -601,14 +601,14 @@ func (a *WorkflowResourceApiService) executeWorkflowImpl(
 	waitUntilTask []string,
 	waitForSeconds int,
 	consistency string,
-	returnStrategy string) (interface{}, *http.Response, error) {
+	returnStrategy string) (model.SignalResponse, *http.Response, error) {
 
 	var (
 		localVarHttpMethod  = strings.ToUpper("Post")
 		localVarPostBody    interface{}
 		localVarFileName    string
 		localVarFileBytes   []byte
-		localVarReturnValue interface{}
+		localVarReturnValue model.SignalResponse
 	)
 
 	path := fmt.Sprintf("/workflow/execute/%s/%d", name, version)
@@ -643,19 +643,19 @@ func (a *WorkflowResourceApiService) executeWorkflowImpl(
 	localVarPostBody = &body
 	r, err := a.prepareRequest(ctx, path, localVarHttpMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFileName, localVarFileBytes)
 	if err != nil {
-		return nil, nil, err
+		return model.SignalResponse{}, nil, err
 	}
 
 	localVarHttpResponse, err := a.callAPI(r)
 	if err != nil || localVarHttpResponse == nil {
-		return nil, localVarHttpResponse, err
+		return model.SignalResponse{}, localVarHttpResponse, err
 	}
 
 	localVarBody, err := getDecompressedBody(localVarHttpResponse)
 
 	localVarHttpResponse.Body.Close()
 	if err != nil {
-		return nil, localVarHttpResponse, err
+		return model.SignalResponse{}, localVarHttpResponse, err
 	}
 
 	if isSuccessfulStatus(localVarHttpResponse.StatusCode) {
@@ -665,7 +665,7 @@ func (a *WorkflowResourceApiService) executeWorkflowImpl(
 		localVarReturnValue = signalResponse
 	} else {
 		newErr := NewGenericSwaggerError(localVarBody, localVarHttpResponse.Status, nil, localVarHttpResponse.StatusCode)
-		return nil, localVarHttpResponse, newErr
+		return model.SignalResponse{}, localVarHttpResponse, newErr
 	}
 
 	return localVarReturnValue, localVarHttpResponse, err
@@ -748,12 +748,7 @@ func (a *WorkflowResourceApiService) ExecuteWorkflowWithReturnStrategy(ctx conte
 		return nil, err
 	}
 
-	signalResponse, ok := response.(model.SignalResponse)
-	if !ok {
-		return nil, fmt.Errorf("expected SignalResponse but got %T", response)
-	}
-
-	return &signalResponse, nil
+	return &response, nil
 }
 
 // ExecuteWorkflow execute workflow synchronously.
@@ -803,12 +798,8 @@ func (a *WorkflowResourceApiService) ExecuteAndGetBlockingTask(
 	if err != nil {
 		return model.TaskRun{}, httpResponse, err
 	}
-	signalResponse, ok := response.(model.SignalResponse)
-	if !ok {
-		return model.TaskRun{}, httpResponse, fmt.Errorf("expected SignalResponse but got %T", response)
-	}
 
-	return signalResponse.GetTaskRun(), httpResponse, nil
+	return response.GetTaskRun(), httpResponse, nil
 }
 
 // Enterprise: This feature requires Orkes Conductor Enterprise license, NOT AVAILABLE in OSS.
@@ -840,12 +831,7 @@ func (a *WorkflowResourceApiService) ExecuteAndGetBlockingTaskInput(
 		return model.TaskRun{}, httpResponse, err
 	}
 
-	signalResponse, ok := response.(model.SignalResponse)
-	if !ok {
-		return model.TaskRun{}, httpResponse, fmt.Errorf("expected SignalResponse but got %T", response)
-	}
-
-	return signalResponse.GetTaskRun(), httpResponse, nil
+	return response.GetTaskRun(), httpResponse, nil
 }
 
 // Enterprise: This feature requires Orkes Conductor Enterprise license, NOT AVAILABLE in OSS.
@@ -877,12 +863,7 @@ func (a *WorkflowResourceApiService) ExecuteAndGetBlockingWorkflow(
 		return model.WorkflowRun{}, httpResponse, err
 	}
 
-	signalResponse, ok := response.(model.SignalResponse)
-	if !ok {
-		return model.WorkflowRun{}, httpResponse, fmt.Errorf("expected SignalResponse but got %T", response)
-	}
-
-	return signalResponse.GetWorkflowRun(), httpResponse, nil
+	return response.GetWorkflowRun(), httpResponse, nil
 }
 
 // Enterprise: This feature requires Orkes Conductor Enterprise license, NOT AVAILABLE in OSS.
@@ -914,12 +895,7 @@ func (a *WorkflowResourceApiService) ExecuteAndGetTarget(
 		return model.WorkflowRun{}, httpResponse, err
 	}
 
-	signalResponse, ok := response.(model.SignalResponse)
-	if !ok {
-		return model.WorkflowRun{}, httpResponse, fmt.Errorf("expected SignalResponse but got %T", response)
-	}
-
-	return signalResponse.GetWorkflowRun(), httpResponse, nil
+	return response.GetWorkflowRun(), httpResponse, nil
 }
 
 // StartWorkflowWithRequest starts a workflow with request
