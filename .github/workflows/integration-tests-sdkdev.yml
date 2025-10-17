@@ -62,3 +62,5 @@ jobs:
           cd test/backward_compatibility
           chmod +x run_compatibility.sh
           ./run_compatibility.sh
+
+#test
