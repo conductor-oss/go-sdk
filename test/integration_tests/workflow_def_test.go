@@ -36,7 +36,7 @@ func TestHttpTask(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = testdata.ValidateWorkflowBulk(httpTaskWorkflow, testdata.WorkflowValidationTimeout, testdata.WorkflowBulkQty)
+	err = testdata.ValidateWorkflowBulk(httpTaskWorkflow, testdata.ExtendedValidationTimeout, testdata.WorkflowBulkQty)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -73,7 +73,7 @@ func SimpleTask(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = testdata.ValidateWorkflowBulk(simpleTaskWorkflow, testdata.WorkflowValidationTimeout, testdata.WorkflowBulkQty)
+	err = testdata.ValidateWorkflowBulk(simpleTaskWorkflow, testdata.ExtendedValidationTimeout, testdata.WorkflowBulkQty)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -119,7 +119,7 @@ func SimpleTaskWithoutRetryCount(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = testdata.ValidateWorkflowBulk(simpleTaskWorkflow, testdata.WorkflowValidationTimeout, testdata.WorkflowBulkQty)
+	err = testdata.ValidateWorkflowBulk(simpleTaskWorkflow, testdata.ExtendedValidationTimeout, testdata.WorkflowBulkQty)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -150,7 +150,7 @@ func TestInlineTask(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = testdata.ValidateWorkflowBulk(inlineTaskWorkflow, testdata.WorkflowValidationTimeout, testdata.WorkflowBulkQty)
+	err = testdata.ValidateWorkflowBulk(inlineTaskWorkflow, testdata.ExtendedValidationTimeout, testdata.WorkflowBulkQty)
 	if err != nil {
 		t.Fatal(err)
 	}

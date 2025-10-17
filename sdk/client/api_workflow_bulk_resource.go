@@ -11,10 +11,11 @@ package client
 
 import (
 	"context"
-	"github.com/antihax/optional"
-	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"net/http"
 	"net/url"
+
+	"github.com/antihax/optional"
+	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
 // Linger please
@@ -26,14 +27,13 @@ type WorkflowBulkResourceApiService struct {
 	*APIClient
 }
 
-/*
-WorkflowBulkResourceApiService Pause the list of workflows
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-
-@return http_model.BulkResponse
-*/
+// Deprecated: Use Pause instead.
 func (a *WorkflowBulkResourceApiService) PauseWorkflow1(ctx context.Context, body []string) (model.BulkResponse, *http.Response, error) {
+	return a.Pause(ctx, body)
+}
+
+// Pause pauses the list of workflows.
+func (a *WorkflowBulkResourceApiService) Pause(ctx context.Context, body []string) (model.BulkResponse, *http.Response, error) {
 	var result model.BulkResponse
 
 	localVarPath := "/workflow/bulk/pause"
@@ -45,23 +45,17 @@ func (a *WorkflowBulkResourceApiService) PauseWorkflow1(ctx context.Context, bod
 	return result, resp, nil
 }
 
-/*
-WorkflowBulkResourceApiService Restart the list of completed workflow
- * @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param body
- * @param optional nil or *WorkflowBulkResourceApiRestart1Opts - Optional Parameters:
-     * @param "UseLatestDefinitions" (optional.Bool) -
-@return http_model.BulkResponse
-*/
-
-type WorkflowBulkResourceApiRestart1Opts struct {
+// WorkflowBulkResourceApiRestartOpts Optional parameters for Restart.
+type WorkflowBulkResourceApiRestartOpts struct {
+	// UseLatestDefinitions if set to true, the restarted workflow will use the latest definition.
 	UseLatestDefinitions optional.Bool
 }
 
-func (a *WorkflowBulkResourceApiService) Restart(ctx context.Context, body []string, localVarOptionals *WorkflowBulkResourceApiRestart1Opts) (model.BulkResponse, *http.Response, error) {
-	return a.Restart1(ctx, body, localVarOptionals)
-}
-func (a *WorkflowBulkResourceApiService) Restart1(ctx context.Context, body []string, localVarOptionals *WorkflowBulkResourceApiRestart1Opts) (model.BulkResponse, *http.Response, error) {
+// Deprecated: Use WorkflowBulkResourceApiRestartOpts instead.
+type WorkflowBulkResourceApiRestart1Opts = WorkflowBulkResourceApiRestartOpts
+
+// Restart restarts the list of workflows.
+func (a *WorkflowBulkResourceApiService) Restart(ctx context.Context, body []string, localVarOptionals *WorkflowBulkResourceApiRestartOpts) (model.BulkResponse, *http.Response, error) {
 	var result model.BulkResponse
 
 	path := "/workflow/bulk/restart"
@@ -78,18 +72,13 @@ func (a *WorkflowBulkResourceApiService) Restart1(ctx context.Context, body []st
 	return result, resp, nil
 }
 
+// Deprecated: Use Resume instead.
 func (a *WorkflowBulkResourceApiService) ResumeWorkflow(ctx context.Context, body []string) (model.BulkResponse, *http.Response, error) {
-	return a.ResumeWorkflow1(ctx, body)
+	return a.Resume(ctx, body)
 }
 
-/*
-WorkflowBulkResourceApiService Resume the list of workflows
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-
-@return http_model.BulkResponse
-*/
-func (a *WorkflowBulkResourceApiService) ResumeWorkflow1(ctx context.Context, body []string) (model.BulkResponse, *http.Response, error) {
+// Resume resumes the list of workflows.
+func (a *WorkflowBulkResourceApiService) Resume(ctx context.Context, body []string) (model.BulkResponse, *http.Response, error) {
 	var result model.BulkResponse
 
 	path := "/workflow/bulk/resume"
@@ -101,17 +90,8 @@ func (a *WorkflowBulkResourceApiService) ResumeWorkflow1(ctx context.Context, bo
 	return result, resp, nil
 }
 
-/*
-WorkflowBulkResourceApiService Retry the last failed task for each workflow from the list
-  - @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-
-@return http_model.BulkResponse
-*/
+// Retry retries the last failed task for each workflow from the list.
 func (a *WorkflowBulkResourceApiService) Retry(ctx context.Context, body []string) (model.BulkResponse, *http.Response, error) {
-	return a.Retry1(ctx, body)
-}
-func (a *WorkflowBulkResourceApiService) Retry1(ctx context.Context, body []string) (model.BulkResponse, *http.Response, error) {
 	var result model.BulkResponse
 
 	path := "/workflow/bulk/retry"
@@ -123,20 +103,20 @@ func (a *WorkflowBulkResourceApiService) Retry1(ctx context.Context, body []stri
 	return result, resp, nil
 }
 
-/*
-WorkflowBulkResourceApiService Terminate workflows execution
- * @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param body
- * @param optional nil or *WorkflowBulkResourceApiTerminateOpts - Optional Parameters:
-     * @param "Reason" (optional.String) -
-@return http_model.BulkResponse
-*/
+// Deprecated: Use Retry instead.
+func (a *WorkflowBulkResourceApiService) Retry1(ctx context.Context, body []string) (model.BulkResponse, *http.Response, error) {
+	return a.Retry(ctx, body)
+}
 
+// WorkflowBulkResourceApiTerminateOpts Optional parameters for Terminate.
 type WorkflowBulkResourceApiTerminateOpts struct {
-	Reason                 optional.String
+	// Reason a reason for termination.
+	Reason optional.String
+	// TriggerFailureWorkflow if set to true, the associated compensation flow  will be triggered.
 	TriggerFailureWorkflow optional.Bool
 }
 
+// Terminate terminates workflows execution.
 func (a *WorkflowBulkResourceApiService) Terminate(ctx context.Context, body []string, opts *WorkflowBulkResourceApiTerminateOpts) (model.BulkResponse, *http.Response, error) {
 	var result model.BulkResponse
 
@@ -151,6 +131,19 @@ func (a *WorkflowBulkResourceApiService) Terminate(ctx context.Context, body []s
 	}
 
 	resp, err := a.PostWithParams(ctx, path, queryParams, body, &result)
+	if err != nil {
+		return model.BulkResponse{}, resp, err
+	}
+	return result, resp, nil
+}
+
+// Delete permanently removes workflows from the system.
+func (a *WorkflowBulkResourceApiService) Delete(ctx context.Context, body []string) (model.BulkResponse, *http.Response, error) {
+	var result model.BulkResponse
+
+	path := "/workflow/bulk/delete"
+
+	resp, err := a.Post(ctx, path, body, &result)
 	if err != nil {
 		return model.BulkResponse{}, resp, err
 	}

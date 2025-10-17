@@ -259,8 +259,12 @@ INFO[0000] Started 1 worker(s) for taskName greet, polling in interval of 100 ms
 INFO[0000] Started workflow with Id:14a9fcc5-3d74-11ef-83dc-acde48001122 
 INFO[0000] Output of the workflow:map[Greetings:Hello, Gopher] 
 ```
+
+## Deprecated Methods
+Some methods in the SDK client interfaces are now deprecated. They’ve been replaced with newer methods that follow more consistent naming. Please refer to our [Migration Guide](docs/migration_guide.md) for detailed information on how to update your code.
 # Further Reading
 
 - [Writing Workers with the Go SDK](docs/workers_sdk.md)
 - [Authoring Workflows with the Go SDK](docs/workflow_sdk.md)
 - [Logging Configuration](docs/logger_sdk.md)
+- [Migration Guide: Deprecated Methods](docs/migration_guide.md)

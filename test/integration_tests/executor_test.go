@@ -804,7 +804,7 @@ func TestSignal_AllStrategies_Comprehensive(t *testing.T) {
 
 				// Validate workflow data matches response
 				assert.Equal(t, resp.WorkflowId, workflowFromResp.WorkflowId, "Workflow ID should match")
-				assert.Equal(t, resp.Status, workflowFromResp.Status, "Workflow status should match")
+				assert.Equal(t, resp.Status, workflowFromResp.Status.String(), "Workflow status should match")
 				assert.Equal(t, resp.CreateTime, workflowFromResp.CreateTime, "Create time should match")
 				assert.Equal(t, resp.UpdateTime, workflowFromResp.UpdateTime, "Update time should match")
 				assert.Equal(t, resp.CreatedBy, workflowFromResp.CreatedBy, "Created by should match")

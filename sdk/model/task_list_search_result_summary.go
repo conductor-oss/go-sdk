@@ -9,12 +9,12 @@
 
 package model
 
-// WorkflowStateUpdate is the request body for the UpdateWorkflowAndTaskState endpoint.
-type WorkflowStateUpdate struct {
-	// TaskReferenceName the reference name of the task to update.
-	TaskReferenceName string `json:"taskReferenceName,omitempty"`
-	// TaskResult the result of the task to update.
-	TaskResult *TaskResult `json:"taskResult,omitempty"`
-	// Variables the variables to update.
-	Variables map[string]interface{} `json:"variables,omitempty"`
+// TaskListSearchResultSummary is the response for the GetExecutionStatusTaskList method.
+type TaskListSearchResultSummary struct {
+	// Results is the list of tasks.
+	Results []Task `json:"results,omitempty"`
+	// Summary is the summary of the tasks.
+	Summary map[string]int64 `json:"summary,omitempty"`
+	// TotalHits is the total number of tasks.
+	TotalHits int64 `json:"totalHits,omitempty"`
 }
