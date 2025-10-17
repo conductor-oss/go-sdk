@@ -3,9 +3,11 @@ module examples
 go 1.23
 
 require (
-	github.com/conductor-sdk/conductor-go v1.6.0
+	github.com/conductor-sdk/conductor-go v0.0.0
 	go.uber.org/zap v1.24.0
 )
+
+replace github.com/conductor-sdk/conductor-go => ../
 
 require (
 	github.com/antihax/optional v1.0.0 // indirect
