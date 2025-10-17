@@ -46,7 +46,7 @@ jobs:
 
       - name: Run Integration tests (sdkdev cluster)
         run: |
-          gotestsum --format testname  --junitfile report.xml -- -v ./test/integration_tests/...
+          gotestsum --format testname  --junitfile report.xml -- -v -count=1 ./test/integration_tests/...
 
       - name: Publish test results (sdkdev cluster)
         if: always()

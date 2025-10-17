@@ -45,7 +45,7 @@ jobs:
 
       - name: Run Integration tests (SM cluster)
         run: |
-          gotestsum --format testname  --junitfile report.xml -- -v ./test/integration_tests/...
+          gotestsum --format testname  --junitfile report.xml -- -v -count=1 ./test/integration_tests/...
 
       - name: Publish test results (SM cluster)
         if: always()
