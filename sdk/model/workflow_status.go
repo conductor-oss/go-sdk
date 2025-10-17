@@ -37,17 +37,17 @@ var (
 
 func ParseWorkflowStatus(status string) (WorkflowStatus, error) {
 	switch status {
-	case "RUNNING":
+	case string(RunningWorkflow):
 		return RunningWorkflow, nil
-	case "COMPLETED":
+	case string(CompletedWorkflow):
 		return CompletedWorkflow, nil
-	case "FAILED":
+	case string(FailedWorkflow):
 		return FailedWorkflow, nil
-	case "TIMED_OUT":
+	case string(TimedOutWorkflow):
 		return TimedOutWorkflow, nil
-	case "TERMINATED":
+	case string(TerminatedWorkflow):
 		return TerminatedWorkflow, nil
-	case "PAUSED":
+	case string(PausedWorkflow):
 		return PausedWorkflow, nil
 	default:
 		return RunningWorkflow, fmt.Errorf("invalid workflow status: %s", status)

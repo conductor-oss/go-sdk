@@ -174,6 +174,10 @@ type WorkflowResourceApiDeleteOpts struct {
 }
 ```
 
+### SignalResponse.Status Field Type Change
+
+The `Status` field in `model.SignalResponse` was changed from `WorkflowStatus` to `string` to support both workflow and task statuses in the unified response. Use helper methods like `GetWorkflow()`, `GetBlockingTask()`, `GetWorkflowRun()`, or `GetTaskRun()` which handle parsing automatically, or use `ParseWorkflowStatus()`/`ParseTaskResultStatus()` for manual parsing.
+
 ## Timeline
 
 - **Current Version**: Deprecated methods are still available but marked for removal

@@ -28,17 +28,17 @@ func (t TaskResultStatus) String() string {
 
 func ParseTaskResultStatus(status string) (TaskResultStatus, error) {
 	switch status {
-	case "IN_PROGRESS":
+	case string(InProgressTask):
 		return InProgressTask, nil
-	case "FAILED":
+	case string(FailedTask):
 		return FailedTask, nil
-	case "FAILED_WITH_TERMINAL_ERROR":
+	case string(FailedWithTerminalErrorTask):
 		return FailedWithTerminalErrorTask, nil
-	case "COMPLETED":
+	case string(CompletedTask):
 		return CompletedTask, nil
-	case "SCHEDULED":
+	case string(ScheduledTask):
 		return ScheduledTask, nil
-	case "SKIPPED":
+	case string(SkippedTask):
 		return SkippedTask, nil
 	default:
 		return InProgressTask, fmt.Errorf("invalid task result status: %s", status)
