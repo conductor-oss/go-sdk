@@ -9,8 +9,12 @@ on:
       - main
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  integration-tests-oldvars:
+  integration-tests-sdkdev:
     runs-on: ubuntu-latest
 
     env:

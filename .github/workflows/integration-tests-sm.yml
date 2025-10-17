@@ -9,8 +9,12 @@ on:
       - main
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  integration-tests:
+  integration-tests-sm:
     runs-on: ubuntu-latest
     env:
       CONDUCTOR_SERVER_URL: ${{ vars.SERVER_URL }}
