@@ -1,4 +1,4 @@
-name: Integration + Backward Compatibility Tests
+name: Integration + Backward Compatibility Tests (SM cluster)
 
 on:
   push:
@@ -9,8 +9,12 @@ on:
       - main
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  integration-tests:
+  integration-tests-sm:
     runs-on: ubuntu-latest
     env:
       CONDUCTOR_SERVER_URL: ${{ vars.SERVER_URL }}
@@ -39,19 +43,19 @@ jobs:
       - name: Install gotestsum
         run: go install gotest.tools/gotestsum@v1.12.0
 
-      - name: Run Integration tests 
+      - name: Run Integration tests (SM cluster)
         run: |
-          gotestsum --format testname  --junitfile report.xml -- -v ./test/integration_tests/...
+          gotestsum --format testname  --junitfile report.xml -- -v -count=1 ./test/integration_tests/...
 
-      - name: Publish test results
+      - name: Publish test results (SM cluster)
         if: always()
         uses: dorny/test-reporter@v1
         with:
-          name: Integration tests report
+          name: Integration tests report (SM cluster)
           path: report.xml
           reporter: java-junit
 
-      - name: Run Backward Compatibility Tests
+      - name: Run Backward Compatibility Tests (SM cluster)
         run: |
           echo "🚀 Starting Backward Compatibility Tests..."
           cd test/backward_compatibility

@@ -1,4 +1,4 @@
-name: Integration + Backward Compatibility Tests (Old Vars)
+name: Integration + Backward Compatibility Tests (sdkdev cluster)
 
 on:
   push:
@@ -9,8 +9,12 @@ on:
       - main
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  integration-tests-oldvars:
+  integration-tests-sdkdev:
     runs-on: ubuntu-latest
 
     env:
@@ -40,19 +44,19 @@ jobs:
       - name: Install gotestsum
         run: go install gotest.tools/gotestsum@v1.12.0
 
-      - name: Run Integration tests (Old Vars)
+      - name: Run Integration tests (sdkdev cluster)
         run: |
-          gotestsum --format testname  --junitfile report.xml -- -v ./test/integration_tests/...
+          gotestsum --format testname  --junitfile report.xml -- -v -count=1 ./test/integration_tests/...
 
-      - name: Publish test results (Old Vars)
+      - name: Publish test results (sdkdev cluster)
         if: always()
         uses: dorny/test-reporter@v1
         with:
-          name: Integration tests report (Old Vars)
+          name: Integration tests report (sdkdev cluster)
           path: report.xml
           reporter: java-junit
 
-      - name: Run Backward Compatibility Tests (Old Vars)
+      - name: Run Backward Compatibility Tests (sdkdev cluster)
         run: |
           echo "🚀 Starting Backward Compatibility Tests..."
           cd test/backward_compatibility
