@@ -26,7 +26,6 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -35,46 +34,55 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/settings"
 )
 
-const (
-	CONDUCTOR_AUTH_KEY            = "CONDUCTOR_AUTH_KEY"
-	CONDUCTOR_AUTH_SECRET         = "CONDUCTOR_AUTH_SECRET"
-	CONDUCTOR_SERVER_URL          = "CONDUCTOR_SERVER_URL"
-	CONDUCTOR_CLIENT_HTTP_TIMEOUT = "CONDUCTOR_CLIENT_HTTP_TIMEOUT"
-)
-
 var (
 	jsonCheck = regexp.MustCompile("(?i:[application|text]/json)")
 	xmlCheck  = regexp.MustCompile("(?i:[application|text]/xml)")
 )
 
+// APIClient is the main client for the Conductor API.
 type APIClient struct {
 	httpRequester *HttpRequester
 }
 
+// NewAPIClient creates APIClient from AuthenticationSettings and HttpSettings.
 func NewAPIClient(
 	authenticationSettings *settings.AuthenticationSettings,
 	httpSettings *settings.HttpSettings,
+	opts ...settings.Option,
 ) *APIClient {
-	return newAPIClient(
-		authenticationSettings,
-		httpSettings,
-		nil,
-		nil,
-	)
-}
-func NewAPIClientFromEnv() *APIClient {
-	return NewAPIClient(NewAuthenticationSettingsFromEnv(), NewHttpSettingsFromEnv())
+	clientSettings := &settings.ClientSettings{
+		Authentication: authenticationSettings,
+		HTTP:           httpSettings,
+	}
+
+	clientSettings.ApplyOptions(opts...)
+
+	return newAPIClient(clientSettings, nil, nil)
 }
 
+// NewAPIClientFromSettings creates APIClient from ClientSettings.
+func NewAPIClientFromSettings(clientSettings *settings.ClientSettings, opts ...settings.Option) *APIClient {
+	clientSettings.ApplyOptions(opts...)
+	return newAPIClient(clientSettings, nil, nil)
+}
+
+// NewAPIClientFromEnv creates APIClient from environment variables.
+func NewAPIClientFromEnv(opts ...settings.Option) *APIClient {
+	clientSettings := settings.NewClientSettingsFromEnv(opts...)
+	return newAPIClient(clientSettings, nil, nil)
+}
+
+// Deprecated: Use settings.NewClientSettingsFromEnv.
 func NewAuthenticationSettingsFromEnv() *settings.AuthenticationSettings {
 	return settings.NewAuthenticationSettings(
-		os.Getenv(CONDUCTOR_AUTH_KEY),
-		os.Getenv(CONDUCTOR_AUTH_SECRET),
+		os.Getenv(settings.EnvAuthKey),
+		os.Getenv(settings.EnvAuthSecret),
 	)
 }
 
+// Deprecated: Use settings.NewHttpSettingsFromEnv
 func NewHttpSettingsFromEnv() *settings.HttpSettings {
-	url := os.Getenv(CONDUCTOR_SERVER_URL)
+	url := os.Getenv(settings.EnvServerURL)
 	if url == "" {
 		log.Error("Environment variable CONDUCTOR_SERVER_URL is not set")
 	}
@@ -82,46 +90,69 @@ func NewHttpSettingsFromEnv() *settings.HttpSettings {
 	return settings.NewHttpSettings(url)
 }
 
+// NewAPIClientWithTokenExpiration creates client with token expiration.
 func NewAPIClientWithTokenExpiration(
 	authenticationSettings *settings.AuthenticationSettings,
 	httpSettings *settings.HttpSettings,
 	tokenExpiration *authentication.TokenExpiration,
+	opts ...settings.Option,
 ) *APIClient {
+	clientSettings := &settings.ClientSettings{
+		Authentication: authenticationSettings,
+		HTTP:           httpSettings,
+	}
+
+	clientSettings.ApplyOptions(opts...)
+
 	return newAPIClient(
-		authenticationSettings,
-		httpSettings,
+		clientSettings,
 		tokenExpiration,
 		nil,
 	)
 }
 
+// NewAPIClientWithTokenManager creates client with token manager.
 func NewAPIClientWithTokenManager(
 	authenticationSettings *settings.AuthenticationSettings,
 	httpSettings *settings.HttpSettings,
 	tokenExpiration *authentication.TokenExpiration,
 	tokenManager authentication.TokenManager,
+	opts ...settings.Option,
 ) *APIClient {
+	clientSettings := &settings.ClientSettings{
+		Authentication: authenticationSettings,
+		HTTP:           httpSettings,
+	}
+
+	clientSettings.ApplyOptions(opts...)
+
 	return newAPIClient(
-		authenticationSettings,
-		httpSettings,
+		clientSettings,
 		tokenExpiration,
 		tokenManager,
 	)
 }
 
-func newAPIClient(authenticationSettings *settings.AuthenticationSettings, httpSettings *settings.HttpSettings, tokenExpiration *authentication.TokenExpiration, tokenManager authentication.TokenManager) *APIClient {
+func newAPIClient(
+	clientSettings *settings.ClientSettings,
+	tokenExpiration *authentication.TokenExpiration,
+	tokenManager authentication.TokenManager,
+) *APIClient {
+	// Extract settings components
+	httpSettings := clientSettings.GetHTTP()
 	if httpSettings == nil {
 		httpSettings = settings.NewHttpDefaultSettings()
 	}
-	var httpTimeout = 30 * time.Second // Set default value once
 
-	timeoutStr := os.Getenv(CONDUCTOR_CLIENT_HTTP_TIMEOUT)
-	if timeoutStr != "" {
-		// Only try to parse if the environment variable is actually set
-		if timeoutInt, err := strconv.Atoi(timeoutStr); err == nil {
-			httpTimeout = time.Duration(timeoutInt) * time.Second
+	// Use token settings from ClientSettings if not provided directly
+	if clientSettings.GetTokenExpiration() != nil {
+		// Convert interface to concrete type if needed
+		if te, ok := clientSettings.GetTokenExpiration().(*authentication.TokenExpiration); ok {
+			tokenExpiration = te
 		}
-		// If parsing fails, we'll keep the default value
+	}
+	if clientSettings.GetTokenManager() != nil {
+		tokenManager = clientSettings.GetTokenManager()
 	}
 
 	baseDialer := &net.Dialer{
@@ -129,21 +160,19 @@ func newAPIClient(authenticationSettings *settings.AuthenticationSettings, httpS
 		KeepAlive: 30 * time.Second,
 	}
 	netTransport := &http.Transport{
-		Proxy:               http.ProxyFromEnvironment,
+		Proxy:               clientSettings.GetProxy().BuildProxyFunc(),
 		DialContext:         baseDialer.DialContext,
 		MaxIdleConns:        100,
 		MaxIdleConnsPerHost: 100,
 		DisableCompression:  false,
 	}
 	client := http.Client{
-		Transport:     netTransport,
-		CheckRedirect: nil,
-		Jar:           nil,
-		Timeout:       httpTimeout,
+		Transport: netTransport,
+		Timeout:   httpSettings.Timeout,
 	}
 	return &APIClient{
 		httpRequester: NewHttpRequester(
-			authenticationSettings, httpSettings, &client, tokenExpiration, tokenManager,
+			clientSettings.GetAuthentication(), httpSettings, &client, tokenExpiration, tokenManager,
 		),
 	}
 }

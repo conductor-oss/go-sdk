@@ -9,11 +9,15 @@
 
 package settings
 
+import "os"
+
+// AuthenticationSettings configures authentication for the client.
 type AuthenticationSettings struct {
 	keyId     string
 	keySecret string
 }
 
+// NewAuthenticationSettings creates AuthenticationSettings with the given keyId and keySecret.
 func NewAuthenticationSettings(keyId string, keySecret string) *AuthenticationSettings {
 	return &AuthenticationSettings{
 		keyId:     keyId,
@@ -21,6 +25,15 @@ func NewAuthenticationSettings(keyId string, keySecret string) *AuthenticationSe
 	}
 }
 
+// NewAuthenticationSettingsFromEnv creates AuthenticationSettings from environment variables.
+func NewAuthenticationSettingsFromEnv() *AuthenticationSettings {
+	return NewAuthenticationSettings(
+		os.Getenv(EnvAuthKey),
+		os.Getenv(EnvAuthSecret),
+	)
+}
+
+// GetBody returns the body for the authentication request.
 func (s *AuthenticationSettings) GetBody() map[string]string {
 	body := map[string]string{
 		"keyId":     s.keyId,
@@ -29,6 +42,7 @@ func (s *AuthenticationSettings) GetBody() map[string]string {
 	return body
 }
 
+// IsEmpty returns true if the AuthenticationSettings is empty.
 func (s *AuthenticationSettings) IsEmpty() bool {
 	if s.keyId == "" || s.keySecret == "" {
 		return true

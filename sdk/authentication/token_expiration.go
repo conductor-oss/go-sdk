@@ -30,3 +30,13 @@ func NewDefaultTokenExpiration() *TokenExpiration {
 		CleanupInterval:   2 * time.Hour,
 	}
 }
+
+// GetDefaultExpiration returns the default expiration duration
+func (t *TokenExpiration) GetDefaultExpiration() time.Duration {
+	return t.DefaultExpiration
+}
+
+// GetCleanupInterval returns the cleanup interval duration
+func (t *TokenExpiration) GetCleanupInterval() time.Duration {
+	return t.CleanupInterval
+}

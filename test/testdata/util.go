@@ -597,3 +597,22 @@ func isVersionAtLeast(have, min string) bool {
 
 	return true
 }
+
+// GetServerURL returns the server URL from environment variables
+func GetServerURL() string {
+	url := os.Getenv("CONDUCTOR_SERVER_URL")
+	if url == "" {
+		return "http://localhost:8080/api" // Default for local testing
+	}
+	return url
+}
+
+// GetAuthKey returns the authentication key from environment variables
+func GetAuthKey() string {
+	return os.Getenv("CONDUCTOR_AUTH_KEY")
+}
+
+// GetAuthSecret returns the authentication secret from environment variables
+func GetAuthSecret() string {
+	return os.Getenv("CONDUCTOR_AUTH_SECRET")
+}

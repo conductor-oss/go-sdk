@@ -185,6 +185,9 @@ First we create an `APIClient` instance. This is a REST client.
 We need to provide the correct settings to our client. In this example, `client.NewAPIClientFromEnv()` is used, which initializes a new client by reading the settings from the following environment variables: `CONDUCTOR_SERVER_URL`, `CONDUCTOR_AUTH_KEY`, and `CONDUCTOR_AUTH_SECRET`.
 `CONDUCTOR_CLIENT_HTTP_TIMEOUT` lets you configure the HTTP timeout for our client, in seconds. If not set, defaults to 30 seconds.
 
+> [!tip]
+> For advanced configuration options and detailed examples see the [API Client Configuration Guide](docs/api_client/README.md).
+
 Now let's take a look at the `main` function:
 
 ```go
@@ -268,3 +271,4 @@ Some methods in the SDK client interfaces are now deprecated. They’ve been rep
 - [Authoring Workflows with the Go SDK](docs/workflow_sdk.md)
 - [Logging Configuration](docs/logger_sdk.md)
 - [Migration Guide: Deprecated Methods](docs/migration_guide.md)
+- [API Client Configuration](docs/api_client/README.md) - Complete guide to API client setup, authentication, and proxy configuration
