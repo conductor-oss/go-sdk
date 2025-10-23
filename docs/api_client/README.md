@@ -129,16 +129,6 @@ clientSettings := settings.NewClientSettings(
     settings.WithProxyURL("http://proxy.company.com:8080"),
     settings.WithProxyCredentials("username", "password"),
 )
-
-// Set complete proxy settings
-proxySettings := settings.NewProxySettings()
-proxySettings.URL, _ = url.Parse("http://proxy.company.com:8080")
-proxySettings.Username = "username"
-proxySettings.Password = "password"
-
-clientSettings := settings.NewClientSettings(
-    settings.WithProxySettings(proxySettings),
-)
 ```
 
 ### Token Options
