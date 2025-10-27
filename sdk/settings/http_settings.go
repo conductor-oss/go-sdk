@@ -9,17 +9,27 @@
 
 package settings
 
+import (
+	"os"
+	"strconv"
+	"time"
+)
+
+// HttpSettings configures HTTP settings for the client.
 type HttpSettings struct {
 	BaseUrl string
 	Headers map[string]string
+	Timeout time.Duration
 }
 
+// NewHttpDefaultSettings creates default HTTP settings.
 func NewHttpDefaultSettings() *HttpSettings {
 	return NewHttpSettings(
 		"http://localhost:8080/api",
 	)
 }
 
+// NewHttpSettings creates HTTP settings with the given base URL.
 func NewHttpSettings(baseUrl string) *HttpSettings {
 	return &HttpSettings{
 		BaseUrl: baseUrl,
@@ -28,5 +38,25 @@ func NewHttpSettings(baseUrl string) *HttpSettings {
 			"Accept":          "application/json",
 			"Accept-Encoding": "gzip",
 		},
+		Timeout: 30 * time.Second,
 	}
+}
+
+// NewHttpSettingsFromEnv creates HTTP settings from environment variables.
+func NewHttpSettingsFromEnv() *HttpSettings {
+	serverURL := os.Getenv(EnvServerURL)
+	if serverURL == "" {
+		serverURL = "http://localhost:8080/api"
+	}
+
+	httpSettings := NewHttpSettings(serverURL)
+
+	// Load timeout from environment
+	if timeoutStr := os.Getenv(EnvTimeout); timeoutStr != "" {
+		if timeoutInt, err := strconv.Atoi(timeoutStr); err == nil {
+			httpSettings.Timeout = time.Duration(timeoutInt) * time.Second
+		}
+	}
+
+	return httpSettings
 }

@@ -161,6 +161,51 @@ opts := &client.WorkflowBulkResourceApiRestartOpts{
 }
 ```
 
+## API Client Deprecated Methods
+
+### 1. NewAuthenticationSettingsFromEnv → settings.NewClientSettingsFromEnv
+
+**Deprecated Method:**
+```go
+func NewAuthenticationSettingsFromEnv() *settings.AuthenticationSettings
+```
+
+**Replacement:**
+```go
+func NewClientSettingsFromEnv() *settings.ClientSettings
+```
+
+**Migration:**
+```go
+// Before
+authSettings := client.NewAuthenticationSettingsFromEnv()
+
+// After
+clientSettings := settings.NewClientSettingsFromEnv()
+authSettings := clientSettings.Authentication
+```
+
+### 2. NewHttpSettingsFromEnv → settings.NewHttpSettingsFromEnv
+
+**Deprecated Method:**
+```go
+func NewHttpSettingsFromEnv() *settings.HttpSettings
+```
+
+**Replacement:**
+```go
+func NewHttpSettingsFromEnv() *settings.HttpSettings
+```
+
+**Migration:**
+```go
+// Before
+httpSettings := client.NewHttpSettingsFromEnv()
+
+// After
+httpSettings := settings.NewHttpSettingsFromEnv()
+```
+
 ## Additional Notes
 
 ### ArchiveWorkflow Parameter (Deprecated)
