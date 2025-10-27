@@ -77,7 +77,7 @@ func TestWorkflowDefinitionParam_MarshalJSON_WorkflowDef(t *testing.T) {
 		Version:     1,
 		Description: "Test workflow",
 	}
-	param := NewWorkflowDefinitionObject(workflowDef)
+	param := NewWorkflowDefinitionParam(workflowDef)
 
 	data, err := json.Marshal(param)
 
@@ -107,9 +107,9 @@ func TestWorkflowDefinitionParam_Constructors(t *testing.T) {
 		assert.Equal(t, "${workflow.input.test}", expr)
 	})
 
-	t.Run("NewWorkflowDefinitionObject", func(t *testing.T) {
+	t.Run("NewWorkflowDefinitionParam", func(t *testing.T) {
 		workflowDef := &WorkflowDef{Name: "test"}
-		param := NewWorkflowDefinitionObject(workflowDef)
+		param := NewWorkflowDefinitionParam(workflowDef)
 
 		assert.False(t, param.IsExpression())
 		assert.True(t, param.IsDefinition())
@@ -223,7 +223,7 @@ func TestSubWorkflowParams_MarshalJSON_RoundTrip(t *testing.T) {
 		params := SubWorkflowParams{
 			Name:    "test_workflow",
 			Version: 1,
-			WorkflowDefinition: NewWorkflowDefinitionObject(&WorkflowDef{
+			WorkflowDefinition: NewWorkflowDefinitionParam(&WorkflowDef{
 				Name:        "inline",
 				Version:     2,
 				Description: "Test",

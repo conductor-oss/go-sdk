@@ -35,8 +35,8 @@ func NewWorkflowDefinitionExpression(expr string) *WorkflowDefinitionParam {
 	}
 }
 
-// NewWorkflowDefinitionObject creates a WorkflowDefinitionParam from a WorkflowDef object.
-func NewWorkflowDefinitionObject(def *WorkflowDef) *WorkflowDefinitionParam {
+// NewWorkflowDefinitionParam creates a WorkflowDefinitionParam from a WorkflowDef object.
+func NewWorkflowDefinitionParam(def *WorkflowDef) *WorkflowDefinitionParam {
 	return &WorkflowDefinitionParam{
 		definition: def,
 	}
