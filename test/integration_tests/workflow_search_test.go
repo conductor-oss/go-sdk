@@ -114,6 +114,7 @@ func TestWorkflowSearch(t *testing.T) {
 			},
 			expectExactResults: 1,
 			validateResults: func(t *testing.T, results []model.WorkflowSummary, workflowId1, workflowId2, wf1Name string) {
+				require.NotEmpty(t, results, "Should find at least one result")
 				assert.Equal(t, workflowId1, results[0].WorkflowId, "Should find the correct workflow")
 			},
 		},

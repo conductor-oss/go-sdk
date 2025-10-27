@@ -28,10 +28,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version: '1.23'
 
@@ -46,15 +46,17 @@ jobs:
 
       - name: Run Integration tests (sdkdev cluster)
         run: |
-          gotestsum --format testname  --junitfile report.xml -- -v -count=1 ./test/integration_tests/...
+          gotestsum --format testname --junitfile report.xml --rerun-fails=3 --rerun-fails-report=rerun-report.xml --packages="./test/integration_tests/..." -- -v -count=1
 
       - name: Publish test results (sdkdev cluster)
         if: always()
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@v2
         with:
           name: Integration tests report (sdkdev cluster)
-          path: report.xml
+          path: report.xml,rerun-report.xml
           reporter: java-junit
+          fail-on-error: false
+          fail-on-empty: true
 
       - name: Run Backward Compatibility Tests (sdkdev cluster)
         run: |

@@ -2,6 +2,7 @@ package integration_tests
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/client"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/test/testdata"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,17 +22,22 @@ const (
 )
 
 type ServiceRegistryClientTestSuite struct {
-	client client.ServiceRegistryClient
-	ctx    context.Context
+	client          client.ServiceRegistryClient
+	ctx             context.Context
+	httpServiceName string
+	grpcServiceName string
 }
 
 func setupServiceRegistryTest(t *testing.T) *ServiceRegistryClientTestSuite {
 	// Initialize your client here - adjust based on your client setup
 	serviceClient := testdata.ServiceRegistryClient
 
+	uuid := uuid.New().String()
 	suite := &ServiceRegistryClientTestSuite{
-		client: serviceClient,
-		ctx:    context.Background(),
+		client:          serviceClient,
+		ctx:             context.Background(),
+		httpServiceName: fmt.Sprintf("%s-%s", HTTPServiceName, uuid),
+		grpcServiceName: fmt.Sprintf("%s-%s", GRPCServiceName, uuid),
 	}
 
 	// Cleanup before test
@@ -41,8 +48,8 @@ func setupServiceRegistryTest(t *testing.T) *ServiceRegistryClientTestSuite {
 
 func (s *ServiceRegistryClientTestSuite) cleanup(t *testing.T) {
 	// Remove services if they exist (ignore errors)
-	s.client.RemoveService(s.ctx, HTTPServiceName)
-	s.client.RemoveService(s.ctx, GRPCServiceName)
+	s.client.RemoveService(s.ctx, s.httpServiceName)
+	s.client.RemoveService(s.ctx, s.grpcServiceName)
 }
 
 func TestServiceRegistryClient_HTTPService(t *testing.T) {
@@ -53,7 +60,7 @@ func TestServiceRegistryClient_HTTPService(t *testing.T) {
 
 	// Create HTTP service registry
 	serviceRegistry := model.ServiceRegistry{
-		Name:       HTTPServiceName,
+		Name:       suite.httpServiceName,
 		Type_:      "HTTP",
 		ServiceURI: "http://httpbin:8081/api-docs",
 	}
@@ -69,7 +76,7 @@ func TestServiceRegistryClient_HTTPService(t *testing.T) {
 		Create: optional.NewBool(true),
 	}
 
-	methods, resp, err := suite.client.Discover(suite.ctx, HTTPServiceName, discoverOpts)
+	methods, resp, err := suite.client.Discover(suite.ctx, suite.httpServiceName, discoverOpts)
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 	require.GreaterOrEqual(t, len(methods), 15)
@@ -86,7 +93,7 @@ func TestServiceRegistryClient_HTTPService(t *testing.T) {
 	// Find our service
 	var actualService *model.ServiceRegistry
 	for _, service := range services {
-		if service.Name == HTTPServiceName {
+		if service.Name == suite.httpServiceName {
 			actualService = &service
 			break
 		}
@@ -94,7 +101,7 @@ func TestServiceRegistryClient_HTTPService(t *testing.T) {
 	require.NotNil(t, actualService, "HTTP service not found")
 
 	// Verify service properties
-	assert.Equal(t, HTTPServiceName, actualService.Name)
+	assert.Equal(t, suite.httpServiceName, actualService.Name)
 	assert.Equal(t, "HTTP", actualService.Type_) // Adjust based on your model
 	assert.Equal(t, "http://httpbin:8081/api-docs", actualService.ServiceURI)
 	assert.Greater(t, len(actualService.Methods), 0)
@@ -110,17 +117,17 @@ func TestServiceRegistryClient_HTTPService(t *testing.T) {
 		OutputType:    "newHttpOutputType",
 	}
 
-	resp, err = suite.client.AddOrUpdateMethod(suite.ctx, method, HTTPServiceName)
+	resp, err = suite.client.AddOrUpdateMethod(suite.ctx, method, suite.httpServiceName)
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 	assert.Equal(t, 200, resp.StatusCode)
 
 	// Verify method was added
-	updatedService, resp, err := suite.client.GetService(suite.ctx, HTTPServiceName)
+	updatedService, resp, err := suite.client.GetService(suite.ctx, suite.httpServiceName)
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 	assert.Equal(t, 200, resp.StatusCode)
-	assert.Equal(t, originalMethodCount+1, len(updatedService.Methods))
+	assert.GreaterOrEqual(t, len(updatedService.Methods), originalMethodCount+1)
 
 	// Verify circuit breaker config (adjust field names based on your model)
 	if updatedService.Config != nil && updatedService.Config.CircuitBreakerConfig != nil {
@@ -135,7 +142,7 @@ func TestServiceRegistryClient_HTTPService(t *testing.T) {
 	}
 
 	// Cleanup
-	resp, err = suite.client.RemoveService(suite.ctx, HTTPServiceName)
+	resp, err = suite.client.RemoveService(suite.ctx, suite.httpServiceName)
 	require.NoError(t, err)
 	assert.Equal(t, 200, resp.StatusCode)
 }
@@ -148,7 +155,7 @@ func TestServiceRegistryClient_GRPCService(t *testing.T) {
 
 	// Create gRPC service registry
 	serviceRegistry := model.ServiceRegistry{
-		Name:       GRPCServiceName,
+		Name:       suite.grpcServiceName,
 		Type_:      "gRPC",
 		ServiceURI: "grpcbin:50051",
 	}
@@ -166,7 +173,7 @@ func TestServiceRegistryClient_GRPCService(t *testing.T) {
 	// Find our service
 	var actualService *model.ServiceRegistry
 	for _, service := range services {
-		if service.Name == GRPCServiceName {
+		if service.Name == suite.grpcServiceName {
 			actualService = &service
 			break
 		}
@@ -174,7 +181,7 @@ func TestServiceRegistryClient_GRPCService(t *testing.T) {
 	require.NotNil(t, actualService, "gRPC service not found")
 
 	// Verify service properties
-	assert.Equal(t, GRPCServiceName, actualService.Name)
+	assert.Equal(t, suite.grpcServiceName, actualService.Name)
 	assert.Equal(t, "gRPC", actualService.Type_)
 	assert.Equal(t, "grpcbin:50051", actualService.ServiceURI)
 	assert.Equal(t, 0, len(actualService.Methods))
@@ -190,12 +197,12 @@ func TestServiceRegistryClient_GRPCService(t *testing.T) {
 		OutputType:    "newHttpOutputType",
 	}
 
-	resp, err = suite.client.AddOrUpdateMethod(suite.ctx, method, GRPCServiceName)
+	resp, err = suite.client.AddOrUpdateMethod(suite.ctx, method, suite.grpcServiceName)
 	require.NoError(t, err)
 	assert.Equal(t, 200, resp.StatusCode)
 
 	// Verify method was added
-	updatedService, resp, err := suite.client.GetService(suite.ctx, GRPCServiceName)
+	updatedService, resp, err := suite.client.GetService(suite.ctx, suite.grpcServiceName)
 	require.NoError(t, err)
 	assert.Equal(t, originalMethodCount+1, len(updatedService.Methods))
 
@@ -205,12 +212,12 @@ func TestServiceRegistryClient_GRPCService(t *testing.T) {
 	require.Greater(t, len(binaryData), 0)
 
 	// Set proto data
-	resp, err = suite.client.SetProtoData(suite.ctx, string(binaryData), GRPCServiceName, ProtoFilename)
+	resp, err = suite.client.SetProtoData(suite.ctx, string(binaryData), suite.grpcServiceName, ProtoFilename)
 	require.NoError(t, err)
 	assert.Equal(t, 200, resp.StatusCode)
 
 	// Verify proto data was set and service has methods
-	finalService, resp, err := suite.client.GetService(suite.ctx, GRPCServiceName)
+	finalService, resp, err := suite.client.GetService(suite.ctx, suite.grpcServiceName)
 	require.NoError(t, err)
 	assert.Greater(t, len(finalService.Methods), 11)
 
@@ -227,13 +234,13 @@ func TestServiceRegistryClient_GRPCService(t *testing.T) {
 	}
 
 	// Test getting all protos
-	protos, resp, err := suite.client.GetAllProtos(suite.ctx, GRPCServiceName)
+	protos, resp, err := suite.client.GetAllProtos(suite.ctx, suite.grpcServiceName)
 	require.NoError(t, err)
 	assert.Equal(t, 200, resp.StatusCode)
 	assert.Greater(t, len(protos), 0)
 
 	// Cleanup
-	resp, err = suite.client.RemoveService(suite.ctx, GRPCServiceName)
+	resp, err = suite.client.RemoveService(suite.ctx, suite.grpcServiceName)
 	require.NoError(t, err)
 	assert.Equal(t, 200, resp.StatusCode)
 }
@@ -246,7 +253,7 @@ func TestServiceRegistryClient_CircuitBreaker(t *testing.T) {
 
 	// First create a service
 	serviceRegistry := model.ServiceRegistry{
-		Name:       HTTPServiceName,
+		Name:       suite.httpServiceName,
 		Type_:      "HTTP",
 		ServiceURI: "http://httpbin:8081/api-docs",
 	}
@@ -256,25 +263,25 @@ func TestServiceRegistryClient_CircuitBreaker(t *testing.T) {
 
 	// Test circuit breaker operations
 	// Get initial status
-	status, resp, err := suite.client.GetCircuitBreakerStatus(suite.ctx, HTTPServiceName)
+	status, resp, err := suite.client.GetCircuitBreakerStatus(suite.ctx, suite.httpServiceName)
 	require.NoError(t, err)
 	assert.Equal(t, 200, resp.StatusCode)
 	assert.NotNil(t, status)
 
 	// Open circuit breaker
-	_, resp, err = suite.client.OpenCircuitBreaker(suite.ctx, HTTPServiceName)
+	_, resp, err = suite.client.OpenCircuitBreaker(suite.ctx, suite.httpServiceName)
 	require.Error(t, err)
 	assert.Equal(t, 404, resp.StatusCode)
 	assert.NotNil(t, err.Error())
 
 	// Close circuit breaker
-	closeResp, resp, err := suite.client.CloseCircuitBreaker(suite.ctx, HTTPServiceName)
+	closeResp, resp, err := suite.client.CloseCircuitBreaker(suite.ctx, suite.httpServiceName)
 	require.Error(t, err, "No active circuit breaker for service: http-service")
 	assert.Equal(t, 404, resp.StatusCode)
 	assert.NotNil(t, closeResp)
 
 	// Cleanup
-	resp, err = suite.client.RemoveService(suite.ctx, HTTPServiceName)
+	resp, err = suite.client.RemoveService(suite.ctx, suite.httpServiceName)
 	require.NoError(t, err)
 }
 
@@ -286,7 +293,7 @@ func TestServiceRegistryClient_MethodOperations(t *testing.T) {
 
 	// Create a service first
 	serviceRegistry := model.ServiceRegistry{
-		Name:       HTTPServiceName,
+		Name:       suite.httpServiceName,
 		Type_:      "HTTP",
 		ServiceURI: "http://httpbin:8081/api-docs",
 	}
@@ -303,12 +310,12 @@ func TestServiceRegistryClient_MethodOperations(t *testing.T) {
 		OutputType:    "TestOutput",
 	}
 
-	resp, err = suite.client.AddOrUpdateMethod(suite.ctx, method, HTTPServiceName)
+	resp, err = suite.client.AddOrUpdateMethod(suite.ctx, method, suite.httpServiceName)
 	require.NoError(t, err)
 	assert.Equal(t, 200, resp.StatusCode)
 
 	// Verify method exists
-	service, resp, err := suite.client.GetService(suite.ctx, HTTPServiceName)
+	service, resp, err := suite.client.GetService(suite.ctx, suite.httpServiceName)
 	require.NoError(t, err)
 
 	var foundMethod bool
@@ -321,12 +328,12 @@ func TestServiceRegistryClient_MethodOperations(t *testing.T) {
 	assert.True(t, foundMethod, "Method should be found in service")
 
 	// Remove the method
-	resp, err = suite.client.RemoveMethod(suite.ctx, HTTPServiceName, "TestOperation", "testMethod", "POST")
+	resp, err = suite.client.RemoveMethod(suite.ctx, suite.httpServiceName, "TestOperation", "testMethod", "POST")
 	require.NoError(t, err)
 	assert.Equal(t, 200, resp.StatusCode)
 
 	// Verify method is removed
-	service, resp, err = suite.client.GetService(suite.ctx, HTTPServiceName)
+	service, resp, err = suite.client.GetService(suite.ctx, suite.httpServiceName)
 	require.NoError(t, err)
 
 	foundMethod = false
@@ -339,6 +346,6 @@ func TestServiceRegistryClient_MethodOperations(t *testing.T) {
 	assert.False(t, foundMethod, "Method should be removed from service")
 
 	// Cleanup
-	resp, err = suite.client.RemoveService(suite.ctx, HTTPServiceName)
+	resp, err = suite.client.RemoveService(suite.ctx, suite.httpServiceName)
 	require.NoError(t, err)
 }

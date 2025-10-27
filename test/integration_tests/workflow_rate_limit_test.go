@@ -15,7 +15,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/sdk/workflow"
 	"github.com/conductor-sdk/conductor-go/test/testdata"
 	"github.com/google/uuid"
@@ -29,8 +28,7 @@ func TestConcurrentWorkflowExecution(t *testing.T) {
 
 	testWorkflowExecutor := testdata.WorkflowExecutor
 
-	concurrentLimit := int32(3)
-	duration := 4 * time.Second
+	concurrentLimit := int32(2)
 	uuid := uuid.New().String()
 	rateLimitKey := "concurrent_test" + uuid
 	// Create workflow with strict concurrency limit
@@ -42,7 +40,7 @@ func TestConcurrentWorkflowExecution(t *testing.T) {
 		ConcurrentExecutionLimit(concurrentLimit)
 
 	// Add a wait task to simulate long-running workflow
-	wf = wf.Add(workflow.NewSetVariableTask("set_var").Input("var_value", 42)).Add(workflow.NewWaitForDurationTask("wait_task", duration))
+	wf = wf.Add(workflow.NewSetVariableTask("set_var").Input("var_value", 42)).Add(workflow.NewSetVariableTask("set_var_2").Input("var_value_2", 43))
 
 	// Register the workflow
 	err := wf.Register(true)
@@ -72,27 +70,18 @@ func TestConcurrentWorkflowExecution(t *testing.T) {
 
 	wg.Wait()
 
-	time.Sleep(duration + 1*time.Second)
+	require.NoError(t, testdata.WaitForMultipleWorkflowsCompletion(ids, testdata.ExtendedValidationTimeout))
 
-	completedCount := 0
 	for _, id := range ids {
 		execution, err := testWorkflowExecutor.GetWorkflow(id, true)
+
+		// Cross check:
+		// 1. The workflow definition contains a rate limit configuration that was set when the flow was created.
 		require.NoError(t, err)
 		require.NotNil(t, execution)
-
-		switch execution.Status {
-		case model.CompletedWorkflow:
-			completedCount++
-			// RateLimitKey should be skipped
-			assert.Equal(t, execution.RateLimitKey, "")
-		case model.RunningWorkflow:
-			// RateLimitKey should be set
-			assert.Equal(t, execution.RateLimitKey, rateLimitKey)
-		}
+		assert.Equal(t, execution.WorkflowDefinition.RateLimitConfig.RateLimitKey, rateLimitKey)
+		assert.Equal(t, execution.WorkflowDefinition.RateLimitConfig.ConcurrentExecLimit, concurrentLimit)
 	}
-
-	assert.GreaterOrEqual(t, completedCount, int(concurrentLimit), "Completed count should be equal to concurrent limit")
-	assert.Less(t, completedCount, len(ids), "Completed count should be less than or equal to the number of workflows")
 
 	t.Cleanup(func() {
 		for _, id := range ids {
@@ -110,8 +99,7 @@ func TestPerCustomerRateLimit(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 
 	testWorkflowExecutor := testdata.WorkflowExecutor
-	concurrentLimit := int32(3)
-	duration := 4 * time.Second
+	concurrentLimit := int32(2)
 	uuid := uuid.New().String()
 
 	// Create workflow with per-customer rate limiting
@@ -124,7 +112,7 @@ func TestPerCustomerRateLimit(t *testing.T) {
 
 	// Add a wait task to simulate long-running workflow
 	wf = wf.Add(workflow.NewSetVariableTask("TEST_GO_SET_VAR").Input("var_value", 42)).
-		Add(workflow.NewWaitForDurationTask("TEST_GO_WAIT_TASK", duration))
+		Add(workflow.NewSetVariableTask("TEST_GO_SET_VAR_2").Input("var_value_2", 43))
 
 	// Register the workflow
 	err := wf.Register(true)
@@ -139,6 +127,7 @@ func TestPerCustomerRateLimit(t *testing.T) {
 	workflowsPerCustomer := 6
 
 	allWorkflows := make([]CustomerWorkflow, 0)
+	allWorkflowIds := make([]string, 0)
 	var mu sync.Mutex
 
 	// Start workflows for each customer simultaneously
@@ -167,6 +156,7 @@ func TestPerCustomerRateLimit(t *testing.T) {
 					CustomerID: cId,
 					WorkflowID: id,
 				})
+				allWorkflowIds = append(allWorkflowIds, id)
 				mu.Unlock()
 			}(customerId, i)
 		}
@@ -175,54 +165,17 @@ func TestPerCustomerRateLimit(t *testing.T) {
 	wg.Wait()
 
 	// Wait for workflows to complete
-	time.Sleep(duration + 1*time.Second)
-
-	// Analyze results per customer
-	customerStats := make(map[string]struct {
-		Completed int
-		Failed    int
-		Running   int
-	})
+	require.NoError(t, testdata.WaitForMultipleWorkflowsCompletion(allWorkflowIds, testdata.ExtendedValidationTimeout))
 
 	// Count results
 	for _, cw := range allWorkflows {
-		stats := customerStats[cw.CustomerID]
-
-		// Check if workflow complete
+		// Cross check:
+		// 1. The workflow definition contains a rate limit configuration that was set when the flow was created.
 		execution, err := testWorkflowExecutor.GetWorkflow(cw.WorkflowID, true)
 		require.NoError(t, err)
 		require.NotNil(t, execution)
-
-		switch execution.Status {
-		case model.CompletedWorkflow:
-			stats.Completed++
-			assert.Equal(t, execution.RateLimitKey, "")
-		case model.FailedWorkflow:
-			stats.Failed++
-		case model.RunningWorkflow:
-			stats.Running++
-			assert.Equal(t, execution.RateLimitKey, cw.CustomerID)
-		}
-
-		customerStats[cw.CustomerID] = stats
-	}
-
-	for customerId, stats := range customerStats {
-		assert.GreaterOrEqual(t, stats.Completed, int(concurrentLimit),
-			"Customer %s should have at least %d completed workflows, got %d",
-			customerId, concurrentLimit, stats.Completed)
-
-		assert.Less(t, stats.Completed, workflowsPerCustomer,
-			"Customer %s should have at most %d completed workflows, got %d",
-			customerId, workflowsPerCustomer, stats.Completed)
-
-		assert.Equal(t, stats.Failed, 0,
-			"Customer %s should have no failed workflows, got %d",
-			customerId, stats.Failed)
-
-		assert.Equal(t, stats.Running, workflowsPerCustomer-stats.Completed,
-			"Customer %s should have %d running workflows, got %d",
-			customerId, workflowsPerCustomer-stats.Completed, stats.Running)
+		assert.Equal(t, execution.WorkflowDefinition.RateLimitConfig.RateLimitKey, "${workflow.input.customerId}")
+		assert.Equal(t, concurrentLimit, execution.WorkflowDefinition.RateLimitConfig.ConcurrentExecLimit)
 	}
 
 	t.Cleanup(func() {

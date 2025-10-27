@@ -17,13 +17,14 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/sdk/workflow"
 	"github.com/conductor-sdk/conductor-go/test/testdata"
+	"github.com/google/uuid"
 )
 
 func TestUpdateTaskRefByName(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
-
+	uuid := uuid.New().String()
 	simpleTaskWorkflow := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).
-		Name("TEST_GO_WORKFLOW_UPDATE_TASK").
+		Name("TEST_GO_WORKFLOW_UPDATE_TASK_" + uuid).
 		Version(1).
 		Add(testdata.TestSimpleTask)
 
