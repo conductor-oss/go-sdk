@@ -313,23 +313,42 @@ func TestWorkflowSearch(t *testing.T) {
 	// Run table-driven tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			searchResult, _, err := testdata.WorkflowClient.Search(context.Background(), tt.searchOpts)
+			var searchResult model.SearchResultWorkflowSummary
+			var err error
 
-			if tt.expectError {
-				assert.Error(t, err, "Search should return error for invalid query")
-				return
+			// For tests with minimum results requirement, use retry mechanism
+			if tt.expectMinResults > 0 && !tt.expectError {
+				err = testdata.RetryCondition(3, time.Second,
+					func() error {
+						// Execute search
+						searchResult, _, err = testdata.WorkflowClient.Search(context.Background(), tt.searchOpts)
+						return err
+					},
+					func() bool {
+						return len(searchResult.Results) >= tt.expectMinResults
+					})
+
+				// Verify retry results
+				assert.NoError(t, err, "Search should eventually return enough results")
+				assert.GreaterOrEqual(t, len(searchResult.Results), tt.expectMinResults,
+					"Should find minimum number of results after retries")
+			} else {
+				// For other tests, use standard search without retries
+				searchResult, _, err = testdata.WorkflowClient.Search(context.Background(), tt.searchOpts)
+
+				if tt.expectError {
+					assert.Error(t, err, "Search should return error for invalid query")
+					return
+				}
+
+				assert.NoError(t, err, "Search should not return error")
+				assert.NotNil(t, searchResult, "Search result should not be nil")
+
+				if tt.expectExactResults > 0 {
+					assert.Len(t, searchResult.Results, tt.expectExactResults, "Should find exact number of results")
+				}
 			}
 
-			assert.NoError(t, err, "Search should not return error")
-			assert.NotNil(t, searchResult, "Search result should not be nil")
-
-			if tt.expectExactResults > 0 {
-				assert.Len(t, searchResult.Results, tt.expectExactResults, "Should find exact number of results")
-			} else if tt.expectMinResults > 0 {
-				assert.GreaterOrEqual(t, len(searchResult.Results), tt.expectMinResults, "Should find minimum number of results")
-			}
-
-			// Run custom validation
 			tt.validateResults(t, searchResult.Results, workflowId1, workflowId2, wf1Name)
 		})
 	}
