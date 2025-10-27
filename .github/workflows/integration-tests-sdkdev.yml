@@ -46,7 +46,7 @@ jobs:
 
       - name: Run Integration tests (sdkdev cluster)
         run: |
-          gotestsum --format testname --junitfile report.xml --rerun-fails=3 --rerun-fails-report=rerun-report.xml --packages="./test/integration_tests/..." -- -v -count=1
+          gotestsum --format testname --junitfile report.xml --rerun-fails=3 --rerun-fails-report=rerun-report.txt --packages="./test/integration_tests/..." -- -v -count=1
 
       - name: Publish test results (sdkdev cluster)
         if: always()
@@ -57,6 +57,28 @@ jobs:
           reporter: java-junit
           fail-on-error: false
           fail-on-empty: true
+
+      - name: Append rerun details to Summary
+        if: always()
+        run: |
+          if [ -f rerun-report.txt ]; then
+            {
+              echo "### Rerun details"
+              echo '```'
+              cat rerun-report.txt
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-and-reruns
+          path: |
+            report.xml
+            rerun-report.txt
+          if-no-files-found: warn
 
       - name: Run Backward Compatibility Tests (sdkdev cluster)
         run: |
