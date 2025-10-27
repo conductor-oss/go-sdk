@@ -12,40 +12,30 @@ package client
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/sdk/model/rbac"
-	"net/http"
 )
 
+// ApplicationResourceApiService is the service for the application resource.
 type ApplicationResourceApiService struct {
 	*APIClient
 }
 
-/*
-ApplicationResourceApiService
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param applicationId
-  - @param role
-    @return interface{}
-*/
-func (a *ApplicationResourceApiService) AddRoleToApplicationUser(ctx context.Context, applicationId string, role string) (interface{}, *http.Response, error) {
-	var result interface{}
+// AddRoleToApplicationUser adds a role to an application user
+func (a *ApplicationResourceApiService) AddRoleToApplicationUser(ctx context.Context, applicationId string, role string) (*http.Response, error) {
 	path := fmt.Sprintf("/applications/%s/roles/%s", applicationId, role)
-	resp, err := a.Post(ctx, path, nil, &result)
+	resp, err := a.Post(ctx, path, nil, nil)
 	if err != nil {
-		return nil, resp, err
+		return resp, err
 	}
-	return result, resp, nil
+	return resp, nil
 }
 
-/*
-ApplicationResourceApiService Create an access key for an application
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param id
-    @return interface{}
-*/
-func (a *ApplicationResourceApiService) CreateAccessKey(ctx context.Context, id string) (*rbac.ConductorApplication, *http.Response, error) {
-	var result rbac.ConductorApplication
+// CreateAccessKey creates an access key for an application.
+func (a *ApplicationResourceApiService) CreateAccessKey(ctx context.Context, id string) (*rbac.CreateAccessKeyResponse, *http.Response, error) {
+	var result rbac.CreateAccessKeyResponse
 	path := fmt.Sprintf("/applications/%s/accessKeys", id)
 	resp, err := a.Post(ctx, path, nil, &result)
 	if err != nil {
@@ -55,12 +45,7 @@ func (a *ApplicationResourceApiService) CreateAccessKey(ctx context.Context, id 
 	return &result, resp, nil
 }
 
-/*
-ApplicationResourceApiService Create an application
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-    @return interface{}
-*/
+// CreateApplication creates an application.
 func (a *ApplicationResourceApiService) CreateApplication(ctx context.Context, body rbac.CreateOrUpdateApplicationRequest) (*rbac.ConductorApplication, *http.Response, error) {
 	var result rbac.ConductorApplication
 	resp, err := a.Post(ctx, "/applications", body, &result)
@@ -72,13 +57,7 @@ func (a *ApplicationResourceApiService) CreateApplication(ctx context.Context, b
 	return &result, resp, nil
 }
 
-/*
-ApplicationResourceApiService Delete an access key
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param applicationId
-  - @param keyId
-    @return interface{}
-*/
+// DeleteAccessKey deletes an access key for an application.
 func (a *ApplicationResourceApiService) DeleteAccessKey(ctx context.Context, applicationId string, keyId string) (*http.Response, error) {
 	path := fmt.Sprintf("/applications/%s/accessKeys/%s", applicationId, keyId)
 	resp, err := a.Delete(ctx, path, nil, nil)
@@ -89,28 +68,18 @@ func (a *ApplicationResourceApiService) DeleteAccessKey(ctx context.Context, app
 	return resp, nil
 }
 
-/*
-ApplicationResourceApiService Delete an application
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param id
-    @return interface{}
-*/
-func (a *ApplicationResourceApiService) DeleteApplication(ctx context.Context, id string) (interface{}, *http.Response, error) {
-	var result interface{}
+// DeleteApplication deletes an application.
+func (a *ApplicationResourceApiService) DeleteApplication(ctx context.Context, id string) (*rbac.DeleteApplicationResponse, *http.Response, error) {
+	var result rbac.DeleteApplicationResponse
 	path := fmt.Sprintf("/applications/%s", id)
 	resp, err := a.Delete(ctx, path, nil, &result)
 	if err != nil {
 		return nil, resp, err
 	}
-	return result, resp, nil
+	return &result, resp, nil
 }
 
-/*
-ApplicationResourceApiService Delete a tag for application
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-  - @param id
-*/
+// DeleteTagForApplication deletes a tag for an application.
 func (a *ApplicationResourceApiService) DeleteTagForApplication(ctx context.Context, body []model.Tag, id string) (*http.Response, error) {
 	path := fmt.Sprintf("/applications/%s/tags", id)
 	resp, err := a.DeleteWithBody(ctx, path, body, nil)
@@ -132,17 +101,17 @@ func (a *ApplicationResourceApiService) GetAccessKeys(ctx context.Context, id st
 }
 
 // GetAppByAccessKeyId gets an application by access key ID
-func (a *ApplicationResourceApiService) GetAppByAccessKeyId(ctx context.Context, accessKeyId string) (interface{}, *http.Response, error) {
-	var result interface{}
+func (a *ApplicationResourceApiService) GetAppByAccessKeyId(ctx context.Context, accessKeyId string) (*rbac.ConductorApplication, *http.Response, error) {
+	var result rbac.ConductorApplication
 	path := fmt.Sprintf("/applications/key/%s", accessKeyId)
 	resp, err := a.Get(ctx, path, nil, &result)
 	if err != nil {
 		return nil, resp, err
 	}
-	return result, resp, nil
+	return &result, resp, nil
 }
 
-// GetApplication gets an application by ID
+// GetApplication gets an application by ID.
 func (a *ApplicationResourceApiService) GetApplication(ctx context.Context, id string) (*rbac.ConductorApplication, *http.Response, error) {
 	var result rbac.ConductorApplication
 	path := fmt.Sprintf("/applications/%s", id)
@@ -186,25 +155,24 @@ func (a *ApplicationResourceApiService) PutTagForApplication(ctx context.Context
 }
 
 // RemoveRoleFromApplicationUser removes a role from an application user
-func (a *ApplicationResourceApiService) RemoveRoleFromApplicationUser(ctx context.Context, applicationId string, role string) (interface{}, *http.Response, error) {
-	var result interface{}
+func (a *ApplicationResourceApiService) RemoveRoleFromApplicationUser(ctx context.Context, applicationId string, role string) (*http.Response, error) {
 	path := fmt.Sprintf("/applications/%s/roles/%s", applicationId, role)
-	resp, err := a.Delete(ctx, path, nil, &result)
+	resp, err := a.Delete(ctx, path, nil, nil)
 	if err != nil {
-		return nil, resp, err
+		return resp, err
 	}
-	return result, resp, nil
+	return resp, nil
 }
 
 // ToggleAccessKeyStatus toggles the status of an access key
-func (a *ApplicationResourceApiService) ToggleAccessKeyStatus(ctx context.Context, applicationId string, keyId string) (interface{}, *http.Response, error) {
-	var result interface{}
+func (a *ApplicationResourceApiService) ToggleAccessKeyStatus(ctx context.Context, applicationId string, keyId string) (*rbac.AccessKeyResponse, *http.Response, error) {
+	var result rbac.AccessKeyResponse
 	path := fmt.Sprintf("/applications/%s/accessKeys/%s/status", applicationId, keyId)
 	resp, err := a.Post(ctx, path, nil, &result)
 	if err != nil {
 		return nil, resp, err
 	}
-	return result, resp, nil
+	return &result, resp, nil
 }
 
 // UpdateApplication updates an application
