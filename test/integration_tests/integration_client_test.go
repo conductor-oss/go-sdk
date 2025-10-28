@@ -154,17 +154,11 @@ func TestIntegrationClient(t *testing.T) {
 			ActiveOnly: optional.NewBool(true),
 		})
 
-	if err != nil {
-		t.Fatalf("Failed to get integrations. Reason: %s", err.Error())
-	}
+	require.NoError(t, err, "Failed to get integrations. Reason: %s", err.Error())
 
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("Expected status code 200, got %d", resp.StatusCode)
-	}
+	require.Equal(t, http.StatusOK, resp.StatusCode, "Expected status code 200, got %d", resp.StatusCode)
 	for i, integration := range integrations {
-		if !integration.Enabled {
-			t.Fatalf("Integration #%d (%s) is not active, but should be", i, integration.Name)
-		}
+		require.True(t, integration.Enabled, "Integration #%d (%s) is not active, but should be", i, integration.Name)
 	}
 
 	require.GreaterOrEqual(t, len(integrations), 2)

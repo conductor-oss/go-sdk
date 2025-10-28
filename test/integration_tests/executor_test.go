@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/conductor-sdk/conductor-go/sdk/log"
 	"github.com/conductor-sdk/conductor-go/sdk/workflow/executor"
 
 	"github.com/conductor-sdk/conductor-go/sdk/client"
@@ -499,38 +498,26 @@ func TestSubWorkflowSignalWithDurableConsistency(t *testing.T) {
 }
 
 // Helper method to register all the complex workflows
-func registerComplexWorkflows() {
+func registerComplexWorkflows(t *testing.T) {
 	executor := testdata.WorkflowExecutor
 
 	// Subworkflow-2
 	wfDef, err := getWorkflowDef("complex_wf_signal_test_subworkflow_2.json")
-	if err != nil {
-		log.Fatal("Failed to get workflow definition", "error", err)
-	}
+	require.NoError(t, err, "Failed to get workflow definition", "error", err)
 	err = executor.RegisterWorkflow(true, wfDef)
-	if err != nil {
-		log.Fatal("Failed to register workflow", "error", err)
-	}
+	require.NoError(t, err, "Failed to register workflow", "error", err)
 
 	// Subworkflow-1
 	wfDef, err = getWorkflowDef("complex_wf_signal_test_subworkflow_1.json")
-	if err != nil {
-		log.Fatal("Failed to get workflow definition", "error", err)
-	}
+	require.NoError(t, err, "Failed to get workflow definition", "error", err)
 	err = executor.RegisterWorkflow(true, wfDef)
-	if err != nil {
-		log.Fatal("Failed to register workflow", "error", err)
-	}
+	require.NoError(t, err, "Failed to register workflow", "error", err)
 
 	// Main WF
 	wfDef, err = getWorkflowDef("complex_wf_signal_test.json")
-	if err != nil {
-		log.Fatal("Failed to get workflow definition", "error", err)
-	}
+	require.NoError(t, err, "Failed to get workflow definition", "error", err)
 	err = executor.RegisterWorkflow(true, wfDef)
-	if err != nil {
-		log.Fatal("Failed to register workflow", "error", err)
-	}
+	require.NoError(t, err, "Failed to register workflow", "error", err)
 }
 
 func getWorkflowDef(filename string) (*model.WorkflowDef, error) {
@@ -551,7 +538,7 @@ func getWorkflowDef(filename string) (*model.WorkflowDef, error) {
 func TestSignal_AllStrategies_Comprehensive(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
 
-	registerComplexWorkflows()
+	registerComplexWorkflows(t)
 	testCases := []struct {
 		name                         string
 		returnStrategy               model.ReturnStrategy
@@ -861,7 +848,7 @@ func TestSignal_DefaultStrategy_IsTargetWorkflow(t *testing.T) {
 
 	// Setup workflow (same setup code as in your original test)
 	executor := testdata.WorkflowExecutor
-	registerComplexWorkflows()
+	registerComplexWorkflows(t)
 
 	startRequest := &model.StartWorkflowRequest{
 		Name:    "complex_wf_signal_test",
@@ -915,7 +902,7 @@ func TestSignal_MixedStrategy(t *testing.T) {
 
 	// Setup workflow (same setup code as in your original test)
 	executor := testdata.WorkflowExecutor
-	registerComplexWorkflows()
+	registerComplexWorkflows(t)
 
 	startRequest := &model.StartWorkflowRequest{
 		Name:    "complex_wf_signal_test",

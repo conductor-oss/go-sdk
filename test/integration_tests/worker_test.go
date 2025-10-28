@@ -16,6 +16,7 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/sdk/workflow"
 	"github.com/conductor-sdk/conductor-go/test/testdata"
+	"github.com/stretchr/testify/require"
 )
 
 func TestWorkerBatchSize(t *testing.T) {
@@ -31,43 +32,27 @@ func TestWorkerBatchSize(t *testing.T) {
 		5,
 		testdata.WorkerPollInterval,
 	)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	time.Sleep(1 * time.Second)
-	if testdata.TaskRunner.GetBatchSizeForTask(testdata.TestSimpleTask.ReferenceName()) != 5 {
-		t.Fatal("unexpected batch size")
-	}
+	require.Equal(t, 5, testdata.TaskRunner.GetBatchSizeForTask(testdata.TestSimpleTask.ReferenceName()), "Unexpected batch size")
 	err = testdata.ValidateWorkflowBulk(simpleTaskWorkflow, testdata.ExtendedValidationTimeout, testdata.WorkflowBulkQty)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	err = testdata.TaskRunner.SetBatchSize(
 		testdata.TestSimpleTask.ReferenceName(),
 		0,
 	)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	time.Sleep(1 * time.Second)
-	if testdata.TaskRunner.GetBatchSizeForTask(testdata.TestSimpleTask.ReferenceName()) != 0 {
-		t.Fatal("unexpected batch size")
-	}
+	require.Equal(t, 0, testdata.TaskRunner.GetBatchSizeForTask(testdata.TestSimpleTask.ReferenceName()), "Unexpected batch size")
 	err = testdata.TaskRunner.SetBatchSize(
 		testdata.TestSimpleTask.ReferenceName(),
 		8,
 	)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	time.Sleep(1 * time.Second)
-	if testdata.TaskRunner.GetBatchSizeForTask(testdata.TestSimpleTask.ReferenceName()) != 8 {
-		t.Fatal("unexpected batch size")
-	}
+	require.Equal(t, 8, testdata.TaskRunner.GetBatchSizeForTask(testdata.TestSimpleTask.ReferenceName()), "Unexpected batch size")
 	err = testdata.ValidateWorkflowBulk(simpleTaskWorkflow, testdata.ExtendedValidationTimeout, testdata.WorkflowBulkQty)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 }
 
 func TestFaultyWorker(t *testing.T) {
@@ -79,22 +64,16 @@ func TestFaultyWorker(t *testing.T) {
 		Version(1).
 		Add(workflow.NewSimpleTask(taskName, taskName))
 	err := wf.Register(true)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	err = testdata.TaskRunner.StartWorker(
 		taskName,
 		testdata.FaultyWorker,
 		5,
 		testdata.WorkerPollInterval,
 	)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	err = testdata.ValidateWorkflow(wf, 5*time.Second, model.FailedWorkflow)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 }
 
 func TestWorkerWithNonRetryableError(t *testing.T) {
@@ -106,20 +85,14 @@ func TestWorkerWithNonRetryableError(t *testing.T) {
 		Version(1).
 		Add(workflow.NewSimpleTask(taskName, taskName))
 	err := wf.Register(true)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	err = testdata.TaskRunner.StartWorker(
 		taskName,
 		testdata.FaultyWorker,
 		5,
 		testdata.WorkerPollInterval,
 	)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	err = testdata.ValidateWorkflow(wf, 5*time.Second, model.FailedWorkflow)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 }

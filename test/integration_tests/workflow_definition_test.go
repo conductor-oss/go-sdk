@@ -40,23 +40,17 @@ func TestWorkflowCreation(t *testing.T) {
 		Description("Simple Population Min Max workflow").
 		Add(testdata.NewSetStateVariableTask(workflow.NewSimpleTask("set_state", "set_state")))
 	err := wf.Register(true)
-	if err != nil {
-		t.Fatalf("Failed to register workflow: %s, reason: %s", wf.GetName(), err.Error())
-	}
+	require.NoError(t, err, "Failed to register workflow: %s, reason: %s", wf.GetName(), err.Error())
 
 	workflow := testdata.NewKitchenSinkWorkflow(testdata.WorkflowExecutor)
 	err = workflow.Register(true)
-	if err != nil {
-		t.Fatalf("Failed to register workflow: %s, reason: %s", workflow.GetName(), err.Error())
-	}
+	require.NoError(t, err, "Failed to register workflow: %s, reason: %s", workflow.GetName(), err.Error())
 	startWorkers()
 	run, err := executeWorkflowWithRetries(workflow, map[string]interface{}{
 		"key1": "input1",
 		"key2": 101,
 	})
-	if err != nil {
-		t.Fatalf("Failed to complete the workflow, reason: %s", err)
-	}
+	require.NoError(t, err, "Failed to complete the workflow, reason: %s", err)
 
 	assert.NotEmpty(t, run, "Workflow is null", run)
 	workflowId := run.WorkflowId
@@ -68,7 +62,8 @@ func TestWorkflowCreation(t *testing.T) {
 	for {
 		select {
 		case <-timeout:
-			t.Fatalf("Timed out and workflow %s didn't complete", workflowId)
+			require.Fail(t, fmt.Sprintf("Timed out and workflow %s didn't complete", workflowId))
+			return
 		case <-tick:
 			wf, err := executor.GetWorkflow(workflowId, false)
 			assert.NoError(t, err)
@@ -78,7 +73,8 @@ func TestWorkflowCreation(t *testing.T) {
 				assert.Equal(t, "input1", run.Input["key1"])
 				return
 			} else if wf.Status == model.FailedWorkflow || wf.Status == model.TerminatedWorkflow {
-				t.Fatalf("Workflow failed with status: %s", wf.Status)
+				require.Fail(t, fmt.Sprintf("Workflow failed with status: %s", wf.Status))
+				return
 			}
 		}
 	}
@@ -173,19 +169,14 @@ func TestExecuteWorkflowWithCorrelationIds(t *testing.T) {
 		Version(1).
 		Add(testdata.TestHttpTask)
 	_, err := httpTaskWorkflow1.StartWorkflow(&model.StartWorkflowRequest{CorrelationId: correlationId1})
-	if err != nil {
-		t.Fatal(err)
-	}
+
+	require.NoError(t, err)
 	_, err = httpTaskWorkflow2.StartWorkflow(&model.StartWorkflowRequest{CorrelationId: correlationId2})
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	time.Sleep(3 * time.Second)
 	workflows, err := executor.GetByCorrelationIdsAndNames(true, true,
 		[]string{correlationId1, correlationId2}, []string{httpTaskWorkflow1.GetName(), httpTaskWorkflow2.GetName()})
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	assert.Contains(t, workflows, correlationId1)
 	assert.Contains(t, workflows, correlationId2)
 	assert.NotEmpty(t, workflows[correlationId1])
@@ -203,9 +194,7 @@ func TestTerminateWorkflowWithFailure(t *testing.T) {
 		Version(1).
 		Add(workflow.NewSetVariableTask("set_var").Input("var_value", 42))
 	err := testdata.ValidateWorkflowRegistration(wf)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	workflowWait := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).
 		Name("TEST_GO_WORKFLOW_WAIT_CONDUCTOR").
@@ -213,22 +202,14 @@ func TestTerminateWorkflowWithFailure(t *testing.T) {
 		Add(workflow.NewWaitTask("termination_wait")).
 		FailureWorkflow(wf.GetName())
 	err = testdata.ValidateWorkflowRegistration(workflowWait)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	id, err := workflowWait.StartWorkflow(&model.StartWorkflowRequest{})
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	err = executor.TerminateWithFailure(id, "Terminated to trigger failure workflow", true)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	terminatedWfStatus, err := executor.GetWorkflow(id, false)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	assert.NotEmpty(t, terminatedWfStatus.Output["conductor.failure_workflow"])
 }
 
@@ -252,9 +233,7 @@ func TestExecuteWorkflowSync(t *testing.T) {
 		"key1": "input1",
 		"key2": 101,
 	})
-	if err != nil {
-		t.Fatalf("Failed to complete the workflow, reason: %s", err)
-	}
+	require.NoError(t, err, "Failed to complete the workflow, reason: %s", err)
 	assert.NotEmpty(t, run, "Workflow is null", run)
 	assert.Equal(t, model.CompletedWorkflow, run.Status)
 
