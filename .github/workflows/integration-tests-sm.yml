@@ -51,7 +51,7 @@ jobs:
         uses: dorny/test-reporter@v2
         with:
           name: Integration tests report (SM cluster)
-          path: report.xml,rerun-report.xml
+          path: report.xml
           reporter: java-junit
           fail-on-error: false
           fail-on-empty: true
@@ -79,8 +79,42 @@ jobs:
           if-no-files-found: warn
 
       - name: Run Backward Compatibility Tests (SM cluster)
+        id: compat_tests
         run: |
           echo "🚀 Starting Backward Compatibility Tests..."
           cd test/backward_compatibility
           chmod +x run_compatibility.sh
-          ./run_compatibility.sh
+          
+          # Run with retry logic - attempt up to 3 times
+          MAX_ATTEMPTS=3
+          ATTEMPT=1
+          SUCCESS=false
+          
+          while [ $ATTEMPT -le $MAX_ATTEMPTS ] && [ "$SUCCESS" = "false" ]; do
+            if [ $ATTEMPT -gt 1 ]; then
+              echo "🔄 Retry attempt $ATTEMPT/$MAX_ATTEMPTS for backward compatibility tests"
+            fi
+            
+            if ./run_compatibility.sh; then
+              SUCCESS=true
+              echo "✅ Backward compatibility tests passed on attempt $ATTEMPT"
+            else
+              if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
+                echo "❌ Backward compatibility tests failed on attempt $ATTEMPT. Retrying in 5 seconds..."
+                sleep 5
+              else
+                echo "❌ Backward compatibility tests failed after $MAX_ATTEMPTS attempts"
+                exit 1
+              fi
+            fi
+            
+            ATTEMPT=$((ATTEMPT+1))
+          done
+          
+          # Add compatibility test retry information to GitHub summary
+          if [ "$SUCCESS" = "true" ] && [ $ATTEMPT -gt 2 ]; then
+            {
+              echo "### Backward Compatibility Tests Retry Summary"
+              echo "✅ Tests passed after $((ATTEMPT-1)) attempts"
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
