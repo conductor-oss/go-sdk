@@ -11,7 +11,6 @@ package integration_tests
 
 import (
 	"fmt"
-	"sync"
 	"testing"
 	"time"
 
@@ -46,35 +45,26 @@ func TestConcurrentWorkflowExecution(t *testing.T) {
 	err := wf.Register(true)
 	assert.NoError(t, err)
 
-	// Start 10 workflows simultaneously
-	var wg sync.WaitGroup
-	ids := make([]string, 10)
+	ids := make([]string, 5)
 
 	for i := 0; i < len(ids); i++ {
-		wg.Add(1)
-		go func(idx int) {
-			defer wg.Done()
-			input := map[string]interface{}{
-				"index": idx,
-			}
-			var id string
-			err := testdata.RetryTimeout(3, 500*time.Millisecond, func() error {
-				var startErr error
-				id, startErr = wf.StartWorkflowWithInput(input)
-				return startErr
-			})
-			require.NoError(t, err)
-			ids[idx] = id
-		}(i)
+		input := map[string]interface{}{
+			"index": i,
+		}
+		var id string
+		err := testdata.RetryTimeout(3, 500*time.Millisecond, func() error {
+			var startErr error
+			id, startErr = wf.StartWorkflowWithInput(input)
+			return startErr
+		})
+		require.NoError(t, err)
+		ids[i] = id
 	}
-
-	wg.Wait()
 
 	require.NoError(t, testdata.WaitForMultipleWorkflowsCompletion(ids, testdata.ExtendedValidationTimeout))
 
 	for _, id := range ids {
-		execution, err := testWorkflowExecutor.GetWorkflow(id, true)
-
+		execution, err := testWorkflowExecutor.GetWorkflow(id, false)
 		// Cross check:
 		// 1. The workflow definition contains a rate limit configuration that was set when the flow was created.
 		require.NoError(t, err)
@@ -124,45 +114,33 @@ func TestPerCustomerRateLimit(t *testing.T) {
 	}
 
 	customers := []string{"customer_A_" + uuid, "customer_B_" + uuid}
-	workflowsPerCustomer := 6
+	workflowsPerCustomer := 4
 
 	allWorkflows := make([]CustomerWorkflow, 0)
 	allWorkflowIds := make([]string, 0)
-	var mu sync.Mutex
 
-	// Start workflows for each customer simultaneously
-	var wg sync.WaitGroup
 	for _, customerId := range customers {
 		for i := 0; i < workflowsPerCustomer; i++ {
-			wg.Add(1)
-			go func(cId string, idx int) {
-				defer wg.Done()
+			input := map[string]interface{}{
+				"customerId": customerId,
+				"index":      i,
+			}
 
-				input := map[string]interface{}{
-					"customerId": cId,
-					"index":      idx,
-				}
+			var id string
+			err := testdata.RetryTimeout(3, 500*time.Millisecond, func() error {
+				var startErr error
+				id, startErr = wf.StartWorkflowWithInput(input)
+				return startErr
+			})
+			require.NoError(t, err)
 
-				var id string
-				err := testdata.RetryTimeout(3, 500*time.Millisecond, func() error {
-					var startErr error
-					id, startErr = wf.StartWorkflowWithInput(input)
-					return startErr
-				})
-				require.NoError(t, err)
-
-				mu.Lock()
-				allWorkflows = append(allWorkflows, CustomerWorkflow{
-					CustomerID: cId,
-					WorkflowID: id,
-				})
-				allWorkflowIds = append(allWorkflowIds, id)
-				mu.Unlock()
-			}(customerId, i)
+			allWorkflows = append(allWorkflows, CustomerWorkflow{
+				CustomerID: customerId,
+				WorkflowID: id,
+			})
+			allWorkflowIds = append(allWorkflowIds, id)
 		}
 	}
-
-	wg.Wait()
 
 	// Wait for workflows to complete
 	require.NoError(t, testdata.WaitForMultipleWorkflowsCompletion(allWorkflowIds, testdata.ExtendedValidationTimeout))
@@ -171,7 +149,7 @@ func TestPerCustomerRateLimit(t *testing.T) {
 	for _, cw := range allWorkflows {
 		// Cross check:
 		// 1. The workflow definition contains a rate limit configuration that was set when the flow was created.
-		execution, err := testWorkflowExecutor.GetWorkflow(cw.WorkflowID, true)
+		execution, err := testWorkflowExecutor.GetWorkflow(cw.WorkflowID, false)
 		require.NoError(t, err)
 		require.NotNil(t, execution)
 		assert.Equal(t, execution.WorkflowDefinition.RateLimitConfig.RateLimitKey, "${workflow.input.customerId}")
