@@ -102,8 +102,8 @@ jobs:
               echo "✅ Backward compatibility tests passed on attempt $ATTEMPT"
             else
               if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
-                echo "❌ Backward compatibility tests failed on attempt $ATTEMPT. Retrying in 10 seconds..."
-                sleep 10
+                echo "❌ Backward compatibility tests failed on attempt $ATTEMPT. Retrying in 5 seconds..."
+                sleep 5
               else
                 echo "❌ Backward compatibility tests failed after $MAX_ATTEMPTS attempts"
                 exit 1
