@@ -40,17 +40,17 @@ func TestWorkflowCreation(t *testing.T) {
 		Description("Simple Population Min Max workflow").
 		Add(testdata.NewSetStateVariableTask(workflow.NewSimpleTask("set_state", "set_state")))
 	err := wf.Register(true)
-	require.NoError(t, err, "Failed to register workflow: %s, reason: %s", wf.GetName(), err.Error())
+	require.NoError(t, err, "Failed to register workflow")
 
 	workflow := testdata.NewKitchenSinkWorkflow(testdata.WorkflowExecutor)
 	err = workflow.Register(true)
-	require.NoError(t, err, "Failed to register workflow: %s, reason: %s", workflow.GetName(), err.Error())
+	require.NoError(t, err, "Failed to register workflow")
 	startWorkers()
 	run, err := executeWorkflowWithRetries(workflow, map[string]interface{}{
 		"key1": "input1",
 		"key2": 101,
 	})
-	require.NoError(t, err, "Failed to complete the workflow, reason: %s", err)
+	require.NoError(t, err, "Failed to complete the workflow")
 
 	assert.NotEmpty(t, run, "Workflow is null", run)
 	workflowId := run.WorkflowId
@@ -102,7 +102,7 @@ func TestRemoveWorkflow(t *testing.T) {
 	assert.NoError(t, err, "Failed to remove workflow execution")
 
 	_, err = executor.GetWorkflow(id, true)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Contains(t, err.Error(), "no such workflow by Id")
 
 	_, err = testdata.MetadataClient.UnregisterWorkflowDef(

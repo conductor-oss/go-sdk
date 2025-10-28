@@ -153,7 +153,7 @@ func TestGetWorkflow(t *testing.T) {
 	wf, err := executor.GetWorkflow(notFoundWorkflowId, false)
 
 	assert.Nil(t, wf)
-	assert.Error(t, err, "GetWorkflow is expected to return an error")
+	require.Error(t, err, "GetWorkflow is expected to return an error")
 	assert.Equal(t, fmt.Sprintf("no such workflow by Id %s", notFoundWorkflowId), err.Error())
 }
 
@@ -162,7 +162,7 @@ func TestUpdateTaskByRefName(t *testing.T) {
 
 	executor := testdata.WorkflowExecutor
 	err := executor.UpdateTaskByRefName("task_ref", notFoundWorkflowId, model.CompletedTask, map[string]interface{}{})
-	assert.Error(t, err, "UpdateTaskByRefName is expected to return an error")
+	require.Error(t, err, "UpdateTaskByRefName is expected to return an error")
 	if swaggerErr, ok := err.(client.GenericSwaggerError); ok {
 		assert.Equal(t, 404, swaggerErr.StatusCode())
 	} else {
@@ -175,7 +175,7 @@ func TestUpdate(t *testing.T) {
 
 	executor := testdata.WorkflowExecutor
 	err := executor.UpdateTask(notFoundTaskId, notFoundWorkflowId, model.CompletedTask, map[string]interface{}{})
-	assert.Error(t, err, "UpdateTask is expected to return an error")
+	require.Error(t, err, "UpdateTask is expected to return an error")
 	if swaggerErr, ok := err.(client.GenericSwaggerError); ok {
 		assert.Equal(t, 404, swaggerErr.StatusCode())
 	} else {
@@ -503,21 +503,21 @@ func registerComplexWorkflows(t *testing.T) {
 
 	// Subworkflow-2
 	wfDef, err := getWorkflowDef("complex_wf_signal_test_subworkflow_2.json")
-	require.NoError(t, err, "Failed to get workflow definition", "error", err)
+	require.NoError(t, err, "Failed to get workflow definition")
 	err = executor.RegisterWorkflow(true, wfDef)
-	require.NoError(t, err, "Failed to register workflow", "error", err)
+	require.NoError(t, err, "Failed to register workflow")
 
 	// Subworkflow-1
 	wfDef, err = getWorkflowDef("complex_wf_signal_test_subworkflow_1.json")
-	require.NoError(t, err, "Failed to get workflow definition", "error", err)
+	require.NoError(t, err, "Failed to get workflow definition")
 	err = executor.RegisterWorkflow(true, wfDef)
-	require.NoError(t, err, "Failed to register workflow", "error", err)
+	require.NoError(t, err, "Failed to register workflow")
 
 	// Main WF
 	wfDef, err = getWorkflowDef("complex_wf_signal_test.json")
-	require.NoError(t, err, "Failed to get workflow definition", "error", err)
+	require.NoError(t, err, "Failed to get workflow definition")
 	err = executor.RegisterWorkflow(true, wfDef)
-	require.NoError(t, err, "Failed to register workflow", "error", err)
+	require.NoError(t, err, "Failed to register workflow")
 }
 
 func getWorkflowDef(filename string) (*model.WorkflowDef, error) {

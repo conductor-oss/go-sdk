@@ -154,7 +154,7 @@ func TestIntegrationClient(t *testing.T) {
 			ActiveOnly: optional.NewBool(true),
 		})
 
-	require.NoError(t, err, "Failed to get integrations. Reason: %s", err.Error())
+	require.NoError(t, err, "Failed to get integrations")
 
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Expected status code 200, got %d", resp.StatusCode)
 	for i, integration := range integrations {
