@@ -38,7 +38,7 @@ func TestHttpTask(t *testing.T) {
 	require.NoError(t, err)
 
 	err = testdata.ValidateWorkflowDeletion(httpTaskWorkflow)
-	require.NoError(t, err, "Failed to delete workflow. Reason: %v", err)
+	require.NoError(t, err, "Failed to delete workflow")
 }
 
 func SimpleTask(t *testing.T) {
@@ -68,7 +68,7 @@ func SimpleTask(t *testing.T) {
 	require.NoError(t, err)
 
 	err = testdata.ValidateWorkflowDeletion(simpleTaskWorkflow)
-	require.NoError(t, err, "Failed to delete workflow. Reason: %v", err)
+	require.NoError(t, err, "Failed to delete workflow")
 }
 
 func SimpleTaskWithoutRetryCount(t *testing.T) {
@@ -100,7 +100,7 @@ func SimpleTaskWithoutRetryCount(t *testing.T) {
 	require.NoError(t, err)
 
 	err = testdata.ValidateWorkflowDeletion(simpleTaskWorkflow)
-	require.NoError(t, err, "Failed to delete workflow. Reason: %v", err)
+	require.NoError(t, err, "Failed to delete workflow")
 }
 
 func TestInlineTask(t *testing.T) {
@@ -116,7 +116,7 @@ func TestInlineTask(t *testing.T) {
 	require.NoError(t, err)
 
 	err = testdata.ValidateWorkflowDeletion(inlineTaskWorkflow)
-	require.NoError(t, err, "Failed to delete workflow. Reason: %v", err)
+	require.NoError(t, err, "Failed to delete workflow")
 }
 
 func TestSqsEventTask(t *testing.T) {
@@ -130,7 +130,7 @@ func TestSqsEventTask(t *testing.T) {
 	require.NoError(t, err)
 
 	err = testdata.ValidateWorkflowDeletion(workflow)
-	require.NoError(t, err, "Failed to delete workflow. Reason: %v", err)
+	require.NoError(t, err, "Failed to delete workflow")
 }
 
 func TestConductorEventTask(t *testing.T) {
@@ -144,7 +144,7 @@ func TestConductorEventTask(t *testing.T) {
 	require.NoError(t, err)
 
 	err = testdata.ValidateWorkflowDeletion(workflow)
-	require.NoError(t, err, "Failed to delete workflow. Reason: %v", err)
+	require.NoError(t, err, "Failed to delete workflow")
 }
 
 func TestKafkaPublishTask(t *testing.T) {
@@ -158,7 +158,7 @@ func TestKafkaPublishTask(t *testing.T) {
 	require.NoError(t, err)
 
 	err = testdata.ValidateWorkflowDeletion(workflow)
-	require.NoError(t, err, "Failed to delete workflow. Reason: %v", err)
+	require.NoError(t, err, "Failed to delete workflow")
 }
 
 func TestDoWhileTask(t *testing.T) {
@@ -176,7 +176,7 @@ func TestTerminateTask(t *testing.T) {
 	require.NoError(t, err)
 
 	err = testdata.ValidateWorkflowDeletion(workflow)
-	require.NoError(t, err, "Failed to delete workflow. Reason: %v", err)
+	require.NoError(t, err, "Failed to delete workflow")
 }
 
 func TestSwitchTask(t *testing.T) {
@@ -190,7 +190,7 @@ func TestSwitchTask(t *testing.T) {
 	require.NoError(t, err)
 
 	err = testdata.ValidateWorkflowDeletion(workflow)
-	require.NoError(t, err, "Failed to delete workflow. Reason: %v", err)
+	require.NoError(t, err, "Failed to delete workflow")
 }
 
 func TestDynamicForkWorkflow(t *testing.T) {
@@ -204,7 +204,7 @@ func TestDynamicForkWorkflow(t *testing.T) {
 	require.NoError(t, err)
 
 	err = testdata.ValidateWorkflowDeletion(wf)
-	require.NoError(t, err, "Failed to delete workflow. Reason: %v", err)
+	require.NoError(t, err, "Failed to delete workflow")
 }
 
 func createDynamicForkTask() *workflow.DynamicForkTask {
@@ -239,7 +239,7 @@ func TestComplexSwitchWorkflow(t *testing.T) {
 	assert.Equal(t, 7, counter)
 
 	err = testdata.ValidateWorkflowDeletion(wf)
-	require.NoError(t, err, "Failed to delete workflow. Reason: %v", err)
+	require.NoError(t, err, "Failed to delete workflow")
 }
 
 func TestRegisterWorkflow_SwitchEmptyDefaultCase(t *testing.T) {

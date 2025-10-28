@@ -404,16 +404,13 @@ func setupTestWorkflows(t *testing.T, uniqueSuffix, correlationId string) (workf
 
 // cleanupTestWorkflows removes test workflows and their definitions
 func cleanupTestWorkflows(t *testing.T, workflowId1, workflowId2, wf1Name, wf2Name string) {
-	if err := testdata.WorkflowExecutor.RemoveWorkflow(workflowId1); err != nil {
-		t.Logf("Warning: Failed to remove workflow 1: %v", err)
-	}
-	if err := testdata.WorkflowExecutor.RemoveWorkflow(workflowId2); err != nil {
-		t.Logf("Warning: Failed to remove workflow 2: %v", err)
-	}
-	if _, err := testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), wf1Name, 1); err != nil {
-		t.Logf("Warning: Failed to remove workflow definition 1: %v", err)
-	}
-	if _, err := testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), wf2Name, 1); err != nil {
-		t.Logf("Warning: Failed to remove workflow definition 2: %v", err)
-	}
+	err := testdata.WorkflowExecutor.RemoveWorkflow(workflowId1)
+	assert.NoError(t, err, "Failed to remove workflow 1")
+	err = testdata.WorkflowExecutor.RemoveWorkflow(workflowId2)
+	assert.NoError(t, err, "Failed to remove workflow 2")
+
+	_, err = testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), wf1Name, 1)
+	assert.NoError(t, err, "Failed to remove workflow definition 1")
+	_, err = testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), wf2Name, 1)
+	assert.NoError(t, err, "Failed to remove workflow definition 2")
 }

@@ -49,7 +49,7 @@ func TestRegisterWorkflowDef(t *testing.T) {
 
 	t.Cleanup(func() {
 		_, err := testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), WorkflowName, 1)
-		require.NoError(t, err, "Failed to delete workflow. Reason: %v", err)
+		require.NoError(t, err, "Failed to delete workflow")
 	})
 }
 
@@ -97,7 +97,7 @@ func TestRegisterWorkflowDefWithTags(t *testing.T) {
 
 	t.Cleanup(func() {
 		_, err := testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), WorkflowName, 1)
-		require.NoError(t, err, "Failed to delete workflow. Reason: %v", err)
+		require.NoError(t, err, "Failed to delete workflow")
 	})
 }
 
@@ -160,8 +160,7 @@ func TestUpdateWorkflowDefWithTags(t *testing.T) {
 
 	t.Cleanup(func() {
 		_, err := testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), WorkflowName, 1)
-
-		require.NoError(t, err, "Failed to delete workflow. Reason: %v", err)
+		require.NoError(t, err, "Failed to delete workflow")
 	})
 }
 
@@ -245,6 +244,6 @@ func TestUpdateTaskDefWithTags(t *testing.T) {
 
 	t.Cleanup(func() {
 		_, err := testdata.MetadataClient.UnregisterTaskDef(context.Background(), TaskName)
-		require.NoError(t, err, "Failed to delete task definition. Reason: %v", err)
+		require.NoError(t, err, "Failed to delete task definition")
 	})
 }

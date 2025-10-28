@@ -976,9 +976,7 @@ func TestGetWorkflowsBatch(t *testing.T) {
 	t.Cleanup(func() {
 		for _, id := range workflowIds {
 			err = testdata.WorkflowExecutor.RemoveWorkflow(id)
-			if err != nil {
-				t.Logf("Warning: Failed to remove workflow %s: %v", id, err)
-			}
+			assert.NoError(t, err, "Failed to remove workflow %s", id)
 		}
 
 		_, err = testdata.MetadataClient.UnregisterWorkflowDef(
@@ -986,9 +984,7 @@ func TestGetWorkflowsBatch(t *testing.T) {
 			wf.GetName(),
 			wf.GetVersion(),
 		)
-		if err != nil {
-			t.Logf("Warning: Failed to remove workflow definition: %v", err)
-		}
+		assert.NoError(t, err, "Failed to remove workflow definition")
 	})
 	err = testdata.WaitForMultipleWorkflowsCompletion(workflowIds, testdata.WorkflowValidationTimeout)
 	assert.NoError(t, err, "Failed to wait for workflow completion")

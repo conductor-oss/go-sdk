@@ -32,7 +32,7 @@ func TestUpdateTaskRefByName(t *testing.T) {
 
 	err := testdata.ValidateWorkflowRegistration(simpleTaskWorkflow)
 
-	require.NoError(t, err, "Failed to register workflow. Reason: %v", err)
+	require.NoError(t, err, "Failed to register workflow")
 
 	workflowId, response, err := testdata.WorkflowClient.StartWorkflow(
 		context.Background(),
@@ -40,7 +40,7 @@ func TestUpdateTaskRefByName(t *testing.T) {
 		simpleTaskWorkflow.GetName(),
 		nil,
 	)
-	require.NoError(t, err, "Failed to start workflow. Reason: %v", err)
+	require.NoError(t, err, "Failed to start workflow")
 	require.Equal(t, http.StatusOK, response.StatusCode, "Expected status code 200, got %d", response.StatusCode)
 	require.NotEmpty(t, workflowId, "Workflow ID is empty")
 	outputData := map[string]interface{}{
@@ -53,7 +53,7 @@ func TestUpdateTaskRefByName(t *testing.T) {
 		testdata.TaskName,
 		string(model.CompletedTask),
 	)
-	require.NoError(t, err, "Failed to updated task by ref name. Reason: %v", err)
+	require.NoError(t, err, "Failed to updated task by ref name")
 	require.Equal(t, http.StatusOK, response.StatusCode, "Expected status code 200, got %d", response.StatusCode)
 	require.NotEmpty(t, returnValue, "Return value is empty")
 	errorChannel := make(chan error)
@@ -65,8 +65,8 @@ func TestUpdateTaskRefByName(t *testing.T) {
 		model.CompletedWorkflow,
 	)
 	err = <-errorChannel
-	require.NoError(t, err, "Failed to validate workflow. Reason: %v", err)
+	require.NoError(t, err, "Failed to validate workflow")
 
 	err = testdata.ValidateWorkflowDeletion(simpleTaskWorkflow)
-	require.NoError(t, err, "Failed to delete workflow. Reason: %v", err)
+	require.NoError(t, err, "Failed to delete workflow")
 }

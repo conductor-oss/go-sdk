@@ -24,7 +24,7 @@ func TestCheckPermissions(t *testing.T) {
 	id := "kitchen_sink"
 
 	permissions, resp, err := client.CheckPermissions(ctx, userId, type_, id)
-	require.NoError(t, err, "CheckPermissions failed: %v", err)
+	require.NoError(t, err, "CheckPermissions failed")
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Expected status code 200, got %d", resp.StatusCode)
 	_, ok := permissions["CREATE"]
 	require.True(t, ok, "Expected 'allowed' field in the response, but found %s", permissions)
@@ -40,7 +40,7 @@ func TestDeleteUser(t *testing.T) {
 	id := "testuser"
 
 	resp, err := client.DeleteUser(ctx, id)
-	require.NoError(t, err, "DeleteUser failed: %v", err)
+	require.NoError(t, err, "DeleteUser failed")
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Expected status code 200, got %d", resp.StatusCode)
 }
 
@@ -54,7 +54,7 @@ func TestGetGrantedPermissions(t *testing.T) {
 	userId := "testuser"
 
 	permissions, resp, err := client.GetGrantedPermissions(ctx, userId)
-	require.NoError(t, err, "GetGrantedPermissions failed: %v", err)
+	require.NoError(t, err, "GetGrantedPermissions failed")
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Expected status code 200, got %d", resp.StatusCode)
 	require.Equal(t, 0, len(permissions.GrantedAccess), "Expected non-empty permissions")
 }
@@ -69,7 +69,7 @@ func TestGetUser(t *testing.T) {
 	id := "testuser"
 
 	user, resp, err := client.GetUser(ctx, id)
-	require.NoError(t, err, "GetUser failed: %v", err)
+	require.NoError(t, err, "GetUser failed")
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Expected status code 200, got %d", resp.StatusCode)
 	require.Equal(t, id, user.Id, "Expected user ID %v, got %v", id, user.Id)
 }
@@ -97,7 +97,7 @@ func TestListUsers(t *testing.T) {
 	options := client.UserResourceApiListUsersOpts{Apps: optional.NewBool(true)}
 
 	users, resp, err := user_client.ListUsers(ctx, &options)
-	require.NoError(t, err, "ListUsers failed: %v", err)
+	require.NoError(t, err, "ListUsers failed")
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Expected status code 200, got %d", resp.StatusCode)
 	require.Greater(t, len(users), 0, "Expected non-empty user list")
 }
@@ -115,7 +115,7 @@ func TestUpsertUser(t *testing.T) {
 	id := "testUser"
 
 	user, resp, err := client.UpsertUser(ctx, body, id)
-	require.NoError(t, err, "UpsertUser failed: %v", err)
+	require.NoError(t, err, "UpsertUser failed")
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Expected status code 200, got %d", resp.StatusCode)
 	require.Equal(t, body.Name, user.Name, "Expected username %v, got %v", body.Name, user.Name)
 }
