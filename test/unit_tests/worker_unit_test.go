@@ -129,7 +129,7 @@ func TestTaskRunnerTimeoutSettings(t *testing.T) {
 	defaultTimeout := -1 * time.Millisecond
 	assert.Equal(t, defaultTimeout, taskRunner.GetPollTimeout())
 	taskTimeout, err := taskRunner.GetPollTimeoutForTask("le_task")
-	require.Error(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, defaultTimeout, taskTimeout)
 
 	// (2) setting the global timeout should apply to all tasks
