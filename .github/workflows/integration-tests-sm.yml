@@ -40,6 +40,11 @@ jobs:
       - name: Build
         run: go build ./...
 
+      - name: Display test configuration
+        run: |
+          echo "🔧 Test Configuration:"
+          echo "   Server URL: $CONDUCTOR_SERVER_URL"
+
       - name: Install gotestsum
         run: go install gotest.tools/gotestsum@v1.12.0
 
