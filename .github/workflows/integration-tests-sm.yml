@@ -43,7 +43,8 @@ jobs:
       - name: Display test configuration
         run: |
           echo "🔧 Test Configuration:"
-          echo "   Server URL: $CONDUCTOR_SERVER_URL"
+          URL_WITHOUT_PROTOCOL=$(echo "$CONDUCTOR_SERVER_URL" | sed 's|https\?://||')
+          echo "   Server: $URL_WITHOUT_PROTOCOL"
 
       - name: Install gotestsum
         run: go install gotest.tools/gotestsum@v1.12.0
