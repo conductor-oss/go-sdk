@@ -83,17 +83,16 @@ func TestRegisterWorkflowDefWithTags(t *testing.T) {
 	tags, _, err2 := testdata.TagsClient.GetWorkflowTags(context.Background(), WorkflowName)
 
 	require.NoError(t, err2)
-	assert.Equal(t, len(tags), 1)
-	assert.Equal(t, tags[0].Key, tag0.Key)
-	assert.Equal(t, tags[0].Value, tag0.Value)
+	assert.Equal(t, 1, len(tags))
+	assert.Equal(t, tag0.Key, tags[0].Key)
+	assert.Equal(t, tag0.Value, tags[0].Value)
 
 	tags2, err := testdata.MetadataClient.GetTagsForWorkflowDef(context.Background(), WorkflowName)
 
-	if err == nil {
-		assert.Equal(t, len(tags2), 1)
-		assert.Equal(t, tags2[0].Key, "key_0")
-		assert.Equal(t, tags2[0].Value, "value_0")
-	}
+	require.NoError(t, err)
+	assert.Equal(t, 1, len(tags2))
+	assert.Equal(t, "key_0", tags2[0].Key)
+	assert.Equal(t, "value_0", tags2[0].Value)
 
 	t.Cleanup(func() {
 		_, err := testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), WorkflowName, 1)
@@ -154,7 +153,7 @@ func TestUpdateWorkflowDefWithTags(t *testing.T) {
 		fetchedTags, err := testdata.MetadataClient.GetTagsForWorkflowDef(context.Background(), WorkflowName)
 
 		require.NoError(t, err)
-		assert.Equal(t, len(fetchedTags), len(tc.expectedTags))
+		assert.Equal(t, len(tc.expectedTags), len(fetchedTags))
 		assert.ElementsMatch(t, fetchedTags, tc.expectedTags)
 	}
 
@@ -184,9 +183,9 @@ func TestRegisterTaskDefWithTags(t *testing.T) {
 	fetchedTags, _, err := testdata.TagsClient.GetTaskTags(context.Background(), TaskName)
 
 	require.NoError(t, err)
-	assert.Equal(t, len(tags), 1)
-	assert.Equal(t, fetchedTags[0].Key, tag0.Key)
-	assert.Equal(t, fetchedTags[0].Value, tag0.Value)
+	assert.Equal(t, 1, len(tags))
+	assert.Equal(t, tag0.Key, fetchedTags[0].Key)
+	assert.Equal(t, tag0.Value, fetchedTags[0].Value)
 
 }
 
@@ -195,9 +194,9 @@ func TestGetTagsForTaskDef(t *testing.T) {
 
 	tags, err := testdata.MetadataClient.GetTagsForTaskDef(context.Background(), TaskName)
 	require.NoError(t, err)
-	assert.Equal(t, len(tags), 1)
-	assert.Equal(t, tags[0].Key, "key_0")
-	assert.Equal(t, tags[0].Value, "value_0")
+	assert.Equal(t, 1, len(tags))
+	assert.Equal(t, "key_0", tags[0].Key)
+	assert.Equal(t, "value_0", tags[0].Value)
 }
 
 func TestUpdateTaskDefWithTags(t *testing.T) {
@@ -238,7 +237,7 @@ func TestUpdateTaskDefWithTags(t *testing.T) {
 		fetchedTags, err := testdata.MetadataClient.GetTagsForTaskDef(context.Background(), TaskName)
 
 		require.NoError(t, err)
-		assert.Equal(t, len(fetchedTags), len(tc.expectedTags))
+		assert.Equal(t, len(tc.expectedTags), len(fetchedTags))
 		assert.ElementsMatch(t, fetchedTags, tc.expectedTags)
 	}
 

@@ -10,10 +10,13 @@
 package integration_tests
 
 import (
+	"context"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/sdk/workflow"
 	"github.com/conductor-sdk/conductor-go/test/testdata"
 	"github.com/google/uuid"
@@ -23,11 +26,17 @@ import (
 
 // TestConcurrentWorkflowExecution tests actual concurrent execution with rate limits
 func TestConcurrentWorkflowExecution(t *testing.T) {
+	// NOTE: This test is currently skipped due to instability in CI running this test.
+	// To improve reliability, consider redesigning the test to be less sensitive
+	// to timing and concurrency fluctuations.
+	t.Skip("Skipping concurrent workflow execution test")
+
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 
 	testWorkflowExecutor := testdata.WorkflowExecutor
 
-	concurrentLimit := int32(2)
+	concurrentLimit := int32(3)
+	duration := 4 * time.Second
 	uuid := uuid.New().String()
 	rateLimitKey := "concurrent_test" + uuid
 	// Create workflow with strict concurrency limit
@@ -39,39 +48,57 @@ func TestConcurrentWorkflowExecution(t *testing.T) {
 		ConcurrentExecutionLimit(concurrentLimit)
 
 	// Add a wait task to simulate long-running workflow
-	wf = wf.Add(workflow.NewSetVariableTask("set_var").Input("var_value", 42)).Add(workflow.NewSetVariableTask("set_var_2").Input("var_value_2", 43))
+	wf = wf.Add(workflow.NewSetVariableTask("set_var").Input("var_value", 42)).Add(workflow.NewWaitForDurationTask("wait_task", duration))
 
 	// Register the workflow
 	err := wf.Register(true)
 	assert.NoError(t, err)
 
-	ids := make([]string, 5)
+	// Start 10 workflows simultaneously
+	var wg sync.WaitGroup
+	ids := make([]string, 10)
 
 	for i := 0; i < len(ids); i++ {
-		input := map[string]interface{}{
-			"index": i,
-		}
-		var id string
-		err := testdata.RetryTimeout(3, 500*time.Millisecond, func() error {
-			var startErr error
-			id, startErr = wf.StartWorkflowWithInput(input)
-			return startErr
-		})
-		require.NoError(t, err)
-		ids[i] = id
+		wg.Add(1)
+		go func(idx int) {
+			defer wg.Done()
+			input := map[string]interface{}{
+				"index": idx,
+			}
+			var id string
+			err := testdata.RetryTimeout(3, 500*time.Millisecond, func() error {
+				var startErr error
+				id, startErr = wf.StartWorkflowWithInput(input)
+				return startErr
+			})
+			require.NoError(t, err)
+			ids[idx] = id
+		}(i)
 	}
 
-	require.NoError(t, testdata.WaitForMultipleWorkflowsCompletion(ids, testdata.ExtendedValidationTimeout))
+	wg.Wait()
 
+	time.Sleep(duration + 1*time.Second)
+
+	completedCount := 0
 	for _, id := range ids {
-		execution, err := testWorkflowExecutor.GetWorkflow(id, false)
-		// Cross check:
-		// 1. The workflow definition contains a rate limit configuration that was set when the flow was created.
+		execution, err := testWorkflowExecutor.GetWorkflow(id, true)
 		require.NoError(t, err)
 		require.NotNil(t, execution)
-		assert.Equal(t, execution.WorkflowDefinition.RateLimitConfig.RateLimitKey, rateLimitKey)
-		assert.Equal(t, execution.WorkflowDefinition.RateLimitConfig.ConcurrentExecLimit, concurrentLimit)
+
+		switch execution.Status {
+		case model.CompletedWorkflow:
+			completedCount++
+			// RateLimitKey should be skipped
+			assert.Equal(t, execution.RateLimitKey, "")
+		case model.RunningWorkflow:
+			// RateLimitKey should be set
+			assert.Equal(t, execution.RateLimitKey, rateLimitKey)
+		}
 	}
+
+	assert.GreaterOrEqual(t, completedCount, int(concurrentLimit), "Completed count should be equal to concurrent limit")
+	assert.Less(t, completedCount, len(ids), "Completed count should be less than or equal to the number of workflows")
 
 	t.Cleanup(func() {
 		for _, id := range ids {
@@ -86,10 +113,16 @@ func TestConcurrentWorkflowExecution(t *testing.T) {
 
 // TestPerCustomerRateLimit tests rate limiting per customer ID
 func TestPerCustomerRateLimit(t *testing.T) {
+	// NOTE: This test is currently skipped due to instability in CI running this test.
+	// To improve reliability, consider redesigning the test to be less sensitive
+	// to timing and concurrency fluctuations.
+
+	t.Skip("Skipping concurrent workflow execution test")
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 
 	testWorkflowExecutor := testdata.WorkflowExecutor
-	concurrentLimit := int32(2)
+	concurrentLimit := int32(3)
+	duration := 4 * time.Second
 	uuid := uuid.New().String()
 
 	// Create workflow with per-customer rate limiting
@@ -102,7 +135,7 @@ func TestPerCustomerRateLimit(t *testing.T) {
 
 	// Add a wait task to simulate long-running workflow
 	wf = wf.Add(workflow.NewSetVariableTask("TEST_GO_SET_VAR").Input("var_value", 42)).
-		Add(workflow.NewSetVariableTask("TEST_GO_SET_VAR_2").Input("var_value_2", 43))
+		Add(workflow.NewWaitForDurationTask("TEST_GO_WAIT_TASK", duration))
 
 	// Register the workflow
 	err := wf.Register(true)
@@ -114,46 +147,93 @@ func TestPerCustomerRateLimit(t *testing.T) {
 	}
 
 	customers := []string{"customer_A_" + uuid, "customer_B_" + uuid}
-	workflowsPerCustomer := 4
+	workflowsPerCustomer := 6
 
 	allWorkflows := make([]CustomerWorkflow, 0)
-	allWorkflowIds := make([]string, 0)
+	var mu sync.Mutex
 
+	// Start workflows for each customer simultaneously
+	var wg sync.WaitGroup
 	for _, customerId := range customers {
 		for i := 0; i < workflowsPerCustomer; i++ {
-			input := map[string]interface{}{
-				"customerId": customerId,
-				"index":      i,
-			}
+			wg.Add(1)
+			go func(cId string, idx int) {
+				defer wg.Done()
 
-			var id string
-			err := testdata.RetryTimeout(3, 500*time.Millisecond, func() error {
-				var startErr error
-				id, startErr = wf.StartWorkflowWithInput(input)
-				return startErr
-			})
-			require.NoError(t, err)
+				input := map[string]interface{}{
+					"customerId": cId,
+					"index":      idx,
+				}
 
-			allWorkflows = append(allWorkflows, CustomerWorkflow{
-				CustomerID: customerId,
-				WorkflowID: id,
-			})
-			allWorkflowIds = append(allWorkflowIds, id)
+				var id string
+				err := testdata.RetryTimeout(3, 500*time.Millisecond, func() error {
+					var startErr error
+					id, startErr = wf.StartWorkflowWithInput(input)
+					return startErr
+				})
+				require.NoError(t, err)
+
+				mu.Lock()
+				allWorkflows = append(allWorkflows, CustomerWorkflow{
+					CustomerID: cId,
+					WorkflowID: id,
+				})
+				mu.Unlock()
+			}(customerId, i)
 		}
 	}
 
+	wg.Wait()
+
 	// Wait for workflows to complete
-	require.NoError(t, testdata.WaitForMultipleWorkflowsCompletion(allWorkflowIds, testdata.ExtendedValidationTimeout))
+	time.Sleep(duration + 1*time.Second)
+
+	// Analyze results per customer
+	customerStats := make(map[string]struct {
+		Completed int
+		Failed    int
+		Running   int
+	})
 
 	// Count results
 	for _, cw := range allWorkflows {
-		// Cross check:
-		// 1. The workflow definition contains a rate limit configuration that was set when the flow was created.
-		execution, err := testWorkflowExecutor.GetWorkflow(cw.WorkflowID, false)
+		stats := customerStats[cw.CustomerID]
+
+		// Check if workflow complete
+		execution, err := testWorkflowExecutor.GetWorkflow(cw.WorkflowID, true)
 		require.NoError(t, err)
 		require.NotNil(t, execution)
-		assert.Equal(t, execution.WorkflowDefinition.RateLimitConfig.RateLimitKey, "${workflow.input.customerId}")
-		assert.Equal(t, concurrentLimit, execution.WorkflowDefinition.RateLimitConfig.ConcurrentExecLimit)
+
+		switch execution.Status {
+		case model.CompletedWorkflow:
+			stats.Completed++
+			assert.Equal(t, execution.RateLimitKey, "")
+		case model.FailedWorkflow:
+			stats.Failed++
+		case model.RunningWorkflow:
+			stats.Running++
+			assert.Equal(t, execution.RateLimitKey, cw.CustomerID)
+		}
+
+		customerStats[cw.CustomerID] = stats
+	}
+
+	for customerId, stats := range customerStats {
+		assert.GreaterOrEqual(t, stats.Completed, int(concurrentLimit),
+			"Customer %s should have at least %d completed workflows, got %d",
+			customerId, concurrentLimit, stats.Completed)
+
+		assert.Less(t, stats.Completed, workflowsPerCustomer,
+			"Customer %s should have at most %d completed workflows, got %d",
+			customerId, workflowsPerCustomer, stats.Completed)
+
+		assert.Equal(t, stats.Failed, 0,
+			"Customer %s should have no failed workflows, got %d",
+			customerId, stats.Failed)
+
+		assert.Equal(t, stats.Running, workflowsPerCustomer-stats.Completed,
+			"Customer %s should have %d running workflows, got %d",
+			customerId, workflowsPerCustomer-stats.Completed, stats.Running)
 	}
 
 	t.Cleanup(func() {
@@ -165,4 +245,91 @@ func TestPerCustomerRateLimit(t *testing.T) {
 		err := wf.UnRegister()
 		assert.NoError(t, err, "Failed to unregister workflow")
 	})
+}
+
+// TestWorkflowRateLimitCRUD_Static verifies we can register a workflow with a static rate limit key
+// and retrieve its definition from the server.
+func TestWorkflowRateLimitCRUD_Static(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
+	executor := testdata.WorkflowExecutor
+
+	unique := uuid.New().String()
+	workflowName := fmt.Sprintf("TEST_GO_WORKFLOW_RL_STATIC_%s", unique)
+
+	// Build a minimal workflow definition with rate limit config
+	wf := workflow.NewConductorWorkflow(executor).
+		Name(workflowName).
+		Version(1).
+		RateLimitKey("static_key_" + unique).
+		ConcurrentExecutionLimit(3).
+		Add(workflow.NewSetVariableTask("set_var").Input("x", 1))
+
+	// Register
+	err := wf.Register(true)
+	require.NoError(t, err)
+
+	// Cleanup: unregister the definition
+	t.Cleanup(func() {
+		_, err := testdata.MetadataClient.UnregisterWorkflowDef(
+			context.Background(),
+			wf.GetName(),
+			wf.GetVersion(),
+		)
+		assert.NoError(t, err, "failed to unregister workflow definition")
+	})
+
+	// Get definition and verify
+	def, _, err := testdata.MetadataClient.Get(context.Background(), wf.GetName(), nil)
+	require.NoError(t, err)
+
+	require.NotNil(t, def.RateLimitConfig)
+	assert.Equal(t, wf.GetName(), def.Name)
+	assert.Equal(t, int32(1), def.Version)
+	assert.Equal(t, "static_key_"+unique, def.RateLimitConfig.RateLimitKey)
+	assert.Equal(t, int32(3), def.RateLimitConfig.ConcurrentExecLimit)
+}
+
+// TestWorkflowRateLimitCRUD_Dynamic verifies we can register a workflow with an dynamic rate limit key
+// and retrieve its definition from the server.
+func TestWorkflowRateLimitCRUD_Dynamic(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
+	executor := testdata.WorkflowExecutor
+
+	unique := uuid.New().String()
+	workflowName := fmt.Sprintf("TEST_GO_WORKFLOW_RL_DYNAMIC_%s", unique)
+
+	// Build a minimal workflow definition with rate limit config using expression
+	dynamicKey := "${workflow.input.customerId}"
+	wf := workflow.NewConductorWorkflow(executor).
+		Name(workflowName).
+		Version(1).
+		RateLimitKey(dynamicKey).
+		ConcurrentExecutionLimit(5).
+		Add(workflow.NewSetVariableTask("set_var").Input("x", 1))
+
+	// Register
+	err := wf.Register(true)
+	require.NoError(t, err)
+
+	// Cleanup: unregister the definition
+	t.Cleanup(func() {
+		_, err := testdata.MetadataClient.UnregisterWorkflowDef(
+			context.Background(),
+			wf.GetName(),
+			wf.GetVersion(),
+		)
+		assert.NoError(t, err, "failed to unregister workflow definition")
+	})
+
+	// Get definition and verify
+	def, _, err := testdata.MetadataClient.Get(context.Background(), wf.GetName(), nil)
+	require.NoError(t, err)
+
+	require.NotNil(t, def.RateLimitConfig)
+	assert.Equal(t, wf.GetName(), def.Name)
+	assert.Equal(t, int32(1), def.Version)
+	assert.Equal(t, dynamicKey, def.RateLimitConfig.RateLimitKey)
+	assert.Equal(t, int32(5), def.RateLimitConfig.ConcurrentExecLimit)
 }

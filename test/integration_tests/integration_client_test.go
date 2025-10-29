@@ -78,7 +78,7 @@ func TestIntegrationClient(t *testing.T) {
 	promptTemplate, resp, err := promptClient.GetMessageTemplate(ctx, promptName)
 	require.NoError(t, err)
 	require.NotNil(t, resp, "response should not be nil for GetMessageTemplate")
-	require.Equal(t, resp.StatusCode, 200)
+	require.Equal(t, 200, resp.StatusCode)
 	require.NotNil(t, promptTemplate)
 	require.Equal(t, promptName, promptTemplate.Name)
 	require.Equal(t, description, promptTemplate.Description)
@@ -100,27 +100,27 @@ func TestIntegrationClient(t *testing.T) {
 	resp, err = promptClient.PutTagForPromptTemplate(ctx, tags, promptName)
 	require.NoError(t, err)
 	require.NotNil(t, resp, "response should not be nil for PutTagForPromptTemplate")
-	require.Equal(t, resp.StatusCode, 200)
+	require.Equal(t, 200, resp.StatusCode)
 
 	// Get Tags on prompt template
 	tags, resp, err = promptClient.GetTagsForPromptTemplate(ctx, promptName)
 	require.NoError(t, err)
 	require.NotNil(t, resp, "response should not be nil for GetTagsForPromptTemplate")
-	require.Equal(t, resp.StatusCode, 200)
-	require.Equal(t, len(tags), 2)
+	require.Equal(t, 200, resp.StatusCode)
+	require.Equal(t, 2, len(tags))
 
 	// Delete Tag on prompt template
 	resp, err = promptClient.DeleteTagForPromptTemplate(ctx, tags, promptName)
 	require.NoError(t, err)
 	require.NotNil(t, resp, "response should not be nil for DeleteTagForPromptTemplate")
-	require.Equal(t, resp.StatusCode, 200)
+	require.Equal(t, 200, resp.StatusCode)
 
 	// Get Tags on prompt template
 	tags, resp, err = promptClient.GetTagsForPromptTemplate(ctx, promptName)
 	require.NoError(t, err)
 	require.NotNil(t, resp, "response should not be nil for GetTagsForPromptTemplate")
-	require.Equal(t, resp.StatusCode, 200)
-	require.Equal(t, len(tags), 0)
+	require.Equal(t, 200, resp.StatusCode)
+	require.Equal(t, 0, len(tags))
 
 	// Create an Integration API
 	_, err = integrationClient.SaveIntegrationApi(ctx, apiUpdate, providerName, apiModel)

@@ -127,7 +127,7 @@ func TestServiceRegistryClient_HTTPService(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 	assert.Equal(t, 200, resp.StatusCode)
-	assert.GreaterOrEqual(t, len(updatedService.Methods), originalMethodCount+1)
+	assert.Equal(t, originalMethodCount+1, len(updatedService.Methods))
 
 	// Verify circuit breaker config (adjust field names based on your model)
 	if updatedService.Config != nil && updatedService.Config.CircuitBreakerConfig != nil {
