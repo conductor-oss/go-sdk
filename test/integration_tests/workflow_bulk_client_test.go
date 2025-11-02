@@ -79,7 +79,7 @@ func TestWorkflowBulkDelete(t *testing.T) {
 	// Verify workflows are deleted
 	for _, id := range workflowIds {
 		_, err := testdata.WorkflowExecutor.GetWorkflow(id, false)
-		assert.Error(t, err, "Workflow %s should be deleted", id)
+		require.Error(t, err, "Workflow %s should be deleted", id)
 		assert.Contains(t, err.Error(), "no such workflow by Id", "Error should indicate workflow not found")
 	}
 }

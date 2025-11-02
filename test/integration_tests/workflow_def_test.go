@@ -33,29 +33,19 @@ func TestHttpTask(t *testing.T) {
 		WorkflowStatusListenerEnabled(true).
 		Add(testdata.TestHttpTask)
 	err := testdata.ValidateWorkflow(httpTaskWorkflow, testdata.WorkflowValidationTimeout, model.CompletedWorkflow)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	err = testdata.ValidateWorkflowBulk(httpTaskWorkflow, testdata.ExtendedValidationTimeout, testdata.WorkflowBulkQty)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	err = testdata.ValidateWorkflowDeletion(httpTaskWorkflow)
-	if err != nil {
-		t.Fatal(
-			"Failed to delete workflow. Reason: ", err.Error(),
-		)
-	}
+	require.NoError(t, err, "Failed to delete workflow")
 }
 
 func SimpleTask(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 
 	err := testdata.ValidateTaskRegistration(*testdata.TestSimpleTask.ToTaskDef())
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	simpleTaskWorkflow := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).
 		Name("TEST_GO_WORKFLOW_SIMPLE").
 		Version(1).
@@ -66,31 +56,19 @@ func SimpleTask(t *testing.T) {
 		testdata.WorkerQty,
 		testdata.WorkerPollInterval,
 	)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	err = testdata.ValidateWorkflow(simpleTaskWorkflow, testdata.WorkflowValidationTimeout, model.CompletedWorkflow)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	err = testdata.ValidateWorkflowBulk(simpleTaskWorkflow, testdata.ExtendedValidationTimeout, testdata.WorkflowBulkQty)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	err = testdata.TaskRunner.DecreaseBatchSize(
 		testdata.TestSimpleTask.ReferenceName(),
 		testdata.WorkerQty,
 	)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	err = testdata.ValidateWorkflowDeletion(simpleTaskWorkflow)
-	if err != nil {
-		t.Fatal(
-			"Failed to delete workflow. Reason: ", err.Error(),
-		)
-	}
+	require.NoError(t, err, "Failed to delete workflow")
 }
 
 func SimpleTaskWithoutRetryCount(t *testing.T) {
@@ -99,9 +77,7 @@ func SimpleTaskWithoutRetryCount(t *testing.T) {
 	taskToRegister := testdata.TestSimpleTask.ToTaskDef()
 	taskToRegister.RetryCount = 0
 	err := testdata.ValidateTaskRegistration(*taskToRegister)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	simpleTaskWorkflow := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).
 		Name("TEST_GO_WORKFLOW_SIMPLE").
 		Version(1).
@@ -112,31 +88,19 @@ func SimpleTaskWithoutRetryCount(t *testing.T) {
 		testdata.WorkerQty,
 		testdata.WorkerPollInterval,
 	)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	err = testdata.ValidateWorkflow(simpleTaskWorkflow, testdata.WorkflowValidationTimeout, model.CompletedWorkflow)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	err = testdata.ValidateWorkflowBulk(simpleTaskWorkflow, testdata.ExtendedValidationTimeout, testdata.WorkflowBulkQty)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	err = testdata.TaskRunner.DecreaseBatchSize(
 		testdata.TestSimpleTask.ReferenceName(),
 		testdata.WorkerQty,
 	)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	err = testdata.ValidateWorkflowDeletion(simpleTaskWorkflow)
-	if err != nil {
-		t.Fatal(
-			"Failed to delete workflow. Reason: ", err.Error(),
-		)
-	}
+	require.NoError(t, err, "Failed to delete workflow")
 }
 
 func TestInlineTask(t *testing.T) {
@@ -147,20 +111,12 @@ func TestInlineTask(t *testing.T) {
 		Version(1).
 		Add(testdata.TestInlineTask)
 	err := testdata.ValidateWorkflow(inlineTaskWorkflow, testdata.WorkflowValidationTimeout, model.CompletedWorkflow)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	err = testdata.ValidateWorkflowBulk(inlineTaskWorkflow, testdata.ExtendedValidationTimeout, testdata.WorkflowBulkQty)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	err = testdata.ValidateWorkflowDeletion(inlineTaskWorkflow)
-	if err != nil {
-		t.Fatal(
-			"Failed to delete workflow. Reason: ", err.Error(),
-		)
-	}
+	require.NoError(t, err, "Failed to delete workflow")
 }
 
 func TestSqsEventTask(t *testing.T) {
@@ -171,16 +127,10 @@ func TestSqsEventTask(t *testing.T) {
 		Version(1).
 		Add(testdata.TestSqsEventTask)
 	err := testdata.ValidateWorkflowRegistration(workflow)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	err = testdata.ValidateWorkflowDeletion(workflow)
-	if err != nil {
-		t.Fatal(
-			"Failed to delete workflow. Reason: ", err.Error(),
-		)
-	}
+	require.NoError(t, err, "Failed to delete workflow")
 }
 
 func TestConductorEventTask(t *testing.T) {
@@ -191,16 +141,10 @@ func TestConductorEventTask(t *testing.T) {
 		Version(1).
 		Add(testdata.TestConductorEventTask)
 	err := testdata.ValidateWorkflowRegistration(workflow)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	err = testdata.ValidateWorkflowDeletion(workflow)
-	if err != nil {
-		t.Fatal(
-			"Failed to delete workflow. Reason: ", err.Error(),
-		)
-	}
+	require.NoError(t, err, "Failed to delete workflow")
 }
 
 func TestKafkaPublishTask(t *testing.T) {
@@ -211,16 +155,10 @@ func TestKafkaPublishTask(t *testing.T) {
 		Version(1).
 		Add(testdata.TestKafkaPublishTask)
 	err := testdata.ValidateWorkflowRegistration(workflow)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	err = testdata.ValidateWorkflowDeletion(workflow)
-	if err != nil {
-		t.Fatal(
-			"Failed to delete workflow. Reason: ", err.Error(),
-		)
-	}
+	require.NoError(t, err, "Failed to delete workflow")
 }
 
 func TestDoWhileTask(t *testing.T) {
@@ -235,16 +173,10 @@ func TestTerminateTask(t *testing.T) {
 		Version(1).
 		Add(testdata.TestTerminateTask)
 	err := testdata.ValidateWorkflowRegistration(workflow)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	err = testdata.ValidateWorkflowDeletion(workflow)
-	if err != nil {
-		t.Fatal(
-			"Failed to delete workflow. Reason: ", err.Error(),
-		)
-	}
+	require.NoError(t, err, "Failed to delete workflow")
 }
 
 func TestSwitchTask(t *testing.T) {
@@ -255,16 +187,10 @@ func TestSwitchTask(t *testing.T) {
 		Version(1).
 		Add(testdata.TestSwitchTask)
 	err := testdata.ValidateWorkflowRegistration(workflow)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	err = testdata.ValidateWorkflowDeletion(workflow)
-	if err != nil {
-		t.Fatal(
-			"Failed to delete workflow. Reason: ", err.Error(),
-		)
-	}
+	require.NoError(t, err, "Failed to delete workflow")
 }
 
 func TestDynamicForkWorkflow(t *testing.T) {
@@ -275,16 +201,10 @@ func TestDynamicForkWorkflow(t *testing.T) {
 		Version(1).
 		Add(createDynamicForkTask())
 	err := wf.Register(true)
-	if err != nil {
-		t.Fatal()
-	}
+	require.NoError(t, err)
 
 	err = testdata.ValidateWorkflowDeletion(wf)
-	if err != nil {
-		t.Fatal(
-			"Failed to delete workflow. Reason: ", err.Error(),
-		)
-	}
+	require.NoError(t, err, "Failed to delete workflow")
 }
 
 func createDynamicForkTask() *workflow.DynamicForkTask {
@@ -312,22 +232,14 @@ func TestComplexSwitchWorkflow(t *testing.T) {
 
 	wf := testdata.GetWorkflowWithComplexSwitchTask()
 	err := testdata.ValidateWorkflowRegistration(wf)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	receivedWf, _, err := testdata.MetadataClient.Get(context.Background(), wf.GetName(), nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	counter := countMultipleSwitchInnerTasks(receivedWf.Tasks...)
 	assert.Equal(t, 7, counter)
 
 	err = testdata.ValidateWorkflowDeletion(wf)
-	if err != nil {
-		t.Fatal(
-			"Failed to delete workflow. Reason: ", err.Error(),
-		)
-	}
+	require.NoError(t, err, "Failed to delete workflow")
 }
 
 func TestRegisterWorkflow_SwitchEmptyDefaultCase(t *testing.T) {

@@ -8,7 +8,9 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/sdk/model/rbac"
 	"github.com/conductor-sdk/conductor-go/test/testdata"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestApplicationLifecycle(t *testing.T) {
@@ -18,17 +20,18 @@ func TestApplicationLifecycle(t *testing.T) {
 
 	// Create an application
 	ctx := context.Background()
-	createReq := rbac.CreateOrUpdateApplicationRequest{Name: "TestApp2"}
+	uuid := uuid.New().String()
+	createReq := rbac.CreateOrUpdateApplicationRequest{Name: "TestApp2" + uuid}
 	createdApp, resp, err := appClient.CreateApplication(ctx, createReq)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, 200, resp.StatusCode)
-	assert.Equal(t, "TestApp2", createdApp.Name)
+	assert.Equal(t, "TestApp2"+uuid, createdApp.Name)
 
 	// Retrieve the created application
 	retrievedApp, resp, err := appClient.GetApplication(ctx, createdApp.Id)
 	assert.Nil(t, err)
 	assert.Equal(t, 200, resp.StatusCode)
-	assert.Equal(t, "TestApp2", retrievedApp.Name)
+	assert.Equal(t, "TestApp2"+uuid, retrievedApp.Name)
 
 	// Delete the application
 	_, resp, err = appClient.DeleteApplication(ctx, createdApp.Id)

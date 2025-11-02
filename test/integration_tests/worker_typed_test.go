@@ -19,6 +19,8 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/worker"
 	"github.com/conductor-sdk/conductor-go/sdk/workflow"
 	"github.com/conductor-sdk/conductor-go/test/testdata"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // uniqueSuffix helps avoid name collisions in CI between parallel runs.
@@ -66,18 +68,12 @@ func TestLegacyWorkerIntegration(t *testing.T) {
 			"message": fmt.Sprintf("${%s.output.message}", refName),
 		})
 
-	if err := wf.Register(true); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := testdata.TaskRunner.StartWorker(taskName, legacyHandler, 2, testdata.WorkerPollInterval); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, wf.Register(true))
+	err := testdata.TaskRunner.StartWorker(taskName, legacyHandler, 2, testdata.WorkerPollInterval)
+	require.NoError(t, err)
 
 	expected := map[string]interface{}{"message": "processed by legacy worker"}
-	if err := testdata.ValidateWorkflowWithOutput(wf, testdata.WorkflowValidationTimeout, model.CompletedWorkflow, expected); err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, testdata.ValidateWorkflowWithOutput(wf, testdata.WorkflowValidationTimeout, model.CompletedWorkflow, expected))
 }
 
 func TestRegularWorkerIntegration(t *testing.T) {
@@ -94,24 +90,13 @@ func TestRegularWorkerIntegration(t *testing.T) {
 		OutputParameters(map[string]interface{}{
 			"message": fmt.Sprintf("${%s.output.message}", taskName),
 		})
-	if err := wf.Register(true); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, wf.Register(true))
 
-	w := worker.NewWorker(
-		taskName,
-		legacyHandler,
-		worker.WithBatchSize(1),
-		worker.WithPollInterval(testdata.WorkerPollInterval),
-	)
-	if err := testdata.TaskRunner.RegisterWorker(w); err != nil {
-		t.Fatal(err)
-	}
+	w := worker.NewWorker(taskName, legacyHandler, worker.WithBatchSize(1), worker.WithPollInterval(testdata.WorkerPollInterval))
+	require.NoError(t, testdata.TaskRunner.RegisterWorker(w))
 
 	expected := map[string]interface{}{"message": "processed by legacy worker"}
-	if err := testdata.ValidateWorkflowWithOutput(wf, testdata.WorkflowValidationTimeout, model.CompletedWorkflow, expected); err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, testdata.ValidateWorkflowWithOutput(wf, testdata.WorkflowValidationTimeout, model.CompletedWorkflow, expected))
 }
 
 // TestTypedWorkerIntegration validates typed worker with struct input/output.
@@ -129,9 +114,7 @@ func TestTypedWorkerIntegration(t *testing.T) {
 		worker.WithBatchSize(1),
 		worker.WithPollInterval(testdata.WorkerPollInterval),
 	)
-	if err := testdata.TaskRunner.RegisterWorker(tw); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, testdata.TaskRunner.RegisterWorker(tw))
 
 	task := workflow.NewSimpleTask(taskName, refName).InputMap(map[string]interface{}{"a": "xyz", "b": 10})
 	wf := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).
@@ -142,17 +125,13 @@ func TestTypedWorkerIntegration(t *testing.T) {
 			"message": fmt.Sprintf("${%s.output.message}", refName),
 			"sum":     fmt.Sprintf("${%s.output.sum}", refName),
 		})
-	if err := wf.Register(true); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, wf.Register(true))
 
 	expected := map[string]interface{}{
 		"message": "processed by typed worker",
 		"sum":     float64(10 + len("xyz")),
 	}
-	if err := testdata.ValidateWorkflowWithOutput(wf, testdata.WorkflowValidationTimeout, model.CompletedWorkflow, expected); err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, testdata.ValidateWorkflowWithOutput(wf, testdata.WorkflowValidationTimeout, model.CompletedWorkflow, expected))
 }
 
 // TestSimpleTypedWorkerIntegration validates typed worker with generic map in/out.
@@ -170,9 +149,7 @@ func TestSimpleTypedWorkerIntegration(t *testing.T) {
 		worker.WithBatchSize(2),
 		worker.WithPollInterval(testdata.WorkerPollInterval),
 	)
-	if err := testdata.TaskRunner.RegisterWorker(tw); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, testdata.TaskRunner.RegisterWorker(tw))
 
 	task := workflow.NewSimpleTask(taskName, refName).InputMap(map[string]interface{}{"foo": "bar", "k": 5})
 	wf := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).
@@ -182,14 +159,10 @@ func TestSimpleTypedWorkerIntegration(t *testing.T) {
 		OutputParameters(map[string]interface{}{
 			"message": fmt.Sprintf("${%s.output.message}", refName),
 		})
-	if err := wf.Register(true); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, wf.Register(true))
 
 	expected := map[string]interface{}{"message": "processed by simple task"}
-	if err := testdata.ValidateWorkflowWithOutput(wf, testdata.WorkflowValidationTimeout, model.CompletedWorkflow, expected); err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, testdata.ValidateWorkflowWithOutput(wf, testdata.WorkflowValidationTimeout, model.CompletedWorkflow, expected))
 }
 
 // TestMultiTaskWorkflowIntegration validates a sequence of mixed legacy and typed workers.
@@ -207,9 +180,7 @@ func TestMultiTaskWorkflowIntegration(t *testing.T) {
 	typedSimpleName := "TEST_GO_TYP_SIMPLE_MULTI_" + suffix
 
 	// Start legacy worker
-	if err := testdata.TaskRunner.StartWorker(legacyTaskName, legacyHandler, 1, testdata.WorkerPollInterval); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, testdata.TaskRunner.StartWorker(legacyTaskName, legacyHandler, 1, testdata.WorkerPollInterval))
 
 	typedWorker := worker.NewTypedWorker(
 		typedTaskName,
@@ -218,9 +189,7 @@ func TestMultiTaskWorkflowIntegration(t *testing.T) {
 		worker.WithPollInterval(testdata.WorkerPollInterval),
 	)
 
-	if err := testdata.TaskRunner.RegisterWorker(typedWorker); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, testdata.TaskRunner.RegisterWorker(typedWorker))
 
 	typedWithCtxWorker := worker.NewSimpleTypedWorker(
 		typedSimpleName,
@@ -229,9 +198,7 @@ func TestMultiTaskWorkflowIntegration(t *testing.T) {
 		worker.WithPollInterval(testdata.WorkerPollInterval),
 	)
 
-	if err := testdata.TaskRunner.RegisterWorker(typedWithCtxWorker); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, testdata.TaskRunner.RegisterWorker(typedWithCtxWorker))
 
 	regularWorker := worker.NewWorker(
 		regularTaskName,
@@ -240,9 +207,7 @@ func TestMultiTaskWorkflowIntegration(t *testing.T) {
 		worker.WithPollInterval(testdata.WorkerPollInterval),
 	)
 
-	if err := testdata.TaskRunner.RegisterWorker(regularWorker); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, testdata.TaskRunner.RegisterWorker(regularWorker))
 
 	wf := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).
 		Name("TEST_GO_WF_MULTI_" + suffix).
@@ -256,13 +221,9 @@ func TestMultiTaskWorkflowIntegration(t *testing.T) {
 		Add(workflow.NewSimpleTask(regularTaskName, regularTaskName).
 			InputMap(map[string]interface{}{"test": "test_value"}))
 
-	if err := wf.Register(true); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, wf.Register(true))
 
-	if err := testdata.ValidateWorkflow(wf, testdata.ExtendedValidationTimeout, model.CompletedWorkflow); err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, testdata.ValidateWorkflow(wf, testdata.ExtendedValidationTimeout, model.CompletedWorkflow))
 }
 
 // TestParallelExecutionIntegration validates fork-join with two typed workers.
@@ -285,9 +246,7 @@ func TestParallelExecutionIntegration(t *testing.T) {
 		worker.WithPollInterval(testdata.WorkerPollInterval),
 	)
 
-	if err := testdata.TaskRunner.RegisterWorker(wA); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, testdata.TaskRunner.RegisterWorker(wA))
 
 	w := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).
 		Name("TEST_GO_WF_PARALLEL_" + suffix).
@@ -305,12 +264,8 @@ func TestParallelExecutionIntegration(t *testing.T) {
 	)
 	w.Add(fork).Add(workflow.NewJoinTask("join_ref", taskName1, taskName2, taskName3, taskName4))
 
-	if err := w.Register(true); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, w.Register(true))
 
 	// No explicit output assertion here; validate completion only
-	if err := testdata.ValidateWorkflow(w, testdata.WorkflowValidationTimeout, model.CompletedWorkflow); err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, testdata.ValidateWorkflow(w, testdata.WorkflowValidationTimeout, model.CompletedWorkflow))
 }

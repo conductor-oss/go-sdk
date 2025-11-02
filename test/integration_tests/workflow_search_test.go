@@ -114,6 +114,7 @@ func TestWorkflowSearch(t *testing.T) {
 			},
 			expectExactResults: 1,
 			validateResults: func(t *testing.T, results []model.WorkflowSummary, workflowId1, workflowId2, wf1Name string) {
+				require.NotEmpty(t, results, "Should find at least one result")
 				assert.Equal(t, workflowId1, results[0].WorkflowId, "Should find the correct workflow")
 			},
 		},
@@ -312,23 +313,42 @@ func TestWorkflowSearch(t *testing.T) {
 	// Run table-driven tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			searchResult, _, err := testdata.WorkflowClient.Search(context.Background(), tt.searchOpts)
+			var searchResult model.SearchResultWorkflowSummary
+			var err error
 
-			if tt.expectError {
-				assert.Error(t, err, "Search should return error for invalid query")
-				return
+			// For tests with minimum results requirement, use retry mechanism
+			if tt.expectMinResults > 0 && !tt.expectError {
+				err = testdata.RetryCondition(3, time.Second,
+					func() error {
+						// Execute search
+						searchResult, _, err = testdata.WorkflowClient.Search(context.Background(), tt.searchOpts)
+						return err
+					},
+					func() bool {
+						return len(searchResult.Results) >= tt.expectMinResults
+					})
+
+				// Verify retry results
+				assert.NoError(t, err, "Search should eventually return enough results")
+				assert.GreaterOrEqual(t, len(searchResult.Results), tt.expectMinResults,
+					"Should find minimum number of results after retries")
+			} else {
+				// For other tests, use standard search without retries
+				searchResult, _, err = testdata.WorkflowClient.Search(context.Background(), tt.searchOpts)
+
+				if tt.expectError {
+					assert.Error(t, err, "Search should return error for invalid query")
+					return
+				}
+
+				assert.NoError(t, err, "Search should not return error")
+				assert.NotNil(t, searchResult, "Search result should not be nil")
+
+				if tt.expectExactResults > 0 {
+					assert.Len(t, searchResult.Results, tt.expectExactResults, "Should find exact number of results")
+				}
 			}
 
-			assert.NoError(t, err, "Search should not return error")
-			assert.NotNil(t, searchResult, "Search result should not be nil")
-
-			if tt.expectExactResults > 0 {
-				assert.Len(t, searchResult.Results, tt.expectExactResults, "Should find exact number of results")
-			} else if tt.expectMinResults > 0 {
-				assert.GreaterOrEqual(t, len(searchResult.Results), tt.expectMinResults, "Should find minimum number of results")
-			}
-
-			// Run custom validation
 			tt.validateResults(t, searchResult.Results, workflowId1, workflowId2, wf1Name)
 		})
 	}
@@ -384,16 +404,13 @@ func setupTestWorkflows(t *testing.T, uniqueSuffix, correlationId string) (workf
 
 // cleanupTestWorkflows removes test workflows and their definitions
 func cleanupTestWorkflows(t *testing.T, workflowId1, workflowId2, wf1Name, wf2Name string) {
-	if err := testdata.WorkflowExecutor.RemoveWorkflow(workflowId1); err != nil {
-		t.Logf("Warning: Failed to remove workflow 1: %v", err)
-	}
-	if err := testdata.WorkflowExecutor.RemoveWorkflow(workflowId2); err != nil {
-		t.Logf("Warning: Failed to remove workflow 2: %v", err)
-	}
-	if _, err := testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), wf1Name, 1); err != nil {
-		t.Logf("Warning: Failed to remove workflow definition 1: %v", err)
-	}
-	if _, err := testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), wf2Name, 1); err != nil {
-		t.Logf("Warning: Failed to remove workflow definition 2: %v", err)
-	}
+	err := testdata.WorkflowExecutor.RemoveWorkflow(workflowId1)
+	assert.NoError(t, err, "Failed to remove workflow 1")
+	err = testdata.WorkflowExecutor.RemoveWorkflow(workflowId2)
+	assert.NoError(t, err, "Failed to remove workflow 2")
+
+	_, err = testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), wf1Name, 1)
+	assert.NoError(t, err, "Failed to remove workflow definition 1")
+	_, err = testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), wf2Name, 1)
+	assert.NoError(t, err, "Failed to remove workflow definition 2")
 }

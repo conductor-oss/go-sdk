@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/conductor-sdk/conductor-go/sdk/log"
 	"github.com/conductor-sdk/conductor-go/sdk/workflow/executor"
 
 	"github.com/conductor-sdk/conductor-go/sdk/client"
@@ -154,7 +153,7 @@ func TestGetWorkflow(t *testing.T) {
 	wf, err := executor.GetWorkflow(notFoundWorkflowId, false)
 
 	assert.Nil(t, wf)
-	assert.Error(t, err, "GetWorkflow is expected to return an error")
+	require.Error(t, err, "GetWorkflow is expected to return an error")
 	assert.Equal(t, fmt.Sprintf("no such workflow by Id %s", notFoundWorkflowId), err.Error())
 }
 
@@ -163,7 +162,7 @@ func TestUpdateTaskByRefName(t *testing.T) {
 
 	executor := testdata.WorkflowExecutor
 	err := executor.UpdateTaskByRefName("task_ref", notFoundWorkflowId, model.CompletedTask, map[string]interface{}{})
-	assert.Error(t, err, "UpdateTaskByRefName is expected to return an error")
+	require.Error(t, err, "UpdateTaskByRefName is expected to return an error")
 	if swaggerErr, ok := err.(client.GenericSwaggerError); ok {
 		assert.Equal(t, 404, swaggerErr.StatusCode())
 	} else {
@@ -176,7 +175,7 @@ func TestUpdate(t *testing.T) {
 
 	executor := testdata.WorkflowExecutor
 	err := executor.UpdateTask(notFoundTaskId, notFoundWorkflowId, model.CompletedTask, map[string]interface{}{})
-	assert.Error(t, err, "UpdateTask is expected to return an error")
+	require.Error(t, err, "UpdateTask is expected to return an error")
 	if swaggerErr, ok := err.(client.GenericSwaggerError); ok {
 		assert.Equal(t, 404, swaggerErr.StatusCode())
 	} else {
@@ -499,38 +498,26 @@ func TestSubWorkflowSignalWithDurableConsistency(t *testing.T) {
 }
 
 // Helper method to register all the complex workflows
-func registerComplexWorkflows() {
+func registerComplexWorkflows(t *testing.T) {
 	executor := testdata.WorkflowExecutor
 
 	// Subworkflow-2
 	wfDef, err := getWorkflowDef("complex_wf_signal_test_subworkflow_2.json")
-	if err != nil {
-		log.Fatal("Failed to get workflow definition", "error", err)
-	}
+	require.NoError(t, err, "Failed to get workflow definition")
 	err = executor.RegisterWorkflow(true, wfDef)
-	if err != nil {
-		log.Fatal("Failed to register workflow", "error", err)
-	}
+	require.NoError(t, err, "Failed to register workflow")
 
 	// Subworkflow-1
 	wfDef, err = getWorkflowDef("complex_wf_signal_test_subworkflow_1.json")
-	if err != nil {
-		log.Fatal("Failed to get workflow definition", "error", err)
-	}
+	require.NoError(t, err, "Failed to get workflow definition")
 	err = executor.RegisterWorkflow(true, wfDef)
-	if err != nil {
-		log.Fatal("Failed to register workflow", "error", err)
-	}
+	require.NoError(t, err, "Failed to register workflow")
 
 	// Main WF
 	wfDef, err = getWorkflowDef("complex_wf_signal_test.json")
-	if err != nil {
-		log.Fatal("Failed to get workflow definition", "error", err)
-	}
+	require.NoError(t, err, "Failed to get workflow definition")
 	err = executor.RegisterWorkflow(true, wfDef)
-	if err != nil {
-		log.Fatal("Failed to register workflow", "error", err)
-	}
+	require.NoError(t, err, "Failed to register workflow")
 }
 
 func getWorkflowDef(filename string) (*model.WorkflowDef, error) {
@@ -551,7 +538,7 @@ func getWorkflowDef(filename string) (*model.WorkflowDef, error) {
 func TestSignal_AllStrategies_Comprehensive(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
 
-	registerComplexWorkflows()
+	registerComplexWorkflows(t)
 	testCases := []struct {
 		name                         string
 		returnStrategy               model.ReturnStrategy
@@ -861,7 +848,7 @@ func TestSignal_DefaultStrategy_IsTargetWorkflow(t *testing.T) {
 
 	// Setup workflow (same setup code as in your original test)
 	executor := testdata.WorkflowExecutor
-	registerComplexWorkflows()
+	registerComplexWorkflows(t)
 
 	startRequest := &model.StartWorkflowRequest{
 		Name:    "complex_wf_signal_test",
@@ -915,7 +902,7 @@ func TestSignal_MixedStrategy(t *testing.T) {
 
 	// Setup workflow (same setup code as in your original test)
 	executor := testdata.WorkflowExecutor
-	registerComplexWorkflows()
+	registerComplexWorkflows(t)
 
 	startRequest := &model.StartWorkflowRequest{
 		Name:    "complex_wf_signal_test",

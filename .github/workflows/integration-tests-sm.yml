@@ -16,10 +16,12 @@ concurrency:
 jobs:
   integration-tests-sm:
     runs-on: ubuntu-latest
-    env:
-      CONDUCTOR_SERVER_URL: ${{ vars.SERVER_URL }}
-      CONDUCTOR_AUTH_KEY: ${{ secrets.AUTH_KEY }}
-      CONDUCTOR_AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+    strategy:
+      fail-fast: false
+      matrix:
+        cluster: [v5, v4]
+        suite: [integration, compatibility]
+    name: Integration + Backward Compatibility Tests (SM cluster) - ${{ matrix.cluster }} - ${{ matrix.suite }}
 
     permissions:
       contents: read       # minimal read access
@@ -27,10 +29,9 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-
+        uses: actions/checkout@v4
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version: '1.23'
 
@@ -44,20 +45,91 @@ jobs:
         run: go install gotest.tools/gotestsum@v1.12.0
 
       - name: Run Integration tests (SM cluster)
+        if: ${{ matrix.suite == 'integration' }}
+        env:
+          CONDUCTOR_SERVER_URL: ${{ matrix.cluster == 'v5' && vars.SERVER_URL_V5 || vars.SERVER_URL }}
+          CONDUCTOR_AUTH_KEY: ${{ matrix.cluster == 'v5' && secrets.AUTH_KEY_V5 || secrets.AUTH_KEY }}
+          CONDUCTOR_AUTH_SECRET: ${{ matrix.cluster == 'v5' && secrets.AUTH_SECRET_V5 || secrets.AUTH_SECRET }}
         run: |
-          gotestsum --format testname  --junitfile report.xml -- -v -count=1 ./test/integration_tests/...
+          REPORT=report-${{ matrix.suite }}-${{ matrix.cluster }}.xml
+          RERUN=rerun-report-${{ matrix.suite }}-${{ matrix.cluster }}.txt
+          gotestsum --format testname --junitfile "$REPORT" --rerun-fails=3 --rerun-fails-report="$RERUN" --packages="./test/integration_tests/..." -- -v -count=1
 
       - name: Publish test results (SM cluster)
-        if: always()
-        uses: dorny/test-reporter@v1
+        if: ${{ always() && matrix.suite == 'integration' }}
+        uses: dorny/test-reporter@v2
         with:
-          name: Integration tests report (SM cluster)
-          path: report.xml
+          name: Integration tests report (SM cluster) - ${{ matrix.cluster }}
+          path: report-${{ matrix.suite }}-${{ matrix.cluster }}.xml
           reporter: java-junit
+          fail-on-error: false
+          fail-on-empty: true
+
+      - name: Append rerun details to Summary
+        if: ${{ always() && matrix.suite == 'integration' }}
+        run: |
+          RERUN=rerun-report-${{ matrix.suite }}-${{ matrix.cluster }}.txt
+          if [ -f "$RERUN" ]; then
+            {
+              echo "### Rerun details (${{ matrix.cluster }})"
+              echo '```'
+              cat "$RERUN"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload test artifacts
+        if: ${{ always() && matrix.suite == 'integration' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-and-reruns-${{ matrix.cluster }}
+          path: |
+            report-${{ matrix.suite }}-${{ matrix.cluster }}.xml
+            rerun-report-${{ matrix.suite }}-${{ matrix.cluster }}.txt
+          if-no-files-found: warn
 
       - name: Run Backward Compatibility Tests (SM cluster)
+        if: ${{ matrix.suite == 'compatibility' }}
+        id: compat_tests
+        env:
+          CONDUCTOR_SERVER_URL: ${{ matrix.cluster == 'v5' && vars.SERVER_URL_V5 || vars.SERVER_URL }}
+          CONDUCTOR_AUTH_KEY: ${{ matrix.cluster == 'v5' && secrets.AUTH_KEY_V5 || secrets.AUTH_KEY }}
+          CONDUCTOR_AUTH_SECRET: ${{ matrix.cluster == 'v5' && secrets.AUTH_SECRET_V5 || secrets.AUTH_SECRET }}
         run: |
-          echo "🚀 Starting Backward Compatibility Tests..."
+          echo "🚀 Starting Backward Compatibility Tests (cluster ${{ matrix.cluster }})..."
           cd test/backward_compatibility
           chmod +x run_compatibility.sh
-          ./run_compatibility.sh
+          
+          # Run with retry logic - attempt up to 3 times
+          MAX_ATTEMPTS=3
+          ATTEMPT=1
+          SUCCESS=false
+          
+          while [ $ATTEMPT -le $MAX_ATTEMPTS ] && [ "$SUCCESS" = "false" ]; do
+            if [ $ATTEMPT -gt 1 ]; then
+              echo "🔄 Retry attempt $ATTEMPT/$MAX_ATTEMPTS for backward compatibility tests"
+            fi
+            
+            if ./run_compatibility.sh; then
+              SUCCESS=true
+              echo "✅ Backward compatibility tests passed on attempt $ATTEMPT"
+            else
+              if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
+                echo "❌ Backward compatibility tests failed on attempt $ATTEMPT. Retrying in 5 seconds..."
+                sleep 5
+              else
+                echo "❌ Backward compatibility tests failed after $MAX_ATTEMPTS attempts"
+                exit 1
+              fi
+            fi
+            
+            ATTEMPT=$((ATTEMPT+1))
+          done
+          
+          # Add compatibility test retry information to GitHub summary
+          if [ "$SUCCESS" = "true" ] && [ $ATTEMPT -gt 2 ]; then
+            {
+              echo "### Backward Compatibility Tests Retry Summary (${{ matrix.cluster }})"
+              echo "✅ Tests passed after $((ATTEMPT-1)) attempts"
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi

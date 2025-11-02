@@ -2,6 +2,7 @@ package integration_tests
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"testing"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/workflow/executor"
 	"github.com/conductor-sdk/conductor-go/test/testdata"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestIdempotencyCombinations(t *testing.T) {
@@ -90,7 +92,8 @@ func checkWorkflowIsCompleted(t *testing.T, executor *executor.WorkflowExecutor,
 	for {
 		select {
 		case <-timeout:
-			t.Fatalf("Timed out and workflow %s didn't complete", id)
+			require.Fail(t, fmt.Sprintf("Timed out and workflow %s didn't complete", id))
+			return
 		case <-tick:
 			wf, err := executor.GetWorkflow(id, false)
 			assert.NoError(t, err)
