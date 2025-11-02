@@ -1038,3 +1038,31 @@ func TestWfExecutionWithWaitForSec_ContextTimeout(t *testing.T) {
 
 	t.Logf("Context timeout occurred in %v", elapsed)
 }
+
+// TestGetWorkflowWithNilResponsePanic check correct error handling and nil http.Response when request times out
+func TestGetWorkflowWithNilResponsePanic(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
+	executor := testdata.WorkflowExecutor
+
+	// Create a context with very short timeout to simulate a request that times out
+	// before the HTTP response is received. This can result in response being nil.
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
+	defer cancel()
+
+	// Call GetWorkflowWithContext - the request may be interrupted before receiving response.
+	// Without proper nil check, accessing response.StatusCode would cause a panic.
+	workflow, err := executor.GetWorkflowWithContext(ctx, notFoundWorkflowId, false)
+
+	// In this case, response may be nil due to timeout.
+	// The code should safely handle this without panicking.
+	require.Error(t, err, "Should return error when request times out")
+	require.Nil(t, workflow, "Workflow should be nil on error")
+
+	// Verify that the error is related to context timeout/cancellation
+	// and not a panic due to nil response access
+	assert.True(t,
+		errors.Is(err, context.DeadlineExceeded) ||
+			errors.Is(err, context.Canceled),
+		"Should return timeout or cancellation error, not panic")
+}
