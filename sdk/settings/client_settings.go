@@ -76,6 +76,11 @@ func (s *ClientSettings) GetAuthentication() *AuthenticationSettings {
 
 // GetHTTP returns HTTP settings
 func (s *ClientSettings) GetHTTP() *HttpSettings {
+	if s.HTTP == nil {
+		s.HTTP = NewHttpDefaultSettings()
+	}
+	s.HTTP.normalizeBaseURL()
+
 	return s.HTTP
 }
 

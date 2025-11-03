@@ -10,10 +10,17 @@
 package settings
 
 import (
+	"net/url"
 	"os"
+	"path"
 	"strconv"
+	"strings"
 	"time"
+
+	"github.com/conductor-sdk/conductor-go/sdk/log"
 )
+
+var defaultBaseUrl = "http://localhost:8080/api"
 
 // HttpSettings configures HTTP settings for the client.
 type HttpSettings struct {
@@ -25,7 +32,7 @@ type HttpSettings struct {
 // NewHttpDefaultSettings creates default HTTP settings.
 func NewHttpDefaultSettings() *HttpSettings {
 	return NewHttpSettings(
-		"http://localhost:8080/api",
+		defaultBaseUrl,
 	)
 }
 
@@ -46,7 +53,7 @@ func NewHttpSettings(baseUrl string) *HttpSettings {
 func NewHttpSettingsFromEnv() *HttpSettings {
 	serverURL := os.Getenv(EnvServerURL)
 	if serverURL == "" {
-		serverURL = "http://localhost:8080/api"
+		serverURL = defaultBaseUrl
 	}
 
 	httpSettings := NewHttpSettings(serverURL)
@@ -59,4 +66,55 @@ func NewHttpSettingsFromEnv() *HttpSettings {
 	}
 
 	return httpSettings
+}
+
+// normalizeBaseURL makes BaseUrl end with exactly one "/api" (no trailing slash).
+// No errors returned per contract: on irrecoverable input we log and return unchanged.
+// Special case: if BaseUrl is empty -> default to "http://localhost:8080/api".
+func (h *HttpSettings) normalizeBaseURL() {
+	raw := strings.TrimSpace(h.BaseUrl)
+
+	// Default for empty
+	if raw == "" {
+		h.BaseUrl = defaultBaseUrl
+		return
+	}
+
+	u, err := url.Parse(raw)
+	if err != nil {
+		log.Warn("normalizeBaseURL: cannot parse base URL", "url", raw, "error", err)
+		return
+	}
+	if u.Scheme == "" || u.Host == "" {
+		log.Error("normalizeBaseURL: base URL must include scheme and host", "url", raw)
+		return
+	}
+
+	// If someone passed query/fragment on base — drop them.
+	if u.RawQuery != "" || u.Fragment != "" {
+		log.Warn("normalizeBaseURL: dropping query/fragment from base URL", "url", raw)
+		u.RawQuery = ""
+		u.Fragment = ""
+	}
+
+	// Clean and normalize path to ensure exactly one "/api" suffix.
+	p := path.Clean(u.Path)
+	if p == "." {
+		p = "/"
+	}
+	p = strings.TrimRight(p, "/")
+
+	switch {
+	case p == "" || p == "/":
+		p = "/api"
+	case strings.HasSuffix(p, "/api"):
+		// already ends with /api -> keep as-is
+	default:
+		p = p + "/api"
+	}
+
+	u.Path = p
+	u.RawPath = ""
+
+	h.BaseUrl = u.String()
 }

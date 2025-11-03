@@ -11,6 +11,7 @@ package integration_tests
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -67,4 +68,42 @@ func TestAPIClientCreationMethods(t *testing.T) {
 		require.Equal(t, 200, resp.StatusCode, "Version request should succeed")
 		require.NotEmpty(t, version, "Version should not be empty")
 	})
+}
+
+func TestAPIClientServerURLNormalization(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
+	base := testdata.GetServerURL() // usually ends with /api
+	root := strings.TrimRight(strings.TrimSuffix(base, "/api"), "/")
+
+	type testCase struct {
+		name string
+		in   string
+	}
+
+	cases := []testCase{
+		{name: "root", in: root},
+		{name: "root-slash", in: root + "/"},
+		{name: "root-double-slash", in: root + "//"},
+		{name: "with-api", in: root + "/api"},
+		{name: "with-api-trailing", in: root + "/api/"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			clientSettings := settings.NewClientSettings(
+				settings.WithServerURL(tc.in),
+				settings.WithHTTPTimeout(30*time.Second),
+				settings.WithAuthCredentials(testdata.GetAuthKey(), testdata.GetAuthSecret()),
+			)
+			apiClient := client.NewAPIClientFromSettings(clientSettings)
+			require.NotNil(t, apiClient)
+
+			versionClient := client.NewVersionResourceClient(apiClient)
+			version, resp, err := versionClient.GetVersion(context.Background())
+			require.NoError(t, err)
+			require.Equal(t, 200, resp.StatusCode)
+			require.NotEmpty(t, version)
+		})
+	}
 }

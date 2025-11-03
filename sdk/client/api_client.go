@@ -138,11 +138,7 @@ func newAPIClient(
 	tokenExpiration *authentication.TokenExpiration,
 	tokenManager authentication.TokenManager,
 ) *APIClient {
-	// Extract settings components
 	httpSettings := clientSettings.GetHTTP()
-	if httpSettings == nil {
-		httpSettings = settings.NewHttpDefaultSettings()
-	}
 
 	// Use token settings from ClientSettings if not provided directly
 	if clientSettings.GetTokenExpiration() != nil {
