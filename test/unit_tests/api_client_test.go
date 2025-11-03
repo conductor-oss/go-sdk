@@ -66,16 +66,16 @@ func TestClient_Proxy(t *testing.T) {
 			targetServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				targetCalled = true
 
-				// Handle authentication token endpoint
-				if r.URL.Path == "/token" {
+				// Handle authentication token endpoint (support normalized base with /api)
+				if r.URL.Path == "/token" || r.URL.Path == "/api/token" {
 					w.Header().Set("Content-Type", "application/json")
 					w.WriteHeader(http.StatusOK)
 					w.Write([]byte(`{"access_token":"mock-token","token_type":"Bearer","expires_in":3600}`))
 					return
 				}
 
-				// Handle version endpoint
-				if r.URL.Path == "/version" {
+				// Handle version endpoint (support normalized base with /api)
+				if r.URL.Path == "/version" || r.URL.Path == "/api/version" {
 					w.Header().Set("Content-Type", "text/plain")
 					w.WriteHeader(http.StatusOK)
 					w.Write([]byte(versionDirect))
@@ -92,8 +92,8 @@ func TestClient_Proxy(t *testing.T) {
 				proxyServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					proxyCalled = true
 
-					// Handle authentication token endpoint
-					if r.URL.Path == "/token" {
+					// Handle authentication token endpoint (support normalized base with /api)
+					if r.URL.Path == "/token" || r.URL.Path == "/api/token" {
 						w.Header().Set("Content-Type", "application/json")
 						w.Header().Set("X-Via-Proxy", "true")
 						w.WriteHeader(http.StatusOK)
@@ -101,8 +101,8 @@ func TestClient_Proxy(t *testing.T) {
 						return
 					}
 
-					// Handle version endpoint
-					if r.URL.Path == "/version" {
+					// Handle version endpoint (support normalized base with /api)
+					if r.URL.Path == "/version" || r.URL.Path == "/api/version" {
 						w.Header().Set("Content-Type", "text/plain")
 						w.Header().Set("X-Via-Proxy", "true")
 						w.WriteHeader(http.StatusOK)
