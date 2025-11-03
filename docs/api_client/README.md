@@ -50,11 +50,13 @@ The SDK supports the following environment variables:
 
 | Variable | Description | Default | Example |
 |----------|-------------|---------|---------|
-| `CONDUCTOR_SERVER_URL` | Conductor server API URL | `http://localhost:8080/api` | `https://api.orkes.io/api` |
+| `CONDUCTOR_SERVER_URL`* | Conductor server API URL | `http://localhost:8080/api` | `https://api.orkes.io` or `https://api.orkes.io/api` |
 | `CONDUCTOR_AUTH_KEY` | Authentication key | - | `your_auth_key` |
 | `CONDUCTOR_AUTH_SECRET` | Authentication secret | - | `your_auth_secret` |
 | `CONDUCTOR_CLIENT_HTTP_TIMEOUT` | HTTP timeout in seconds | `30` (default) | `60` |
 | `CONDUCTOR_PROXY` | Proxy URL | - | `http://proxy.company.com:8080` |
+
+\* You can provide the server URL with or without the `/api` suffix. The SDK will normalize it to end with `/api`.
 
 ### Environment Variable Examples
 
