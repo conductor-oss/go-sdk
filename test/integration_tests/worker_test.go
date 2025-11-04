@@ -16,14 +16,17 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/sdk/workflow"
 	"github.com/conductor-sdk/conductor-go/test/testdata"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestWorkerBatchSize(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 
+	uuid := uuid.New().String()
 	simpleTaskWorkflow := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).
-		Name("TEST_GO_WORKFLOW_SIMPLE").
+		Name("TEST_GO_WORKFLOW_SIMPLE_" + uuid).
 		Version(1).
 		Add(testdata.TestSimpleTask)
 	err := testdata.TaskRunner.StartWorker(
@@ -35,8 +38,13 @@ func TestWorkerBatchSize(t *testing.T) {
 	require.NoError(t, err)
 	time.Sleep(1 * time.Second)
 	require.Equal(t, 5, testdata.TaskRunner.GetBatchSizeForTask(testdata.TestSimpleTask.ReferenceName()), "Unexpected batch size")
-	err = testdata.ValidateWorkflowBulk(simpleTaskWorkflow, testdata.ExtendedValidationTimeout, testdata.WorkflowBulkQty)
+	runningWorkflows, err := testdata.ValidateWorkflowBulk(simpleTaskWorkflow, testdata.ExtendedValidationTimeout, testdata.WorkflowBulkQty)
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		assert.NoError(t, testdata.ValidateWorkflowDeletion(simpleTaskWorkflow), "Failed to delete workflow")
+		assert.NoError(t, testdata.ValidateWorkflowExecutionsRunningDeletion(runningWorkflows), "Failed to delete workflow executions")
+	})
+
 	err = testdata.TaskRunner.SetBatchSize(
 		testdata.TestSimpleTask.ReferenceName(),
 		0,
@@ -51,48 +59,67 @@ func TestWorkerBatchSize(t *testing.T) {
 	require.NoError(t, err)
 	time.Sleep(1 * time.Second)
 	require.Equal(t, 8, testdata.TaskRunner.GetBatchSizeForTask(testdata.TestSimpleTask.ReferenceName()), "Unexpected batch size")
-	err = testdata.ValidateWorkflowBulk(simpleTaskWorkflow, testdata.ExtendedValidationTimeout, testdata.WorkflowBulkQty)
+	updatedRunningWorkflows, err := testdata.ValidateWorkflowBulk(simpleTaskWorkflow, testdata.ExtendedValidationTimeout, testdata.WorkflowBulkQty)
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		assert.NoError(t, testdata.ValidateWorkflowExecutionsRunningDeletion(updatedRunningWorkflows), "Failed to delete workflow executions")
+	})
 }
 
 func TestFaultyWorker(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 
-	taskName := "TEST_GO_FAULTY_TASK"
+	uuid := uuid.New().String()
+	taskName := "TEST_GO_FAULTY_TASK_" + uuid
 	wf := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).
-		Name("TEST_GO_FAULTY_WORKFLOW").
+		Name("TEST_GO_FAULTY_WORKFLOW_" + uuid).
 		Version(1).
 		Add(workflow.NewSimpleTask(taskName, taskName))
-	err := wf.Register(true)
-	require.NoError(t, err)
-	err = testdata.TaskRunner.StartWorker(
+	require.NoError(t, wf.Register(true))
+	t.Cleanup(func() {
+		assert.NoError(t, testdata.ValidateWorkflowDeletion(wf), "Failed to delete workflow")
+	})
+
+	err := testdata.TaskRunner.StartWorker(
 		taskName,
 		testdata.FaultyWorker,
 		5,
 		testdata.WorkerPollInterval,
 	)
 	require.NoError(t, err)
-	err = testdata.ValidateWorkflow(wf, 5*time.Second, model.FailedWorkflow)
+	completedWorkflow, err := testdata.ValidateWorkflow(wf, 5*time.Second, model.FailedWorkflow)
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		assert.NoError(t, testdata.ValidateWorkflowExecutionDeletion(completedWorkflow), "Failed to delete workflow execution")
+	})
+
 }
 
 func TestWorkerWithNonRetryableError(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 
-	taskName := "TEST_GO_NON_RETRYABLE_ERROR_TASK"
+	uuid := uuid.New().String()
+	taskName := "TEST_GO_NON_RETRYABLE_ERROR_TASK_" + uuid
 	wf := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).
-		Name("TEST_GO_NON_RETRYABLE_ERROR_WF").
+		Name("TEST_GO_NON_RETRYABLE_ERROR_WF_" + uuid).
 		Version(1).
 		Add(workflow.NewSimpleTask(taskName, taskName))
-	err := wf.Register(true)
-	require.NoError(t, err)
-	err = testdata.TaskRunner.StartWorker(
+
+	require.NoError(t, wf.Register(true))
+	t.Cleanup(func() {
+		assert.NoError(t, testdata.ValidateWorkflowDeletion(wf), "Failed to delete workflow")
+	})
+
+	err := testdata.TaskRunner.StartWorker(
 		taskName,
 		testdata.FaultyWorker,
 		5,
 		testdata.WorkerPollInterval,
 	)
 	require.NoError(t, err)
-	err = testdata.ValidateWorkflow(wf, 5*time.Second, model.FailedWorkflow)
+	completedWorkflow, err := testdata.ValidateWorkflow(wf, 5*time.Second, model.FailedWorkflow)
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		assert.NoError(t, testdata.ValidateWorkflowExecutionDeletion(completedWorkflow), "Failed to delete workflow execution")
+	})
 }

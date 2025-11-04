@@ -2,7 +2,7 @@ package integration_tests
 
 import (
 	"context"
-	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -10,13 +10,15 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/client"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/test/testdata"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSchedulerResourceApiService(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	// Setup
-	const WorkflowName = "TestGoSDKWorkflowForSchedulerClient"
+	uuid := uuid.New().String()
+	WorkflowName := "TEST_GO_WORKFLOW_FOR_SCHEDULER_CLIENT_" + uuid
 	schedulerClient := testdata.SchedulerClient // Assuming this exists in your testdata package
 
 	ctx := context.Background()
@@ -41,8 +43,13 @@ func TestSchedulerResourceApiService(t *testing.T) {
 	assert.NotNil(t, resp)
 	assert.Equal(t, 200, resp.StatusCode)
 
-	// Generate a unique schedule name for testing
-	scheduleName := fmt.Sprintf("test_schedule_%d", time.Now().UnixNano())
+	t.Cleanup(func() {
+		_, err := testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), WorkflowName, 1)
+		assert.NoError(t, err, "Failed to unregister workflow definition")
+	})
+
+	// Generate a unique schedule name for testing (alphanumeric with underscores only)
+	scheduleName := "TestGoSDKSchedule_" + strings.ReplaceAll(uuid, "-", "_")
 
 	// Test case 1: Create a new schedule
 	// Create the StartWorkflowRequest for the schedule

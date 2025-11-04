@@ -151,19 +151,19 @@ func StartWorkflows(workflowQty int, workflowName string) ([]string, error) {
 	return workflowIdList, nil
 }
 
-func ValidateWorkflow(conductorWorkflow *workflow.ConductorWorkflow, timeout time.Duration, expectedStatus model.WorkflowStatus) error {
+func ValidateWorkflow(conductorWorkflow *workflow.ConductorWorkflow, timeout time.Duration, expectedStatus model.WorkflowStatus) (*model.Workflow, error) {
 	err := ValidateWorkflowRegistration(conductorWorkflow)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	workflowId, err := conductorWorkflow.StartWorkflowWithInput(make(map[string]interface{}))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	log.Debug("Started workflowId", "workflow_id", workflowId)
 	workflowExecutionChannel, err := WorkflowExecutor.MonitorExecution(workflowId)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	log.Debug("Generated workflowExecutionChannel for workflowId", "workflow_id", workflowId)
 	workflow, err := executor.WaitForWorkflowCompletionUntilTimeout(
@@ -171,19 +171,19 @@ func ValidateWorkflow(conductorWorkflow *workflow.ConductorWorkflow, timeout tim
 		timeout,
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	log.Debug("Workflow completed", "workflow_id", workflowId)
 	if !isWorkflowCompleted(workflow, expectedStatus) {
-		return fmt.Errorf("workflow finished with unexpected status: %s", workflow.Status)
+		return nil, fmt.Errorf("workflow finished with unexpected status: %s", workflow.Status)
 	}
-	return nil
+	return workflow, nil
 }
 
-func ValidateWorkflowBulk(conductorWorkflow *workflow.ConductorWorkflow, timeout time.Duration, amount int) error {
+func ValidateWorkflowBulk(conductorWorkflow *workflow.ConductorWorkflow, timeout time.Duration, amount int) ([]*executor.RunningWorkflow, error) {
 	err := ValidateWorkflowRegistration(conductorWorkflow)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	version := conductorWorkflow.GetVersion()
 	startWorkflowRequests := make([]*model.StartWorkflowRequest, amount)
@@ -199,16 +199,16 @@ func ValidateWorkflowBulk(conductorWorkflow *workflow.ConductorWorkflow, timeout
 	WorkflowExecutor.WaitForRunningWorkflowsUntilTimeout(timeout, runningWorkflows...)
 	for _, runningWorkflow := range runningWorkflows {
 		if runningWorkflow.Err != nil {
-			return err
+			return nil, err
 		}
 		if runningWorkflow.CompletedWorkflow == nil {
-			return fmt.Errorf("invalid completed workflows")
+			return nil, fmt.Errorf("invalid completed workflows")
 		}
 		if !isWorkflowCompleted(runningWorkflow.CompletedWorkflow, model.CompletedWorkflow) {
-			return fmt.Errorf("workflow finished with status: %s", runningWorkflow.CompletedWorkflow.Status)
+			return nil, fmt.Errorf("workflow finished with status: %s", runningWorkflow.CompletedWorkflow.Status)
 		}
 	}
-	return nil
+	return runningWorkflows, nil
 }
 
 func ValidateTaskRegistration(taskDefs ...model.TaskDef) error {
@@ -251,6 +251,38 @@ func ValidateWorkflowDeletion(workflow *workflow.ConductorWorkflow) error {
 		return nil
 	}
 	return fmt.Errorf("exhausted retries")
+}
+func ValidateWorkflowExecutionDeletion(workflow *model.Workflow) error {
+	for attempt := 0; attempt < 5; attempt += 1 {
+		err := WorkflowExecutor.RemoveWorkflow(workflow.WorkflowId)
+		if err != nil {
+			time.Sleep(time.Duration(attempt+2) * time.Second)
+			log.Error("Failed to validate workflow execution deletion, reason: " + err.Error())
+			continue
+		}
+		return nil
+	}
+	return fmt.Errorf("exhausted retries")
+}
+
+func ValidateWorkflowExecutionsRunningDeletion(runningWorkflows []*executor.RunningWorkflow) error {
+	for _, runningWorkflow := range runningWorkflows {
+		attempt := 0
+		for attempt < 5 {
+			err := WorkflowExecutor.RemoveWorkflow(runningWorkflow.WorkflowId)
+			if err != nil {
+				time.Sleep(time.Duration(attempt+2) * time.Second)
+				log.Error("Failed to validate workflow execution deletion, reason: " + err.Error())
+				attempt += 1
+				continue
+			}
+			break
+		}
+		if attempt == 5 {
+			return fmt.Errorf("exhausted retries for workflow: %s", runningWorkflow.WorkflowId)
+		}
+	}
+	return nil
 }
 
 func CreateNewUser(ctx context.Context) (rbac.ConductorUser, error) {
@@ -524,37 +556,37 @@ var (
 	)
 )
 
-func ValidateWorkflowWithOutput(conductorWorkflow *workflow.ConductorWorkflow, timeout time.Duration, expectedStatus model.WorkflowStatus, expectedOutput map[string]interface{}) error {
+func ValidateWorkflowWithOutput(conductorWorkflow *workflow.ConductorWorkflow, timeout time.Duration, expectedStatus model.WorkflowStatus, expectedOutput map[string]interface{}) (*model.Workflow, error) {
 	err := ValidateWorkflowRegistration(conductorWorkflow)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	workflowId, err := conductorWorkflow.StartWorkflowWithInput(make(map[string]interface{}))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	log.Debug("Started workflowId: ", workflowId)
 
 	workflowExecutionChannel, err := WorkflowExecutor.MonitorExecution(workflowId)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	completed, err := executor.WaitForWorkflowCompletionUntilTimeout(workflowExecutionChannel, timeout)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if !isWorkflowCompleted(completed, expectedStatus) {
-		return fmt.Errorf("workflow finished with unexpected status: %s", completed.Status)
+		return nil, fmt.Errorf("workflow finished with unexpected status: %s", completed.Status)
 	}
 
 	wf, _, err := WorkflowClient.GetExecutionStatus(context.Background(), workflowId, nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if !reflect.DeepEqual(wf.Output, expectedOutput) {
-		return fmt.Errorf("workflow output is different than expected, workflowId: %s, output: %+v", workflowId, wf.Output)
+		return nil, fmt.Errorf("workflow output is different than expected, workflowId: %s, output: %+v", workflowId, wf.Output)
 	}
-	return nil
+	return &wf, nil
 }
 
 func parseVersion(version string) string {
