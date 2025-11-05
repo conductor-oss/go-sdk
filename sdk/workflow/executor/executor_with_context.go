@@ -191,12 +191,14 @@ func (e *WorkflowExecutor) getWorkflowWithContext(ctx context.Context, retry int
 			IncludeTasks: optional.NewBool(includeTasks)},
 	)
 
-	if response.StatusCode == 404 {
-		return nil, fmt.Errorf("no such workflow by Id %s", workflowId)
-	}
+	if response != nil {
+		if response.StatusCode == 404 {
+			return nil, fmt.Errorf("no such workflow by Id %s", workflowId)
+		}
 
-	if response.StatusCode > 399 && response.StatusCode < 500 && response.StatusCode != 429 {
-		return nil, err
+		if response.StatusCode > 399 && response.StatusCode < 500 && response.StatusCode != 429 {
+			return nil, err
+		}
 	}
 
 	if err != nil {
