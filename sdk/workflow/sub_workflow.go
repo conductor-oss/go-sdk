@@ -60,7 +60,7 @@ func (task *SubWorkflowTask) toWorkflowTask() []model.WorkflowTask {
 		workflowTasks[0].SubWorkflowParam = &model.SubWorkflowParams{
 			Name:               task.workflow.name,
 			TaskToDomain:       task.taskToDomainMap,
-			WorkflowDefinition: task.workflow.ToWorkflowDef(),
+			WorkflowDefinition: model.NewWorkflowDefinitionParam(task.workflow.ToWorkflowDef()),
 		}
 	} else {
 		workflowTasks[0].SubWorkflowParam = &model.SubWorkflowParams{

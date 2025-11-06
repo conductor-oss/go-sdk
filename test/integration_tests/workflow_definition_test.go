@@ -40,23 +40,17 @@ func TestWorkflowCreation(t *testing.T) {
 		Description("Simple Population Min Max workflow").
 		Add(testdata.NewSetStateVariableTask(workflow.NewSimpleTask("set_state", "set_state")))
 	err := wf.Register(true)
-	if err != nil {
-		t.Fatalf("Failed to register workflow: %s, reason: %s", wf.GetName(), err.Error())
-	}
+	require.NoError(t, err, "Failed to register workflow")
 
 	workflow := testdata.NewKitchenSinkWorkflow(testdata.WorkflowExecutor)
 	err = workflow.Register(true)
-	if err != nil {
-		t.Fatalf("Failed to register workflow: %s, reason: %s", workflow.GetName(), err.Error())
-	}
+	require.NoError(t, err, "Failed to register workflow")
 	startWorkers()
 	run, err := executeWorkflowWithRetries(workflow, map[string]interface{}{
 		"key1": "input1",
 		"key2": 101,
 	})
-	if err != nil {
-		t.Fatalf("Failed to complete the workflow, reason: %s", err)
-	}
+	require.NoError(t, err, "Failed to complete the workflow")
 
 	assert.NotEmpty(t, run, "Workflow is null", run)
 	workflowId := run.WorkflowId
@@ -68,7 +62,8 @@ func TestWorkflowCreation(t *testing.T) {
 	for {
 		select {
 		case <-timeout:
-			t.Fatalf("Timed out and workflow %s didn't complete", workflowId)
+			require.Fail(t, fmt.Sprintf("Timed out and workflow %s didn't complete", workflowId))
+			return
 		case <-tick:
 			wf, err := executor.GetWorkflow(workflowId, false)
 			assert.NoError(t, err)
@@ -78,7 +73,8 @@ func TestWorkflowCreation(t *testing.T) {
 				assert.Equal(t, "input1", run.Input["key1"])
 				return
 			} else if wf.Status == model.FailedWorkflow || wf.Status == model.TerminatedWorkflow {
-				t.Fatalf("Workflow failed with status: %s", wf.Status)
+				require.Fail(t, fmt.Sprintf("Workflow failed with status: %s", wf.Status))
+				return
 			}
 		}
 	}
@@ -106,7 +102,7 @@ func TestRemoveWorkflow(t *testing.T) {
 	assert.NoError(t, err, "Failed to remove workflow execution")
 
 	_, err = executor.GetWorkflow(id, true)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Contains(t, err.Error(), "no such workflow by Id")
 
 	_, err = testdata.MetadataClient.UnregisterWorkflowDef(
@@ -173,19 +169,14 @@ func TestExecuteWorkflowWithCorrelationIds(t *testing.T) {
 		Version(1).
 		Add(testdata.TestHttpTask)
 	_, err := httpTaskWorkflow1.StartWorkflow(&model.StartWorkflowRequest{CorrelationId: correlationId1})
-	if err != nil {
-		t.Fatal(err)
-	}
+
+	require.NoError(t, err)
 	_, err = httpTaskWorkflow2.StartWorkflow(&model.StartWorkflowRequest{CorrelationId: correlationId2})
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	time.Sleep(3 * time.Second)
 	workflows, err := executor.GetByCorrelationIdsAndNames(true, true,
 		[]string{correlationId1, correlationId2}, []string{httpTaskWorkflow1.GetName(), httpTaskWorkflow2.GetName()})
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	assert.Contains(t, workflows, correlationId1)
 	assert.Contains(t, workflows, correlationId2)
 	assert.NotEmpty(t, workflows[correlationId1])
@@ -203,9 +194,7 @@ func TestTerminateWorkflowWithFailure(t *testing.T) {
 		Version(1).
 		Add(workflow.NewSetVariableTask("set_var").Input("var_value", 42))
 	err := testdata.ValidateWorkflowRegistration(wf)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	workflowWait := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).
 		Name("TEST_GO_WORKFLOW_WAIT_CONDUCTOR").
@@ -213,22 +202,14 @@ func TestTerminateWorkflowWithFailure(t *testing.T) {
 		Add(workflow.NewWaitTask("termination_wait")).
 		FailureWorkflow(wf.GetName())
 	err = testdata.ValidateWorkflowRegistration(workflowWait)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	id, err := workflowWait.StartWorkflow(&model.StartWorkflowRequest{})
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	err = executor.TerminateWithFailure(id, "Terminated to trigger failure workflow", true)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	terminatedWfStatus, err := executor.GetWorkflow(id, false)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	assert.NotEmpty(t, terminatedWfStatus.Output["conductor.failure_workflow"])
 }
 
@@ -252,9 +233,7 @@ func TestExecuteWorkflowSync(t *testing.T) {
 		"key1": "input1",
 		"key2": 101,
 	})
-	if err != nil {
-		t.Fatalf("Failed to complete the workflow, reason: %s", err)
-	}
+	require.NoError(t, err, "Failed to complete the workflow, reason: %s", err)
 	assert.NotEmpty(t, run, "Workflow is null", run)
 	assert.Equal(t, model.CompletedWorkflow, run.Status)
 
@@ -410,6 +389,9 @@ func TestRetryWorkflow(t *testing.T) {
 
 // TestRerunWorkflow tests the Rerun API endpoint
 func TestRerunWorkflow(t *testing.T) {
+	// NOTE: This test is currently skipped Due to changes in logic in the new cluster version,
+	// following an investigation of the issue by the core team, the test will be rewritten/deleted.
+	t.Skip("Skipping rerun workflow test")
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 
 	// Create a simple workflow with multiple tasks
@@ -486,6 +468,86 @@ func TestRerunWorkflow(t *testing.T) {
 	// Assert upstream not re-executed; downstream re-executed
 	assert.Equal(t, int32(1), set1Count, "set_var1 (upstream) must NOT be re-executed on rerun-from set_var2")
 	assert.Equal(t, int32(2), set2Count, "set_var2 (downstream) must be executed twice (initial + rerun)")
+	require.NotNil(t, latestSetVar2, "expected to capture latest set_var2 instance")
+	assert.Equal(t, model.CompletedTask, latestSetVar2.Status, "latest set_var2 must complete")
+
+	val, ok := latestSetVar2.InputData["var_value"]
+	assert.True(t, ok, "latest set_var2 must have var_value in InputData")
+	assert.Equal(t, "rerun_value", val)
+
+}
+
+// TestRerunWorkflowSimple tests the Rerun API endpoint
+func TestRerunWorkflowSimple(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
+	// Create a simple workflow with multiple tasks
+	uniqueSuffix := strconv.Itoa(time.Now().Nanosecond())
+	wf := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).
+		Name("TEST_GO_WORKFLOW_RERUN_" + uniqueSuffix).
+		Version(1).
+		Add(workflow.NewSetVariableTask("set_var1").Input("var_value", "first")).
+		Add(workflow.NewSetVariableTask("set_var2").Input("var_value", "second"))
+
+	err := testdata.ValidateWorkflowRegistration(wf)
+	assert.NoError(t, err, "Failed to register workflow")
+
+	// Start the workflow manually to get workflow ID for rerun
+	workflowId, err := wf.StartWorkflowWithInput(map[string]interface{}{"test": "rerun"})
+	assert.NoError(t, err, "Failed to start workflow for rerun test")
+
+	t.Cleanup(func() {
+		err = testdata.WorkflowExecutor.RemoveWorkflow(workflowId)
+		assert.NoError(t, err, "Failed to remove workflow")
+		_, err = testdata.MetadataClient.UnregisterWorkflowDef(
+			context.Background(),
+			wf.GetName(),
+			wf.GetVersion(),
+		)
+		assert.NoError(t, err, "Failed to remove workflow definition")
+	})
+
+	// Wait for workflow completion
+	completedWorkflow, err := testdata.WaitForWorkflowCompletion(workflowId, testdata.WorkflowValidationTimeout)
+	assert.NoError(t, err, "Failed to wait for workflow completion")
+	assert.Equal(t, model.CompletedWorkflow, completedWorkflow.Status, "Workflow should be completed")
+	assert.Len(t, completedWorkflow.Tasks, 2, "Workflow should have 2 tasks")
+
+	// Rerun from the second task with comprehensive parameters
+	rerunRequest := model.RerunWorkflowRequest{
+		ReRunFromTaskId: completedWorkflow.Tasks[1].TaskId,
+		TaskInput: map[string]interface{}{
+			"var_value": "rerun_value",
+		},
+		WorkflowInput: map[string]interface{}{
+			"rerun_test": "true",
+			"timestamp":  time.Now().Unix(),
+		},
+		CorrelationId: "rerun-correlation-" + uniqueSuffix,
+	}
+
+	rerunId, _, err := testdata.WorkflowClient.Rerun(context.Background(), rerunRequest, workflowId)
+	assert.NoError(t, err, "Failed to rerun workflow")
+	assert.Equal(t, workflowId, rerunId, "Rerun should return the same workflow ID")
+
+	// Wait for rerun completion
+	rerunWorkflow, err := testdata.WaitForWorkflowCompletion(rerunId, testdata.WorkflowValidationTimeout)
+	assert.NoError(t, err, "Failed to wait for rerun workflow completion")
+	assert.Equal(t, model.CompletedWorkflow, rerunWorkflow.Status, "Rerun workflow should be completed")
+
+	var latestSetVar2 *model.Task
+	var maxSeq int32
+	for _, tk := range rerunWorkflow.Tasks {
+		switch tk.ReferenceTaskName {
+		case "set_var2":
+			if tk.Seq > maxSeq {
+				maxSeq = tk.Seq
+				c := tk // copy loop var
+				latestSetVar2 = &c
+			}
+		}
+	}
+
 	require.NotNil(t, latestSetVar2, "expected to capture latest set_var2 instance")
 	assert.Equal(t, model.CompletedTask, latestSetVar2.Status, "latest set_var2 must complete")
 
@@ -997,9 +1059,7 @@ func TestGetWorkflowsBatch(t *testing.T) {
 	t.Cleanup(func() {
 		for _, id := range workflowIds {
 			err = testdata.WorkflowExecutor.RemoveWorkflow(id)
-			if err != nil {
-				t.Logf("Warning: Failed to remove workflow %s: %v", id, err)
-			}
+			assert.NoError(t, err, "Failed to remove workflow %s", id)
 		}
 
 		_, err = testdata.MetadataClient.UnregisterWorkflowDef(
@@ -1007,9 +1067,7 @@ func TestGetWorkflowsBatch(t *testing.T) {
 			wf.GetName(),
 			wf.GetVersion(),
 		)
-		if err != nil {
-			t.Logf("Warning: Failed to remove workflow definition: %v", err)
-		}
+		assert.NoError(t, err, "Failed to remove workflow definition")
 	})
 	err = testdata.WaitForMultipleWorkflowsCompletion(workflowIds, testdata.WorkflowValidationTimeout)
 	assert.NoError(t, err, "Failed to wait for workflow completion")
