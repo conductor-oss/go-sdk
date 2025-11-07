@@ -9,6 +9,19 @@
 
 package gateway
 
+import (
+	"github.com/conductor-sdk/conductor-go/sdk/model"
+)
+
+type WorkflowExecutionMode string
+
+const (
+	// ExecutionModeSynchronous waits for workflow completion and returns the result
+	ExecutionModeSynchronous WorkflowExecutionMode = "SYNCHRONOUS"
+	// ExecutionModeAsynchronous starts workflow and immediately returns workflow ID
+	ExecutionModeAsynchronous WorkflowExecutionMode = "ASYNCHRONOUS"
+)
+
 // ServiceRouteDetails wraps a route with its metrics
 type ServiceRouteDetails struct {
 	// The route configuration
@@ -31,8 +44,8 @@ type ApiGatewayRoute struct {
 	MappedWorkflow *MappedWorkflow `json:"mappedWorkflow,omitempty"`
 	// Whether to include workflow metadata in output
 	WorkflowMetadataInOutput bool `json:"workflowMetadataInOutput,omitempty"`
-	// Workflow execution mode (SYNCHRONOUS, ASYNCHRONOUS)
-	WorkflowExecutionMode string `json:"workflowExecutionMode,omitempty"`
+	// Workflow execution mode
+	WorkflowExecutionMode WorkflowExecutionMode `json:"workflowExecutionMode,omitempty"`
 	// Wait until tasks (comma-separated task reference names)
 	WaitUntilTasks string `json:"waitUntilTasks,omitempty"`
 	// Creation timestamp
@@ -40,7 +53,7 @@ type ApiGatewayRoute struct {
 	// Update timestamp
 	UpdateTime int64 `json:"updateTime,omitempty"`
 	// Tags
-	Tags []interface{} `json:"tags,omitempty"`
+	Tags []model.Tag `json:"tags,omitempty"`
 }
 
 // MappedWorkflow represents the workflow mapping configuration for a route
