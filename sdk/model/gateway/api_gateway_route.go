@@ -43,7 +43,7 @@ type ApiGatewayRoute struct {
 	// Mapped workflow configuration
 	MappedWorkflow *MappedWorkflow `json:"mappedWorkflow,omitempty"`
 	// Whether to include workflow metadata in output
-	WorkflowMetadataInOutput bool `json:"workflowMetadataInOutput,omitempty"`
+	WorkflowMetadataInOutput bool `json:"workflowMetadataInOutput"`
 	// Workflow execution mode
 	WorkflowExecutionMode WorkflowExecutionMode `json:"workflowExecutionMode,omitempty"`
 	// Wait until tasks (comma-separated task reference names)
@@ -63,5 +63,5 @@ type MappedWorkflow struct {
 	// Workflow version
 	Version int32 `json:"version,omitempty"`
 	// Whether to pass request metadata as input
-	RequestMetadataAsInput bool `json:"requestMetadataAsInput,omitempty"`
+	RequestMetadataAsInput bool `json:"requestMetadataAsInput"`
 }

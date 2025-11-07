@@ -20,7 +20,7 @@ type ApiGatewayService struct {
 	// Description of the service
 	Description string `json:"description,omitempty"`
 	// Whether the service is enabled
-	Enabled bool `json:"enabled,omitempty"`
+	Enabled bool `json:"enabled"`
 	// Creation timestamp
 	CreateTime int64 `json:"createTime,omitempty"`
 	// Update timestamp
@@ -34,7 +34,7 @@ type ApiGatewayService struct {
 	// CORS configuration
 	CorsConfig *CorsConfig `json:"corsConfig,omitempty"`
 	// Whether MCP is enabled
-	McpEnabled bool `json:"mcpEnabled,omitempty"`
+	McpEnabled bool `json:"mcpEnabled"`
 }
 
 // CorsConfig represents CORS configuration for a service
