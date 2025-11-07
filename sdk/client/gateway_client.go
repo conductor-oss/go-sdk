@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/sdk/model/gateway"
 )
 
@@ -15,6 +16,8 @@ type ApiGatewayClient interface {
 	GetAllServices(ctx context.Context) ([]gateway.ApiGatewayService, *http.Response, error)
 	UpdateService(ctx context.Context, serviceId string, service gateway.ApiGatewayService) (*http.Response, error)
 	DeleteService(ctx context.Context, serviceId string) (*http.Response, error)
+	GetTagsForService(ctx context.Context, serviceId string) ([]model.Tag, *http.Response, error)
+	DeleteTagsForService(ctx context.Context, serviceId string, tags []model.Tag) (*http.Response, error)
 
 	// Authentication config operations
 	CreateAuthConfig(ctx context.Context, authConfig gateway.ApiGatewayAuthConfig) (*http.Response, error)
@@ -28,6 +31,7 @@ type ApiGatewayClient interface {
 	GetRoutes(ctx context.Context, serviceId string) ([]gateway.ApiGatewayRoute, *http.Response, error)
 	UpdateRoute(ctx context.Context, serviceId string, routePath string, route gateway.ApiGatewayRoute) (*http.Response, error)
 	DeleteRoute(ctx context.Context, serviceId string, httpMethod string, routePath string) (*http.Response, error)
+	PutTagsForRoute(ctx context.Context, serviceId string, httpMethod string, routePath string, tags []model.Tag) (*http.Response, error)
 }
 
 // NewApiGatewayClient creates a new API Gateway client

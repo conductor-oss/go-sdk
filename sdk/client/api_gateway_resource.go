@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/sdk/model/gateway"
 )
 
@@ -28,11 +29,7 @@ type ApiGatewayResourceApiService struct {
 // CreateService creates a new API Gateway service
 func (a *ApiGatewayResourceApiService) CreateService(ctx context.Context, service gateway.ApiGatewayService) (*http.Response, error) {
 	path := "/gateway/config/services"
-	resp, err := a.Post(ctx, path, service, nil)
-	if err != nil {
-		return resp, err
-	}
-	return resp, nil
+	return a.Post(ctx, path, service, nil)
 }
 
 // GetService retrieves an API Gateway service by ID
@@ -40,10 +37,7 @@ func (a *ApiGatewayResourceApiService) GetService(ctx context.Context, serviceId
 	var result gateway.ApiGatewayService
 	path := fmt.Sprintf("/gateway/config/services/%s", serviceId)
 	resp, err := a.Get(ctx, path, nil, &result)
-	if err != nil {
-		return result, resp, err
-	}
-	return result, resp, nil
+	return result, resp, err
 }
 
 // GetAllServices retrieves all API Gateway services
@@ -51,30 +45,33 @@ func (a *ApiGatewayResourceApiService) GetAllServices(ctx context.Context) ([]ga
 	var result []gateway.ApiGatewayService
 	path := "/gateway/config/services"
 	resp, err := a.Get(ctx, path, nil, &result)
-	if err != nil {
-		return result, resp, err
-	}
-	return result, resp, nil
+	return result, resp, err
 }
 
 // UpdateService updates an existing API Gateway service
 func (a *ApiGatewayResourceApiService) UpdateService(ctx context.Context, serviceId string, service gateway.ApiGatewayService) (*http.Response, error) {
 	path := fmt.Sprintf("/gateway/config/services/%s", serviceId)
-	resp, err := a.Put(ctx, path, service, nil)
-	if err != nil {
-		return resp, err
-	}
-	return resp, nil
+	return a.Put(ctx, path, service, nil)
 }
 
 // DeleteService deletes an API Gateway service by ID
 func (a *ApiGatewayResourceApiService) DeleteService(ctx context.Context, serviceId string) (*http.Response, error) {
 	path := fmt.Sprintf("/gateway/config/services/%s", serviceId)
-	resp, err := a.Delete(ctx, path, nil, nil)
-	if err != nil {
-		return resp, err
-	}
-	return resp, nil
+	return a.Delete(ctx, path, nil, nil)
+}
+
+// GetTagsForService retrieves tags for a service
+func (a *ApiGatewayResourceApiService) GetTagsForService(ctx context.Context, serviceId string) ([]model.Tag, *http.Response, error) {
+	var result []model.Tag
+	path := fmt.Sprintf("/gateway/config/services/%s/tags", serviceId)
+	resp, err := a.Get(ctx, path, nil, &result)
+	return result, resp, err
+}
+
+// DeleteTagsForService removes tags from a service
+func (a *ApiGatewayResourceApiService) DeleteTagsForService(ctx context.Context, serviceId string, tags []model.Tag) (*http.Response, error) {
+	path := fmt.Sprintf("/gateway/config/services/%s/tags", serviceId)
+	return a.DeleteWithBody(ctx, path, tags, nil)
 }
 
 // ==================== Authentication Config Operations ====================
@@ -82,11 +79,7 @@ func (a *ApiGatewayResourceApiService) DeleteService(ctx context.Context, servic
 // CreateAuthConfig creates a new authentication configuration
 func (a *ApiGatewayResourceApiService) CreateAuthConfig(ctx context.Context, authConfig gateway.ApiGatewayAuthConfig) (*http.Response, error) {
 	path := "/gateway/config/auth"
-	resp, err := a.Post(ctx, path, authConfig, nil)
-	if err != nil {
-		return resp, err
-	}
-	return resp, nil
+	return a.Post(ctx, path, authConfig, nil)
 }
 
 // GetAuthConfig retrieves an authentication configuration by ID
@@ -94,10 +87,7 @@ func (a *ApiGatewayResourceApiService) GetAuthConfig(ctx context.Context, authCo
 	var result gateway.ApiGatewayAuthConfig
 	path := fmt.Sprintf("/gateway/config/auth/%s", authConfigId)
 	resp, err := a.Get(ctx, path, nil, &result)
-	if err != nil {
-		return result, resp, err
-	}
-	return result, resp, nil
+	return result, resp, err
 }
 
 // GetAllAuthConfigs retrieves all authentication configurations
@@ -105,30 +95,19 @@ func (a *ApiGatewayResourceApiService) GetAllAuthConfigs(ctx context.Context) ([
 	var result []gateway.ApiGatewayAuthConfig
 	path := "/gateway/config/auth"
 	resp, err := a.Get(ctx, path, nil, &result)
-	if err != nil {
-		return result, resp, err
-	}
-	return result, resp, nil
+	return result, resp, err
 }
 
 // UpdateAuthConfig updates an existing authentication configuration
 func (a *ApiGatewayResourceApiService) UpdateAuthConfig(ctx context.Context, authConfigId string, authConfig gateway.ApiGatewayAuthConfig) (*http.Response, error) {
 	path := fmt.Sprintf("/gateway/config/auth/%s", authConfigId)
-	resp, err := a.Put(ctx, path, authConfig, nil)
-	if err != nil {
-		return resp, err
-	}
-	return resp, nil
+	return a.Put(ctx, path, authConfig, nil)
 }
 
 // DeleteAuthConfig deletes an authentication configuration by ID
 func (a *ApiGatewayResourceApiService) DeleteAuthConfig(ctx context.Context, authConfigId string) (*http.Response, error) {
 	path := fmt.Sprintf("/gateway/config/auth/%s", authConfigId)
-	resp, err := a.Delete(ctx, path, nil, nil)
-	if err != nil {
-		return resp, err
-	}
-	return resp, nil
+	return a.Delete(ctx, path, nil, nil)
 }
 
 // ==================== Route Operations ====================
@@ -136,11 +115,7 @@ func (a *ApiGatewayResourceApiService) DeleteAuthConfig(ctx context.Context, aut
 // CreateRoute creates a new route for a service
 func (a *ApiGatewayResourceApiService) CreateRoute(ctx context.Context, serviceId string, route gateway.ApiGatewayRoute) (*http.Response, error) {
 	path := fmt.Sprintf("/gateway/config/services/%s/routes", serviceId)
-	resp, err := a.Post(ctx, path, route, nil)
-	if err != nil {
-		return resp, err
-	}
-	return resp, nil
+	return a.Post(ctx, path, route, nil)
 }
 
 // GetRoutes retrieves all routes for a service
@@ -168,11 +143,7 @@ func (a *ApiGatewayResourceApiService) UpdateRoute(ctx context.Context, serviceI
 	path := fmt.Sprintf("/gateway/config/services/%s/routes", serviceId)
 	queryParams := url.Values{}
 	queryParams.Add("path", routePath)
-	resp, err := a.PutWithParams(ctx, path, queryParams, route, nil)
-	if err != nil {
-		return resp, err
-	}
-	return resp, nil
+	return a.PutWithParams(ctx, path, queryParams, route, nil)
 }
 
 // DeleteRoute deletes a route from a service
@@ -181,9 +152,14 @@ func (a *ApiGatewayResourceApiService) DeleteRoute(ctx context.Context, serviceI
 	queryParams := url.Values{}
 	queryParams.Add("method", httpMethod)
 	queryParams.Add("path", routePath)
-	resp, err := a.Delete(ctx, path, queryParams, nil)
-	if err != nil {
-		return resp, err
-	}
-	return resp, nil
+	return a.Delete(ctx, path, queryParams, nil)
+}
+
+// PutTagsForRoute replaces tags for a specific route
+func (a *ApiGatewayResourceApiService) PutTagsForRoute(ctx context.Context, serviceId string, httpMethod string, routePath string, tags []model.Tag) (*http.Response, error) {
+	path := fmt.Sprintf("/gateway/config/services/%s/routes/tags", serviceId)
+	queryParams := url.Values{}
+	queryParams.Add("method", httpMethod)
+	queryParams.Add("path", routePath)
+	return a.PutWithParams(ctx, path, queryParams, tags, nil)
 }

@@ -184,7 +184,12 @@ func TestApiGatewayClient(t *testing.T) {
 	}
 	assert.True(t, foundUpdatedRoute, "Updated route not found")
 
-	// Test case 11: Update the service
+	// Test case 11: Get tags for service (should be empty initially)
+	_, resp, err = gatewayClient.GetTagsForService(ctx, serviceId)
+	assert.Nil(t, err)
+	assert.Equal(t, 200, resp.StatusCode)
+
+	// Test case 12: Update the service
 	updatedService := retrievedService
 	updatedService.Description = "Updated test service"
 	updatedService.Enabled = false
@@ -193,14 +198,14 @@ func TestApiGatewayClient(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, 200, resp.StatusCode)
 
-	// Test case 12: Verify service update
+	// Test case 13: Verify service update
 	verifyService, resp, err := gatewayClient.GetService(ctx, serviceId)
 	assert.Nil(t, err)
 	assert.Equal(t, 200, resp.StatusCode)
 	assert.Equal(t, "Updated test service", verifyService.Description)
 	assert.False(t, verifyService.Enabled)
 
-	// Test case 13: Update the auth config
+	// Test case 14: Update the auth config
 	updatedAuthConfig := retrievedAuthConfig
 	updatedAuthConfig.ApiKeys = []string{"test-key-1", "test-key-2", "test-key-3"}
 
@@ -208,18 +213,92 @@ func TestApiGatewayClient(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, 200, resp.StatusCode)
 
-	// Test case 14: Verify auth config update
+	// Test case 15: Verify auth config update
 	verifyAuthConfig, resp, err := gatewayClient.GetAuthConfig(ctx, authConfigId)
 	assert.Nil(t, err)
 	assert.Equal(t, 200, resp.StatusCode)
 	assert.Equal(t, 3, len(verifyAuthConfig.ApiKeys))
 
-	// Test case 15: Delete the route
+	// Test case 16: Put tags for route using PutTagsForRoute
+	routeTags := []model.Tag{
+		{
+			Key:   "department",
+			Value: "engineering",
+			Type_: "metadata",
+		},
+		{
+			Key:   "team",
+			Value: "platform",
+			Type_: "ownership",
+		},
+		{
+			Key:   "version",
+			Value: "v1",
+			Type_: "metadata",
+		},
+	}
+
+	resp, err = gatewayClient.PutTagsForRoute(ctx, serviceId, "GET", "/test-route", routeTags)
+	assert.Nil(t, err)
+	assert.Equal(t, 200, resp.StatusCode)
+
+	// Test case 17: Verify tags were set on the route
+	routesWithTags, resp, err := gatewayClient.GetRoutes(ctx, serviceId)
+	assert.Nil(t, err)
+	assert.Equal(t, 200, resp.StatusCode)
+
+	var foundRouteWithTags bool
+	for _, r := range routesWithTags {
+		if r.HttpMethod == "GET" && r.Path == "/test-route" {
+			foundRouteWithTags = true
+			assert.GreaterOrEqual(t, len(r.Tags), 3, "Route should have at least 3 tags")
+
+			// Verify specific tags exist
+			tagMap := make(map[string]string)
+			for _, tag := range r.Tags {
+				tagMap[tag.Key] = tag.Value
+			}
+			assert.Equal(t, "engineering", tagMap["department"])
+			assert.Equal(t, "platform", tagMap["team"])
+			assert.Equal(t, "v1", tagMap["version"])
+			break
+		}
+	}
+	assert.True(t, foundRouteWithTags, "Route with tags not found")
+
+	// Test case 18: Delete specific tags from service
+	tagsToDelete := []model.Tag{
+		{
+			Key:   "department",
+			Value: "engineering",
+			Type_: "metadata",
+		},
+	}
+
+	// First, verify we can get tags for the service again
+	serviceTagsBeforeDelete, resp, err := gatewayClient.GetTagsForService(ctx, serviceId)
+	assert.Nil(t, err)
+	assert.Equal(t, 200, resp.StatusCode)
+
+	// Delete tags from service (if any exist)
+	if len(serviceTagsBeforeDelete) > 0 {
+		resp, err = gatewayClient.DeleteTagsForService(ctx, serviceId, tagsToDelete)
+		assert.Nil(t, err)
+		assert.Equal(t, 200, resp.StatusCode)
+
+		// Verify tags were deleted
+		serviceTagsAfterDelete, resp, err := gatewayClient.GetTagsForService(ctx, serviceId)
+		assert.Nil(t, err)
+		assert.Equal(t, 200, resp.StatusCode)
+		assert.LessOrEqual(t, len(serviceTagsAfterDelete), len(serviceTagsBeforeDelete))
+	}
+
+	// Test case 19: Delete the route
 	resp, err = gatewayClient.DeleteRoute(ctx, serviceId, "GET", "/test-route")
 	assert.Nil(t, err)
 	assert.Equal(t, 200, resp.StatusCode)
 
-	// Test case 16: Verify the route was deleted
+	// Test case 20: Verify the route was deleted
 	routesAfterDelete, resp, err := gatewayClient.GetRoutes(ctx, serviceId)
 	assert.Nil(t, err)
 	assert.Equal(t, 200, resp.StatusCode)
@@ -233,12 +312,12 @@ func TestApiGatewayClient(t *testing.T) {
 	}
 	assert.False(t, routeFoundAfterDelete, "Route should have been deleted")
 
-	// Test case 17: Delete the service
+	// Test case 21: Delete the service
 	resp, err = gatewayClient.DeleteService(ctx, serviceId)
 	assert.Nil(t, err)
 	assert.Equal(t, 200, resp.StatusCode)
 
-	// Test case 18: Verify the service was deleted
+	// Test case 22: Verify the service was deleted
 	allServicesAfterDelete, resp, err := gatewayClient.GetAllServices(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, 200, resp.StatusCode)
@@ -252,12 +331,12 @@ func TestApiGatewayClient(t *testing.T) {
 	}
 	assert.False(t, serviceFoundAfterDelete, "Service should have been deleted")
 
-	// Test case 19: Delete the auth config
+	// Test case 23: Delete the auth config
 	resp, err = gatewayClient.DeleteAuthConfig(ctx, authConfigId)
 	assert.Nil(t, err)
 	assert.Equal(t, 200, resp.StatusCode)
 
-	// Test case 20: Verify the auth config was deleted
+	// Test case 24: Verify the auth config was deleted
 	allAuthConfigsAfterDelete, resp, err := gatewayClient.GetAllAuthConfigs(ctx)
 	assert.Nil(t, err)
 	assert.Equal(t, 200, resp.StatusCode)
