@@ -13,6 +13,8 @@ import (
 )
 
 func TestApiGatewayClient(t *testing.T) {
+	t.Skip("Temporarily disabled - No API Gateway Support in Server")
+
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 
 	// Setup
