@@ -19,6 +19,7 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/workflow"
 	"github.com/conductor-sdk/conductor-go/test/testdata"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -30,9 +31,10 @@ func TestUpdateTaskRefByName(t *testing.T) {
 		Version(1).
 		Add(testdata.TestSimpleTask)
 
-	err := testdata.ValidateWorkflowRegistration(simpleTaskWorkflow)
-
-	require.NoError(t, err, "Failed to register workflow")
+	require.NoError(t, testdata.ValidateWorkflowRegistration(simpleTaskWorkflow))
+	t.Cleanup(func() {
+		require.NoError(t, testdata.ValidateWorkflowDeletion(simpleTaskWorkflow), "Failed to delete workflow")
+	})
 
 	workflowId, response, err := testdata.WorkflowClient.StartWorkflow(
 		context.Background(),
@@ -43,6 +45,9 @@ func TestUpdateTaskRefByName(t *testing.T) {
 	require.NoError(t, err, "Failed to start workflow")
 	require.Equal(t, http.StatusOK, response.StatusCode, "Expected status code 200, got %d", response.StatusCode)
 	require.NotEmpty(t, workflowId, "Workflow ID is empty")
+	t.Cleanup(func() {
+		assert.NoError(t, testdata.ValidateWorkflowExecutionDeletion(&model.Workflow{WorkflowId: workflowId}), "Failed to delete workflow execution")
+	})
 	outputData := map[string]interface{}{
 		"key": "value",
 	}
@@ -66,7 +71,4 @@ func TestUpdateTaskRefByName(t *testing.T) {
 	)
 	err = <-errorChannel
 	require.NoError(t, err, "Failed to validate workflow")
-
-	err = testdata.ValidateWorkflowDeletion(simpleTaskWorkflow)
-	require.NoError(t, err, "Failed to delete workflow")
 }
