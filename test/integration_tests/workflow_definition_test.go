@@ -39,12 +39,16 @@ func TestWorkflowCreation(t *testing.T) {
 		Version(1).
 		Description("Simple Population Min Max workflow").
 		Add(testdata.NewSetStateVariableTask(workflow.NewSimpleTask("set_state", "set_state")))
-	err := wf.Register(true)
-	require.NoError(t, err, "Failed to register workflow")
+	require.NoError(t, testdata.ValidateWorkflowRegistration(wf))
+	t.Cleanup(func() {
+		assert.NoError(t, testdata.ValidateWorkflowDeletion(wf), "Failed to delete workflow")
+	})
 
 	workflow := testdata.NewKitchenSinkWorkflow(testdata.WorkflowExecutor)
-	err = workflow.Register(true)
-	require.NoError(t, err, "Failed to register workflow")
+	require.NoError(t, testdata.ValidateWorkflowRegistration(workflow))
+	t.Cleanup(func() {
+		assert.NoError(t, testdata.ValidateWorkflowDeletion(workflow), "Failed to delete workflow")
+	})
 	startWorkers()
 	run, err := executeWorkflowWithRetries(workflow, map[string]interface{}{
 		"key1": "input1",
@@ -54,6 +58,9 @@ func TestWorkflowCreation(t *testing.T) {
 
 	assert.NotEmpty(t, run, "Workflow is null", run)
 	workflowId := run.WorkflowId
+	t.Cleanup(func() {
+		assert.NoError(t, testdata.ValidateWorkflowExecutionDeletion(&model.Workflow{WorkflowId: workflowId}), "Failed to delete workflow execution")
+	})
 	timeout := time.After(60 * time.Second)
 	tick := time.Tick(1 * time.Second)
 
@@ -105,12 +112,9 @@ func TestRemoveWorkflow(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "no such workflow by Id")
 
-	_, err = testdata.MetadataClient.UnregisterWorkflowDef(
-		context.Background(),
-		wf.GetName(),
-		wf.GetVersion(),
-	)
-	assert.NoError(t, err, "Failed to delete workflow definition ", err)
+	t.Cleanup(func() {
+		assert.NoError(t, testdata.ValidateWorkflowDeletion(wf), "Failed to delete workflow")
+	})
 }
 
 func TestExecuteWorkflow(t *testing.T) {
@@ -143,12 +147,10 @@ func TestExecuteWorkflow(t *testing.T) {
 	assert.NoError(t, err, "Failed to get workflow execution")
 	assert.Equal(t, model.CompletedWorkflow, execution.Status, "Workflow is not in the completed state")
 
-	_, err = testdata.MetadataClient.UnregisterWorkflowDef(
-		context.Background(),
-		wf.GetName(),
-		wf.GetVersion(),
-	)
-	assert.NoError(t, err, "Failed to delete workflow definition ", err)
+	t.Cleanup(func() {
+		assert.NoError(t, testdata.ValidateWorkflowExecutionDeletion(execution), "Failed to delete workflow execution")
+		assert.NoError(t, testdata.ValidateWorkflowDeletion(wf), "Failed to delete workflow")
+	})
 }
 
 func TestExecuteWorkflowWithCorrelationIds(t *testing.T) {
@@ -168,11 +170,16 @@ func TestExecuteWorkflowWithCorrelationIds(t *testing.T) {
 		OwnerEmail("test@orkes.io").
 		Version(1).
 		Add(testdata.TestHttpTask)
-	_, err := httpTaskWorkflow1.StartWorkflow(&model.StartWorkflowRequest{CorrelationId: correlationId1})
-
+	workflowId1, err := httpTaskWorkflow1.StartWorkflow(&model.StartWorkflowRequest{CorrelationId: correlationId1})
 	require.NoError(t, err)
-	_, err = httpTaskWorkflow2.StartWorkflow(&model.StartWorkflowRequest{CorrelationId: correlationId2})
+	t.Cleanup(func() {
+		assert.NoError(t, testdata.ValidateWorkflowExecutionDeletion(&model.Workflow{WorkflowId: workflowId1}), "Failed to delete workflow execution 1")
+	})
+	workflowId2, err := httpTaskWorkflow2.StartWorkflow(&model.StartWorkflowRequest{CorrelationId: correlationId2})
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		assert.NoError(t, testdata.ValidateWorkflowExecutionDeletion(&model.Workflow{WorkflowId: workflowId2}), "Failed to delete workflow execution 2")
+	})
 	time.Sleep(3 * time.Second)
 	workflows, err := executor.GetByCorrelationIdsAndNames(true, true,
 		[]string{correlationId1, correlationId2}, []string{httpTaskWorkflow1.GetName(), httpTaskWorkflow2.GetName()})
@@ -201,11 +208,16 @@ func TestTerminateWorkflowWithFailure(t *testing.T) {
 		Version(1).
 		Add(workflow.NewWaitTask("termination_wait")).
 		FailureWorkflow(wf.GetName())
-	err = testdata.ValidateWorkflowRegistration(workflowWait)
-	require.NoError(t, err)
+	require.NoError(t, testdata.ValidateWorkflowRegistration(workflowWait))
+	t.Cleanup(func() {
+		assert.NoError(t, testdata.ValidateWorkflowDeletion(wf), "Failed to delete workflow")
+	})
 
 	id, err := workflowWait.StartWorkflow(&model.StartWorkflowRequest{})
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		assert.NoError(t, testdata.ValidateWorkflowExecutionDeletion(&model.Workflow{WorkflowId: id}), "Failed to delete workflow execution")
+	})
 	err = executor.TerminateWithFailure(id, "Terminated to trigger failure workflow", true)
 	require.NoError(t, err)
 	terminatedWfStatus, err := executor.GetWorkflow(id, false)
@@ -226,9 +238,10 @@ func TestExecuteWorkflowSync(t *testing.T) {
 		"param1": "Test",
 		"param2": 123,
 	})
-	err := wf.Register(true)
-
-	assert.NoError(t, err, "Failed to register workflow")
+	require.NoError(t, testdata.ValidateWorkflowRegistration(wf))
+	t.Cleanup(func() {
+		assert.NoError(t, testdata.ValidateWorkflowDeletion(wf), "Failed to delete workflow")
+	})
 	run, err := executeWorkflowWithRetries(wf, map[string]interface{}{
 		"key1": "input1",
 		"key2": 101,
@@ -236,17 +249,13 @@ func TestExecuteWorkflowSync(t *testing.T) {
 	require.NoError(t, err, "Failed to complete the workflow, reason: %s", err)
 	assert.NotEmpty(t, run, "Workflow is null", run)
 	assert.Equal(t, model.CompletedWorkflow, run.Status)
+	t.Cleanup(func() {
+		assert.NoError(t, testdata.ValidateWorkflowExecutionDeletion(&model.Workflow{WorkflowId: run.WorkflowId}), "Failed to delete workflow execution")
+	})
 
 	execution, err := executor.GetWorkflow(run.WorkflowId, true)
 	assert.NoError(t, err, "Failed to get workflow execution")
 	assert.Equal(t, model.CompletedWorkflow, execution.Status, "Workflow is not in the completed state")
-
-	_, err = testdata.MetadataClient.UnregisterWorkflowDef(
-		context.Background(),
-		wf.GetName(),
-		wf.GetVersion(),
-	)
-	assert.NoError(t, err, "Failed to delete workflow definition ", err)
 }
 
 func startWorkers() {

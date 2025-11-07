@@ -518,6 +518,16 @@ func registerComplexWorkflows(t *testing.T) {
 	require.NoError(t, err, "Failed to get workflow definition")
 	err = executor.RegisterWorkflow(true, wfDef)
 	require.NoError(t, err, "Failed to register workflow")
+
+	// Cleanup for registered workflows
+	t.Cleanup(func() {
+		_, err := testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), "complex_wf_signal_test", 1)
+		assert.NoError(t, err, "Failed to unregister main workflow")
+		_, err = testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), "complex_wf_signal_test_subworkflow_1", 1)
+		assert.NoError(t, err, "Failed to unregister subworkflow 1")
+		_, err = testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), "complex_wf_signal_test_subworkflow_2", 1)
+		assert.NoError(t, err, "Failed to unregister subworkflow 2")
+	})
 }
 
 func getWorkflowDef(filename string) (*model.WorkflowDef, error) {
@@ -691,6 +701,11 @@ func TestSignal_AllStrategies_Comprehensive(t *testing.T) {
 			require.NotEmpty(t, resp)
 			workflowId := resp.WorkflowId
 
+			// Cleanup for workflow execution
+			t.Cleanup(func() {
+				assert.NoError(t, testdata.ValidateWorkflowExecutionDeletion(&model.Workflow{WorkflowId: workflowId}), "Failed to delete workflow execution")
+			})
+
 			t.Logf("Started complex workflow with ID: %s for strategy: %s, Consistency: %s", workflowId, tc.name, tc.consistency.String())
 
 			// Wait for workflow to execute the HTTP task and start the subworkflow
@@ -723,12 +738,12 @@ func TestSignal_AllStrategies_Comprehensive(t *testing.T) {
 				client.SignalTaskOpts{
 					ReturnStrategy: tc.returnStrategy,
 				})
+			// ========== BASIC VALIDATIONS (same for all strategies) ==========
+			require.NoError(t, err, "Signal should not return an error")
+			require.NotNil(t, resp, "Response should not be nil")
+
 			// Validate response type
 			assert.Equal(t, tc.returnStrategy, resp.ResponseType, fmt.Sprintf("Response type should be %s", tc.returnStrategy))
-
-			// ========== BASIC VALIDATIONS (same for all strategies) ==========
-			assert.NoError(t, err, "Signal should not return an error")
-			assert.NotNil(t, resp, "Response should not be nil")
 
 			// Type check validations
 			assert.Equal(t, tc.expectedIsTarget, resp.IsTargetWorkflow(), "IsTargetWorkflow check")
@@ -867,6 +882,11 @@ func TestSignal_DefaultStrategy_IsTargetWorkflow(t *testing.T) {
 	require.NotNil(t, workflowRun)
 	workflowId := workflowRun.WorkflowId
 
+	// Cleanup for workflow execution
+	t.Cleanup(func() {
+		assert.NoError(t, testdata.ValidateWorkflowExecutionDeletion(&model.Workflow{WorkflowId: workflowId}), "Failed to delete workflow execution")
+	})
+
 	time.Sleep(20 * time.Millisecond)
 
 	// Signal with NO ReturnStrategy specified (should default to TARGET_WORKFLOW)
@@ -920,6 +940,11 @@ func TestSignal_MixedStrategy(t *testing.T) {
 	require.Nil(t, err)
 	require.NotNil(t, workflowRun)
 	workflowId := workflowRun.WorkflowId
+
+	// Cleanup for workflow execution
+	t.Cleanup(func() {
+		assert.NoError(t, testdata.ValidateWorkflowExecutionDeletion(&model.Workflow{WorkflowId: workflowId}), "Failed to delete workflow execution")
+	})
 
 	time.Sleep(20 * time.Millisecond)
 

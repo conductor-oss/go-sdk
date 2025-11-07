@@ -68,12 +68,20 @@ func TestLegacyWorkerIntegration(t *testing.T) {
 			"message": fmt.Sprintf("${%s.output.message}", refName),
 		})
 
-	require.NoError(t, wf.Register(true))
+	require.NoError(t, testdata.ValidateWorkflowRegistration(wf))
+	t.Cleanup(func() {
+		require.NoError(t, testdata.ValidateWorkflowDeletion(wf), "Failed to delete workflow")
+	})
+
 	err := testdata.TaskRunner.StartWorker(taskName, legacyHandler, 2, testdata.WorkerPollInterval)
 	require.NoError(t, err)
 
 	expected := map[string]interface{}{"message": "processed by legacy worker"}
-	assert.NoError(t, testdata.ValidateWorkflowWithOutput(wf, testdata.WorkflowValidationTimeout, model.CompletedWorkflow, expected))
+	completedWorkflow, err := testdata.ValidateWorkflowWithOutput(wf, testdata.WorkflowValidationTimeout, model.CompletedWorkflow, expected)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		assert.NoError(t, testdata.ValidateWorkflowExecutionDeletion(completedWorkflow), "Failed to delete workflow execution")
+	})
 }
 
 func TestRegularWorkerIntegration(t *testing.T) {
@@ -90,13 +98,19 @@ func TestRegularWorkerIntegration(t *testing.T) {
 		OutputParameters(map[string]interface{}{
 			"message": fmt.Sprintf("${%s.output.message}", taskName),
 		})
-	require.NoError(t, wf.Register(true))
-
+	require.NoError(t, testdata.ValidateWorkflowRegistration(wf))
+	t.Cleanup(func() {
+		require.NoError(t, testdata.ValidateWorkflowDeletion(wf), "Failed to delete workflow")
+	})
 	w := worker.NewWorker(taskName, legacyHandler, worker.WithBatchSize(1), worker.WithPollInterval(testdata.WorkerPollInterval))
 	require.NoError(t, testdata.TaskRunner.RegisterWorker(w))
 
 	expected := map[string]interface{}{"message": "processed by legacy worker"}
-	assert.NoError(t, testdata.ValidateWorkflowWithOutput(wf, testdata.WorkflowValidationTimeout, model.CompletedWorkflow, expected))
+	completedWorkflow, err := testdata.ValidateWorkflowWithOutput(wf, testdata.WorkflowValidationTimeout, model.CompletedWorkflow, expected)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		assert.NoError(t, testdata.ValidateWorkflowExecutionDeletion(completedWorkflow), "Failed to delete workflow execution")
+	})
 }
 
 // TestTypedWorkerIntegration validates typed worker with struct input/output.
@@ -125,13 +139,20 @@ func TestTypedWorkerIntegration(t *testing.T) {
 			"message": fmt.Sprintf("${%s.output.message}", refName),
 			"sum":     fmt.Sprintf("${%s.output.sum}", refName),
 		})
-	require.NoError(t, wf.Register(true))
+	require.NoError(t, testdata.ValidateWorkflowRegistration(wf))
+	t.Cleanup(func() {
+		require.NoError(t, testdata.ValidateWorkflowDeletion(wf), "Failed to delete workflow")
+	})
 
 	expected := map[string]interface{}{
 		"message": "processed by typed worker",
 		"sum":     float64(10 + len("xyz")),
 	}
-	assert.NoError(t, testdata.ValidateWorkflowWithOutput(wf, testdata.WorkflowValidationTimeout, model.CompletedWorkflow, expected))
+	completedWorkflow, err := testdata.ValidateWorkflowWithOutput(wf, testdata.WorkflowValidationTimeout, model.CompletedWorkflow, expected)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		assert.NoError(t, testdata.ValidateWorkflowExecutionDeletion(completedWorkflow), "Failed to delete workflow execution")
+	})
 }
 
 // TestSimpleTypedWorkerIntegration validates typed worker with generic map in/out.
@@ -159,10 +180,17 @@ func TestSimpleTypedWorkerIntegration(t *testing.T) {
 		OutputParameters(map[string]interface{}{
 			"message": fmt.Sprintf("${%s.output.message}", refName),
 		})
-	require.NoError(t, wf.Register(true))
+	require.NoError(t, testdata.ValidateWorkflowRegistration(wf))
+	t.Cleanup(func() {
+		require.NoError(t, testdata.ValidateWorkflowDeletion(wf), "Failed to delete workflow")
+	})
 
 	expected := map[string]interface{}{"message": "processed by simple task"}
-	assert.NoError(t, testdata.ValidateWorkflowWithOutput(wf, testdata.WorkflowValidationTimeout, model.CompletedWorkflow, expected))
+	completedWorkflow, err := testdata.ValidateWorkflowWithOutput(wf, testdata.WorkflowValidationTimeout, model.CompletedWorkflow, expected)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		assert.NoError(t, testdata.ValidateWorkflowExecutionDeletion(completedWorkflow), "Failed to delete workflow execution")
+	})
 }
 
 // TestMultiTaskWorkflowIntegration validates a sequence of mixed legacy and typed workers.
@@ -221,9 +249,16 @@ func TestMultiTaskWorkflowIntegration(t *testing.T) {
 		Add(workflow.NewSimpleTask(regularTaskName, regularTaskName).
 			InputMap(map[string]interface{}{"test": "test_value"}))
 
-	require.NoError(t, wf.Register(true))
+	require.NoError(t, testdata.ValidateWorkflowRegistration(wf))
+	t.Cleanup(func() {
+		require.NoError(t, testdata.ValidateWorkflowDeletion(wf), "Failed to delete workflow")
+	})
 
-	assert.NoError(t, testdata.ValidateWorkflow(wf, testdata.ExtendedValidationTimeout, model.CompletedWorkflow))
+	completedWorkflow, err := testdata.ValidateWorkflow(wf, testdata.ExtendedValidationTimeout, model.CompletedWorkflow)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		assert.NoError(t, testdata.ValidateWorkflowExecutionDeletion(completedWorkflow), "Failed to delete workflow execution")
+	})
 }
 
 // TestParallelExecutionIntegration validates fork-join with two typed workers.
@@ -264,8 +299,15 @@ func TestParallelExecutionIntegration(t *testing.T) {
 	)
 	w.Add(fork).Add(workflow.NewJoinTask("join_ref", taskName1, taskName2, taskName3, taskName4))
 
-	require.NoError(t, w.Register(true))
+	require.NoError(t, testdata.ValidateWorkflowRegistration(w))
+	t.Cleanup(func() {
+		assert.NoError(t, testdata.ValidateWorkflowDeletion(w), "Failed to delete workflow")
+	})
 
 	// No explicit output assertion here; validate completion only
-	assert.NoError(t, testdata.ValidateWorkflow(w, testdata.WorkflowValidationTimeout, model.CompletedWorkflow))
+	completedWorkflow, err := testdata.ValidateWorkflow(w, testdata.WorkflowValidationTimeout, model.CompletedWorkflow)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		assert.NoError(t, testdata.ValidateWorkflowExecutionDeletion(completedWorkflow), "Failed to delete workflow execution")
+	})
 }
