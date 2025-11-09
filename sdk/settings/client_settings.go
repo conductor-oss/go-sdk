@@ -30,6 +30,7 @@ type ClientSettings struct {
 	Authentication  *AuthenticationSettings
 	HTTP            *HttpSettings
 	Proxy           *ProxySettings
+	TLS             *TLSSettings
 	TokenExpiration TokenExpirationInterface
 	TokenManager    TokenManagerInterface
 }
@@ -59,6 +60,7 @@ func NewClientSettingsFromEnv(opts ...Option) *ClientSettings {
 		Authentication: NewAuthenticationSettingsFromEnv(),
 		HTTP:           NewHttpSettingsFromEnv(),
 		Proxy:          NewProxySettingsFromEnv(),
+		TLS:            NewTLSSettingsFromEnv(),
 	}
 
 	// Apply options (override environment values)
@@ -92,6 +94,11 @@ func (s *ClientSettings) GetTokenExpiration() TokenExpirationInterface {
 // GetTokenManager returns token manager
 func (s *ClientSettings) GetTokenManager() TokenManagerInterface {
 	return s.TokenManager
+}
+
+// GetTLS returns TLS settings
+func (s *ClientSettings) GetTLS() *TLSSettings {
+	return s.TLS
 }
 
 // ApplyOptions applies the given options to the ClientSettings

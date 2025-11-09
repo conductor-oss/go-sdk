@@ -215,3 +215,177 @@ func TestTypeAssertions_TokenManagerInterface(t *testing.T) {
 		assert.NotNil(t, apiClient)
 	})
 }
+
+func TestClient_TLS(t *testing.T) {
+	tests := []struct {
+		name          string
+		setupTLS      func(t *testing.T) (server *httptest.Server, clientSettings *settings.ClientSettings)
+		expectSuccess bool
+	}{
+		{
+			name: "connection with valid CA cert via properties - should succeed",
+			setupTLS: func(t *testing.T) (*httptest.Server, *settings.ClientSettings) {
+				// Create TLS server with self-signed cert
+				tlsServer := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					if r.URL.Path == "/token" {
+						w.Header().Set("Content-Type", "application/json")
+						w.WriteHeader(http.StatusOK)
+						w.Write([]byte(`{"access_token":"mock-token","token_type":"Bearer","expires_in":3600}`))
+						return
+					}
+					if r.URL.Path == "/version" {
+						w.Header().Set("Content-Type", "text/plain")
+						w.WriteHeader(http.StatusOK)
+						w.Write([]byte("3.0.0-tls"))
+						return
+					}
+					w.WriteHeader(http.StatusNotFound)
+				}))
+				tlsServer.StartTLS()
+
+				// Create client settings with server's CA cert (via properties)
+				clientSettings := settings.NewClientSettings(
+					settings.WithServerURL(tlsServer.URL),
+					settings.WithAuthCredentials("test-key", "test-secret"),
+				)
+
+				// Add server's CA cert to client settings with safe type assertion
+				tr, ok := tlsServer.Client().Transport.(*http.Transport)
+				require.True(t, ok, "Expected *http.Transport")
+				clientSettings.TLS = settings.NewTLSDefaultSettings()
+				clientSettings.TLS.RootCAs = tr.TLSClientConfig.RootCAs
+
+				return tlsServer, clientSettings
+			},
+			expectSuccess: true,
+		},
+		{
+			name: "connection without CA cert - should fail",
+			setupTLS: func(t *testing.T) (*httptest.Server, *settings.ClientSettings) {
+				// Create TLS server with self-signed cert
+				tlsServer := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					if r.URL.Path == "/token" {
+						w.Header().Set("Content-Type", "application/json")
+						w.WriteHeader(http.StatusOK)
+						w.Write([]byte(`{"access_token":"mock-token","token_type":"Bearer","expires_in":3600}`))
+						return
+					}
+					if r.URL.Path == "/version" {
+						w.Header().Set("Content-Type", "text/plain")
+						w.WriteHeader(http.StatusOK)
+						w.Write([]byte("3.0.0-tls-fail"))
+						return
+					}
+					w.WriteHeader(http.StatusNotFound)
+				}))
+				tlsServer.StartTLS()
+
+				// Create client settings WITHOUT server's CA cert
+				clientSettings := settings.NewClientSettings(
+					settings.WithServerURL(tlsServer.URL),
+					settings.WithAuthCredentials("test-key", "test-secret"),
+				)
+
+				return tlsServer, clientSettings
+			},
+			expectSuccess: false,
+		},
+		{
+			name: "connection with InsecureSkipVerify via option - should succeed",
+			setupTLS: func(t *testing.T) (*httptest.Server, *settings.ClientSettings) {
+				// Create TLS server with self-signed cert
+				tlsServer := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					if r.URL.Path == "/token" {
+						w.Header().Set("Content-Type", "application/json")
+						w.WriteHeader(http.StatusOK)
+						w.Write([]byte(`{"access_token":"mock-token","token_type":"Bearer","expires_in":3600}`))
+						return
+					}
+					if r.URL.Path == "/version" {
+						w.Header().Set("Content-Type", "text/plain")
+						w.WriteHeader(http.StatusOK)
+						w.Write([]byte("3.0.0-insecure"))
+						return
+					}
+					w.WriteHeader(http.StatusNotFound)
+				}))
+				tlsServer.StartTLS()
+
+				// Create client settings with InsecureSkipVerify option (no CA cert needed)
+				clientSettings := settings.NewClientSettings(
+					settings.WithServerURL(tlsServer.URL),
+					settings.WithAuthCredentials("test-key", "test-secret"),
+					settings.WithInsecureSkipVerify(true),
+				)
+
+				return tlsServer, clientSettings
+			},
+			expectSuccess: true,
+		},
+		{
+			name: "connection with InsecureSkipVerify via env var - should succeed",
+			setupTLS: func(t *testing.T) (*httptest.Server, *settings.ClientSettings) {
+				// Create TLS server with self-signed cert
+				tlsServer := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					if r.URL.Path == "/token" {
+						w.Header().Set("Content-Type", "application/json")
+						w.WriteHeader(http.StatusOK)
+						w.Write([]byte(`{"access_token":"mock-token","token_type":"Bearer","expires_in":3600}`))
+						return
+					}
+					if r.URL.Path == "/version" {
+						w.Header().Set("Content-Type", "text/plain")
+						w.WriteHeader(http.StatusOK)
+						w.Write([]byte("3.0.0-insecure-env"))
+						return
+					}
+					w.WriteHeader(http.StatusNotFound)
+				}))
+				tlsServer.StartTLS()
+
+				// Set environment variables using t.Setenv (auto-cleanup)
+				t.Setenv(settings.EnvTLSInsecureSkipVerify, "true")
+				t.Setenv(settings.EnvServerURL, tlsServer.URL)
+				t.Setenv(settings.EnvTLSCACert, "")
+				t.Setenv(settings.EnvTLSClientCert, "")
+				t.Setenv(settings.EnvTLSClientKey, "")
+
+				// Create client from environment
+				return tlsServer, nil // nil signals to use NewAPIClientFromEnv
+			},
+			expectSuccess: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tlsServer, clientSettings := tt.setupTLS(t)
+			defer tlsServer.Close()
+
+			var apiClient *client.APIClient
+			if clientSettings == nil {
+				// Use environment-based client creation
+				apiClient = client.NewAPIClientFromEnv()
+			} else {
+				// Use settings-based client creation
+				apiClient = client.NewAPIClientFromSettings(clientSettings)
+			}
+			require.NotNil(t, apiClient)
+
+			// Create VersionResourceClient and make request
+			versionClient := client.NewVersionResourceClient(apiClient)
+			ctx := context.Background()
+			version, resp, err := versionClient.GetVersion(ctx)
+
+			if tt.expectSuccess {
+				require.NoError(t, err, "Connection should succeed")
+				require.NotNil(t, resp)
+				assert.Equal(t, http.StatusOK, resp.StatusCode)
+				assert.NotEmpty(t, version)
+			} else {
+				// Only check that connection fails, don't assert on error message
+				require.Error(t, err, "Connection should fail without valid CA cert")
+			}
+		})
+	}
+}

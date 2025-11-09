@@ -23,4 +23,19 @@ const (
 
 	// Proxy URL for the client HTTP requests.
 	EnvProxy = "CONDUCTOR_PROXY"
+
+	// EnvTLSInsecureSkipVerify disables SSL certificate verification (INSECURE!)
+	// Set to "true" to disable verification. This should only be used for testing.
+	EnvTLSInsecureSkipVerify = "CONDUCTOR_TLS_INSECURE_SKIP_VERIFY"
+
+	// EnvTLSCACert specifies the path to a CA certificate file in PEM format.
+	EnvTLSCACert = "CONDUCTOR_TLS_CA_CERT"
+
+	// EnvTLSClientCert specifies the path to a client certificate file for mutual TLS.
+	// Must be used together with CONDUCTOR_TLS_CLIENT_KEY.
+	EnvTLSClientCert = "CONDUCTOR_TLS_CLIENT_CERT"
+
+	// EnvTLSClientKey specifies the path to a client private key file for mutual TLS.
+	// Must be used together with CONDUCTOR_TLS_CLIENT_CERT.
+	EnvTLSClientKey = "CONDUCTOR_TLS_CLIENT_KEY"
 )

@@ -162,6 +162,7 @@ func newAPIClient(
 	netTransport := &http.Transport{
 		Proxy:               clientSettings.GetProxy().BuildProxyFunc(),
 		DialContext:         baseDialer.DialContext,
+		TLSClientConfig:     clientSettings.GetTLS().BuildTLSConfig(),
 		MaxIdleConns:        100,
 		MaxIdleConnsPerHost: 100,
 		DisableCompression:  false,

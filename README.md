@@ -13,11 +13,16 @@ To learn more about Conductor checkout our [developer's guide](https://docs.cond
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-- [Installation](#installation)
-- [Hello World!](#hello-world)
-  - [Step 1: Creating the workflow by code](#step-1-creating-the-workflow-by-code)
-  - [Step 2: Creating the worker](#step-2-creating-the-worker)
-  - [Step 3: Running the application](#step-3-running-the-application)
+- [Conductor OSS Go SDK](#conductor-oss-go-sdk)
+- [Content](#content)
+	- [Installation](#installation)
+	- [Hello World](#hello-world)
+		- [Step 1: Creating the workflow by code](#step-1-creating-the-workflow-by-code)
+		- [Step 2: Creating the worker](#step-2-creating-the-worker)
+		- [Step 3: Running the application](#step-3-running-the-application)
+			- [Running the example with a local Conductor OSS server:](#running-the-example-with-a-local-conductor-oss-server)
+			- [Running the example with an Orkes developer account.](#running-the-example-with-an-orkes-developer-account)
+	- [Deprecated Methods](#deprecated-methods)
 - [Further Reading](#further-reading)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -272,3 +277,4 @@ Some methods in the SDK client interfaces are now deprecated. They’ve been rep
 - [Logging Configuration](docs/logger_sdk.md)
 - [Migration Guide: Deprecated Methods](docs/migration_guide.md)
 - [API Client Configuration](docs/api_client/README.md) - Complete guide to API client setup, authentication, and proxy configuration
+- [TLS Configuration Guide](docs/api_client/tls_configuration.md) - TLS/SSL configuration for self-signed certificates and mTLS
