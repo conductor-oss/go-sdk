@@ -9,6 +9,10 @@
 
 package gateway
 
+import (
+	"github.com/conductor-sdk/conductor-go/sdk/model"
+)
+
 // ApiGatewayService represents an API Gateway service configuration
 type ApiGatewayService struct {
 	// Unique identifier for the service
@@ -26,7 +30,7 @@ type ApiGatewayService struct {
 	// Update timestamp
 	UpdateTime int64 `json:"updateTime,omitempty"`
 	// Tags associated with the service
-	Tags []interface{} `json:"tags,omitempty"`
+	Tags []model.Tag `json:"tags,omitempty"`
 	// Routes defined for this service
 	Routes []ApiGatewayRoute `json:"routes,omitempty"`
 	// Authentication config ID
