@@ -60,9 +60,28 @@ func main() {
 
 ### Programmatic Configuration
 
-#### 1. Disable Certificate Verification
+#### 1. Allow Self-Signed Certificates
 
-**⚠️ WARNING**: Only use this for local development/testing!
+```go
+// Accept any self-signed certificate
+apiClient := client.NewAPIClient(
+    authSettings,
+    httpSettings,
+    settings.WithTlsAllowSelfSigned(true),
+)
+
+// Accept self-signed certificates with thumbprint pinning (SECURE)
+apiClient := client.NewAPIClient(
+    authSettings,
+    httpSettings,
+    settings.WithTlsAllowSelfSigned(true),
+    settings.WithTlsPinnedThumbprints([]string{
+        "abc123def456...", // SHA-256 thumbprint of the expected certificate
+    }),
+)
+```
+
+#### 2. Disable Certificate Verification
 
 ```go
 apiClient := client.NewAPIClient(
@@ -72,9 +91,7 @@ apiClient := client.NewAPIClient(
 )
 ```
 
-#### 2. Trust Custom CA Certificate
-
-**Recommended for production with self-signed certificates:**
+#### 3. Trust Custom CA Certificate
 
 ```go
 // From file
@@ -83,17 +100,28 @@ apiClient := client.NewAPIClient(
     httpSettings,
     settings.WithCACertFromFile("/path/to/ca-cert.pem"),
 )
-
-// From PEM bytes (e.g., from secrets manager)
-certData, _ := os.ReadFile("ca-cert.pem")
-apiClient := client.NewAPIClient(
-    authSettings,
-    httpSettings,
-    settings.WithCACertFromPEM(certData),
-)
 ```
 
-#### 3. Hybrid Mode (System + Custom CAs)
+```go
+// From PEM bytes (e.g., from secrets manager)
+import (
+    "os"
+    
+    "github.com/conductor-sdk/conductor-go/sdk/client"
+    "github.com/conductor-sdk/conductor-go/sdk/settings"
+)
+
+func main() {
+    certData, _ := os.ReadFile("ca-cert.pem")
+    apiClient := client.NewAPIClient(
+        authSettings,
+        httpSettings,
+        settings.WithCACertFromPEM(certData),
+    )
+}
+```
+
+#### 4. Hybrid Mode (System + Custom CAs)
 
 Trust both public CAs and your custom CA:
 
@@ -109,7 +137,7 @@ This allows connecting to both:
 - Public services with valid SSL certificates
 - Internal services with self-signed certificates
 
-#### 4. Mutual TLS (Client Certificates)
+#### 5. Mutual TLS (Client Certificates)
 
 For servers requiring client authentication:
 
@@ -133,6 +161,8 @@ apiClient := client.NewAPIClient(
 | Variable | Description | Example |
 |----------|-------------|---------|
 | `CONDUCTOR_TLS_INSECURE_SKIP_VERIFY` | Disable certificate verification (⚠️ insecure) | `true` |
+| `CONDUCTOR_TLS_ALLOW_SELF_SIGNED` | Allow self-signed certificates | `true` |
+| `CONDUCTOR_TLS_PINNED_THUMBPRINTS` | Comma-separated SHA-256 thumbprints for pinning | `abc123...,def456...` |
 | `CONDUCTOR_TLS_CA_CERT` | Path to CA certificate (PEM) | `/etc/ssl/certs/ca.pem` |
 | `CONDUCTOR_TLS_CLIENT_CERT` | Path to client certificate for mTLS | `/etc/ssl/certs/client.pem` |
 | `CONDUCTOR_TLS_CLIENT_KEY` | Path to client private key for mTLS | `/etc/ssl/private/key.pem` |
@@ -147,22 +177,40 @@ apiClient := client.NewAPIClient(
 
 ### Use Case 1: Self-Signed Certificate
 
-**Scenario**: Connecting to a server with a self-signed certificate that is not trusted by the system certificate store
-
-**Option A: Skip Certificate Verification**
-
-This option disables certificate verification entirely. The client will accept any certificate presented by the server.
+**Option A: Using AllowSelfSigned**
 
 ```bash
 export CONDUCTOR_SERVER_URL="https://localhost:8443/api"
-export CONDUCTOR_TLS_INSECURE_SKIP_VERIFY=true
+export CONDUCTOR_TLS_ALLOW_SELF_SIGNED=true
 ```
 
 ```go
 apiClient := client.NewAPIClientFromEnv()
 ```
 
-**Option B: Trust the Self-Signed Certificate**
+Or with thumbprint pinning:
+
+```bash
+export CONDUCTOR_SERVER_URL="https://localhost:8443/api"
+export CONDUCTOR_TLS_ALLOW_SELF_SIGNED=true
+export CONDUCTOR_TLS_PINNED_THUMBPRINTS="abc123def456...,ghi789jkl012..."
+```
+
+```go
+apiClient := client.NewAPIClientFromEnv()
+```
+
+Or programmatically:
+
+```go
+apiClient := client.NewAPIClient(
+    authSettings,
+    settings.NewHttpSettings("https://localhost:8443/api"),
+    settings.WithTlsAllowSelfSigned(true),
+)
+```
+
+**Option B: Using CA Certificate**
 
 This option explicitly trusts the self-signed certificate by providing it as a CA certificate. The client will verify the server's certificate against the provided CA.
 
@@ -172,6 +220,17 @@ openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -node
 
 export CONDUCTOR_SERVER_URL="https://localhost:8443/api"
 export CONDUCTOR_TLS_CA_CERT="./cert.pem"
+```
+
+```go
+apiClient := client.NewAPIClientFromEnv()
+```
+
+**Option C: Insecure (Development/Testing Only)**
+
+```bash
+export CONDUCTOR_SERVER_URL="https://localhost:8443/api"
+export CONDUCTOR_TLS_INSECURE_SKIP_VERIFY=true
 ```
 
 ```go
@@ -204,6 +263,8 @@ func main() {
 
 ```go
 import (
+    "log"
+    
     "github.com/conductor-sdk/conductor-go/sdk/client"
     "github.com/conductor-sdk/conductor-go/sdk/settings"
 )
@@ -275,6 +336,19 @@ apiClient := client.NewAPIClient(
 )
 ```
 
+### Use Case 5: Self-Signed Certificate with Thumbprint Pinning
+
+```go
+apiClient := client.NewAPIClient(
+    settings.NewAuthenticationSettings("key", "secret"),
+    settings.NewHttpSettings("https://conductor.example.com/api"),
+    settings.WithTlsAllowSelfSigned(true),
+    settings.WithTlsPinnedThumbprints([]string{
+        "abc123def456789...", // SHA-256 thumbprint of the expected certificate
+    }),
+)
+```
+
 ## Security Considerations
 
 ### TLS Version
@@ -292,24 +366,14 @@ The SDK enforces **TLS 1.2** as the minimum version.
 | `certificate has expired` | Renew certificate or use `WithInsecureSkipVerify` (testing only) |
 | Client certificate not sent | Set both `CONDUCTOR_TLS_CLIENT_CERT` and `CONDUCTOR_TLS_CLIENT_KEY` |
 
-### Testing TLS Configuration
-
-Test your TLS setup with `openssl`:
-
-```bash
-# Test server certificate
-openssl s_client -connect conductor.example.com:443 -showcerts
-
-# Test with custom CA
-openssl s_client -connect conductor.example.com:443 -CAfile /path/to/ca.pem
-```
-
 ## API Reference
 
 ### Available Options
 
 | Option | Description |
 |--------|-------------|
+| `WithTlsAllowSelfSigned(allow)` | Allow self-signed certificates |
+| `WithTlsPinnedThumbprints(thumbprints)` | Set SHA-256 thumbprints for pinning |
 | `WithCACertFromFile(path)` | Trust custom CA from file |
 | `WithCACertFromPEM(pemCert)` | Trust custom CA from PEM bytes |
 | `WithSelfSignedCert(path)` | Trust custom CA + system CAs |
@@ -318,4 +382,3 @@ openssl s_client -connect conductor.example.com:443 -CAfile /path/to/ca.pem
 | `WithTLSServerName(serverName)` | Override server name for SNI |
 | `WithInsecureSkipVerify(skip)` | ⚠️ Disable cert verification (insecure) |
 | `WithTLSSettings(tlsSettings)` | Set complete TLS settings |
-

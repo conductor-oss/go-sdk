@@ -144,6 +144,17 @@ clientSettings := settings.NewClientSettings(
 ### TLS/SSL Options
 
 ```go
+// 🆕 Allow self-signed certificates (simplest for development)
+clientSettings := settings.NewClientSettings(
+    settings.WithTlsAllowSelfSigned(true),
+)
+
+// 🆕 Allow self-signed certificates with thumbprint pinning (secure)
+clientSettings := settings.NewClientSettings(
+    settings.WithTlsAllowSelfSigned(true),
+    settings.WithTlsPinnedThumbprints([]string{"abc123def456..."}),
+)
+
 // Trust a self-signed certificate
 clientSettings := settings.NewClientSettings(
     settings.WithCACertFromFile("/etc/ssl/certs/company-ca.pem"),

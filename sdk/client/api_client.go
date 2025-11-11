@@ -155,6 +155,21 @@ func newAPIClient(
 		tokenManager = clientSettings.GetTokenManager()
 	}
 
+	// Log warning if self-signed certificate mode is enabled
+	tlsSettings := clientSettings.GetTLS()
+	if tlsSettings != nil && tlsSettings.AllowSelfSigned {
+		baseURL := httpSettings.BaseUrl
+		hasPins := len(tlsSettings.PinnedThumbprints) > 0
+		if hasPins {
+			log.Warn("TLS self-signed certificate mode is active with certificate pinning.",
+				"target_url", baseURL,
+				"pinned_thumbprints_count", len(tlsSettings.PinnedThumbprints))
+		} else {
+			log.Warn("TLS self-signed certificate mode is active WITHOUT certificate pinning. Any self-signed certificate will be trusted!",
+				"target_url", baseURL)
+		}
+	}
+
 	baseDialer := &net.Dialer{
 		Timeout:   30 * time.Second,
 		KeepAlive: 30 * time.Second,
@@ -162,7 +177,7 @@ func newAPIClient(
 	netTransport := &http.Transport{
 		Proxy:               clientSettings.GetProxy().BuildProxyFunc(),
 		DialContext:         baseDialer.DialContext,
-		TLSClientConfig:     clientSettings.GetTLS().BuildTLSConfig(),
+		TLSClientConfig:     tlsSettings.BuildTLSConfig(),
 		MaxIdleConns:        100,
 		MaxIdleConnsPerHost: 100,
 		DisableCompression:  false,

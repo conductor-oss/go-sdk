@@ -466,4 +466,31 @@ func TestNewTLSSettingsFromEnv(t *testing.T) {
 
 		assert.Len(t, settings.Certificates, 1)
 	})
+
+	t.Run("with_pinned_thumbprints", func(t *testing.T) {
+		t.Setenv(EnvTLSPinnedThumbprints, "abc123def456,ghi789jkl012")
+		t.Setenv(EnvTLSAllowSelfSigned, "")
+
+		settings := NewTLSSettingsFromEnv()
+
+		assert.Equal(t, []string{"abc123def456", "ghi789jkl012"}, settings.PinnedThumbprints)
+	})
+
+	t.Run("with_pinned_thumbprints_and_self_signed", func(t *testing.T) {
+		t.Setenv(EnvTLSAllowSelfSigned, "true")
+		t.Setenv(EnvTLSPinnedThumbprints, "abc123,def456")
+
+		settings := NewTLSSettingsFromEnv()
+
+		assert.True(t, settings.AllowSelfSigned)
+		assert.Equal(t, []string{"abc123", "def456"}, settings.PinnedThumbprints)
+	})
+
+	t.Run("with_pinned_thumbprints_whitespace", func(t *testing.T) {
+		t.Setenv(EnvTLSPinnedThumbprints, "  abc123  ,  def456  ")
+
+		settings := NewTLSSettingsFromEnv()
+
+		assert.Equal(t, []string{"abc123", "def456"}, settings.PinnedThumbprints)
+	})
 }

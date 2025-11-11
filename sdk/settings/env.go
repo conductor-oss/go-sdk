@@ -28,6 +28,16 @@ const (
 	// Set to "true" to disable verification.
 	EnvTLSInsecureSkipVerify = "CONDUCTOR_TLS_INSECURE_SKIP_VERIFY"
 
+	// EnvTLSAllowSelfSigned enables acceptance of self-signed certificates.
+	// Set to "true" to allow self-signed certificates.
+	// Consider using CONDUCTOR_TLS_PINNED_THUMBPRINTS for additional security.
+	EnvTLSAllowSelfSigned = "CONDUCTOR_TLS_ALLOW_SELF_SIGNED"
+
+	// EnvTLSPinnedThumbprints specifies SHA-256 thumbprints for certificate pinning.
+	// Comma-separated list of thumbprints (e.g., "abc123...,def456...").
+	// Only used when CONDUCTOR_TLS_ALLOW_SELF_SIGNED is enabled.
+	EnvTLSPinnedThumbprints = "CONDUCTOR_TLS_PINNED_THUMBPRINTS"
+
 	// EnvTLSCACert specifies the path to a CA certificate file in PEM format.
 	EnvTLSCACert = "CONDUCTOR_TLS_CA_CERT"
 

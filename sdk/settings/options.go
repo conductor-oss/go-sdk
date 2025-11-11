@@ -215,6 +215,39 @@ func WithTLSServerName(serverName string) Option {
 	}
 }
 
+// WithTlsAllowSelfSigned enables or disables acceptance of self-signed certificates.
+// When enabled (true), the client will accept self-signed certificates without requiring
+// them to be added to the trust store.
+// Consider using WithTlsPinnedThumbprints for additional security.
+func WithTlsAllowSelfSigned(allow bool) Option {
+	return func(s *ClientSettings) {
+		if s.TLS == nil {
+			s.TLS = NewTLSDefaultSettings()
+		}
+		s.TLS.AllowSelfSigned = allow
+	}
+}
+
+// WithTlsPinnedThumbprints sets SHA-256 thumbprints for certificate pinning.
+// When AllowSelfSigned is enabled and thumbprints are provided, only certificates
+// matching one of these thumbprints will be accepted.
+// Thumbprints should be lowercase hex strings (e.g., "abc123def456...").
+func WithTlsPinnedThumbprints(thumbprints []string) Option {
+	return func(s *ClientSettings) {
+		if s.TLS == nil {
+			s.TLS = NewTLSDefaultSettings()
+		}
+		// Copy the slice to avoid external mutations affecting TLS settings
+		if thumbprints != nil {
+			pinsCopy := make([]string, len(thumbprints))
+			copy(pinsCopy, thumbprints)
+			s.TLS.PinnedThumbprints = pinsCopy
+		} else {
+			s.TLS.PinnedThumbprints = nil
+		}
+	}
+}
+
 // WithSelfSignedCert is a convenience function for the common case of trusting
 // a self-signed certificate while keeping system certificates.
 // Use this to trust both public CAs and your custom CA (hybrid mode).
