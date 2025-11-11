@@ -2,6 +2,7 @@ package integration_tests
 
 import (
 	"context"
+	"fmt"
 
 	"testing"
 
@@ -21,25 +22,27 @@ func TestApplicationLifecycle(t *testing.T) {
 	// Create an application
 	ctx := context.Background()
 	uuid := uuid.New().String()
-	createReq := rbac.CreateOrUpdateApplicationRequest{Name: "TestApp2" + uuid}
+	createReq := rbac.CreateOrUpdateApplicationRequest{Name: fmt.Sprintf("TEST_GO_APP_%s", uuid)}
 	createdApp, resp, err := appClient.CreateApplication(ctx, createReq)
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 	assert.Equal(t, 200, resp.StatusCode)
-	assert.Equal(t, "TestApp2"+uuid, createdApp.Name)
+	assert.Equal(t, fmt.Sprintf("TEST_GO_APP_%s", uuid), createdApp.Name)
 
 	// Retrieve the created application
 	retrievedApp, resp, err := appClient.GetApplication(ctx, createdApp.Id)
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 	assert.Equal(t, 200, resp.StatusCode)
-	assert.Equal(t, "TestApp2"+uuid, retrievedApp.Name)
+	assert.Equal(t, fmt.Sprintf("TEST_GO_APP_%s", uuid), retrievedApp.Name)
 
 	// Delete the application
-	_, resp, err = appClient.DeleteApplication(ctx, createdApp.Id)
+	result, resp, err := appClient.DeleteApplication(ctx, createdApp.Id)
 	require.NoError(t, err)
 	require.NotNil(t, resp)
+	require.NotNil(t, result)
 	assert.Equal(t, 200, resp.StatusCode)
+	assert.NotEmpty(t, result.Message)
 
 	// Verify the application is deleted (this step may vary based on how your API handles deletions)
 	_, resp, _ = appClient.GetApplication(ctx, createdApp.Id)
@@ -54,25 +57,29 @@ func TestRoleManagementForApplicationUser(t *testing.T) {
 
 	// Create an application to use in the test
 	ctx := context.Background()
-	createReq := rbac.CreateOrUpdateApplicationRequest{Name: "TestAppRoleUser"}
-	application, resp, err := appClient.CreateApplication(ctx, createReq)
+	uuid := uuid.New().String()
+	createReq := rbac.CreateOrUpdateApplicationRequest{Name: fmt.Sprintf("TEST_GO_APP_ROLE_USER_%s", uuid)}
+	application, _, err := appClient.CreateApplication(ctx, createReq)
 	require.NoError(t, err)
-	assert.NotNil(t, application)
+	require.NotNil(t, application)
 
 	// Add a role to the application user
-	_, resp, err = appClient.AddRoleToApplicationUser(ctx, application.Id, "ADMIN")
+	resp, err := appClient.AddRoleToApplicationUser(ctx, application.Id, "ADMIN")
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 	assert.Equal(t, 200, resp.StatusCode)
 
 	// Remove the role from the application user
-	_, resp, err = appClient.RemoveRoleFromApplicationUser(ctx, application.Id, "ADMIN")
+	resp, err = appClient.RemoveRoleFromApplicationUser(ctx, application.Id, "ADMIN")
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 	assert.Equal(t, 200, resp.StatusCode)
 
 	// Cleanup
-	_, _, _ = appClient.DeleteApplication(ctx, application.Id)
+	t.Cleanup(func() {
+		_, _, err = appClient.DeleteApplication(ctx, application.Id)
+		require.NoError(t, err)
+	})
 }
 
 func TestAuthorizationResourcePermissions(t *testing.T) {
@@ -139,7 +146,8 @@ func TestAuthorizationResourcePermissions(t *testing.T) {
 	// Assert that permissions no longer includes the removed permission
 
 	// Cleanup
-	_, _, _ = appClient.DeleteApplication(ctx, application.Id)
+	_, _, err = appClient.DeleteApplication(ctx, application.Id)
+	require.NoError(t, err)
 }
 
 func TestAccessKeyLifecycle(t *testing.T) {
@@ -149,16 +157,19 @@ func TestAccessKeyLifecycle(t *testing.T) {
 
 	// Create an application to use in the test
 	ctx := context.Background()
-	createReq := rbac.CreateOrUpdateApplicationRequest{Name: "TestAppAccessKey"}
-	application, resp, err := appClient.CreateApplication(ctx, createReq)
+	uuid := uuid.New().String()
+	createReq := rbac.CreateOrUpdateApplicationRequest{Name: fmt.Sprintf("TEST_GO_APP_ACCESS_KEY_%s", uuid)}
+	application, _, err := appClient.CreateApplication(ctx, createReq)
 	require.NoError(t, err)
-	assert.NotNil(t, application)
+	require.NotNil(t, application)
 
 	// Create an access key for the application
 	accessKey, resp, err := appClient.CreateAccessKey(ctx, application.Id)
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 	assert.Equal(t, 200, resp.StatusCode)
+	require.NotNil(t, accessKey)
+	assert.NotEmpty(t, accessKey.Secret)
 
 	// Delete the access key
 	resp, err = appClient.DeleteAccessKey(ctx, application.Id, accessKey.Id)
@@ -167,7 +178,10 @@ func TestAccessKeyLifecycle(t *testing.T) {
 	assert.Equal(t, 200, resp.StatusCode)
 
 	// Cleanup
-	_, _, _ = appClient.DeleteApplication(ctx, application.Id)
+	t.Cleanup(func() {
+		_, _, err = appClient.DeleteApplication(ctx, application.Id)
+		require.NoError(t, err)
+	})
 }
 
 func TestGetTagsForApplication(t *testing.T) {
@@ -177,10 +191,11 @@ func TestGetTagsForApplication(t *testing.T) {
 
 	// Create an application to use in the test
 	ctx := context.Background()
-	createReq := rbac.CreateOrUpdateApplicationRequest{Name: "TestAppTags"}
-	application, _, _ := appClient.CreateApplication(ctx, createReq)
-
-	// Assuming tags are added here or exists; this could use PutTagForApplication if needed
+	uuid := uuid.New().String()
+	createReq := rbac.CreateOrUpdateApplicationRequest{Name: fmt.Sprintf("TEST_GO_APP_TAGS_%s", uuid)}
+	application, _, err := appClient.CreateApplication(ctx, createReq)
+	require.NoError(t, err)
+	require.NotNil(t, application)
 
 	// Get tags for the application
 	tags, resp, err := appClient.GetTagsForApplication(ctx, application.Id)
@@ -190,8 +205,26 @@ func TestGetTagsForApplication(t *testing.T) {
 	// Additional assertions based on expected tags
 	assert.Equal(t, 0, len(tags))
 
+	// Add a tag to the application
+	tags = []model.Tag{{Key: "env", Value: "development"}}
+	_, err = appClient.PutTagForApplication(ctx, tags, application.Id)
+	require.NoError(t, err)
+
+	// Get tags for the application
+	retrievedTags, resp, err := appClient.GetTagsForApplication(ctx, application.Id)
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	assert.Equal(t, 200, resp.StatusCode)
+
+	require.Equal(t, 1, len(retrievedTags))
+	assert.Equal(t, tags[0].Key, retrievedTags[0].Key)
+	assert.Equal(t, tags[0].Value, retrievedTags[0].Value)
+
 	// Cleanup
-	_, _, _ = appClient.DeleteApplication(ctx, application.Id)
+	t.Cleanup(func() {
+		_, resp, err = appClient.DeleteApplication(ctx, application.Id)
+		require.NoError(t, err)
+	})
 }
 
 func TestApplicationClientIntegration(t *testing.T) {
@@ -204,15 +237,22 @@ func TestApplicationClientIntegration(t *testing.T) {
 	ctx := context.Background()
 
 	// Create an application
-	createReq := rbac.CreateOrUpdateApplicationRequest{Name: "IntegrationTestApp"}
+	uuid := uuid.New().String()
+	createReq := rbac.CreateOrUpdateApplicationRequest{Name: fmt.Sprintf("TEST_GO_APP_INTEGRATION_%s", uuid)}
 	application, _, err := appClient.CreateApplication(ctx, createReq)
 	require.NoError(t, err)
 	require.NotNil(t, application)
+
+	t.Cleanup(func() {
+		_, _, err := appClient.DeleteApplication(ctx, application.Id)
+		require.NoError(t, err)
+	})
 
 	// Get the application
 	gotApp, _, err := appClient.GetApplication(ctx, application.Id)
 	require.NoError(t, err)
 	require.NotNil(t, gotApp)
+	assert.Equal(t, fmt.Sprintf("TEST_GO_APP_INTEGRATION_%s", uuid), gotApp.Name)
 	assert.Equal(t, application.Id, gotApp.Id)
 
 	// List applications
@@ -221,43 +261,70 @@ func TestApplicationClientIntegration(t *testing.T) {
 	require.NotNil(t, apps)
 	assert.GreaterOrEqual(t, len(apps), 1)
 
+	// Verify the application is in the list
+	found := false
+	for _, app := range apps {
+		if app.Id == application.Id {
+			assert.Equal(t, fmt.Sprintf("TEST_GO_APP_INTEGRATION_%s", uuid), app.Name)
+			found = true
+			break
+		}
+	}
+	assert.True(t, found)
+
 	// Add a tag to the application
 	tags := []model.Tag{{Key: "env", Value: "development"}}
 	_, err = appClient.PutTagForApplication(ctx, tags, application.Id)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	// Get tags for the application
 	retrievedTags, _, err := appClient.GetTagsForApplication(ctx, application.Id)
 	require.NoError(t, err)
 	require.NotNil(t, retrievedTags)
-	assert.Equal(t, 1, len(retrievedTags))
+
+	require.Equal(t, 1, len(retrievedTags))
+	assert.Equal(t, tags[0].Key, retrievedTags[0].Key)
+	assert.Equal(t, tags[0].Value, retrievedTags[0].Value)
 
 	// Create an access key for the application
 	accessKey, _, err := appClient.CreateAccessKey(ctx, application.Id)
 	require.NoError(t, err)
 	require.NotNil(t, accessKey)
+	assert.NotEmpty(t, accessKey.Secret)
+
+	t.Cleanup(func() {
+		_, err = appClient.DeleteAccessKey(ctx, application.Id, accessKey.Id)
+		require.NoError(t, err)
+	})
+
 	// Toggle the access key status
-	_, _, err = appClient.ToggleAccessKeyStatus(ctx, application.Id, accessKey.Id)
+	updatedAccessKey, _, err := appClient.ToggleAccessKeyStatus(ctx, application.Id, accessKey.Id)
 	require.NoError(t, err)
+	require.NotNil(t, updatedAccessKey)
+	assert.Equal(t, "INACTIVE", updatedAccessKey.Status)
 
 	// Remove the added tag
 	_, err = appClient.DeleteTagForApplication(ctx, tags, application.Id)
 	require.NoError(t, err)
 
+	retrievedTags, _, err = appClient.GetTagsForApplication(ctx, application.Id)
+	require.NoError(t, err)
+	require.NotNil(t, retrievedTags)
+	assert.Equal(t, 0, len(retrievedTags))
+
 	// Update the application
-	updateReq := rbac.CreateOrUpdateApplicationRequest{Name: "UpdatedIntegrationTestApp"}
+	updatedAppName := fmt.Sprintf("TEST_GO_APP_INTEGRATION_UPDATED_%s", uuid)
+	updateReq := rbac.CreateOrUpdateApplicationRequest{Name: updatedAppName}
 	updatedApp, _, err := appClient.UpdateApplication(ctx, updateReq, application.Id)
 	require.NoError(t, err)
 	require.NotNil(t, updatedApp)
-	assert.Equal(t, "UpdatedIntegrationTestApp", updatedApp.Name)
+	assert.Equal(t, updatedAppName, updatedApp.Name)
 
-	// Delete the access key
-	_, err = appClient.DeleteAccessKey(ctx, application.Id, accessKey.Id)
-	assert.Nil(t, err)
-
-	// Finally, delete the application
-	_, _, err = appClient.DeleteApplication(ctx, application.Id)
-	assert.Nil(t, err)
+	// Get the application
+	gotApp, _, err = appClient.GetApplication(ctx, application.Id)
+	require.NoError(t, err)
+	require.NotNil(t, gotApp)
+	assert.Equal(t, updatedAppName, gotApp.Name)
 }
 
 func TestApplicationClientErrorHandling(t *testing.T) {
@@ -270,7 +337,8 @@ func TestApplicationClientErrorHandling(t *testing.T) {
 	ctx := context.Background()
 
 	// Define an invalid application ID
-	invalidAppId := "nonexistent"
+	uuid := uuid.New().String()
+	invalidAppId := fmt.Sprintf("nonexistent-%s", uuid)
 
 	// Try to get a non-existent application
 	_, resp, err := appClient.GetApplication(ctx, invalidAppId)
@@ -287,24 +355,28 @@ func TestApplicationClientErrorHandling(t *testing.T) {
 
 	// Try to delete a non-existent application
 	_, resp, err = appClient.DeleteApplication(ctx, invalidAppId)
-	assert.NotNil(t, err)
+	require.NotNil(t, err)
 	require.NotNil(t, resp)
 	assert.Equal(t, 404, resp.StatusCode)
 
 	// Try to add a tag to a non-existent application
 	tags := []model.Tag{{Key: "env", Value: "staging"}}
 	res, err := appClient.PutTagForApplication(ctx, tags, invalidAppId)
+	require.NoError(t, err)
 	require.NotNil(t, res)
 	assert.Equal(t, 200, res.StatusCode) //expected
-	// Assume error handling in client converts HTTP 404 to specific Go error; response might not be accessible directly
 
 	// Try to get tags for a non-existent application
 	_, _, err = appClient.GetTagsForApplication(ctx, invalidAppId)
-	assert.Nil(t, err)
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	assert.Equal(t, 404, resp.StatusCode)
 
 	// Try to delete a tag from a non-existent application
 	_, err = appClient.DeleteTagForApplication(ctx, tags, invalidAppId)
-	assert.Nil(t, err)
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	assert.Equal(t, 404, resp.StatusCode)
 
 	// Try to create an access key for a non-existent application
 	_, resp, err = appClient.CreateAccessKey(ctx, invalidAppId)
@@ -313,8 +385,10 @@ func TestApplicationClientErrorHandling(t *testing.T) {
 	assert.Equal(t, 404, resp.StatusCode)
 
 	// Try to toggle access key status for a non-existent application
-	_, _, err = appClient.ToggleAccessKeyStatus(ctx, invalidAppId, "fakeKey")
-	assert.NotNil(t, err)
+	_, resp, err = appClient.ToggleAccessKeyStatus(ctx, invalidAppId, "fakeKey")
+	require.NotNil(t, err)
+	require.NotNil(t, resp)
+	assert.Equal(t, 404, resp.StatusCode)
 }
 
 func TestGetAccessKeys(t *testing.T) {
@@ -327,9 +401,11 @@ func TestGetAccessKeys(t *testing.T) {
 	ctx := context.Background()
 
 	// Create an application to use in the test
-	createReq := rbac.CreateOrUpdateApplicationRequest{Name: "TestAppAccessKeys"}
+	uuid := uuid.New().String()
+	createReq := rbac.CreateOrUpdateApplicationRequest{Name: fmt.Sprintf("TEST_GO_APP_ACCESS_KEYS_%s", uuid)}
 	application, _, err := appClient.CreateApplication(ctx, createReq)
-	assert.Nil(t, err)
+	require.NoError(t, err)
+	require.NotNil(t, application)
 
 	// Initially check access keys when none are added
 	keysBefore, resp, err := appClient.GetAccessKeys(ctx, application.Id)
@@ -340,7 +416,10 @@ func TestGetAccessKeys(t *testing.T) {
 
 	// Create an access key
 	newKey, _, err := appClient.CreateAccessKey(ctx, application.Id)
-	assert.Nil(t, err)
+	require.NoError(t, err)
+	require.NotNil(t, newKey)
+	assert.NotNil(t, newKey)
+	assert.NotEmpty(t, newKey.Secret)
 
 	// Retrieve the access keys and check the list contains the new key
 	keysAfter, resp, err := appClient.GetAccessKeys(ctx, application.Id)
@@ -348,11 +427,24 @@ func TestGetAccessKeys(t *testing.T) {
 	require.NotNil(t, resp)
 	assert.Equal(t, 200, resp.StatusCode)
 	assert.NotEmpty(t, keysAfter)
-	assert.Equal(t, newKey.Id, keysAfter[0].Id) // Assuming the client returns keys with IDs and the list has this structure
+
+	var (
+		found = false
+		key   *rbac.AccessKeyResponse
+	)
+	for _, k := range keysAfter {
+		if k.Id == newKey.Id {
+			found = true
+			key = &k
+			break
+		}
+	}
+	assert.True(t, found)
+	assert.Equal(t, "ACTIVE", key.Status)
 
 	// Cleanup - delete the access key and application
 	_, err = appClient.DeleteAccessKey(ctx, application.Id, newKey.Id)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	keysAfter, resp, err = appClient.GetAccessKeys(ctx, application.Id)
 	require.NoError(t, err)
@@ -361,13 +453,53 @@ func TestGetAccessKeys(t *testing.T) {
 	assert.Empty(t, keysAfter)
 
 	_, _, err = appClient.DeleteApplication(ctx, application.Id)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	retrievedApp, resp, err := appClient.GetApplication(ctx, application.Id)
-	require.NotNil(t, err)
+	require.Error(t, err)
 	require.NotNil(t, resp)
 	assert.Equal(t, 404, resp.StatusCode)
-	assert.Nil(t, retrievedApp)
+	require.Nil(t, retrievedApp)
 }
 
-// Implement other tests if there are more methods in ApplicationClient
+func TestGetAppByAccessKeyId(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+
+	// Initialize ApplicationClient
+	appClient := testdata.ApplicationClient
+
+	// Context used in all requests
+	ctx := context.Background()
+
+	// Create an application to use in the test
+	uuid := uuid.New().String()
+	createReq := rbac.CreateOrUpdateApplicationRequest{Name: fmt.Sprintf("TEST_GO_APP_ACCESS_KEY_ID_%s", uuid)}
+	application, _, err := appClient.CreateApplication(ctx, createReq)
+	require.NoError(t, err)
+	require.NotNil(t, application)
+
+	// Create an access key for the application
+	accessKey, _, err := appClient.CreateAccessKey(ctx, application.Id)
+	require.NoError(t, err)
+	require.NotNil(t, accessKey)
+	assert.NotEmpty(t, accessKey.Id)
+
+	app, _, err := appClient.GetAppByAccessKeyId(ctx, accessKey.Id)
+	require.NoError(t, err)
+	require.NotNil(t, app)
+	require.Equal(t, application.Name, app.Name)
+
+	// Test case 2: Try to get application with invalid access key ID
+	invalidAccessKeyId := "invalid-access-key-id"
+	_, resp, err := appClient.GetAppByAccessKeyId(ctx, invalidAccessKeyId)
+	require.Error(t, err)
+	require.NotNil(t, resp)
+	require.Equal(t, 404, resp.StatusCode)
+
+	t.Cleanup(func() {
+		_, err = appClient.DeleteAccessKey(ctx, application.Id, accessKey.Id)
+		assert.NoError(t, err)
+		_, _, err = appClient.DeleteApplication(ctx, application.Id)
+		require.NoError(t, err)
+	})
+}

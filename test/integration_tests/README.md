@@ -1,6 +1,26 @@
-# Workflow API Integration Tests
+# Integration Tests
 
-This directory contains integration tests for the Conductor Workflow API endpoints. Each endpoint is tested to ensure proper functionality and compatibility with the Go SDK.
+This directory contains integration tests for the Conductor API endpoints. Each endpoint is tested to ensure proper functionality and compatibility with the Go SDK.
+
+## Application API Endpoints and Tests
+
+| HTTP Method | URL | Description | Test Function |
+|-------------|-----|-------------|--------------|
+| `POST` | `/applications` | Create a new application | `TestApplicationLifecycle`, `TestApplicationClientIntegration` |
+| `GET` | `/applications/{id}` | Get an application by ID | `TestApplicationLifecycle`, `TestApplicationClientIntegration` |
+| `PUT` | `/applications/{id}` | Update an application | `TestApplicationClientIntegration` |
+| `DELETE` | `/applications/{id}` | Delete an application | `TestApplicationLifecycle`, `TestApplicationClientIntegration` |
+| `GET` | `/applications` | List all applications | `TestApplicationClientIntegration` |
+| `POST` | `/applications/{id}/accessKeys` | Create an access key for an application | `TestAccessKeyLifecycle`, `TestApplicationClientIntegration`, `TestGetAccessKeys` |
+| `GET` | `/applications/{id}/accessKeys` | Get all access keys for an application | `TestGetAccessKeys` |
+| `DELETE` | `/applications/{applicationId}/accessKeys/{keyId}` | Delete an access key | `TestAccessKeyLifecycle`, `TestApplicationClientIntegration`, `TestGetAccessKeys` |
+| `POST` | `/applications/{applicationId}/accessKeys/{keyId}/status` | Toggle access key status | `TestApplicationClientIntegration` |
+| `GET` | `/applications/key/{accessKeyId}` | Get application by access key ID | `TestGetAppByAccessKeyId`|
+| `POST` | `/applications/{applicationId}/roles/{role}` | Add role to application user | `TestRoleManagementForApplicationUser` |
+| `DELETE` | `/applications/{applicationId}/roles/{role}` | Remove role from application user | `TestRoleManagementForApplicationUser` |
+| `PUT` | `/applications/{id}/tags` | Add tags to an application | `TestApplicationClientIntegration` |
+| `GET` | `/applications/{id}/tags` | Get tags for an application | `TestGetTagsForApplication`, `TestApplicationClientIntegration` |
+| `DELETE` | `/applications/{id}/tags` | Delete tags from an application | `TestApplicationClientIntegration` |
 
 ## Workflow API Endpoints and Tests
 
@@ -63,10 +83,6 @@ go test -v -run TestTerminateWorkflow
 ## Test Requirements
 
 These tests require a running Conductor server. The tests use the configuration defined in the `testdata` package to connect to the server.
-
-## Test Coverage
-
-Most of the Workflow API endpoints are covered by integration tests. Some endpoints that are not directly tested may be indirectly tested as part of other test flows.
 
 ## Adding New Tests
 
