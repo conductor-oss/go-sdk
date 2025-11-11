@@ -145,11 +145,13 @@ apiClient := client.NewAPIClient(
 
 ## Common Use Cases
 
-### Use Case 1: Local Development with Self-Signed Certificate
+### Use Case 1: Self-Signed Certificate
 
-**Scenario**: Testing against local Conductor server with self-signed certificate
+**Scenario**: Connecting to a server with a self-signed certificate that is not trusted by the system certificate store
 
-**Option A: Quick & Dirty (Development Only)**
+**Option A: Skip Certificate Verification**
+
+This option disables certificate verification entirely. The client will accept any certificate presented by the server.
 
 ```bash
 export CONDUCTOR_SERVER_URL="https://localhost:8443/api"
@@ -160,7 +162,9 @@ export CONDUCTOR_TLS_INSECURE_SKIP_VERIFY=true
 apiClient := client.NewAPIClientFromEnv()
 ```
 
-**Option B: Proper (Recommended)**
+**Option B: Trust the Self-Signed Certificate**
+
+This option explicitly trusts the self-signed certificate by providing it as a CA certificate. The client will verify the server's certificate against the provided CA.
 
 ```bash
 # Generate self-signed cert (one-time)
@@ -174,9 +178,9 @@ export CONDUCTOR_TLS_CA_CERT="./cert.pem"
 apiClient := client.NewAPIClientFromEnv()
 ```
 
-### Use Case 2: Corporate Environment
+### Use Case 2: Custom CA Certificate
 
-**Scenario**: Internal Conductor server with corporate CA certificate
+**Scenario**: Connecting to a server whose certificate is signed by a custom Certificate Authority that is not in the system certificate store
 
 ```bash
 export CONDUCTOR_SERVER_URL="https://conductor.internal.company.com/api"
@@ -190,7 +194,7 @@ func main() {
     apiClient := client.NewAPIClientFromEnv()
     
     // All TLS configuration is handled automatically
-    // Client trusts only the corporate CA
+    // Client verifies server certificate against the provided CA
 }
 ```
 
@@ -275,7 +279,7 @@ apiClient := client.NewAPIClient(
 
 ### TLS Version
 
-The SDK enforces **TLS 1.2** as the minimum version. TLS 1.0 and 1.1 are not supported due to known security vulnerabilities.
+The SDK enforces **TLS 1.2** as the minimum version.
 
 ## Troubleshooting
 

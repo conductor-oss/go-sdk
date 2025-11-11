@@ -25,7 +25,7 @@ const (
 	EnvProxy = "CONDUCTOR_PROXY"
 
 	// EnvTLSInsecureSkipVerify disables SSL certificate verification (INSECURE!)
-	// Set to "true" to disable verification. This should only be used for testing.
+	// Set to "true" to disable verification.
 	EnvTLSInsecureSkipVerify = "CONDUCTOR_TLS_INSECURE_SKIP_VERIFY"
 
 	// EnvTLSCACert specifies the path to a CA certificate file in PEM format.
