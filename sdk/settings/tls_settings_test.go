@@ -10,6 +10,8 @@
 package settings
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
@@ -18,6 +20,7 @@ import (
 	"encoding/pem"
 	"math/big"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -68,11 +71,41 @@ func generateTestCert() (certPEM, keyPEM []byte, err error) {
 	return certPEM, keyPEM, nil
 }
 
+// generateSelfSignedCert generates a self-signed certificate for testing (ECDSA version)
+func generateSelfSignedCert(t *testing.T) (*x509.Certificate, []byte, *ecdsa.PrivateKey) {
+	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+
+	template := x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		Subject: pkix.Name{
+			Organization: []string{"Test Org"},
+			CommonName:   "test.example.com",
+		},
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().Add(24 * time.Hour),
+		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+		IsCA:                  true,
+	}
+
+	certDER, err := x509.CreateCertificate(rand.Reader, &template, &template, &privateKey.PublicKey, privateKey)
+	require.NoError(t, err)
+
+	cert, err := x509.ParseCertificate(certDER)
+	require.NoError(t, err)
+
+	return cert, certDER, privateKey
+}
+
 func TestNewTLSDefaultSettings(t *testing.T) {
 	settings := NewTLSDefaultSettings()
 
 	require.NotNil(t, settings)
 	assert.False(t, settings.InsecureSkipVerify)
+	assert.False(t, settings.AllowSelfSigned, "AllowSelfSigned should be false by default")
+	assert.Empty(t, settings.PinnedThumbprints, "PinnedThumbprints should be empty by default")
 	assert.Nil(t, settings.RootCAs)
 	assert.Empty(t, settings.ServerName)
 	assert.Empty(t, settings.Certificates)
@@ -368,6 +401,20 @@ func TestBuildTLSConfig(t *testing.T) {
 				assert.Len(t, config.Certificates, 1)
 			},
 		},
+		{
+			name: "with_allow_self_signed",
+			setupSettings: func(t *testing.T) *TLSSettings {
+				s := NewTLSDefaultSettings()
+				s.AllowSelfSigned = true
+				return s
+			},
+			shouldReturnConfig: true,
+			validateConfig: func(t *testing.T, config *tls.Config) {
+				assert.True(t, config.InsecureSkipVerify, "InsecureSkipVerify should be true when using custom verification")
+				assert.NotNil(t, config.VerifyPeerCertificate, "Should have custom verification function")
+				assert.Equal(t, uint16(tls.VersionTLS12), config.MinVersion)
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -493,4 +540,273 @@ func TestNewTLSSettingsFromEnv(t *testing.T) {
 
 		assert.Equal(t, []string{"abc123", "def456"}, settings.PinnedThumbprints)
 	})
+}
+
+func TestWithTlsAllowSelfSigned(t *testing.T) {
+	clientSettings := NewClientSettings(
+		WithTlsAllowSelfSigned(true),
+	)
+
+	assert.NotNil(t, clientSettings.TLS)
+	assert.True(t, clientSettings.TLS.AllowSelfSigned)
+}
+
+func TestWithTlsPinnedThumbprints(t *testing.T) {
+	thumbprints := []string{"abc123", "def456"}
+	clientSettings := NewClientSettings(
+		WithTlsPinnedThumbprints(thumbprints),
+	)
+
+	assert.NotNil(t, clientSettings.TLS)
+	assert.Equal(t, thumbprints, clientSettings.TLS.PinnedThumbprints)
+}
+
+func TestCalculateThumbprint(t *testing.T) {
+	_, certDER, _ := generateSelfSignedCert(t)
+
+	thumbprint := calculateThumbprint(certDER)
+
+	assert.NotEmpty(t, thumbprint)
+	assert.Len(t, thumbprint, 64, "SHA-256 thumbprint should be 64 hex characters")
+
+	// Verify it's hex
+	for _, c := range thumbprint {
+		assert.True(t, (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'), "thumbprint should be lowercase hex")
+	}
+}
+
+func TestParseThumbprints(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected []string
+	}{
+		{
+			name:     "single_thumbprint",
+			input:    "abc123def456",
+			expected: []string{"abc123def456"},
+		},
+		{
+			name:     "multiple_thumbprints",
+			input:    "abc123,def456,ghi789",
+			expected: []string{"abc123", "def456", "ghi789"},
+		},
+		{
+			name:     "with_whitespace",
+			input:    "abc123 , def456 , ghi789",
+			expected: []string{"abc123", "def456", "ghi789"},
+		},
+		{
+			name:     "empty_string",
+			input:    "",
+			expected: nil,
+		},
+		{
+			name:     "with_empty_parts",
+			input:    "abc123,,def456",
+			expected: []string{"abc123", "def456"},
+		},
+		{
+			name:     "only_whitespace",
+			input:    "   ,  ,  ",
+			expected: []string{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := parseThumbprints(tt.input)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestVerifySelfSignedCertificate(t *testing.T) {
+	tests := []struct {
+		name        string
+		setup       func(t *testing.T) (*TLSSettings, [][]byte)
+		shouldError bool
+		errorCheck  func(t *testing.T, err error)
+	}{
+		{
+			name: "no_pin_allow_self_signed",
+			setup: func(t *testing.T) (*TLSSettings, [][]byte) {
+				_, certDER, _ := generateSelfSignedCert(t)
+				settings := &TLSSettings{
+					AllowSelfSigned:   true,
+					PinnedThumbprints: nil,
+					ServerName:        "",
+				}
+				return settings, [][]byte{certDER}
+			},
+			shouldError: false,
+		},
+		{
+			name: "with_matching_pin",
+			setup: func(t *testing.T) (*TLSSettings, [][]byte) {
+				_, certDER, _ := generateSelfSignedCert(t)
+				thumbprint := calculateThumbprint(certDER)
+				settings := &TLSSettings{
+					AllowSelfSigned:   true,
+					PinnedThumbprints: []string{thumbprint},
+					ServerName:        "",
+				}
+				return settings, [][]byte{certDER}
+			},
+			shouldError: false,
+		},
+		{
+			name: "with_matching_pin_case_insensitive",
+			setup: func(t *testing.T) (*TLSSettings, [][]byte) {
+				_, certDER, _ := generateSelfSignedCert(t)
+				thumbprint := calculateThumbprint(certDER)
+				settings := &TLSSettings{
+					AllowSelfSigned:   true,
+					PinnedThumbprints: []string{strings.ToUpper(thumbprint)},
+					ServerName:        "",
+				}
+				return settings, [][]byte{certDER}
+			},
+			shouldError: false,
+		},
+		{
+			name: "with_non_matching_pin",
+			setup: func(t *testing.T) (*TLSSettings, [][]byte) {
+				_, certDER, _ := generateSelfSignedCert(t)
+				settings := &TLSSettings{
+					AllowSelfSigned:   true,
+					PinnedThumbprints: []string{"wrongthumbprint123"},
+					ServerName:        "",
+				}
+				return settings, [][]byte{certDER}
+			},
+			shouldError: true,
+			errorCheck: func(t *testing.T, err error) {
+				assert.Contains(t, err.Error(), "pin mismatch")
+			},
+		},
+		{
+			name: "no_certs",
+			setup: func(t *testing.T) (*TLSSettings, [][]byte) {
+				settings := &TLSSettings{
+					AllowSelfSigned: true,
+				}
+				return settings, [][]byte{}
+			},
+			shouldError: true,
+			errorCheck: func(t *testing.T, err error) {
+				assert.Contains(t, err.Error(), "no certificates")
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			settings, certs := tt.setup(t)
+			err := settings.verifySelfSignedCertificate(certs, nil)
+
+			if tt.shouldError {
+				require.Error(t, err)
+				if tt.errorCheck != nil {
+					tt.errorCheck(t, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestValidateSelfSignedCert(t *testing.T) {
+	tests := []struct {
+		name        string
+		setup       func(t *testing.T) (*TLSSettings, *x509.Certificate)
+		shouldError bool
+		errorCheck  func(t *testing.T, err error)
+	}{
+		{
+			name: "expired_cert",
+			setup: func(t *testing.T) (*TLSSettings, *x509.Certificate) {
+				cert, _, _ := generateSelfSignedCert(t)
+				cert.NotAfter = time.Now().Add(-24 * time.Hour)
+				settings := &TLSSettings{
+					AllowSelfSigned: true,
+				}
+				return settings, cert
+			},
+			shouldError: true,
+			errorCheck: func(t *testing.T, err error) {
+				assert.Contains(t, err.Error(), "expired")
+			},
+		},
+		{
+			name: "not_yet_valid",
+			setup: func(t *testing.T) (*TLSSettings, *x509.Certificate) {
+				cert, _, _ := generateSelfSignedCert(t)
+				cert.NotBefore = time.Now().Add(24 * time.Hour)
+				settings := &TLSSettings{
+					AllowSelfSigned: true,
+				}
+				return settings, cert
+			},
+			shouldError: true,
+			errorCheck: func(t *testing.T, err error) {
+				assert.Contains(t, err.Error(), "not yet valid")
+			},
+		},
+		{
+			name: "hostname_mismatch",
+			setup: func(t *testing.T) (*TLSSettings, *x509.Certificate) {
+				cert, _, _ := generateSelfSignedCert(t)
+				settings := &TLSSettings{
+					AllowSelfSigned: true,
+					ServerName:      "wrong.example.com",
+				}
+				return settings, cert
+			},
+			shouldError: true,
+			errorCheck: func(t *testing.T, err error) {
+				assert.Contains(t, err.Error(), "hostname mismatch")
+			},
+		},
+		{
+			name: "hostname_match",
+			setup: func(t *testing.T) (*TLSSettings, *x509.Certificate) {
+				cert, _, _ := generateSelfSignedCert(t)
+				settings := &TLSSettings{
+					AllowSelfSigned: true,
+					ServerName:      "test.example.com",
+				}
+				return settings, cert
+			},
+			shouldError: false,
+		},
+		{
+			name: "valid_cert",
+			setup: func(t *testing.T) (*TLSSettings, *x509.Certificate) {
+				cert, _, _ := generateSelfSignedCert(t)
+				settings := &TLSSettings{
+					AllowSelfSigned: true,
+				}
+				return settings, cert
+			},
+			shouldError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			settings, cert := tt.setup(t)
+			err := settings.validateSelfSignedCert(cert)
+
+			if tt.shouldError {
+				require.Error(t, err)
+				if tt.errorCheck != nil {
+					tt.errorCheck(t, err)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
 }
