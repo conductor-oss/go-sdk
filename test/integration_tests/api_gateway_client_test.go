@@ -180,6 +180,7 @@ func TestApiGatewayClient(t *testing.T) {
 		if r.HttpMethod == "GET" && r.Path == "/test-route" {
 			foundUpdatedRoute = true
 			assert.Equal(t, "Updated test route", r.Description)
+			// 2025-11-11: This is failing. Check with backend team if updating tags will be supported
 			assert.GreaterOrEqual(t, len(r.Tags), 2)
 			break
 		}
