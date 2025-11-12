@@ -33,7 +33,7 @@ func (e *MultiValidationError) Error() string {
 		return e.Errors[0].Error()
 	}
 
-	var messages []string
+	messages := make([]string, 0, len(e.Errors))
 	for _, err := range e.Errors {
 		messages = append(messages, err.Error())
 	}
