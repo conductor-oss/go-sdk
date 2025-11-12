@@ -14,8 +14,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/conductor-sdk/conductor-go/sdk/log"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/sdk/model/rbac"
+	"github.com/conductor-sdk/conductor-go/sdk/validation"
 )
 
 // ApplicationResourceApiService is the service for the application resource.
@@ -25,6 +27,15 @@ type ApplicationResourceApiService struct {
 
 // AddRoleToApplicationUser adds a role to an application user
 func (a *ApplicationResourceApiService) AddRoleToApplicationUser(ctx context.Context, applicationId string, role string) (*http.Response, error) {
+	// Validate parameters
+	if err := validation.NewValidator().
+		RequiredString("applicationId", applicationId).
+		RequiredString("role", role).
+		Error(); err != nil {
+		log.Error("error validating parameters", "error", err)
+		return nil, err
+	}
+
 	path := fmt.Sprintf("/applications/%s/roles/%s", applicationId, role)
 	resp, err := a.Post(ctx, path, nil, nil)
 	if err != nil {
@@ -35,6 +46,12 @@ func (a *ApplicationResourceApiService) AddRoleToApplicationUser(ctx context.Con
 
 // CreateAccessKey creates an access key for an application.
 func (a *ApplicationResourceApiService) CreateAccessKey(ctx context.Context, id string) (*rbac.CreateAccessKeyResponse, *http.Response, error) {
+	// Validate parameters
+	if err := validation.NewValidator().RequiredString("applicationID", id).Error(); err != nil {
+		log.Error("error validating parameters", "error", err)
+		return nil, nil, err
+	}
+
 	var result rbac.CreateAccessKeyResponse
 	path := fmt.Sprintf("/applications/%s/accessKeys", id)
 	resp, err := a.Post(ctx, path, nil, &result)
@@ -59,6 +76,15 @@ func (a *ApplicationResourceApiService) CreateApplication(ctx context.Context, b
 
 // DeleteAccessKey deletes an access key for an application.
 func (a *ApplicationResourceApiService) DeleteAccessKey(ctx context.Context, applicationId string, keyId string) (*http.Response, error) {
+	// Validate parameters
+	if err := validation.NewValidator().
+		RequiredString("applicationId", applicationId).
+		RequiredString("accessKeyId", keyId).
+		Error(); err != nil {
+		log.Error("error validating parameters", "error", err)
+		return nil, err
+	}
+
 	path := fmt.Sprintf("/applications/%s/accessKeys/%s", applicationId, keyId)
 	resp, err := a.Delete(ctx, path, nil, nil)
 	if err != nil {
@@ -70,6 +96,12 @@ func (a *ApplicationResourceApiService) DeleteAccessKey(ctx context.Context, app
 
 // DeleteApplication deletes an application.
 func (a *ApplicationResourceApiService) DeleteApplication(ctx context.Context, id string) (*rbac.DeleteApplicationResponse, *http.Response, error) {
+	// Validate parameters
+	if err := validation.NewValidator().RequiredString("applicationId", id).Error(); err != nil {
+		log.Error("error validating parameters", "error", err)
+		return nil, nil, err
+	}
+
 	var result rbac.DeleteApplicationResponse
 	path := fmt.Sprintf("/applications/%s", id)
 	resp, err := a.Delete(ctx, path, nil, &result)
@@ -81,6 +113,15 @@ func (a *ApplicationResourceApiService) DeleteApplication(ctx context.Context, i
 
 // DeleteTagForApplication deletes a tag for an application.
 func (a *ApplicationResourceApiService) DeleteTagForApplication(ctx context.Context, body []model.Tag, id string) (*http.Response, error) {
+	// Validate parameters
+	if err := validation.NewValidator().
+		RequiredString("applicationId", id).
+		SliceNotEmpty("tags", body).
+		Error(); err != nil {
+		log.Error("error validating parameters", "error", err)
+		return nil, err
+	}
+
 	path := fmt.Sprintf("/applications/%s/tags", id)
 	resp, err := a.DeleteWithBody(ctx, path, body, nil)
 	if err != nil {
@@ -91,6 +132,12 @@ func (a *ApplicationResourceApiService) DeleteTagForApplication(ctx context.Cont
 
 // GetAccessKeys gets all access keys for an application
 func (a *ApplicationResourceApiService) GetAccessKeys(ctx context.Context, id string) ([]rbac.AccessKeyResponse, *http.Response, error) {
+	// Validate parameters
+	if err := validation.NewValidator().RequiredString("applicationId", id).Error(); err != nil {
+		log.Error("error validating parameters", "error", err)
+		return nil, nil, err
+	}
+
 	var result []rbac.AccessKeyResponse
 	path := fmt.Sprintf("/applications/%s/accessKeys", id)
 	resp, err := a.Get(ctx, path, nil, &result)
@@ -102,6 +149,12 @@ func (a *ApplicationResourceApiService) GetAccessKeys(ctx context.Context, id st
 
 // GetAppByAccessKeyId gets an application by access key ID
 func (a *ApplicationResourceApiService) GetAppByAccessKeyId(ctx context.Context, accessKeyId string) (*rbac.ConductorApplication, *http.Response, error) {
+	// Validate parameters
+	if err := validation.NewValidator().RequiredString("accessKeyId", accessKeyId).Error(); err != nil {
+		log.Error("error validating parameters", "error", err)
+		return nil, nil, err
+	}
+
 	var result rbac.ConductorApplication
 	path := fmt.Sprintf("/applications/key/%s", accessKeyId)
 	resp, err := a.Get(ctx, path, nil, &result)
@@ -113,6 +166,12 @@ func (a *ApplicationResourceApiService) GetAppByAccessKeyId(ctx context.Context,
 
 // GetApplication gets an application by ID.
 func (a *ApplicationResourceApiService) GetApplication(ctx context.Context, id string) (*rbac.ConductorApplication, *http.Response, error) {
+	// Validate parameters
+	if err := validation.NewValidator().RequiredString("applicationId", id).Error(); err != nil {
+		log.Error("error validating parameters", "error", err)
+		return nil, nil, err
+	}
+
 	var result rbac.ConductorApplication
 	path := fmt.Sprintf("/applications/%s", id)
 	resp, err := a.Get(ctx, path, nil, &result)
@@ -120,11 +179,17 @@ func (a *ApplicationResourceApiService) GetApplication(ctx context.Context, id s
 		return nil, resp, err
 	}
 
-	return &result, resp, err
+	return &result, resp, nil
 }
 
 // GetTagsForApplication gets all tags for an application
 func (a *ApplicationResourceApiService) GetTagsForApplication(ctx context.Context, id string) ([]model.Tag, *http.Response, error) {
+	// Validate parameters
+	if err := validation.NewValidator().RequiredString("applicationId", id).Error(); err != nil {
+		log.Error("error validating parameters", "error", err)
+		return nil, nil, err
+	}
+
 	var result []model.Tag
 	path := fmt.Sprintf("/applications/%s/tags", id)
 	resp, err := a.Get(ctx, path, nil, &result)
@@ -146,6 +211,15 @@ func (a *ApplicationResourceApiService) ListApplications(ctx context.Context) ([
 
 // PutTagForApplication adds tags to an application
 func (a *ApplicationResourceApiService) PutTagForApplication(ctx context.Context, body []model.Tag, id string) (*http.Response, error) {
+	// Validate parameters
+	if err := validation.NewValidator().
+		RequiredString("applicationId", id).
+		SliceNotEmpty("tags", body).
+		Error(); err != nil {
+		log.Error("error validating parameters", "error", err)
+		return nil, err
+	}
+
 	path := fmt.Sprintf("/applications/%s/tags", id)
 	resp, err := a.Put(ctx, path, body, nil)
 	if err != nil {
@@ -156,6 +230,15 @@ func (a *ApplicationResourceApiService) PutTagForApplication(ctx context.Context
 
 // RemoveRoleFromApplicationUser removes a role from an application user
 func (a *ApplicationResourceApiService) RemoveRoleFromApplicationUser(ctx context.Context, applicationId string, role string) (*http.Response, error) {
+	// Validate parameters
+	if err := validation.NewValidator().
+		RequiredString("applicationId", applicationId).
+		RequiredString("role", role).
+		Error(); err != nil {
+		log.Error("error validating parameters", "error", err)
+		return nil, err
+	}
+
 	path := fmt.Sprintf("/applications/%s/roles/%s", applicationId, role)
 	resp, err := a.Delete(ctx, path, nil, nil)
 	if err != nil {
@@ -166,6 +249,15 @@ func (a *ApplicationResourceApiService) RemoveRoleFromApplicationUser(ctx contex
 
 // ToggleAccessKeyStatus toggles the status of an access key
 func (a *ApplicationResourceApiService) ToggleAccessKeyStatus(ctx context.Context, applicationId string, keyId string) (*rbac.AccessKeyResponse, *http.Response, error) {
+	// Validate parameters
+	if err := validation.NewValidator().
+		RequiredString("applicationId", applicationId).
+		RequiredString("accessKeyId", keyId).
+		Error(); err != nil {
+		log.Error("error validating parameters", "error", err)
+		return nil, nil, err
+	}
+
 	var result rbac.AccessKeyResponse
 	path := fmt.Sprintf("/applications/%s/accessKeys/%s/status", applicationId, keyId)
 	resp, err := a.Post(ctx, path, nil, &result)
@@ -177,6 +269,12 @@ func (a *ApplicationResourceApiService) ToggleAccessKeyStatus(ctx context.Contex
 
 // UpdateApplication updates an application
 func (a *ApplicationResourceApiService) UpdateApplication(ctx context.Context, body rbac.CreateOrUpdateApplicationRequest, id string) (*rbac.ConductorApplication, *http.Response, error) {
+	// Validate parameters
+	if err := validation.NewValidator().RequiredString("applicationID", id).Error(); err != nil {
+		log.Error("error validating parameters", "error", err)
+		return nil, nil, err
+	}
+
 	var result rbac.ConductorApplication
 	path := fmt.Sprintf("/applications/%s", id)
 	resp, err := a.Put(ctx, path, body, &result)
