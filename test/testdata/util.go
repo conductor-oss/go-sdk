@@ -61,6 +61,7 @@ var (
 	ApplicationClient     = client.NewApplicationClient(apiClient)
 	AuthorizationClient   = client.NewAuthorizationClient(apiClient)
 	EnvironmentClient     = client.NewEnvironmentClient(apiClient)
+	GatewayClient         = client.NewApiGatewayClient(apiClient)
 	HumanTaskClient       = client.NewHumanTaskClient(apiClient)
 	IntegrationClient     = client.NewIntegrationClient(apiClient)
 	PromptClient          = client.NewPromptClient(apiClient)
