@@ -2,6 +2,7 @@ package integration_tests
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/client"
 	"github.com/conductor-sdk/conductor-go/sdk/model/rbac"
 	"github.com/conductor-sdk/conductor-go/test/testdata"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,15 +18,16 @@ import (
 func TestCheckPermissions(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 
-	TestUpsertUser(t)
 	client := NewUserClient()
 	ctx := context.Background()
-	userId := "testuser"
+	user := setupUser(t, ctx)
+
 	type_ := "WORKFLOW_DEF"
 	id := "kitchen_sink"
 
-	permissions, resp, err := client.CheckPermissions(ctx, userId, type_, id)
+	permissions, resp, err := client.CheckPermissions(ctx, user.Id, type_, id)
 	require.NoError(t, err, "CheckPermissions failed")
+	require.NotNil(t, resp)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Expected status code 200, got %d", resp.StatusCode)
 	_, ok := permissions["CREATE"]
 	require.True(t, ok, "Expected 'allowed' field in the response, but found %s", permissions)
@@ -34,13 +37,13 @@ func TestCheckPermissions(t *testing.T) {
 func TestDeleteUser(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 
-	TestUpsertUser(t)
 	client := NewUserClient()
 	ctx := context.Background()
-	id := "testuser"
+	user := setupUser(t, ctx)
 
-	resp, err := client.DeleteUser(ctx, id)
+	resp, err := client.DeleteUser(ctx, user.Id)
 	require.NoError(t, err, "DeleteUser failed")
+	require.NotNil(t, resp)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Expected status code 200, got %d", resp.StatusCode)
 }
 
@@ -48,13 +51,13 @@ func TestDeleteUser(t *testing.T) {
 func TestGetGrantedPermissions(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 
-	TestUpsertUser(t)
 	client := NewUserClient()
 	ctx := context.Background()
-	userId := "testuser"
+	user := setupUser(t, ctx)
 
-	permissions, resp, err := client.GetGrantedPermissions(ctx, userId)
+	permissions, resp, err := client.GetGrantedPermissions(ctx, user.Id)
 	require.NoError(t, err, "GetGrantedPermissions failed")
+	require.NotNil(t, resp)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Expected status code 200, got %d", resp.StatusCode)
 	require.Equal(t, 0, len(permissions.GrantedAccess), "Expected non-empty permissions")
 }
@@ -63,24 +66,24 @@ func TestGetGrantedPermissions(t *testing.T) {
 func TestGetUser(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 
-	TestUpsertUser(t)
 	client := NewUserClient()
 	ctx := context.Background()
-	id := "testuser"
+	user := setupUser(t, ctx)
 
-	user, resp, err := client.GetUser(ctx, id)
+	user, resp, err := client.GetUser(ctx, user.Id)
 	require.NoError(t, err, "GetUser failed")
+	require.NotNil(t, resp)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Expected status code 200, got %d", resp.StatusCode)
-	require.Equal(t, id, user.Id, "Expected user ID %v, got %v", id, user.Id)
+	require.Equal(t, user.Id, user.Id, "Expected user ID %v, got %v", user.Id, user.Id)
 }
 
 func TestGetUserNotFound(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 
-	TestUpsertUser(t)
 	client := NewUserClient()
 	ctx := context.Background()
-	id := "testuserxxx_doesnot_exist"
+	uuid := uuid.New().String()
+	id := fmt.Sprintf("testuserxxx_doesnot_exist_%s", uuid)
 
 	user, resp, _ := client.GetUser(ctx, id)
 
@@ -98,6 +101,7 @@ func TestListUsers(t *testing.T) {
 
 	users, resp, err := user_client.ListUsers(ctx, &options)
 	require.NoError(t, err, "ListUsers failed")
+	require.NotNil(t, resp)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Expected status code 200, got %d", resp.StatusCode)
 	require.Greater(t, len(users), 0, "Expected non-empty user list")
 }
@@ -106,18 +110,47 @@ func TestListUsers(t *testing.T) {
 func TestUpsertUser(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 
-	client := NewUserClient()
 	ctx := context.Background()
-	body := rbac.UpsertUserRequest{
-		Name:  "testuser",
-		Roles: []string{"ADMIN", "USER"},
-	}
-	id := "testUser"
+	user := setupUser(t, ctx)
 
-	user, resp, err := client.UpsertUser(ctx, body, id)
+	require.NotNil(t, user)
+	require.Equal(t, user.Id, user.Name, "Unexpected username")
+	require.NotNil(t, user.ContactInformation, "Unexpected contact information")
+}
+
+// setupUser creates a unique user for testing and registers cleanup to delete it.
+// Returns the userId and the created user.
+func setupUser(t *testing.T, ctx context.Context) *rbac.ConductorUser {
+	client := NewUserClient()
+	uuid := uuid.New().String()
+	userId := fmt.Sprintf("test_go_user_%s", uuid)
+
+	body := rbac.UpsertUserRequest{
+		Name:  userId,
+		Roles: []string{"ADMIN", "USER"},
+		ContactInformation: map[string]interface{}{
+			"email": fmt.Sprintf("testuser_%s@example.com", uuid),
+		},
+	}
+
+	user, resp, err := client.UpsertUser(ctx, body, userId)
 	require.NoError(t, err, "UpsertUser failed")
-	require.Equal(t, http.StatusOK, resp.StatusCode, "Expected status code 200, got %d", resp.StatusCode)
-	require.Equal(t, body.Name, user.Name, "Expected username %v, got %v", body.Name, user.Name)
+	require.Equal(t, http.StatusOK, resp.StatusCode, "Expected status code 200")
+	require.NotNil(t, user)
+
+	// Verify user is accessible
+	_, resp, err = client.GetUser(ctx, user.Id)
+	require.NoError(t, err, "GetUser failed after creation")
+	require.Equal(t, http.StatusOK, resp.StatusCode, "Expected status code 200 for GetUser")
+	require.Equal(t, userId, user.Name, "Expected username %s, got %s", userId, user.Name)
+	require.Equal(t, userId, user.Id, "Expected user ID %s, got %s", userId, user.Id)
+
+	// Cleanup: delete user after test
+	t.Cleanup(func() {
+		_, _ = client.DeleteUser(ctx, user.Id)
+	})
+
+	return user
 }
 
 func NewUserClient() client.UserClient {
