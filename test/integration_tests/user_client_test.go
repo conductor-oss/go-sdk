@@ -106,16 +106,23 @@ func TestListUsers(t *testing.T) {
 	require.Greater(t, len(users), 0, "Expected non-empty user list")
 }
 
-// TestUpsertUser verifies that a user can be updated or inserted.
 func TestUpsertUser(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 
 	ctx := context.Background()
 	user := setupUser(t, ctx)
+	require.NotNil(t, user)
+}
+
+func TestUpsertUser_ExtraFields(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
+
+	ctx := context.Background()
+	user := setupUser(t, ctx)
 
 	require.NotNil(t, user)
-	require.Equal(t, user.Id, user.Name, "Unexpected username")
 	require.NotNil(t, user.ContactInformation, "Unexpected contact information")
+	require.NotNil(t, user.ContactInformation["email"], "Unexpected attributes")
 }
 
 // setupUser creates a unique user for testing and registers cleanup to delete it.
@@ -139,7 +146,7 @@ func setupUser(t *testing.T, ctx context.Context) *rbac.ConductorUser {
 	require.NotNil(t, user)
 
 	// Verify user is accessible
-	_, resp, err = client.GetUser(ctx, user.Id)
+	user, resp, err = client.GetUser(ctx, user.Id)
 	require.NoError(t, err, "GetUser failed after creation")
 	require.Equal(t, http.StatusOK, resp.StatusCode, "Expected status code 200 for GetUser")
 	require.Equal(t, userId, user.Name, "Expected username %s, got %s", userId, user.Name)

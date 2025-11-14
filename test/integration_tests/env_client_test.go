@@ -85,7 +85,6 @@ func TestGetAllEnvVariables(t *testing.T) {
 func TestGetTagsForEnvVar(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 
-	TestUpsertUser(t)
 	ctx := context.Background()
 	envClient := NewEnvironmentClient()
 	tags := []model.Tag{{Key: "tag1", Value: "value1"}}
