@@ -73,6 +73,7 @@ var (
 	ServiceRegistryClient = client.NewServiceRegistryClient(apiClient)
 	VersionResourceClient = client.NewVersionResourceClient(apiClient)
 	WorkflowBulkClient    = client.NewWorkflowBulkClient(apiClient)
+	SchemaClient          = client.NewSchemaClient(apiClient)
 )
 
 var TaskRunner = worker.NewTaskRunnerWithApiClient(apiClient)

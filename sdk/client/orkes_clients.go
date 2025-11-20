@@ -52,3 +52,6 @@ func (clients *OrkesClients) GetApplicationClient() ApplicationClient {
 func (clients *OrkesClients) GetSecretsClient() SecretsClient {
 	return NewSecretsClient(clients.apiClient)
 }
+func (clients *OrkesClients) GetSchemaClient() SchemaClient {
+	return NewSchemaClient(clients.apiClient)
+}
