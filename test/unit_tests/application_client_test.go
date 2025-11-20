@@ -42,7 +42,7 @@ func TestApplicationClientValidationErrors(t *testing.T) {
 		_, resp, err := appClient.CreateAccessKey(ctx, "")
 		require.Error(t, err)
 		assert.Nil(t, resp)
-		assertValidationError(t, err, "applicationID")
+		assertValidationError(t, err, "id")
 	})
 
 	t.Run("DeleteAccessKey - empty applicationId", func(t *testing.T) {
@@ -56,21 +56,21 @@ func TestApplicationClientValidationErrors(t *testing.T) {
 		resp, err := appClient.DeleteAccessKey(ctx, "app-id", "")
 		require.Error(t, err)
 		assert.Nil(t, resp)
-		assertValidationError(t, err, "accessKeyId")
+		assertValidationError(t, err, "keyId")
 	})
 
 	t.Run("DeleteAccessKey - both empty", func(t *testing.T) {
 		resp, err := appClient.DeleteAccessKey(ctx, "", "")
 		require.Error(t, err)
 		assert.Nil(t, resp)
-		assertValidationError(t, err, "applicationId", "accessKeyId")
+		assertValidationError(t, err, "applicationId", "keyId")
 	})
 
 	t.Run("DeleteApplication - empty applicationId", func(t *testing.T) {
 		_, resp, err := appClient.DeleteApplication(ctx, "")
 		require.Error(t, err)
 		assert.Nil(t, resp)
-		assertValidationError(t, err, "applicationId")
+		assertValidationError(t, err, "id")
 	})
 
 	t.Run("DeleteTagForApplication - empty applicationId", func(t *testing.T) {
@@ -78,7 +78,7 @@ func TestApplicationClientValidationErrors(t *testing.T) {
 		resp, err := appClient.DeleteTagForApplication(ctx, tags, "")
 		require.Error(t, err)
 		assert.Nil(t, resp)
-		assertValidationError(t, err, "applicationId")
+		assertValidationError(t, err, "id")
 	})
 
 	t.Run("DeleteTagForApplication - empty tags slice", func(t *testing.T) {
@@ -99,14 +99,14 @@ func TestApplicationClientValidationErrors(t *testing.T) {
 		resp, err := appClient.DeleteTagForApplication(ctx, []model.Tag{}, "")
 		require.Error(t, err)
 		assert.Nil(t, resp)
-		assertValidationError(t, err, "applicationId", "tags")
+		assertValidationError(t, err, "id", "tags")
 	})
 
 	t.Run("GetAccessKeys - empty applicationId", func(t *testing.T) {
 		_, resp, err := appClient.GetAccessKeys(ctx, "")
 		require.Error(t, err)
 		assert.Nil(t, resp)
-		assertValidationError(t, err, "applicationId")
+		assertValidationError(t, err, "id")
 	})
 
 	t.Run("GetAppByAccessKeyId - empty accessKeyId", func(t *testing.T) {
@@ -120,14 +120,14 @@ func TestApplicationClientValidationErrors(t *testing.T) {
 		_, resp, err := appClient.GetApplication(ctx, "")
 		require.Error(t, err)
 		assert.Nil(t, resp)
-		assertValidationError(t, err, "applicationId")
+		assertValidationError(t, err, "id")
 	})
 
 	t.Run("GetTagsForApplication - empty applicationId", func(t *testing.T) {
 		_, resp, err := appClient.GetTagsForApplication(ctx, "")
 		require.Error(t, err)
 		assert.Nil(t, resp)
-		assertValidationError(t, err, "applicationId")
+		assertValidationError(t, err, "id")
 	})
 
 	t.Run("PutTagForApplication - empty applicationId", func(t *testing.T) {
@@ -135,7 +135,7 @@ func TestApplicationClientValidationErrors(t *testing.T) {
 		resp, err := appClient.PutTagForApplication(ctx, tags, "")
 		require.Error(t, err)
 		assert.Nil(t, resp)
-		assertValidationError(t, err, "applicationId")
+		assertValidationError(t, err, "id")
 	})
 
 	t.Run("PutTagForApplication - empty tags slice", func(t *testing.T) {
@@ -156,7 +156,7 @@ func TestApplicationClientValidationErrors(t *testing.T) {
 		resp, err := appClient.PutTagForApplication(ctx, []model.Tag{}, "")
 		require.Error(t, err)
 		assert.Nil(t, resp)
-		assertValidationError(t, err, "applicationId", "tags")
+		assertValidationError(t, err, "id", "tags")
 	})
 
 	t.Run("RemoveRoleFromApplicationUser - empty applicationId", func(t *testing.T) {
@@ -191,14 +191,14 @@ func TestApplicationClientValidationErrors(t *testing.T) {
 		_, resp, err := appClient.ToggleAccessKeyStatus(ctx, "app-id", "")
 		require.Error(t, err)
 		assert.Nil(t, resp)
-		assertValidationError(t, err, "accessKeyId")
+		assertValidationError(t, err, "keyId")
 	})
 
 	t.Run("ToggleAccessKeyStatus - both empty", func(t *testing.T) {
 		_, resp, err := appClient.ToggleAccessKeyStatus(ctx, "", "")
 		require.Error(t, err)
 		assert.Nil(t, resp)
-		assertValidationError(t, err, "applicationId", "accessKeyId")
+		assertValidationError(t, err, "applicationId", "keyId")
 	})
 
 	t.Run("UpdateApplication - empty applicationId", func(t *testing.T) {
@@ -206,7 +206,7 @@ func TestApplicationClientValidationErrors(t *testing.T) {
 		_, resp, err := appClient.UpdateApplication(ctx, updateReq, "")
 		require.Error(t, err)
 		assert.Nil(t, resp)
-		assertValidationError(t, err, "applicationID")
+		assertValidationError(t, err, "id")
 	})
 }
 
