@@ -47,7 +47,7 @@ func (a *ApplicationResourceApiService) AddRoleToApplicationUser(ctx context.Con
 // CreateAccessKey creates an access key for an application.
 func (a *ApplicationResourceApiService) CreateAccessKey(ctx context.Context, id string) (*rbac.CreateAccessKeyResponse, *http.Response, error) {
 	// Validate parameters
-	if err := validation.NewValidator().RequiredString("applicationID", id).Error(); err != nil {
+	if err := validation.NewValidator().RequiredString("id", id).Error(); err != nil {
 		log.Error("error validating parameters", "error", err)
 		return nil, nil, err
 	}
@@ -79,7 +79,7 @@ func (a *ApplicationResourceApiService) DeleteAccessKey(ctx context.Context, app
 	// Validate parameters
 	if err := validation.NewValidator().
 		RequiredString("applicationId", applicationId).
-		RequiredString("accessKeyId", keyId).
+		RequiredString("keyId", keyId).
 		Error(); err != nil {
 		log.Error("error validating parameters", "error", err)
 		return nil, err
@@ -97,7 +97,7 @@ func (a *ApplicationResourceApiService) DeleteAccessKey(ctx context.Context, app
 // DeleteApplication deletes an application.
 func (a *ApplicationResourceApiService) DeleteApplication(ctx context.Context, id string) (*rbac.DeleteApplicationResponse, *http.Response, error) {
 	// Validate parameters
-	if err := validation.NewValidator().RequiredString("applicationId", id).Error(); err != nil {
+	if err := validation.NewValidator().RequiredString("id", id).Error(); err != nil {
 		log.Error("error validating parameters", "error", err)
 		return nil, nil, err
 	}
@@ -115,7 +115,7 @@ func (a *ApplicationResourceApiService) DeleteApplication(ctx context.Context, i
 func (a *ApplicationResourceApiService) DeleteTagForApplication(ctx context.Context, body []model.Tag, id string) (*http.Response, error) {
 	// Validate parameters
 	if err := validation.NewValidator().
-		RequiredString("applicationId", id).
+		RequiredString("id", id).
 		SliceNotEmpty("tags", body).
 		Error(); err != nil {
 		log.Error("error validating parameters", "error", err)
@@ -133,7 +133,7 @@ func (a *ApplicationResourceApiService) DeleteTagForApplication(ctx context.Cont
 // GetAccessKeys gets all access keys for an application
 func (a *ApplicationResourceApiService) GetAccessKeys(ctx context.Context, id string) ([]rbac.AccessKeyResponse, *http.Response, error) {
 	// Validate parameters
-	if err := validation.NewValidator().RequiredString("applicationId", id).Error(); err != nil {
+	if err := validation.NewValidator().RequiredString("id", id).Error(); err != nil {
 		log.Error("error validating parameters", "error", err)
 		return nil, nil, err
 	}
@@ -167,7 +167,7 @@ func (a *ApplicationResourceApiService) GetAppByAccessKeyId(ctx context.Context,
 // GetApplication gets an application by ID.
 func (a *ApplicationResourceApiService) GetApplication(ctx context.Context, id string) (*rbac.ConductorApplication, *http.Response, error) {
 	// Validate parameters
-	if err := validation.NewValidator().RequiredString("applicationId", id).Error(); err != nil {
+	if err := validation.NewValidator().RequiredString("id", id).Error(); err != nil {
 		log.Error("error validating parameters", "error", err)
 		return nil, nil, err
 	}
@@ -185,7 +185,7 @@ func (a *ApplicationResourceApiService) GetApplication(ctx context.Context, id s
 // GetTagsForApplication gets all tags for an application
 func (a *ApplicationResourceApiService) GetTagsForApplication(ctx context.Context, id string) ([]model.Tag, *http.Response, error) {
 	// Validate parameters
-	if err := validation.NewValidator().RequiredString("applicationId", id).Error(); err != nil {
+	if err := validation.NewValidator().RequiredString("id", id).Error(); err != nil {
 		log.Error("error validating parameters", "error", err)
 		return nil, nil, err
 	}
@@ -213,7 +213,7 @@ func (a *ApplicationResourceApiService) ListApplications(ctx context.Context) ([
 func (a *ApplicationResourceApiService) PutTagForApplication(ctx context.Context, body []model.Tag, id string) (*http.Response, error) {
 	// Validate parameters
 	if err := validation.NewValidator().
-		RequiredString("applicationId", id).
+		RequiredString("id", id).
 		SliceNotEmpty("tags", body).
 		Error(); err != nil {
 		log.Error("error validating parameters", "error", err)
@@ -252,7 +252,7 @@ func (a *ApplicationResourceApiService) ToggleAccessKeyStatus(ctx context.Contex
 	// Validate parameters
 	if err := validation.NewValidator().
 		RequiredString("applicationId", applicationId).
-		RequiredString("accessKeyId", keyId).
+		RequiredString("keyId", keyId).
 		Error(); err != nil {
 		log.Error("error validating parameters", "error", err)
 		return nil, nil, err
@@ -270,7 +270,7 @@ func (a *ApplicationResourceApiService) ToggleAccessKeyStatus(ctx context.Contex
 // UpdateApplication updates an application
 func (a *ApplicationResourceApiService) UpdateApplication(ctx context.Context, body rbac.CreateOrUpdateApplicationRequest, id string) (*rbac.ConductorApplication, *http.Response, error) {
 	// Validate parameters
-	if err := validation.NewValidator().RequiredString("applicationID", id).Error(); err != nil {
+	if err := validation.NewValidator().RequiredString("id", id).Error(); err != nil {
 		log.Error("error validating parameters", "error", err)
 		return nil, nil, err
 	}
