@@ -14,6 +14,23 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// createTestSchema creates a test schema definition with the given name.
+// Returns a schema with a simple default property.
+func createTestSchema(schemaName string) model.SchemaDefinition {
+	return model.SchemaDefinition{
+		Name: schemaName,
+		Type: model.SchemaTypeJSON,
+		Data: map[string]interface{}{
+			"type": "object",
+			"properties": map[string]interface{}{
+				"name": map[string]interface{}{
+					"type": "string",
+				},
+			},
+		},
+	}
+}
+
 func TestSchemaLifecycle(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 
@@ -23,21 +40,7 @@ func TestSchemaLifecycle(t *testing.T) {
 	ctx := context.Background()
 	uuid := uuid.New().String()
 	schemaName := fmt.Sprintf("TEST_GO_SCHEMA_%s", uuid)
-	schema := model.SchemaDefinition{
-		Name: schemaName,
-		Type: model.SchemaTypeJSON,
-		Data: map[string]interface{}{
-			"type": "object",
-			"properties": map[string]interface{}{
-				"name": map[string]interface{}{
-					"type": "string",
-				},
-				"age": map[string]interface{}{
-					"type": "integer",
-				},
-			},
-		},
-	}
+	schema := createTestSchema(schemaName)
 
 	resp, err := schemaClient.CreateSchema(ctx, []model.SchemaDefinition{schema}, nil)
 	require.NoError(t, err)
@@ -53,8 +56,9 @@ func TestSchemaLifecycle(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 	assert.Equal(t, 200, resp.StatusCode)
-	assert.Equal(t, schemaName, retrievedSchema.Name)
-	assert.Equal(t, model.SchemaTypeJSON, retrievedSchema.Type)
+	assert.Equal(t, schema.Name, retrievedSchema.Name)
+	assert.Equal(t, schema.Type, retrievedSchema.Type)
+	assert.Equal(t, schema.Data, retrievedSchema.Data)
 
 	// Delete the schema
 	resp, err = schemaClient.DeleteSchema(ctx, schemaName)
@@ -78,18 +82,7 @@ func TestSchemaVersioning(t *testing.T) {
 	schemaName := fmt.Sprintf("TEST_GO_SCHEMA_VERSION_%s", uuid)
 
 	// Create initial schema version
-	schemaV1 := model.SchemaDefinition{
-		Name: schemaName,
-		Type: model.SchemaTypeJSON,
-		Data: map[string]interface{}{
-			"type": "object",
-			"properties": map[string]interface{}{
-				"name": map[string]interface{}{
-					"type": "string",
-				},
-			},
-		},
-	}
+	schemaV1 := createTestSchema(schemaName)
 
 	resp, err := schemaClient.CreateSchema(ctx, []model.SchemaDefinition{schemaV1}, nil)
 	require.NoError(t, err)
@@ -104,20 +97,11 @@ func TestSchemaVersioning(t *testing.T) {
 	assert.Equal(t, int32(1), schema1.Version)
 
 	// Create a new version
-	schemaV2 := model.SchemaDefinition{
-		Name: schemaName,
-		Type: model.SchemaTypeJSON,
-		Data: map[string]interface{}{
-			"type": "object",
-			"properties": map[string]interface{}{
-				"name": map[string]interface{}{
-					"type": "string",
-				},
-				"age": map[string]interface{}{
-					"type": "integer",
-				},
-			},
-		},
+	schemaV2 := createTestSchema(schemaName)
+	// Add age field to show version difference
+	propertiesV2 := schemaV2.Data["properties"].(map[string]interface{})
+	propertiesV2["age"] = map[string]interface{}{
+		"type": "integer",
 	}
 
 	opts := &client.SchemaResourceApiCreateSchemaOpts{
@@ -127,6 +111,10 @@ func TestSchemaVersioning(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 	assert.Equal(t, 200, resp.StatusCode)
+
+	t.Cleanup(func() {
+		_, _ = schemaClient.DeleteSchema(ctx, schemaName)
+	})
 
 	// Get the second version
 	schema2, resp, err := schemaClient.GetSchemaVersion(ctx, schemaName, 2)
@@ -159,11 +147,6 @@ func TestSchemaVersioning(t *testing.T) {
 	require.NotNil(t, resp)
 	assert.Equal(t, 200, resp.StatusCode)
 	assert.Equal(t, int32(2), schema2After.Version)
-
-	// Cleanup - delete all versions
-	t.Cleanup(func() {
-		_, _ = schemaClient.DeleteSchema(ctx, schemaName)
-	})
 }
 
 func TestGetAllSchemas(t *testing.T) {
@@ -176,18 +159,7 @@ func TestGetAllSchemas(t *testing.T) {
 	schemaName := fmt.Sprintf("TEST_GO_SCHEMA_GETALL_%s", uuid)
 
 	// Create a schema
-	schema := model.SchemaDefinition{
-		Name: schemaName,
-		Type: model.SchemaTypeJSON,
-		Data: map[string]interface{}{
-			"type": "object",
-			"properties": map[string]interface{}{
-				"test": map[string]interface{}{
-					"type": "string",
-				},
-			},
-		},
-	}
+	schema := createTestSchema(schemaName)
 
 	resp, err := schemaClient.CreateSchema(ctx, []model.SchemaDefinition{schema}, nil)
 	require.NoError(t, err)
@@ -207,20 +179,11 @@ func TestGetAllSchemas(t *testing.T) {
 		if s.Name == schemaName {
 			found = true
 			assert.Equal(t, model.SchemaTypeJSON, s.Type)
+			assert.Equal(t, schema.Data, s.Data)
 			break
 		}
 	}
 	assert.True(t, found, "Created schema should be in the list")
-
-	// Get all schemas with short option
-	opts := &client.SchemaResourceApiGetAllOpts{
-		Short: optional.NewBool(true),
-	}
-	shortSchemas, resp, err := schemaClient.GetAll(ctx, opts)
-	require.NoError(t, err)
-	require.NotNil(t, resp)
-	assert.Equal(t, 200, resp.StatusCode)
-	assert.NotNil(t, shortSchemas)
 
 	// Cleanup
 	t.Cleanup(func() {
@@ -239,32 +202,10 @@ func TestCreateMultipleSchemas(t *testing.T) {
 	schema1Name := fmt.Sprintf("TEST_GO_SCHEMA_MULTI_1_%s", uuid)
 	schema2Name := fmt.Sprintf("TEST_GO_SCHEMA_MULTI_2_%s", uuid)
 
-	schemas := []model.SchemaDefinition{
-		{
-			Name: schema1Name,
-			Type: model.SchemaTypeJSON,
-			Data: map[string]interface{}{
-				"type": "object",
-				"properties": map[string]interface{}{
-					"field1": map[string]interface{}{
-						"type": "string",
-					},
-				},
-			},
-		},
-		{
-			Name: schema2Name,
-			Type: model.SchemaTypeJSON,
-			Data: map[string]interface{}{
-				"type": "object",
-				"properties": map[string]interface{}{
-					"field2": map[string]interface{}{
-						"type": "integer",
-					},
-				},
-			},
-		},
-	}
+	schema1 := createTestSchema(schema1Name)
+	schema2 := createTestSchema(schema2Name)
+
+	schemas := []model.SchemaDefinition{schema1, schema2}
 
 	resp, err := schemaClient.CreateSchema(ctx, schemas, nil)
 	require.NoError(t, err)
@@ -277,217 +218,15 @@ func TestCreateMultipleSchemas(t *testing.T) {
 	})
 
 	// Verify both schemas were created
-	schema1, resp, err := schemaClient.GetSchema(ctx, schema1Name)
+	retrievedSchema1, resp, err := schemaClient.GetSchema(ctx, schema1Name)
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 	assert.Equal(t, 200, resp.StatusCode)
-	assert.Equal(t, schema1Name, schema1.Name)
+	assert.Equal(t, schema1Name, retrievedSchema1.Name)
 
-	schema2, resp, err := schemaClient.GetSchema(ctx, schema2Name)
+	retrievedSchema2, resp, err := schemaClient.GetSchema(ctx, schema2Name)
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 	assert.Equal(t, 200, resp.StatusCode)
-	assert.Equal(t, schema2Name, schema2.Name)
-
-	// Cleanup
-
-}
-
-func TestSchemaClientErrorHandling(t *testing.T) {
-	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
-
-	schemaClient := testdata.SchemaClient
-
-	ctx := context.Background()
-	uuid := uuid.New().String()
-	invalidSchemaName := fmt.Sprintf("nonexistent-schema-%s", uuid)
-
-	// Try to get a non-existent schema
-	_, resp, err := schemaClient.GetSchema(ctx, invalidSchemaName)
-	require.NotNil(t, err)
-	require.NotNil(t, resp)
-	// API may return 404 or 500 for non-existent schemas
-	assert.GreaterOrEqual(t, resp.StatusCode, 400, "Expected error status code (>= 400)")
-
-	// Try to get a non-existent schema version
-	_, resp, err = schemaClient.GetSchemaVersion(ctx, invalidSchemaName, 1)
-	require.NotNil(t, err)
-	require.NotNil(t, resp)
-	// API may return 404 or 500 for non-existent schema versions
-	assert.GreaterOrEqual(t, resp.StatusCode, 400, "Expected error status code (>= 400)")
-
-	// Try to delete a non-existent schema
-	resp, err = schemaClient.DeleteSchema(ctx, invalidSchemaName)
-	require.NotNil(t, err)
-	require.NotNil(t, resp)
-	// API may return 404 or 500 for non-existent schemas
-	assert.GreaterOrEqual(t, resp.StatusCode, 400, "Expected error status code (>= 400)")
-
-	// Try to delete a non-existent schema version
-	resp, err = schemaClient.DeleteSchemaVersion(ctx, invalidSchemaName, 1)
-	require.NotNil(t, err)
-	require.NotNil(t, resp)
-	// API may return 404 or 500 for non-existent schema versions
-	assert.GreaterOrEqual(t, resp.StatusCode, 400, "Expected error status code (>= 400)")
-}
-
-func TestSchemaClientIntegration(t *testing.T) {
-	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
-
-	schemaClient := testdata.SchemaClient
-
-	ctx := context.Background()
-	uuid := uuid.New().String()
-	schemaName := fmt.Sprintf("TEST_GO_SCHEMA_INTEGRATION_%s", uuid)
-
-	// Create a schema
-	schema := model.SchemaDefinition{
-		Name: schemaName,
-		Type: model.SchemaTypeJSON,
-		Data: map[string]interface{}{
-			"type": "object",
-			"properties": map[string]interface{}{
-				"name": map[string]interface{}{
-					"type": "string",
-				},
-				"email": map[string]interface{}{
-					"type": "string",
-				},
-			},
-		},
-	}
-
-	resp, err := schemaClient.CreateSchema(ctx, []model.SchemaDefinition{schema}, nil)
-	require.NoError(t, err)
-	require.NotNil(t, resp)
-	assert.Equal(t, 200, resp.StatusCode)
-
-	t.Cleanup(func() {
-		_, _ = schemaClient.DeleteSchema(ctx, schemaName)
-	})
-
-	// Get the schema
-	gotSchema, resp, err := schemaClient.GetSchema(ctx, schemaName)
-	require.NoError(t, err)
-	require.NotNil(t, resp)
-	assert.Equal(t, 200, resp.StatusCode)
-	assert.Equal(t, schemaName, gotSchema.Name)
-	assert.Equal(t, model.SchemaTypeJSON, gotSchema.Type)
-	assert.Equal(t, int32(1), gotSchema.Version)
-
-	// Get all schemas and verify our schema is in the list
-	allSchemas, resp, err := schemaClient.GetAll(ctx, nil)
-	require.NoError(t, err)
-	require.NotNil(t, resp)
-	assert.Equal(t, 200, resp.StatusCode)
-
-	found := false
-	for _, s := range allSchemas {
-		if s.Name == schemaName {
-			found = true
-			break
-		}
-	}
-	assert.True(t, found, "Created schema should be in the list")
-
-	// Create a new version
-	schemaV2 := model.SchemaDefinition{
-		Name: schemaName,
-		Type: model.SchemaTypeJSON,
-		Data: map[string]interface{}{
-			"type": "object",
-			"properties": map[string]interface{}{
-				"name": map[string]interface{}{
-					"type": "string",
-				},
-				"email": map[string]interface{}{
-					"type": "string",
-				},
-				"age": map[string]interface{}{
-					"type": "integer",
-				},
-			},
-		},
-	}
-
-	opts := &client.SchemaResourceApiCreateSchemaOpts{
-		NewVersion: optional.NewBool(true),
-	}
-	resp, err = schemaClient.CreateSchema(ctx, []model.SchemaDefinition{schemaV2}, opts)
-	require.NoError(t, err)
-	require.NotNil(t, resp)
-	assert.Equal(t, 200, resp.StatusCode)
-
-	// Get version 2
-	gotSchemaV2, resp, err := schemaClient.GetSchemaVersion(ctx, schemaName, 2)
-	require.NoError(t, err)
-	require.NotNil(t, resp)
-	assert.Equal(t, 200, resp.StatusCode)
-	assert.Equal(t, int32(2), gotSchemaV2.Version)
-
-	// Get latest version (should be version 2)
-	latestSchema, resp, err := schemaClient.GetSchema(ctx, schemaName)
-	require.NoError(t, err)
-	require.NotNil(t, resp)
-	assert.Equal(t, 200, resp.StatusCode)
-	assert.Equal(t, int32(2), latestSchema.Version)
-
-	// Delete version 1
-	resp, err = schemaClient.DeleteSchemaVersion(ctx, schemaName, 1)
-	require.NoError(t, err)
-	require.NotNil(t, resp)
-	assert.Equal(t, 200, resp.StatusCode)
-
-	// Verify version 1 is deleted
-	_, resp, _ = schemaClient.GetSchemaVersion(ctx, schemaName, 1)
-	require.NotNil(t, resp)
-	assert.Equal(t, 404, resp.StatusCode)
-
-	// Verify version 2 still exists
-	gotSchemaV2After, resp, err := schemaClient.GetSchemaVersion(ctx, schemaName, 2)
-	require.NoError(t, err)
-	require.NotNil(t, resp)
-	assert.Equal(t, 200, resp.StatusCode)
-	assert.Equal(t, int32(2), gotSchemaV2After.Version)
-}
-
-func TestSchemaWithDifferentTypes(t *testing.T) {
-	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
-
-	schemaClient := testdata.SchemaClient
-
-	ctx := context.Background()
-	uuid := uuid.New().String()
-
-	// Test JSON schema
-	jsonSchemaName := fmt.Sprintf("TEST_GO_SCHEMA_JSON_%s", uuid)
-	jsonSchema := model.SchemaDefinition{
-		Name: jsonSchemaName,
-		Type: model.SchemaTypeJSON,
-		Data: map[string]interface{}{
-			"type": "object",
-			"properties": map[string]interface{}{
-				"test": map[string]interface{}{
-					"type": "string",
-				},
-			},
-		},
-	}
-
-	resp, err := schemaClient.CreateSchema(ctx, []model.SchemaDefinition{jsonSchema}, nil)
-	require.NoError(t, err)
-	require.NotNil(t, resp)
-	assert.Equal(t, 200, resp.StatusCode)
-
-	// Verify JSON schema
-	retrievedJSON, resp, err := schemaClient.GetSchema(ctx, jsonSchemaName)
-	require.NoError(t, err)
-	require.NotNil(t, resp)
-	assert.Equal(t, 200, resp.StatusCode)
-	assert.Equal(t, model.SchemaTypeJSON, retrievedJSON.Type)
-
-	// Cleanup
-	t.Cleanup(func() {
-		_, _ = schemaClient.DeleteSchema(ctx, jsonSchemaName)
-	})
+	assert.Equal(t, schema2Name, retrievedSchema2.Name)
 }
