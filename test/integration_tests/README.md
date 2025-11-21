@@ -65,6 +65,17 @@ This directory contains integration tests for the Conductor API endpoints. Each 
 | `POST` | `/api/workflow/bulk/retry` | Retry the last failed task for each workflow from the list | `TestWorkflowBulkRetry` |
 | `POST` | `/api/workflow/bulk/terminate` | Terminate workflows execution | `TestWorkflowBulkTerminate` |
 
+## Schema API Endpoints and Tests
+
+| HTTP Method | URL | Description | Test Function |
+|-------------|-----|-------------|--------------|
+| `GET` | `/api/schema` | Get all schemas | `TestGetAllSchemas` |
+| `POST` | `/api/schema` | Save schema | `TestSchemaLifecycle` |
+| `DELETE` | `/api/schema/{name}` | Delete all versions of schema by name | Multiple tests|
+| `GET` | `/api/schema/{name}` | Get schema by name with latest version | `TestSchemaLifecycle`, `TestSchemaVersioning`, `TestCreateMultipleSchemas` |
+| `DELETE` | `/api/schema/{name}/{version}` | Delete a version of schema by name | `TestSchemaVersioning` |
+| `GET` | `/api/schema/{name}/{version}` | Get schema by name and version | `TestSchemaVersioning` |
+
 ## Running Tests
 
 To run all integration tests:
