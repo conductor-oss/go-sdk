@@ -51,8 +51,8 @@ func TestSchemaLifecycle(t *testing.T) {
 		_, _ = schemaClient.DeleteSchema(ctx, schemaName)
 	})
 
-	// Retrieve the created schema
-	retrievedSchema, resp, err := schemaClient.GetSchema(ctx, schemaName)
+	// Retrieve the created schema (version 1)
+	retrievedSchema, resp, err := schemaClient.GetSchemaVersion(ctx, schemaName, 1)
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 	assert.Equal(t, 200, resp.StatusCode)
@@ -67,7 +67,7 @@ func TestSchemaLifecycle(t *testing.T) {
 	assert.Equal(t, 200, resp.StatusCode)
 
 	// Verify the schema is deleted
-	_, resp, _ = schemaClient.GetSchema(ctx, schemaName)
+	_, resp, _ = schemaClient.GetSchemaVersion(ctx, schemaName, 1)
 	require.NotNil(t, resp)
 	assert.Equal(t, 404, resp.StatusCode)
 }
@@ -116,19 +116,12 @@ func TestSchemaVersioning(t *testing.T) {
 		_, _ = schemaClient.DeleteSchema(ctx, schemaName)
 	})
 
-	// Get the second version
+	// Get version 2
 	schema2, resp, err := schemaClient.GetSchemaVersion(ctx, schemaName, 2)
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 	assert.Equal(t, 200, resp.StatusCode)
 	assert.Equal(t, int32(2), schema2.Version)
-
-	// Get latest version (should be version 2)
-	latestSchema, resp, err := schemaClient.GetSchema(ctx, schemaName)
-	require.NoError(t, err)
-	require.NotNil(t, resp)
-	assert.Equal(t, 200, resp.StatusCode)
-	assert.Equal(t, int32(2), latestSchema.Version)
 
 	// Delete specific version
 	resp, err = schemaClient.DeleteSchemaVersion(ctx, schemaName, 1)
@@ -217,16 +210,60 @@ func TestCreateMultipleSchemas(t *testing.T) {
 		_, _ = schemaClient.DeleteSchema(ctx, schema2Name)
 	})
 
-	// Verify both schemas were created
-	retrievedSchema1, resp, err := schemaClient.GetSchema(ctx, schema1Name)
+	// Verify both schemas were created (version 1)
+	retrievedSchema1, resp, err := schemaClient.GetSchemaVersion(ctx, schema1Name, 1)
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 	assert.Equal(t, 200, resp.StatusCode)
 	assert.Equal(t, schema1Name, retrievedSchema1.Name)
 
-	retrievedSchema2, resp, err := schemaClient.GetSchema(ctx, schema2Name)
+	retrievedSchema2, resp, err := schemaClient.GetSchemaVersion(ctx, schema2Name, 1)
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 	assert.Equal(t, 200, resp.StatusCode)
 	assert.Equal(t, schema2Name, retrievedSchema2.Name)
+
+}
+
+// Tests using GetSchema method (requires version 5.0+)
+func TestSchemaLifecycleWithGetSchema(t *testing.T) {
+	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
+
+	schemaClient := testdata.SchemaClient
+
+	// Create a schema
+	ctx := context.Background()
+	uuid := uuid.New().String()
+	schemaName := fmt.Sprintf("TEST_GO_SCHEMA_GET_%s", uuid)
+	schema := createTestSchema(schemaName)
+
+	resp, err := schemaClient.CreateSchema(ctx, []model.SchemaDefinition{schema}, nil)
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	assert.Equal(t, 200, resp.StatusCode)
+
+	t.Cleanup(func() {
+		_, _ = schemaClient.DeleteSchema(ctx, schemaName)
+	})
+
+	// Retrieve the created schema using GetSchema (latest version)
+	retrievedSchema, resp, err := schemaClient.GetSchema(ctx, schemaName)
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	assert.Equal(t, 200, resp.StatusCode)
+	assert.Equal(t, schema.Name, retrievedSchema.Name)
+	assert.Equal(t, schema.Type, retrievedSchema.Type)
+	assert.Equal(t, schema.Data, retrievedSchema.Data)
+	assert.Equal(t, int32(1), retrievedSchema.Version)
+
+	// Delete the schema
+	resp, err = schemaClient.DeleteSchema(ctx, schemaName)
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	assert.Equal(t, 200, resp.StatusCode)
+
+	// Verify the schema is deleted using GetSchema
+	_, resp, _ = schemaClient.GetSchema(ctx, schemaName)
+	require.NotNil(t, resp)
+	assert.Equal(t, 404, resp.StatusCode)
 }

@@ -16,7 +16,9 @@ import (
 	"net/url"
 
 	"github.com/antihax/optional"
+	"github.com/conductor-sdk/conductor-go/sdk/log"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
+	"github.com/conductor-sdk/conductor-go/sdk/validation"
 )
 
 // SchemaResourceApiService is the service for the schema resource.
@@ -53,6 +55,14 @@ type SchemaResourceApiCreateSchemaOpts struct {
 
 // CreateSchema creates one or more schemas.
 func (s *SchemaResourceApiService) CreateSchema(ctx context.Context, schemas []model.SchemaDefinition, opts *SchemaResourceApiCreateSchemaOpts) (*http.Response, error) {
+	// Validate parameters
+	if err := validation.NewValidator().
+		SliceNotEmpty("schemas", schemas).
+		Error(); err != nil {
+		log.Error("error validating parameters", "error", err)
+		return nil, err
+	}
+
 	path := "/schema"
 	queryParams := url.Values{}
 	if opts != nil && opts.NewVersion.IsSet() {
@@ -67,6 +77,12 @@ func (s *SchemaResourceApiService) CreateSchema(ctx context.Context, schemas []m
 
 // DeleteSchema deletes all versions of a schema by name.
 func (s *SchemaResourceApiService) DeleteSchema(ctx context.Context, name string) (*http.Response, error) {
+	// Validate parameters
+	if err := validation.NewValidator().RequiredString("name", name).Error(); err != nil {
+		log.Error("error validating parameters", "error", err)
+		return nil, err
+	}
+
 	path := fmt.Sprintf("/schema/%s", name)
 	resp, err := s.Delete(ctx, path, nil, nil)
 	if err != nil {
@@ -77,6 +93,12 @@ func (s *SchemaResourceApiService) DeleteSchema(ctx context.Context, name string
 
 // GetSchema gets a schema by name with the latest version.
 func (s *SchemaResourceApiService) GetSchema(ctx context.Context, name string) (*model.SchemaDefinition, *http.Response, error) {
+	// Validate parameters
+	if err := validation.NewValidator().RequiredString("name", name).Error(); err != nil {
+		log.Error("error validating parameters", "error", err)
+		return nil, nil, err
+	}
+
 	var result model.SchemaDefinition
 	path := fmt.Sprintf("/schema/%s", name)
 	resp, err := s.Get(ctx, path, nil, &result)
@@ -88,6 +110,12 @@ func (s *SchemaResourceApiService) GetSchema(ctx context.Context, name string) (
 
 // DeleteSchemaVersion deletes a specific version of a schema.
 func (s *SchemaResourceApiService) DeleteSchemaVersion(ctx context.Context, name string, version int32) (*http.Response, error) {
+	// Validate parameters
+	if err := validation.NewValidator().RequiredString("name", name).Error(); err != nil {
+		log.Error("error validating parameters", "error", err)
+		return nil, err
+	}
+
 	path := fmt.Sprintf("/schema/%s/%d", name, version)
 	resp, err := s.Delete(ctx, path, nil, nil)
 	if err != nil {
@@ -98,6 +126,12 @@ func (s *SchemaResourceApiService) DeleteSchemaVersion(ctx context.Context, name
 
 // GetSchemaVersion gets a schema by name and specific version.
 func (s *SchemaResourceApiService) GetSchemaVersion(ctx context.Context, name string, version int32) (*model.SchemaDefinition, *http.Response, error) {
+	// Validate parameters
+	if err := validation.NewValidator().RequiredString("name", name).Error(); err != nil {
+		log.Error("error validating parameters", "error", err)
+		return nil, nil, err
+	}
+
 	var result model.SchemaDefinition
 	path := fmt.Sprintf("/schema/%s/%d", name, version)
 	resp, err := s.Get(ctx, path, nil, &result)
