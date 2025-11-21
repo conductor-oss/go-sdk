@@ -151,6 +151,7 @@ func (s *TLSSettings) loadCACertFromFile(path string) error {
 }
 
 // loadCACertFromFileWithSystemCerts loads a CA certificate from file and
+// adds it to the system certificate pool.
 func (s *TLSSettings) loadCACertFromFileWithSystemCerts(path string) error {
 	// Load system cert pool first
 	systemPool, err := x509.SystemCertPool()
