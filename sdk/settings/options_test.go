@@ -10,8 +10,15 @@
 package settings
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
+	"math/big"
 	"net/http"
 	"net/url"
+	"os"
 	"testing"
 	"time"
 
@@ -434,4 +441,203 @@ type mockTokenManager struct{}
 
 func (m *mockTokenManager) RefreshToken(httpSettings *HttpSettings, httpClient *http.Client) (string, error) {
 	return "mock-token", nil
+}
+
+// ============= TLS Options Tests =============
+
+// generateTestCertForOptions generates a self-signed certificate for testing TLS options
+func generateTestCertForOptions() (certPEM, keyPEM []byte, err error) {
+	// Generate private key
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Create certificate template
+	template := x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		Subject: pkix.Name{
+			CommonName: "test-cert-options",
+		},
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().Add(24 * time.Hour),
+		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+		IsCA:                  true,
+	}
+
+	// Create self-signed certificate
+	certDER, err := x509.CreateCertificate(rand.Reader, &template, &template, &privateKey.PublicKey, privateKey)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Encode certificate to PEM
+	certPEM = pem.EncodeToMemory(&pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: certDER,
+	})
+
+	// Encode private key to PEM
+	keyPEM = pem.EncodeToMemory(&pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
+	})
+
+	return certPEM, keyPEM, nil
+}
+
+func TestTLSOptions(t *testing.T) {
+	// Generate test certificate and key for tests that need them
+	certPEM, keyPEM, err := generateTestCertForOptions()
+	require.NoError(t, err)
+
+	// Create temporary files
+	certFile, err := os.CreateTemp("", "test-cert-*.pem")
+	require.NoError(t, err)
+	t.Cleanup(func() { os.Remove(certFile.Name()) })
+	_, err = certFile.Write(certPEM)
+	require.NoError(t, err)
+	certFile.Close()
+
+	keyFile, err := os.CreateTemp("", "test-key-*.pem")
+	require.NoError(t, err)
+	t.Cleanup(func() { os.Remove(keyFile.Name()) })
+	_, err = keyFile.Write(keyPEM)
+	require.NoError(t, err)
+	keyFile.Close()
+
+	t.Run("WithInsecureSkipVerify", func(t *testing.T) {
+		settings := NewClientSettings(WithInsecureSkipVerify(true))
+
+		require.NotNil(t, settings.TLS)
+		assert.True(t, settings.TLS.InsecureSkipVerify)
+	})
+
+	t.Run("WithCACertFromFile_valid", func(t *testing.T) {
+		settings := NewClientSettings(WithCACertFromFile(certFile.Name()))
+
+		require.NotNil(t, settings.TLS)
+		assert.NotNil(t, settings.TLS.RootCAs)
+	})
+
+	t.Run("WithCACertFromFile_invalid", func(t *testing.T) {
+		settings := NewClientSettings(WithCACertFromFile("/non/existent/path.pem"))
+
+		// Should not panic, just log error and skip
+		require.NotNil(t, settings.TLS)
+	})
+
+	t.Run("WithCACertFromPEM_valid", func(t *testing.T) {
+		settings := NewClientSettings(WithCACertFromPEM(certPEM))
+
+		require.NotNil(t, settings.TLS)
+		assert.NotNil(t, settings.TLS.RootCAs)
+	})
+
+	t.Run("WithCACertFromPEM_invalid", func(t *testing.T) {
+		settings := NewClientSettings(WithCACertFromPEM([]byte("invalid pem")))
+
+		// Should not panic, just log error and skip
+		require.NotNil(t, settings.TLS)
+		assert.Nil(t, settings.TLS.RootCAs)
+	})
+
+	t.Run("WithClientCert_valid", func(t *testing.T) {
+		settings := NewClientSettings(WithClientCert(certFile.Name(), keyFile.Name()))
+
+		require.NotNil(t, settings.TLS)
+		assert.Len(t, settings.TLS.Certificates, 1)
+	})
+
+	t.Run("WithClientCert_invalid", func(t *testing.T) {
+		settings := NewClientSettings(WithClientCert("/non/existent/cert.pem", "/non/existent/key.pem"))
+
+		// Should not panic, just log error and skip
+		require.NotNil(t, settings.TLS)
+		assert.Empty(t, settings.TLS.Certificates)
+	})
+
+	t.Run("WithClientCertFromPEM_valid", func(t *testing.T) {
+		settings := NewClientSettings(WithClientCertFromPEM(certPEM, keyPEM))
+
+		require.NotNil(t, settings.TLS)
+		assert.Len(t, settings.TLS.Certificates, 1)
+	})
+
+	t.Run("WithClientCertFromPEM_invalid_cert", func(t *testing.T) {
+		settings := NewClientSettings(WithClientCertFromPEM([]byte("invalid cert"), keyPEM))
+
+		// Should not panic, just log error and skip
+		require.NotNil(t, settings.TLS)
+		assert.Empty(t, settings.TLS.Certificates)
+	})
+
+	t.Run("WithClientCertFromPEM_invalid_key", func(t *testing.T) {
+		settings := NewClientSettings(WithClientCertFromPEM(certPEM, []byte("invalid key")))
+
+		// Should not panic, just log error and skip
+		require.NotNil(t, settings.TLS)
+		assert.Empty(t, settings.TLS.Certificates)
+	})
+
+	t.Run("WithTLSServerName", func(t *testing.T) {
+		settings := NewClientSettings(WithTLSServerName("example.com"))
+
+		require.NotNil(t, settings.TLS)
+		assert.Equal(t, "example.com", settings.TLS.ServerName)
+	})
+
+	t.Run("WithSelfSignedCert_valid", func(t *testing.T) {
+		settings := NewClientSettings(WithSelfSignedCert(certFile.Name()))
+
+		require.NotNil(t, settings.TLS)
+		assert.NotNil(t, settings.TLS.RootCAs)
+	})
+
+	t.Run("WithSelfSignedCert_invalid", func(t *testing.T) {
+		settings := NewClientSettings(WithSelfSignedCert("/non/existent/path.pem"))
+
+		// Should not panic, just log error and skip
+		require.NotNil(t, settings.TLS)
+	})
+
+	t.Run("WithTLSSettings", func(t *testing.T) {
+		customTLS := &TLSSettings{
+			InsecureSkipVerify: true,
+			ServerName:         "custom.example.com",
+		}
+		settings := NewClientSettings(WithTLSSettings(customTLS))
+
+		require.NotNil(t, settings.TLS)
+		assert.True(t, settings.TLS.InsecureSkipVerify)
+		assert.Equal(t, "custom.example.com", settings.TLS.ServerName)
+	})
+
+	t.Run("multiple_options", func(t *testing.T) {
+		settings := NewClientSettings(
+			WithTLSServerName("multi.example.com"),
+			WithCACertFromPEM(certPEM),
+			WithClientCert(certFile.Name(), keyFile.Name()),
+		)
+
+		require.NotNil(t, settings.TLS)
+		assert.Equal(t, "multi.example.com", settings.TLS.ServerName)
+		assert.NotNil(t, settings.TLS.RootCAs)
+		assert.Len(t, settings.TLS.Certificates, 1)
+	})
+
+	t.Run("multiple_options_with_pem", func(t *testing.T) {
+		settings := NewClientSettings(
+			WithTLSServerName("multi.example.com"),
+			WithCACertFromPEM(certPEM),
+			WithClientCertFromPEM(certPEM, keyPEM),
+		)
+
+		require.NotNil(t, settings.TLS)
+		assert.Equal(t, "multi.example.com", settings.TLS.ServerName)
+		assert.NotNil(t, settings.TLS.RootCAs)
+		assert.Len(t, settings.TLS.Certificates, 1)
+	})
 }

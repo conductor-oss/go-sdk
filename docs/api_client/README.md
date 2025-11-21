@@ -4,17 +4,23 @@ The Conductor Go SDK provides flexible API client configuration with support for
 
 ## Table of Contents
 
-- [Quick Start](#quick-start)
-- [Client Creation Methods](#client-creation-methods)
-- [Environment Variables](#environment-variables)
-- [Configuration Options](#configuration-options)
-- [Advanced Configuration](#advanced-configuration)
-- [Examples](#examples)
-- [Related Documentation](#related-documentation)
+- [API Client Configuration](#api-client-configuration)
+  - [Table of Contents](#table-of-contents)
+  - [Quick Start](#quick-start)
+  - [Client Creation Methods](#client-creation-methods)
+  - [Environment Variables](#environment-variables)
+    - [Environment Variable Examples](#environment-variable-examples)
+  - [Configuration Options](#configuration-options)
+    - [Authentication Options](#authentication-options)
+    - [HTTP Options](#http-options)
+    - [Proxy Options](#proxy-options)
+    - [TLS/SSL Options](#tlsssl-options)
+    - [Token Options](#token-options)
+  - [Configuration Example](#configuration-example)
+  - [Related Documentation](#related-documentation)
 
 ## Quick Start
 
-### Basic Client Creation
 
 ```go
 import (
@@ -53,8 +59,12 @@ The SDK supports the following environment variables:
 | `CONDUCTOR_SERVER_URL` | Conductor server API URL | `http://localhost:8080/api` | `https://api.orkes.io/api` |
 | `CONDUCTOR_AUTH_KEY` | Authentication key | - | `your_auth_key` |
 | `CONDUCTOR_AUTH_SECRET` | Authentication secret | - | `your_auth_secret` |
-| `CONDUCTOR_CLIENT_HTTP_TIMEOUT` | HTTP timeout in seconds | `30` (default) | `60` |
+| `CONDUCTOR_CLIENT_HTTP_TIMEOUT` | HTTP timeout in seconds | `30` | `60` |
 | `CONDUCTOR_PROXY` | Proxy URL | - | `http://proxy.company.com:8080` |
+| `CONDUCTOR_TLS_CA_CERT` | Path to CA certificate (PEM) | - | `/etc/ssl/certs/ca.pem` |
+| `CONDUCTOR_TLS_INSECURE_SKIP_VERIFY` | Disable certificate verification (⚠️ insecure) | `false` | `true` |
+| `CONDUCTOR_TLS_CLIENT_CERT` | Client certificate for mTLS | - | `/etc/ssl/certs/client.pem` |
+| `CONDUCTOR_TLS_CLIENT_KEY` | Client private key for mTLS | - | `/etc/ssl/private/key.pem` |
 
 ### Environment Variable Examples
 
@@ -131,6 +141,50 @@ clientSettings := settings.NewClientSettings(
 )
 ```
 
+### TLS/SSL Options
+
+```go
+// 🆕 Allow self-signed certificates (simplest for development)
+clientSettings := settings.NewClientSettings(
+    settings.WithTlsAllowSelfSigned(true),
+)
+
+// 🆕 Allow self-signed certificates with thumbprint pinning (secure)
+clientSettings := settings.NewClientSettings(
+    settings.WithTlsAllowSelfSigned(true),
+    settings.WithTlsPinnedThumbprints([]string{"abc123def456..."}),
+)
+
+// Trust a self-signed certificate
+clientSettings := settings.NewClientSettings(
+    settings.WithCACertFromFile("/etc/ssl/certs/company-ca.pem"),
+)
+
+// Disable certificate verification (testing only!)
+clientSettings := settings.NewClientSettings(
+    settings.WithInsecureSkipVerify(true),
+)
+
+// Mutual TLS with client certificate from files
+clientSettings := settings.NewClientSettings(
+    settings.WithCACertFromFile("/etc/ssl/certs/server-ca.pem"),
+    settings.WithClientCert("/etc/ssl/certs/client.pem", "/etc/ssl/private/client-key.pem"),
+)
+
+// Mutual TLS with client certificate from memory (e.g., secrets manager)
+clientSettings := settings.NewClientSettings(
+    settings.WithCACertFromPEM(caCertPEM),
+    settings.WithClientCertFromPEM(clientCertPEM, clientKeyPEM),
+)
+
+// Hybrid mode - trust both system and custom CAs
+clientSettings := settings.NewClientSettings(
+    settings.WithSelfSignedCert("/etc/ssl/certs/internal-ca.pem"),
+)
+```
+
+For detailed TLS configuration, see [TLS Configuration Guide](tls_configuration.md).
+
 ### Token Options
 
 ```go
@@ -152,9 +206,7 @@ clientSettings := settings.NewClientSettings(
 )
 ```
 
-## Advanced Configuration
-
-### Complete Configuration Example
+## Configuration Example
 
 ```go
 package main
@@ -185,6 +237,10 @@ func main() {
         settings.WithProxyURL("http://corporate-proxy.com:8080"),
         settings.WithProxyCredentials("proxy_user", "proxy_pass"),
         
+        // TLS configuration
+        settings.WithCACertFromFile("/etc/ssl/certs/company-ca.pem"),
+        settings.WithClientCert("/etc/ssl/certs/client.pem", "/etc/ssl/private/client-key.pem"),
+        
         // Token management
         settings.WithTokenExpiration(authentication.NewTokenExpiration(
             45*time.Minute,  // default expiration
@@ -203,12 +259,14 @@ func main() {
         settings.WithServerURL("https://api.orkes.io/api"),
         settings.WithHTTPTimeout(120*time.Second),
         settings.WithProxyURL("http://corporate-proxy.com:8080"),
+        settings.WithCACertFromFile("/etc/ssl/certs/company-ca.pem"),
     )
     
     // Method 3: Manual settings construction
     authSettings := settings.NewAuthenticationSettings("key", "secret")
     httpSettings := settings.NewHttpSettings("https://api.orkes.io/api")
     proxySettings := settings.NewProxySettingsFromEnv()
+    tlsSettings := settings.NewTLSSettingsFromEnv()
     
     tokenExpiration := authentication.NewTokenExpiration(
         45*time.Minute,  // default expiration
@@ -220,6 +278,7 @@ func main() {
         Authentication:  authSettings,
         HTTP:           httpSettings,
         Proxy:          proxySettings,
+        TLS:            tlsSettings,
         TokenExpiration: tokenExpiration,
         TokenManager:   tokenManager,
     }
@@ -234,3 +293,4 @@ func main() {
 ## Related Documentation
 
 - [Proxy Configuration](proxy_configuration.md) - Detailed proxy setup guide
+- [TLS Configuration](tls_configuration.md) - TLS/SSL configuration guide
