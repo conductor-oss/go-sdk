@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   integration-tests-sm:
-    runs-on: ubuntu-latest
+    runs-on: wtfrunner
     strategy:
       fail-fast: false
       matrix:

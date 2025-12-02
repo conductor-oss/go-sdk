@@ -11,6 +11,7 @@ on:
 
 jobs:
   build:
+    # test
     runs-on: wtfrunner
     steps:
       - name: Checkout
