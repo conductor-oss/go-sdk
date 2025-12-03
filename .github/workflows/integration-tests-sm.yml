@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   integration-tests-sm:
-    runs-on: wtfrunner
+    runs-on: self-hosted-arm64
     strategy:
       fail-fast: false
       matrix:
