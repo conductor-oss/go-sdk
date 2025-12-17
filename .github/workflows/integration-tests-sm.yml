@@ -57,7 +57,7 @@ jobs:
           REPORT=report-${{ matrix.suite }}-${{ matrix.cluster }}.xml
           RERUN=rerun-report-${{ matrix.suite }}-${{ matrix.cluster }}.txt
           COVERAGE=coverage/coverage-${{ matrix.suite }}-${{ matrix.cluster }}.out
-          gotestsum --format testname --junitfile "$REPORT" --rerun-fails=3 --rerun-fails-report="$RERUN" --packages="./test/integration_tests/..." -- -v -count=1 -coverprofile="$COVERAGE" -covermode=atomic
+          gotestsum --format testname --junitfile "$REPORT" --rerun-fails=3 --rerun-fails-report="$RERUN" --packages="./test/integration_tests/..." -- -v -count=1 -coverprofile="$COVERAGE" -covermode=atomic -coverpkg=github.com/conductor-sdk/conductor-go/sdk/...
 
       - name: Publish test results (SM cluster)
         if: ${{ always() && matrix.suite == 'integration' }}
@@ -82,13 +82,14 @@ jobs:
             } >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - name: Merge Coverage Reports
+      - name: Prepare Coverage Report
         if: ${{ always() && matrix.suite == 'integration' }}
         run: |
-          echo "mode: atomic" > coverage/merged_coverage.out
-          # Merge coverage files if they exist
-          if [ -f coverage/coverage-integration-${{ matrix.cluster }}.out ]; then
-            grep -h -v "^mode:" coverage/coverage-integration-${{ matrix.cluster }}.out >> coverage/merged_coverage.out || true
+          COVERAGE_FILE=coverage/coverage-integration-${{ matrix.cluster }}.out
+          if [ -f "$COVERAGE_FILE" ] && [ -s "$COVERAGE_FILE" ]; then
+            cp "$COVERAGE_FILE" coverage/merged_coverage.out
+          else
+            echo "mode: atomic" > coverage/merged_coverage.out
           fi
           
       - name: Generate Coverage Report
@@ -99,8 +100,6 @@ jobs:
             go tool cover -func=coverage/merged_coverage.out > coverage/coverage.txt
             echo "Coverage Summary (${{ matrix.cluster }}):"
             tail -1 coverage/coverage.txt
-          else
-            echo "No coverage data available"
           fi
           
       - name: Upload coverage to Codecov
