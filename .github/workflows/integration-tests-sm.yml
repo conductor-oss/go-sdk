@@ -46,14 +46,18 @@ jobs:
 
       - name: Run Integration tests (SM cluster)
         if: ${{ matrix.suite == 'integration' }}
+        id: integration_tests
+        continue-on-error: true
         env:
           CONDUCTOR_SERVER_URL: ${{ matrix.cluster == 'v5' && vars.SERVER_URL_V5 || vars.SERVER_URL }}
           CONDUCTOR_AUTH_KEY: ${{ matrix.cluster == 'v5' && secrets.AUTH_KEY_V5 || secrets.AUTH_KEY }}
           CONDUCTOR_AUTH_SECRET: ${{ matrix.cluster == 'v5' && secrets.AUTH_SECRET_V5 || secrets.AUTH_SECRET }}
         run: |
+          mkdir -p coverage
           REPORT=report-${{ matrix.suite }}-${{ matrix.cluster }}.xml
           RERUN=rerun-report-${{ matrix.suite }}-${{ matrix.cluster }}.txt
-          gotestsum --format testname --junitfile "$REPORT" --rerun-fails=3 --rerun-fails-report="$RERUN" --packages="./test/integration_tests/..." -- -v -count=1
+          COVERAGE=coverage/coverage-${{ matrix.suite }}-${{ matrix.cluster }}.out
+          gotestsum --format testname --junitfile "$REPORT" --rerun-fails=3 --rerun-fails-report="$RERUN" --packages="./test/integration_tests/..." -- -v -count=1 -coverprofile="$COVERAGE" -covermode=atomic
 
       - name: Publish test results (SM cluster)
         if: ${{ always() && matrix.suite == 'integration' }}
@@ -78,6 +82,41 @@ jobs:
             } >> "$GITHUB_STEP_SUMMARY"
           fi
 
+      - name: Merge Coverage Reports
+        if: ${{ always() && matrix.suite == 'integration' }}
+        run: |
+          echo "mode: atomic" > coverage/merged_coverage.out
+          # Merge coverage files if they exist
+          if [ -f coverage/coverage-integration-${{ matrix.cluster }}.out ]; then
+            grep -h -v "^mode:" coverage/coverage-integration-${{ matrix.cluster }}.out >> coverage/merged_coverage.out || true
+          fi
+          
+      - name: Generate Coverage Report
+        if: ${{ always() && matrix.suite == 'integration' }}
+        run: |
+          if [ -f coverage/merged_coverage.out ] && [ -s coverage/merged_coverage.out ]; then
+            go tool cover -html=coverage/merged_coverage.out -o coverage/coverage.html
+            go tool cover -func=coverage/merged_coverage.out > coverage/coverage.txt
+            echo "Coverage Summary (${{ matrix.cluster }}):"
+            tail -1 coverage/coverage.txt
+          else
+            echo "No coverage data available"
+          fi
+          
+      - name: Upload coverage to Codecov
+        if: ${{ always() && matrix.suite == 'integration' }}
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage/merged_coverage.out
+          flags: integration-tests-${{ matrix.cluster }}
+          name: go-sdk-integration-${{ matrix.cluster }}
+          fail_ci_if_error: false
+          
+      - name: Check Integration Tests Status
+        if: ${{ matrix.suite == 'integration' && steps.integration_tests.outcome == 'failure' }}
+        run: exit 1
+          
       - name: Upload test artifacts
         if: ${{ always() && matrix.suite == 'integration' }}
         uses: actions/upload-artifact@v4
@@ -86,6 +125,8 @@ jobs:
           path: |
             report-${{ matrix.suite }}-${{ matrix.cluster }}.xml
             rerun-report-${{ matrix.suite }}-${{ matrix.cluster }}.txt
+            coverage/coverage.html
+            coverage/coverage.txt
           if-no-files-found: warn
 
       - name: Run Backward Compatibility Tests (SM cluster)

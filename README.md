@@ -8,6 +8,8 @@ To learn more about Conductor checkout our [developer's guide](https://docs.cond
 
 [![GitHub stars](https://img.shields.io/github/stars/conductor-oss/conductor.svg?style=social&label=Star&maxAge=)](https://GitHub.com/conductor-oss/conductor/)
 
+[![Build Status](https://github.com/conductor-oss/go-sdk/actions/workflows/build.yml/badge.svg)](https://github.com/conductor-oss/go-sdk/actions/workflows/build.yml)
+[![codecov](https://codecov.io/gh/conductor-oss/go-sdk/graph/badge.svg?token=456P7O8BG4)](https://codecov.io/gh/conductor-oss/go-sdk)
 
 # Content
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
