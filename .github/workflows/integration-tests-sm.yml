@@ -51,6 +51,13 @@ jobs:
           go test -v -count=1 -coverprofile=coverage/coverage-unit.out -covermode=atomic -coverpkg=github.com/conductor-sdk/conductor-go/sdk/... ./test/unit_tests/...
           echo "Unit test coverage generated"
 
+      - name: Run SDK unit tests with coverage
+        if: ${{ matrix.suite == 'integration' }}
+        run: |
+          mkdir -p coverage
+          go test -v -count=1 -coverprofile=coverage/coverage-sdk.out -covermode=atomic ./sdk/...
+          echo "SDK test coverage generated"
+
       - name: Run Integration tests (SM cluster)
         if: ${{ matrix.suite == 'integration' }}
         id: integration_tests
@@ -99,6 +106,13 @@ jobs:
             tail -1 coverage/coverage-unit.txt || echo "No unit test coverage data"
           fi
           
+          # Generate reports for SDK test coverage if it exists
+          if [ -f coverage/coverage-sdk.out ] && [ -s coverage/coverage-sdk.out ]; then
+            go tool cover -func=coverage/coverage-sdk.out > coverage/coverage-sdk.txt || true
+            echo "SDK test coverage summary:"
+            tail -1 coverage/coverage-sdk.txt || echo "No SDK test coverage data"
+          fi
+          
           # Generate reports for integration test coverage if it exists
           INTEGRATION_COVERAGE=coverage/coverage-integration-${{ matrix.cluster }}.out
           if [ -f "$INTEGRATION_COVERAGE" ] && [ -s "$INTEGRATION_COVERAGE" ]; then
@@ -115,6 +129,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: |
             coverage/coverage-unit.out
+            coverage/coverage-sdk.out
             coverage/coverage-integration-${{ matrix.cluster }}.out
           flags: integration-tests-${{ matrix.cluster }}
           name: go-sdk-integration-${{ matrix.cluster }}
@@ -134,6 +149,7 @@ jobs:
             rerun-report-${{ matrix.suite }}-${{ matrix.cluster }}.txt
             coverage/coverage.html
             coverage/coverage.txt
+            coverage/coverage-sdk.txt
           if-no-files-found: warn
 
       - name: Run Backward Compatibility Tests (SM cluster)
