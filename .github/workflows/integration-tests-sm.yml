@@ -44,6 +44,13 @@ jobs:
       - name: Install gotestsum
         run: go install gotest.tools/gotestsum@v1.12.0
 
+      - name: Run Unit tests with coverage
+        if: ${{ matrix.suite == 'integration' }}
+        run: |
+          mkdir -p coverage
+          go test -v -count=1 -coverprofile=coverage/coverage-unit.out -covermode=atomic -coverpkg=github.com/conductor-sdk/conductor-go/sdk/... ./test/unit_tests/...
+          echo "Unit test coverage generated"
+
       - name: Run Integration tests (SM cluster)
         if: ${{ matrix.suite == 'integration' }}
         id: integration_tests
@@ -85,11 +92,26 @@ jobs:
       - name: Prepare Coverage Report
         if: ${{ always() && matrix.suite == 'integration' }}
         run: |
-          COVERAGE_FILE=coverage/coverage-integration-${{ matrix.cluster }}.out
-          if [ -f "$COVERAGE_FILE" ] && [ -s "$COVERAGE_FILE" ]; then
-            cp "$COVERAGE_FILE" coverage/merged_coverage.out
+          # Start with unit test coverage if it exists
+          if [ -f coverage/coverage-unit.out ] && [ -s coverage/coverage-unit.out ]; then
+            cp coverage/coverage-unit.out coverage/merged_coverage.out
+            echo "Started with unit test coverage"
           else
             echo "mode: atomic" > coverage/merged_coverage.out
+            echo "No unit test coverage found, starting fresh"
+          fi
+          
+          # Merge integration test coverage if it exists
+          INTEGRATION_COVERAGE=coverage/coverage-integration-${{ matrix.cluster }}.out
+          if [ -f "$INTEGRATION_COVERAGE" ] && [ -s "$INTEGRATION_COVERAGE" ]; then
+            # Install gocovmerge for merging coverage files
+            go install github.com/wadey/gocovmerge@latest
+            export PATH=$PATH:$(go env GOPATH)/bin
+            gocovmerge coverage/merged_coverage.out "$INTEGRATION_COVERAGE" > coverage/temp_merged.out
+            mv coverage/temp_merged.out coverage/merged_coverage.out
+            echo "Merged integration test coverage from $INTEGRATION_COVERAGE"
+          else
+            echo "No integration test coverage found for ${{ matrix.cluster }}"
           fi
           
       - name: Generate Coverage Report
