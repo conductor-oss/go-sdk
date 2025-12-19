@@ -44,6 +44,20 @@ jobs:
       - name: Install gotestsum
         run: go install gotest.tools/gotestsum@v1.12.0
 
+      - name: Run Unit tests with coverage
+        if: ${{ matrix.suite == 'integration' }}
+        run: |
+          mkdir -p coverage
+          go test -v -count=1 -coverprofile=coverage/coverage-unit.out -covermode=atomic -coverpkg=github.com/conductor-sdk/conductor-go/sdk/... ./test/unit_tests/...
+          echo "Unit test coverage generated"
+
+      - name: Run SDK unit tests with coverage
+        if: ${{ matrix.suite == 'integration' }}
+        run: |
+          mkdir -p coverage
+          go test -v -count=1 -coverprofile=coverage/coverage-sdk.out -covermode=atomic ./sdk/...
+          echo "SDK test coverage generated"
+
       - name: Run Integration tests (SM cluster)
         if: ${{ matrix.suite == 'integration' }}
         id: integration_tests
@@ -82,24 +96,30 @@ jobs:
             } >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - name: Prepare Coverage Report
-        if: ${{ always() && matrix.suite == 'integration' }}
-        run: |
-          COVERAGE_FILE=coverage/coverage-integration-${{ matrix.cluster }}.out
-          if [ -f "$COVERAGE_FILE" ] && [ -s "$COVERAGE_FILE" ]; then
-            cp "$COVERAGE_FILE" coverage/merged_coverage.out
-          else
-            echo "mode: atomic" > coverage/merged_coverage.out
-          fi
-          
       - name: Generate Coverage Report
         if: ${{ always() && matrix.suite == 'integration' }}
         run: |
-          if [ -f coverage/merged_coverage.out ] && [ -s coverage/merged_coverage.out ]; then
-            go tool cover -html=coverage/merged_coverage.out -o coverage/coverage.html
-            go tool cover -func=coverage/merged_coverage.out > coverage/coverage.txt
-            echo "Coverage Summary (${{ matrix.cluster }}):"
-            tail -1 coverage/coverage.txt
+          # Generate reports for unit test coverage if it exists
+          if [ -f coverage/coverage-unit.out ] && [ -s coverage/coverage-unit.out ]; then
+            go tool cover -func=coverage/coverage-unit.out > coverage/coverage-unit.txt || true
+            echo "Unit test coverage summary:"
+            tail -1 coverage/coverage-unit.txt || echo "No unit test coverage data"
+          fi
+          
+          # Generate reports for SDK test coverage if it exists
+          if [ -f coverage/coverage-sdk.out ] && [ -s coverage/coverage-sdk.out ]; then
+            go tool cover -func=coverage/coverage-sdk.out > coverage/coverage-sdk.txt || true
+            echo "SDK test coverage summary:"
+            tail -1 coverage/coverage-sdk.txt || echo "No SDK test coverage data"
+          fi
+          
+          # Generate reports for integration test coverage if it exists
+          INTEGRATION_COVERAGE=coverage/coverage-integration-${{ matrix.cluster }}.out
+          if [ -f "$INTEGRATION_COVERAGE" ] && [ -s "$INTEGRATION_COVERAGE" ]; then
+            go tool cover -html="$INTEGRATION_COVERAGE" -o coverage/coverage.html || true
+            go tool cover -func="$INTEGRATION_COVERAGE" > coverage/coverage.txt || true
+            echo "Integration test coverage summary (${{ matrix.cluster }}):"
+            tail -1 coverage/coverage.txt || echo "No integration test coverage data"
           fi
           
       - name: Upload coverage to Codecov
@@ -107,7 +127,10 @@ jobs:
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: coverage/merged_coverage.out
+          files: |
+            coverage/coverage-unit.out
+            coverage/coverage-sdk.out
+            coverage/coverage-integration-${{ matrix.cluster }}.out
           flags: integration-tests-${{ matrix.cluster }}
           name: go-sdk-integration-${{ matrix.cluster }}
           fail_ci_if_error: false
@@ -126,6 +149,7 @@ jobs:
             rerun-report-${{ matrix.suite }}-${{ matrix.cluster }}.txt
             coverage/coverage.html
             coverage/coverage.txt
+            coverage/coverage-sdk.txt
           if-no-files-found: warn
 
       - name: Run Backward Compatibility Tests (SM cluster)
