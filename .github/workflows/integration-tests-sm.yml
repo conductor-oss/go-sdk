@@ -89,39 +89,23 @@ jobs:
             } >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - name: Prepare Coverage Report
-        if: ${{ always() && matrix.suite == 'integration' }}
-        run: |
-          # Start with unit test coverage if it exists
-          if [ -f coverage/coverage-unit.out ] && [ -s coverage/coverage-unit.out ]; then
-            cp coverage/coverage-unit.out coverage/merged_coverage.out
-            echo "Started with unit test coverage"
-          else
-            echo "mode: atomic" > coverage/merged_coverage.out
-            echo "No unit test coverage found, starting fresh"
-          fi
-          
-          # Merge integration test coverage if it exists
-          INTEGRATION_COVERAGE=coverage/coverage-integration-${{ matrix.cluster }}.out
-          if [ -f "$INTEGRATION_COVERAGE" ] && [ -s "$INTEGRATION_COVERAGE" ]; then
-            # Install gocovmerge for merging coverage files
-            go install github.com/wadey/gocovmerge@latest
-            export PATH=$PATH:$(go env GOPATH)/bin
-            gocovmerge coverage/merged_coverage.out "$INTEGRATION_COVERAGE" > coverage/temp_merged.out
-            mv coverage/temp_merged.out coverage/merged_coverage.out
-            echo "Merged integration test coverage from $INTEGRATION_COVERAGE"
-          else
-            echo "No integration test coverage found for ${{ matrix.cluster }}"
-          fi
-          
       - name: Generate Coverage Report
         if: ${{ always() && matrix.suite == 'integration' }}
         run: |
-          if [ -f coverage/merged_coverage.out ] && [ -s coverage/merged_coverage.out ]; then
-            go tool cover -html=coverage/merged_coverage.out -o coverage/coverage.html
-            go tool cover -func=coverage/merged_coverage.out > coverage/coverage.txt
-            echo "Coverage Summary (${{ matrix.cluster }}):"
-            tail -1 coverage/coverage.txt
+          # Generate reports for unit test coverage if it exists
+          if [ -f coverage/coverage-unit.out ] && [ -s coverage/coverage-unit.out ]; then
+            go tool cover -func=coverage/coverage-unit.out > coverage/coverage-unit.txt || true
+            echo "Unit test coverage summary:"
+            tail -1 coverage/coverage-unit.txt || echo "No unit test coverage data"
+          fi
+          
+          # Generate reports for integration test coverage if it exists
+          INTEGRATION_COVERAGE=coverage/coverage-integration-${{ matrix.cluster }}.out
+          if [ -f "$INTEGRATION_COVERAGE" ] && [ -s "$INTEGRATION_COVERAGE" ]; then
+            go tool cover -html="$INTEGRATION_COVERAGE" -o coverage/coverage.html || true
+            go tool cover -func="$INTEGRATION_COVERAGE" > coverage/coverage.txt || true
+            echo "Integration test coverage summary (${{ matrix.cluster }}):"
+            tail -1 coverage/coverage.txt || echo "No integration test coverage data"
           fi
           
       - name: Upload coverage to Codecov
@@ -129,7 +113,9 @@ jobs:
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: coverage/merged_coverage.out
+          files: |
+            coverage/coverage-unit.out
+            coverage/coverage-integration-${{ matrix.cluster }}.out
           flags: integration-tests-${{ matrix.cluster }}
           name: go-sdk-integration-${{ matrix.cluster }}
           fail_ci_if_error: false
