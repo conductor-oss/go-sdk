@@ -1,5 +1,7 @@
 # Conductor OSS Go SDK
 
+[![Build Status](https://github.com/conductor-oss/go-sdk/actions/workflows/build.yml/badge.svg)](https://github.com/conductor-oss/go-sdk/actions/workflows/build.yml)
+
 SDK for developing Go applications that create, manage and execute workflows, and run workers.
 
 [Conductor](https://www.conductor-oss.org/) is the leading open-source orchestration platform allowing developers to build highly scalable distributed applications.
@@ -7,9 +9,6 @@ SDK for developing Go applications that create, manage and execute workflows, an
 To learn more about Conductor checkout our [developer's guide](https://docs.conductor-oss.org/devguide/concepts/index.html) and give it a ⭐ to make it famous!
 
 [![GitHub stars](https://img.shields.io/github/stars/conductor-oss/conductor.svg?style=social&label=Star&maxAge=)](https://GitHub.com/conductor-oss/conductor/)
-
-[![Build Status](https://github.com/conductor-oss/go-sdk/actions/workflows/build.yml/badge.svg)](https://github.com/conductor-oss/go-sdk/actions/workflows/build.yml)
-[![codecov](https://codecov.io/gh/conductor-oss/go-sdk/graph/badge.svg?token=456P7O8BG4)](https://codecov.io/gh/conductor-oss/go-sdk)
 
 # Content
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
