@@ -1,10 +1,13 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"math"
-	"math/rand"
+	mrand "math/rand"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -17,22 +20,21 @@ var instanceID = func() string {
 	if h := os.Getenv("HOSTNAME"); h != "" {
 		return h
 	}
-	b := make([]byte, 8)
-	const hex = "0123456789abcdef"
-	for i := range b {
-		b[i] = hex[rand.Intn(len(hex))]
+	b := make([]byte, 4)
+	if _, err := rand.Read(b); err != nil {
+		return "00000000"
 	}
-	return string(b)
+	return hex.EncodeToString(b)
 }()
 
 type SimulatedTaskWorker struct {
-	taskName      string
-	codename      string
-	defaultDelay  time.Duration
-	batchSize     int
-	pollInterval  time.Duration
-	workerID      string
-	rng           *rand.Rand
+	taskName     string
+	codename     string
+	defaultDelay time.Duration
+	batchSize    int
+	pollInterval time.Duration
+	workerID     string
+	rng          *mrand.Rand //nolint:gosec // intentionally non-crypto: fast seedable RNG for simulation delays and output
 }
 
 func NewSimulatedTaskWorker(taskName, codename string, sleepSeconds, batchSize, pollIntervalMs int) *SimulatedTaskWorker {
@@ -43,7 +45,7 @@ func NewSimulatedTaskWorker(taskName, codename string, sleepSeconds, batchSize, 
 		batchSize:    batchSize,
 		pollInterval: time.Duration(pollIntervalMs) * time.Millisecond,
 		workerID:     fmt.Sprintf("%s-%s", taskName, instanceID),
-		rng:          rand.New(rand.NewSource(time.Now().UnixNano())),
+		rng:          mrand.New(mrand.NewSource(time.Now().UnixNano())), //nolint:gosec // see struct field comment
 	}
 
 	fmt.Printf("[%s] Initialized worker [workerId=%s, codename=%s, batchSize=%d, pollInterval=%dms]\n",
@@ -58,21 +60,21 @@ func (w *SimulatedTaskWorker) Execute(task *model.Task) (interface{}, error) {
 		input = make(map[string]interface{})
 	}
 	taskID := task.TaskId
-	taskIndex := getOrDefault[int](input, "taskIndex", -1)
+	taskIndex := getIntOrDefault(input, "taskIndex", -1)
 
 	fmt.Printf("[%s] Starting simulated task [id=%s, index=%d, codename=%s]\n",
 		w.taskName, taskID, taskIndex, w.codename)
 
 	startTime := time.Now()
 
-	delayType := getOrDefault[string](input, "delayType", "fixed")
-	minDelay := getOrDefault[int](input, "minDelay", int(w.defaultDelay.Milliseconds()))
-	maxDelay := getOrDefault[int](input, "maxDelay", minDelay+100)
-	meanDelay := getOrDefault[int](input, "meanDelay", (minDelay+maxDelay)/2)
-	stdDeviation := getOrDefault[int](input, "stdDeviation", 30)
-	successRate := getOrDefault[float64](input, "successRate", 1.0)
-	failureMode := getOrDefault[string](input, "failureMode", "random")
-	outputSize := getOrDefault[int](input, "outputSize", 1024)
+	delayType := getStringOrDefault(input, "delayType", "fixed")
+	minDelay := getIntOrDefault(input, "minDelay", int(w.defaultDelay.Milliseconds()))
+	maxDelay := getIntOrDefault(input, "maxDelay", minDelay+100)
+	meanDelay := getIntOrDefault(input, "meanDelay", (minDelay+maxDelay)/2)
+	stdDeviation := getIntOrDefault(input, "stdDeviation", 30)
+	successRate := getFloat64OrDefault(input, "successRate", 1.0)
+	failureMode := getStringOrDefault(input, "failureMode", "random")
+	outputSize := getIntOrDefault(input, "outputSize", 1024)
 
 	var delayMs int64
 	if !strings.EqualFold(delayType, "wait") {
@@ -151,34 +153,35 @@ func (w *SimulatedTaskWorker) shouldTaskSucceed(successRate float64, failureMode
 	switch strings.ToLower(failureMode) {
 	case "random":
 		return w.rng.Float64() < successRate
-
 	case "conditional":
-		taskIndex := getOrDefault[int](input, "taskIndex", -1)
-		if taskIndex >= 0 {
-			if failIndexes, ok := input["failIndexes"]; ok {
-				if arr, ok := failIndexes.([]interface{}); ok {
-					for _, idx := range arr {
-						if toInt(idx) == taskIndex {
-							return false
-						}
-					}
-				}
-			}
-			failEvery := getOrDefault[int](input, "failEvery", 0)
-			if failEvery > 0 && taskIndex%failEvery == 0 {
-				return false
-			}
-		}
-		return w.rng.Float64() < successRate
-
+		return w.shouldConditionalSucceed(successRate, input)
 	case "sequential":
-		attempt := getOrDefault[int](input, "attempt", 1)
-		failUntilAttempt := getOrDefault[int](input, "failUntilAttempt", 2)
+		attempt := getIntOrDefault(input, "attempt", 1)
+		failUntilAttempt := getIntOrDefault(input, "failUntilAttempt", 2)
 		return attempt >= failUntilAttempt
-
 	default:
 		return w.rng.Float64() < successRate
 	}
+}
+
+func (w *SimulatedTaskWorker) shouldConditionalSucceed(successRate float64, input map[string]interface{}) bool {
+	taskIndex := getIntOrDefault(input, "taskIndex", -1)
+	if taskIndex >= 0 {
+		if failIndexes, ok := input["failIndexes"]; ok {
+			if arr, ok := failIndexes.([]interface{}); ok {
+				for _, idx := range arr {
+					if toInt(idx) == taskIndex {
+						return false
+					}
+				}
+			}
+		}
+		failEvery := getIntOrDefault(input, "failEvery", 0)
+		if failEvery > 0 && taskIndex%failEvery == 0 {
+			return false
+		}
+	}
+	return w.rng.Float64() < successRate
 }
 
 func (w *SimulatedTaskWorker) generateOutput(
@@ -186,11 +189,11 @@ func (w *SimulatedTaskWorker) generateOutput(
 	delayMs, elapsedTimeMs int64, outputSize int,
 ) map[string]interface{} {
 	output := map[string]interface{}{
-		"taskId":               taskID,
-		"taskIndex":            taskIndex,
-		"codename":             w.codename,
-		"status":               "completed",
-		"configuredDelayMs":    delayMs,
+		"taskId":                taskID,
+		"taskIndex":             taskIndex,
+		"codename":              w.codename,
+		"status":                "completed",
+		"configuredDelayMs":     delayMs,
 		"actualExecutionTimeMs": elapsedTimeMs,
 		"a_or_b": func() string {
 			if w.rng.Intn(100) > 20 {
@@ -206,7 +209,7 @@ func (w *SimulatedTaskWorker) generateOutput(
 		}(),
 	}
 
-	if getOrDefault[bool](input, "includeInput", false) {
+	if getBoolOrDefault(input, "includeInput", false) {
 		output["input"] = input
 	}
 
@@ -229,7 +232,7 @@ func (w *SimulatedTaskWorker) generateOutput(
 	return output
 }
 
-func generateRandomData(rng *rand.Rand, size int) string {
+func generateRandomData(rng *mrand.Rand, size int) string {
 	if size <= 0 {
 		return ""
 	}
@@ -240,28 +243,40 @@ func generateRandomData(rng *rand.Rand, size int) string {
 	return string(b)
 }
 
-// getOrDefault extracts a typed value from an input map, returning defaultVal on miss or type mismatch.
-func getOrDefault[T int | float64 | string | bool](input map[string]interface{}, key string, defaultVal T) T {
+func getIntOrDefault(input map[string]interface{}, key string, defaultVal int) int {
 	v, ok := input[key]
 	if !ok || v == nil {
 		return defaultVal
 	}
-	var zero T
-	switch any(zero).(type) {
-	case int:
-		return any(toInt(v)).(T)
-	case float64:
-		return any(toFloat64(v)).(T)
-	case string:
-		if s, ok := v.(string); ok {
-			return any(s).(T)
-		}
+	return toInt(v)
+}
+
+func getFloat64OrDefault(input map[string]interface{}, key string, defaultVal float64) float64 {
+	v, ok := input[key]
+	if !ok || v == nil {
 		return defaultVal
-	case bool:
-		if b, ok := toBool(v); ok {
-			return any(b).(T)
-		}
+	}
+	return toFloat64(v)
+}
+
+func getStringOrDefault(input map[string]interface{}, key string, defaultVal string) string {
+	v, ok := input[key]
+	if !ok || v == nil {
 		return defaultVal
+	}
+	if s, ok := v.(string); ok {
+		return s
+	}
+	return defaultVal
+}
+
+func getBoolOrDefault(input map[string]interface{}, key string, defaultVal bool) bool {
+	v, ok := input[key]
+	if !ok || v == nil {
+		return defaultVal
+	}
+	if b, ok := toBool(v); ok {
+		return b
 	}
 	return defaultVal
 }
@@ -279,9 +294,10 @@ func toInt(v interface{}) int {
 	case float64:
 		return int(n)
 	case string:
-		var i int
-		fmt.Sscanf(n, "%d", &i)
-		return i
+		if i, err := strconv.Atoi(n); err == nil {
+			return i
+		}
+		return 0
 	default:
 		return 0
 	}
@@ -300,9 +316,10 @@ func toFloat64(v interface{}) float64 {
 	case int64:
 		return float64(n)
 	case string:
-		var f float64
-		fmt.Sscanf(n, "%f", &f)
-		return f
+		if f, err := strconv.ParseFloat(n, 64); err == nil {
+			return f
+		}
+		return 0
 	default:
 		return 0
 	}
