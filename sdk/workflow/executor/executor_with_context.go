@@ -20,6 +20,13 @@ func (e *WorkflowExecutor) RegisterWorkflowWithContext(ctx context.Context, over
 		return err
 	}
 
+	if overwrite {
+		// POST /metadata/workflow does not honor the overwrite param on the OSS
+		// server — it returns HTTP 500 if the workflow already exists.
+		// Use PUT /metadata/workflow instead when overwrite=true.
+		_, err := e.metadataClient.Update(ctx, []model.WorkflowDef{*workflow})
+		return err
+	}
 	_, err := e.metadataClient.RegisterWorkflowDef(ctx, overwrite, *workflow)
 	return err
 }
