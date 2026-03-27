@@ -28,7 +28,9 @@ COPY /harness /package/harness
 WORKDIR /package
 RUN CGO_ENABLED=0 go build -o /app/harness ./harness
 
-FROM gcr.io/distroless/static-debian12:nonroot AS harness
+FROM alpine:3 AS harness
+RUN adduser -D -u 65532 nonroot
+USER nonroot
 COPY --from=harness-build /app/harness /app/harness
 WORKDIR /app
 ENTRYPOINT ["/app/harness"]
