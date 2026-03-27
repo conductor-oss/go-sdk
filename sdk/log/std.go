@@ -7,6 +7,14 @@ import (
 	"strings"
 )
 
+// Exported log level constants for use with SetLevel.
+const (
+	LevelDebug = lvlDebug
+	LevelInfo  = lvlInfo
+	LevelWarn  = lvlWarn
+	LevelError = lvlError
+)
+
 type stdLogger struct {
 	l     *log.Logger
 	level int
@@ -106,9 +114,24 @@ func (s *stdLogger) With(vals ...interface{}) Logger {
 }
 
 // NewStd creates a new Logger that wraps a log.Logger.
+// The log level defaults to INFO and can be overridden by setting the LOG_LEVEL
+// environment variable to one of: debug, info, warn, error (case-insensitive).
 func NewStd(l *log.Logger) Logger {
 	if l == nil {
 		l = log.New(os.Stdout, "", log.LstdFlags)
 	}
-	return &stdLogger{l: l}
+	return &stdLogger{l: l, level: levelFromEnv()}
+}
+
+func levelFromEnv() int {
+	switch strings.ToLower(os.Getenv("LOG_LEVEL")) {
+	case "debug":
+		return lvlDebug
+	case "warn", "warning":
+		return lvlWarn
+	case "error":
+		return lvlError
+	default:
+		return lvlInfo
+	}
 }

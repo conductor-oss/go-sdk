@@ -22,3 +22,13 @@ ENV CONDUCTOR_AUTH_KEY=${CONDUCTOR_AUTH_KEY}
 ENV CONDUCTOR_AUTH_SECRET=${CONDUCTOR_AUTH_SECRET}
 ENV CONDUCTOR_SERVER_URL=${CONDUCTOR_SERVER_URL}
 RUN go test -v ./test/integration_tests/...
+
+FROM build AS harness-build
+COPY /harness /package/harness
+WORKDIR /package
+RUN CGO_ENABLED=0 go build -o /app/harness ./harness
+
+FROM gcr.io/distroless/static-debian12:nonroot AS harness
+COPY --from=harness-build /app/harness /app/harness
+WORKDIR /app
+ENTRYPOINT ["/app/harness"]
