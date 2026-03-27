@@ -11,7 +11,7 @@ export NS=your-namespace-here
 
 All kubectl commands below use `-n $NS` to specify the namespace. The manifests intentionally do not include hardcoded namespaces.
 
-**Ensure the GHCR image pull secret exists in the namespace** (see step 1 below).
+**Note:** The harness worker images are published as public packages on GHCR and do not require authentication to pull. No image pull secrets are needed.
 
 ## Files
 
@@ -22,27 +22,10 @@ All kubectl commands below use `-n $NS` to specify the namespace. The manifests 
 | `configmap-azure.yaml` | Conductor URL + auth key for certification-az |
 | `configmap-gcp.yaml` | Conductor URL + auth key for certification-gcp |
 | `secret-conductor.yaml` | Conductor auth secret (placeholder template) |
-| `secret-ghcr-pull.yaml` | GHCR image pull secret (instructions only) |
 
 ## Quick Start
 
-### 1. Create the Image Pull Secret
-
-The deployment pulls from a private GHCR package. The orkes-io org's `regcredorkesgit` secret does not have access to this OSS repo's packages, so a dedicated pull secret is needed.
-
-```bash
-kubectl create secret docker-registry ghcr-oss-sdk \
-  --docker-server=ghcr.io \
-  --docker-username=YOUR_GITHUB_USERNAME \
-  --docker-password=YOUR_GITHUB_PAT \
-  -n $NS
-```
-
-The PAT must be a GitHub PAT (classic) with `read:packages` scope. Verify it works first with `docker login ghcr.io`.
-
-See `secret-ghcr-pull.yaml` for more details.
-
-### 2. Create the Conductor Auth Secret
+### 1. Create the Conductor Auth Secret
 
 The `CONDUCTOR_AUTH_SECRET` must be created as a Kubernetes secret before deploying.
 
@@ -56,7 +39,7 @@ If the `conductor-credentials` secret already exists in the namespace (e.g. from
 
 See `secret-conductor.yaml` for more details.
 
-### 3. Apply the ConfigMap for Your Cluster
+### 2. Apply the ConfigMap for Your Cluster
 
 ```bash
 # AWS
@@ -69,13 +52,13 @@ kubectl apply -f manifests/configmap-azure.yaml -n $NS
 kubectl apply -f manifests/configmap-gcp.yaml -n $NS
 ```
 
-### 4. Deploy
+### 3. Deploy
 
 ```bash
 kubectl apply -f manifests/deployment.yaml -n $NS
 ```
 
-### 5. Verify
+### 4. Verify
 
 ```bash
 # Check pod status
@@ -134,22 +117,6 @@ kubectl logs -n $NS -l app=go-sdk-harness-worker --tail=100
 
 ```bash
 kubectl get secret conductor-credentials -n $NS
-```
-
-### Image pull errors
-
-Verify the `ghcr-oss-sdk` image pull secret exists and is correctly formatted:
-
-```bash
-# Check it exists
-kubectl get secret ghcr-oss-sdk -n $NS
-
-# Verify type is kubernetes.io/dockerconfigjson
-kubectl get secret ghcr-oss-sdk -n $NS -o jsonpath='{.type}'
-
-# Decode and inspect the docker config
-kubectl get secret ghcr-oss-sdk -n $NS \
-  -o jsonpath='{.data.\.dockerconfigjson}' | base64 -d
 ```
 
 ## Resource Limits
