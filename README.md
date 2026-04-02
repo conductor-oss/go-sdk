@@ -44,6 +44,8 @@ go mod init hello_world
 go get github.com/conductor-sdk/conductor-go
 ```
 
+> **Note:** The Go module path is `github.com/conductor-sdk/conductor-go` (historical). The source repository is at [conductor-oss/go-sdk](https://github.com/conductor-oss/go-sdk).
+
 ## Hello World
 
 In this repo you will find a basic "Hello World" under [examples/hello_world](examples/hello_world/). 
@@ -54,7 +56,7 @@ Let's analyze the app in 3 steps.
 > [!note]
 > You will need an up & running Conductor Server. 
 >
-> For details on how to run Conductor take a look at [our guide](https://conductor-oss.github.io/conductor/devguide/running/docker.html).
+> For details on how to run Conductor take a look at [our documentation](https://docs.conductor-oss.org).
 >
 > The examples expect the server to be listening on http://localhost:8080.
 
