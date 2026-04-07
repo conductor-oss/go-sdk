@@ -489,12 +489,16 @@ func (c *TaskRunner) updateTaskWithRetry(taskName string, taskResult *model.Task
 		"taskId", taskResult.TaskId,
 		"workflowId", taskResult.WorkflowInstanceId,
 	)
+	ctx := c.getBaseContext()
 	var lastError error
 	for attempt := 0; attempt <= taskUpdateRetryAttemptsLimit; attempt += 1 {
 		if attempt > 0 {
-			// Wait for [10s, 20s, 30s] before next attempt
 			amount := attempt * 10
-			time.Sleep(time.Duration(amount) * time.Second)
+			select {
+			case <-ctx.Done():
+				return fmt.Errorf("context cancelled during task update retry for %s: %w", taskName, ctx.Err())
+			case <-time.After(time.Duration(amount) * time.Second):
+			}
 		}
 		_, err := c.updateTask(taskName, taskResult)
 		if err == nil {

@@ -80,6 +80,46 @@ func TestStd_With(t *testing.T) {
 	})
 }
 
+func TestStd_ExportedLevelConstants(t *testing.T) {
+	assert.Equal(t, lvlDebug, LevelDebug)
+	assert.Equal(t, lvlInfo, LevelInfo)
+	assert.Equal(t, lvlWarn, LevelWarn)
+	assert.Equal(t, lvlError, LevelError)
+}
+
+func TestStd_LevelFromEnv(t *testing.T) {
+	cases := []struct {
+		env   string
+		level int
+	}{
+		{"debug", lvlDebug},
+		{"DEBUG", lvlDebug},
+		{"warn", lvlWarn},
+		{"warning", lvlWarn},
+		{"error", lvlError},
+		{"info", lvlInfo},
+		{"", lvlInfo},
+		{"bogus", lvlInfo},
+	}
+
+	for _, tc := range cases {
+		t.Run("LOG_LEVEL="+tc.env, func(t *testing.T) {
+			t.Setenv("LOG_LEVEL", tc.env)
+			buf, goStd := capture()
+			l := NewStd(goStd).(*stdLogger)
+
+			assert.Equal(t, tc.level, l.level)
+
+			l.Debug("d")
+			if tc.level <= lvlDebug {
+				assert.Contains(t, buf.String(), "[DEBUG]")
+			} else {
+				assert.Empty(t, buf.String())
+			}
+		})
+	}
+}
+
 func TestStd_FormatArgs(t *testing.T) {
 	buf, goStd := capture()
 	l := NewStd(goStd)
