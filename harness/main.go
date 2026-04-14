@@ -9,7 +9,9 @@ import (
 	"syscall"
 
 	"github.com/conductor-sdk/conductor-go/sdk/client"
+	"github.com/conductor-sdk/conductor-go/sdk/metrics"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
+	"github.com/conductor-sdk/conductor-go/sdk/settings"
 	"github.com/conductor-sdk/conductor-go/sdk/worker"
 	"github.com/conductor-sdk/conductor-go/sdk/workflow"
 	"github.com/conductor-sdk/conductor-go/sdk/workflow/executor"
@@ -37,6 +39,10 @@ func main() {
 	taskRunner := worker.NewTaskRunnerWithApiClient(apiClient)
 
 	registerMetadata(apiClient, workflowExecutor)
+
+	metricsPort := envIntOrDefault("HARNESS_METRICS_PORT", 9991)
+	go metrics.ProvideMetrics(settings.NewMetricsSettings("/metrics", metricsPort))
+	fmt.Printf("Prometheus metrics server started on port %d\n", metricsPort)
 
 	workflowsPerSec := envIntOrDefault("HARNESS_WORKFLOWS_PER_SEC", 2)
 	batchSize := envIntOrDefault("HARNESS_BATCH_SIZE", 20)
