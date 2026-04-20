@@ -18,7 +18,7 @@ spec:
       # note: imagePullSecrets is not needed for public images
       containers:
       - name: harness
-        image: ghcr.io/conductor-oss/go-sdk/harness-worker:feature-certification-worker-metrics-latest
+        image: ghcr.io/conductor-oss/go-sdk/harness-worker:main-latest
         imagePullPolicy: Always
         env:
         # === CONDUCTOR CONNECTION (from per-cloud ConfigMap) ===
