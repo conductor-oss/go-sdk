@@ -24,9 +24,24 @@ var gaugeTemplates = map[MetricName]*MetricDetails{
 			WORKFLOW_VERSION,
 		},
 	),
+	WORKFLOW_INPUT_SIZE_BYTES: NewMetricDetails(
+		WORKFLOW_INPUT_SIZE_BYTES,
+		WORKFLOW_INPUT_SIZE_BYTES_DOC,
+		[]MetricLabel{
+			WORKFLOW_TYPE,
+			WORKFLOW_VERSION,
+		},
+	),
 	TASK_RESULT_SIZE: NewMetricDetails(
 		TASK_RESULT_SIZE,
 		TASK_RESULT_SIZE_DOC,
+		[]MetricLabel{
+			TASK_TYPE,
+		},
+	),
+	TASK_RESULT_SIZE_BYTES: NewMetricDetails(
+		TASK_RESULT_SIZE_BYTES,
+		TASK_RESULT_SIZE_BYTES_DOC,
 		[]MetricLabel{
 			TASK_TYPE,
 		},
@@ -55,54 +70,41 @@ var gaugeTemplates = map[MetricName]*MetricDetails{
 }
 
 func RecordWorkflowInputPayloadSize(workflowType string, version string, payloadSize float64) {
-	setGauge(
-		WORKFLOW_INPUT_SIZE,
-		[]string{
-			workflowType,
-			version,
-		},
-		payloadSize,
-	)
+	setGauge(WORKFLOW_INPUT_SIZE, []string{workflowType, version}, payloadSize)
+	setGauge(WORKFLOW_INPUT_SIZE_BYTES, []string{workflowType, version}, payloadSize)
 }
 
 func RecordTaskResultPayloadSize(taskType string, payloadSize float64) {
-	setGauge(
-		TASK_RESULT_SIZE,
-		[]string{
-			taskType,
-		},
-		payloadSize,
-	)
+	setGauge(TASK_RESULT_SIZE, []string{taskType}, payloadSize)
+	setGauge(TASK_RESULT_SIZE_BYTES, []string{taskType}, payloadSize)
 }
 
+// RecordTaskPollTime records a task-poll duration (in seconds) on the legacy
+// task_poll_time Gauge. For the canonical task_poll_time_seconds Histogram,
+// use ObserveTaskPollTimeSeconds — it requires a status label and should be
+// called after the poll completes so SUCCESS/FAILURE can be distinguished.
 func RecordTaskPollTime(taskType string, timeSpent float64) {
-	setGauge(
-		TASK_POLL_TIME,
-		[]string{
-			taskType,
-		},
-		timeSpent,
-	)
+	setGauge(TASK_POLL_TIME, []string{taskType}, timeSpent)
 }
 
+// RecordTaskUpdateTime records a task-update duration.
+// NOTE: for backward compatibility the legacy task_update_time Gauge is
+// updated using the caller-supplied value (which the existing worker call
+// site passes in milliseconds). The canonical task_update_time_seconds
+// Histogram is NOT observed here: callers that have the correct seconds
+// value should call ObserveTaskUpdateTimeSeconds directly.
 func RecordTaskUpdateTime(taskType string, timeSpent float64) {
-	setGauge(
-		TASK_UPDATE_TIME,
-		[]string{
-			taskType,
-		},
-		timeSpent,
-	)
+	setGauge(TASK_UPDATE_TIME, []string{taskType}, timeSpent)
 }
 
+// RecordTaskExecuteTime records a task-execution duration.
+// NOTE: for backward compatibility the legacy task_execute_time Gauge is
+// updated using the caller-supplied value (which the existing worker call
+// site passes in milliseconds). The canonical task_execute_time_seconds
+// Histogram is NOT observed here: callers that have the correct seconds
+// value should call ObserveTaskExecuteTimeSeconds directly.
 func RecordTaskExecuteTime(taskType string, timeSpent float64) {
-	setGauge(
-		TASK_EXECUTE_TIME,
-		[]string{
-			taskType,
-		},
-		timeSpent,
-	)
+	setGauge(TASK_EXECUTE_TIME, []string{taskType}, timeSpent)
 }
 
 func newGauge(metricDetails *MetricDetails) *prometheus.GaugeVec {

@@ -39,6 +39,11 @@ func ProvideMetrics(metricsSettings *settings.MetricsSettings) {
 		gaugeByName[metricName] = newGauge(metricDetails)
 		prometheus.MustRegister(gaugeByName[metricName])
 	}
+
+	for metricName, metricDetails := range histogramTemplates {
+		histogramByName[metricName] = newHistogram(metricDetails)
+		prometheus.MustRegister(histogramByName[metricName])
+	}
 	collectionEnabled = true
 
 	http.Handle(

@@ -215,19 +215,72 @@ When enabled the worker starts an HTTP server which is used to publish metrics, 
 go ProvideMetrics(settings.NewDefaultMetricsSettings())
 ```
 
-Worker SDK collects the following metrics:
+Worker SDK emits both legacy metric names (kept for backward compatibility)
+and canonical metric names that match the cross-SDK catalog in
+[`longrunning-wfstest/sdk-metrics-harmonization.md`](https://github.com/conductor-oss/longrunning-wfstest/blob/main/sdk-metrics-harmonization.md).
+Both sets are emitted by every worker; prefer the canonical names for new
+dashboards.
 
+#### Canonical metrics
 
-| Name        | Purpose           | Tags  |
-| ------------- |:-------------| -----|
-| task_poll_error | Client error when polling for a task queue | taskType, includeRetries, status |
-| task_execute_error | Execution error | taskType|
-| task_update_error | Task status cannot be updated back to server  | taskType |
-| task_poll_counter | Incremented each time polling is done  | taskType |
-| task_poll_time | Time to poll for a batch of tasks | taskType |
-| task_execute_time | Time to execute a task  | taskType |
-| task_result_size | Records output payload size of a task | taskType |
+| Name | Type | Labels | Purpose |
+| --- | --- | --- | --- |
+| `task_poll_total` | Counter | `taskType` | Incremented for every poll request. |
+| `task_poll_error_total` | Counter | `taskType`, `exception` | Poll request failed client-side. `exception` is the Go type name. |
+| `task_execution_started_total` | Counter | `taskType` | Polled task dispatched to the user worker function. |
+| `task_execute_error_total` | Counter | `taskType`, `exception` | Worker function returned a non-nil error. |
+| `task_update_error_total` | Counter | `taskType`, `exception` | Task-result update back to the server failed. |
+| `task_ack_error_total` | Counter | `taskType`, `exception` | Exception while acknowledging a polled task. |
+| `task_ack_failed_total` | Counter | `taskType` | Server returned a non-success ack. |
+| `task_execution_queue_full_total` | Counter | `taskType` | Worker's executor queue saturated. |
+| `task_paused_total` | Counter | `taskType` | Poll happened while worker was paused. |
+| `thread_uncaught_exceptions_total` | Counter | `exception` | Uncaught panic inside a worker goroutine. |
+| `external_payload_used_total` | Counter | `entityName`, `operation`, `payload_type` | External payload storage used. |
+| `workflow_start_error_total` | Counter | `workflowType`, `exception` | `StartWorkflow` failed client-side. |
+| `task_poll_time_seconds` | Histogram | `taskType`, `status` | Task poll latency (seconds). Standard buckets 1ms..10s. |
+| `task_execute_time_seconds` | Histogram | `taskType`, `status` | Task execution latency. |
+| `task_update_time_seconds` | Histogram | `taskType`, `status` | Task-update latency. |
+| `http_api_client_request_seconds` | Histogram | `method`, `uri`, `status` | Every HTTP request made by the SDK's generated API client. |
+| `task_result_size_bytes` | Gauge | `taskType` | Last-seen task-result payload size. |
+| `workflow_input_size_bytes` | Gauge | `workflowType`, `version` | Last-seen workflow-input payload size. |
 
-Metrics on client side supplements the one collected from server in identifying the network as well as client side issues.
+Querying percentiles across replicas:
+
+```promql
+histogram_quantile(
+  0.95,
+  sum by (le, taskType) (rate(task_execute_time_seconds_bucket[5m]))
+)
+```
+
+#### Deprecated metrics
+
+These are still emitted for backward compatibility and will be removed in a
+future major release. Prefer the canonical replacements above.
+
+| Deprecated | Replacement | Notes |
+| --- | --- | --- |
+| `task_poll` (Counter) | `task_poll_total` | Identical semantics. |
+| `task_poll_error` (Counter) | `task_poll_error_total` | Canonical adds the `exception` label. |
+| `task_execute_error` (Counter) | `task_execute_error_total` | Canonical adds the `exception` label. |
+| `task_update_error` (Counter) | `task_update_error_total` | Canonical adds the `exception` label. |
+| `task_execution_queue_full` (Counter) | `task_execution_queue_full_total` | Rename-alias. |
+| `task_paused` (Counter) | `task_paused_total` | Rename-alias. |
+| `thread_uncaught_exceptions` (Counter, no labels) | `thread_uncaught_exceptions_total{exception}` | Canonical populates the previously dropped `message` argument as the `exception` label. |
+| `external_payload_used` (Counter) | `external_payload_used_total` | Rename-alias. |
+| `workflow_start_error` (Counter) | `workflow_start_error_total` | Canonical adds the `exception` label. |
+| `task_poll_time` (Gauge, seconds) | `task_poll_time_seconds` (Histogram) | Gauge kept for dashboards; Histogram aggregates across replicas. |
+| `task_execute_time` (Gauge, **milliseconds**) | `task_execute_time_seconds` (Histogram, seconds) | Legacy Gauge emits the wrong unit for historical reasons; the Histogram uses seconds as advertised. |
+| `task_update_time` (Gauge, **milliseconds**) | `task_update_time_seconds` (Histogram, seconds) | Same unit note as above. |
+| `task_result_size` (Gauge) | `task_result_size_bytes` (Gauge) | Same value, canonical name. |
+| `workflow_input_size` (Gauge) | `workflow_input_size_bytes` (Gauge) | Same value, canonical name. |
+
+#### Go runtime metrics
+
+The Prometheus default gatherer also exposes the standard `go_*` and
+`process_*` runtime metrics automatically.
+
+Metrics on client side supplement the ones collected from server in
+identifying network as well as client-side issues.
 
 ### Next: [Create and Execute Workflows](workflow_sdk.md)

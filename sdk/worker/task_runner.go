@@ -426,8 +426,10 @@ func (c *TaskRunner) batchPoll(taskName string, count int, domain string) ([]mod
 		metrics.IncrementTaskPollError(
 			taskName, err,
 		)
+		metrics.ObserveTaskPollTimeSeconds(taskName, "FAILURE", spentTime.Seconds())
 		return nil, err
 	}
+	metrics.ObserveTaskPollTimeSeconds(taskName, "SUCCESS", spentTime.Seconds())
 	if response.StatusCode == 204 {
 		return nil, nil
 	}
@@ -442,12 +444,22 @@ func (c *TaskRunner) executeTask(t *model.Task, executeFunction model.ExecuteTas
 		"taskId", t.TaskId,
 		"workflowId", t.WorkflowInstanceId,
 	)
+	metrics.IncrementTaskExecutionStarted(t.TaskDefName)
 	startTime := time.Now()
 	taskExecutionOutput, err := executeFunction(t)
 	spentTime := time.Since(startTime)
+	// Legacy task_execute_time Gauge is emitted in milliseconds for
+	// backward compatibility (this is a known unit bug kept intentionally).
 	metrics.RecordTaskExecuteTime(
 		t.TaskDefName, float64(spentTime.Milliseconds()),
 	)
+	// Canonical task_execute_time_seconds Histogram is always observed with
+	// the correct seconds unit.
+	if err != nil {
+		metrics.ObserveTaskExecuteTimeSeconds(t.TaskDefName, "FAILURE", spentTime.Seconds())
+	} else {
+		metrics.ObserveTaskExecuteTimeSeconds(t.TaskDefName, "SUCCESS", spentTime.Seconds())
+	}
 	if err != nil {
 		metrics.IncrementTaskExecuteError(t.TaskDefName, err)
 		log.Debug(
@@ -519,8 +531,16 @@ func (c *TaskRunner) updateTaskWithRetry(taskName string, taskResult *model.Task
 func (c *TaskRunner) updateTask(taskName string, taskResult *model.TaskResult) (*http.Response, error) {
 	startTime := time.Now()
 	_, response, err := c.conductorTaskResourceClient.UpdateTask(c.getBaseContext(), taskResult)
-	spentTime := time.Since(startTime).Milliseconds()
-	metrics.RecordTaskUpdateTime(taskName, float64(spentTime))
+	spent := time.Since(startTime)
+	// Legacy task_update_time Gauge keeps emitting milliseconds for
+	// backward compatibility (this is a known unit bug kept intentionally).
+	metrics.RecordTaskUpdateTime(taskName, float64(spent.Milliseconds()))
+	// Canonical task_update_time_seconds Histogram is observed in seconds.
+	status := "SUCCESS"
+	if err != nil {
+		status = "FAILURE"
+	}
+	metrics.ObserveTaskUpdateTimeSeconds(taskName, status, spent.Seconds())
 	return response, err
 }
 

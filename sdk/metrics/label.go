@@ -14,9 +14,12 @@ type MetricLabel string
 const (
 	ENTITY_NAME      MetricLabel = "entityName"
 	EXCEPTION        MetricLabel = "exception"
+	METHOD           MetricLabel = "method"
 	OPERATION        MetricLabel = "operation"
 	PAYLOAD_TYPE     MetricLabel = "payload_type"
+	STATUS           MetricLabel = "status"
 	TASK_TYPE        MetricLabel = "taskType"
+	URI              MetricLabel = "uri"
 	WORKFLOW_TYPE    MetricLabel = "workflowType"
 	WORKFLOW_VERSION MetricLabel = "version"
 )
