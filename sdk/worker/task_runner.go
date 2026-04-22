@@ -11,6 +11,7 @@ package worker
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -337,6 +338,7 @@ func (c *TaskRunner) work4ever(taskName string, executeFunction model.ExecuteTas
 
 func (c *TaskRunner) workOnce(taskName string, executeFunction model.ExecuteTaskFunction, domain string) {
 	if c.isPaused(taskName) {
+		metrics.IncrementTaskPaused(taskName)
 		pauseOnGenericError(taskName, domain, fmt.Errorf("worker is paused"))
 		return
 	}
@@ -384,10 +386,26 @@ func (c *TaskRunner) executeAndUpdateTask(taskName string, task model.Task, exec
 	defer c.runningWorkerDone(taskName)
 	defer concurrency.HandlePanicError("execute_and_update_task " + string(task.TaskId) + ": " + string(task.Status))
 	taskResult := c.executeTask(&task, executeFunction)
+	recordTaskResultPayloadSize(taskName, taskResult)
 	err := c.updateTaskWithRetry(taskName, taskResult)
 	if err != nil {
 		log.Error("failed to update task", "taskName", taskName, "taskId", task.TaskId, "workflowId", task.WorkflowInstanceId, "error", err)
 	}
+}
+
+// recordTaskResultPayloadSize serializes the task result and emits the
+// canonical task_result_size_bytes / legacy task_result_size gauges. Errors
+// during serialization are swallowed: metrics must never break the update
+// path.
+func recordTaskResultPayloadSize(taskName string, taskResult *model.TaskResult) {
+	if taskResult == nil {
+		return
+	}
+	encoded, err := json.Marshal(taskResult)
+	if err != nil {
+		return
+	}
+	metrics.RecordTaskResultPayloadSize(taskName, float64(len(encoded)))
 }
 
 func (c *TaskRunner) batchPoll(taskName string, count int, domain string) ([]model.Task, error) {

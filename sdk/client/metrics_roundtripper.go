@@ -51,11 +51,13 @@ func (m *metricsRoundTripper) RoundTrip(req *http.Request) (*http.Response, erro
 		uri = req.URL.Path
 	}
 
+	// Cross-SDK convention: network / transport failures (no HTTP status
+	// ever received) are labeled "0". Matches python-sdk (records 0 on
+	// URLError / ConnectionError) and java-sdk (coerces any <= 0 status to
+	// "0" in PrometheusApiClientMetrics). Keeping the label numeric lets
+	// dashboards treat `status` as a single facet across all three SDKs.
 	status := "0"
-	switch {
-	case err != nil:
-		status = "error"
-	case resp != nil:
+	if err == nil && resp != nil {
 		status = strconv.Itoa(resp.StatusCode)
 	}
 
