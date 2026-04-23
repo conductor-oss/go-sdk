@@ -76,7 +76,7 @@ func CreateWorkflow(executor *executor.WorkflowExecutor) *workflow.ConductorWork
 		TimeoutPolicy(workflow.TimeOutWorkflow, 600)
 
 	greet := workflow.NewSimpleTask("greet", "greet_ref").
-		Input("person_to_be_greated", "${workflow.input.name}")
+		Input("person_to_be_greeted", "${workflow.input.name}")
 
 	wf.Add(greet)
 
@@ -90,14 +90,14 @@ func CreateWorkflow(executor *executor.WorkflowExecutor) *workflow.ConductorWork
 
 In the above code first we create a workflow by calling `workflow.NewConductorWorkflow(..)` and set its properties `Name`, `Version`, `Description` and `TimeoutPolicy`. 
 
-Then we create a [Simple Task](https://orkes.io/content/reference-docs/worker-task) of type `"greet"` with reference name `"greet_ref"` and add it to the workflow. That task gets the workflow input `"name"` as an input with key `"person_to_be_greated"`.
+Then we create a [Simple Task](https://orkes.io/content/reference-docs/worker-task) of type `"greet"` with reference name `"greet_ref"` and add it to the workflow. That task gets the workflow input `"name"` as an input with key `"person_to_be_greeted"`.
 
 > [!note]
->`"person_to_be_greated"` is too verbose! Why would you name it like that?
+>`"person_to_be_greeted"` is too verbose! Why would you name it like that?
 >
 > It's just to make it clear that the workflow input is not passed automatically. 
 >
-> The worker will get the actual value of the workflow input because of this mapping  `Input("person_to_be_greated", "${workflow.input.name}")` in the workflow definition. 
+> The worker will get the actual value of the workflow input because of this mapping  `Input("person_to_be_greeted", "${workflow.input.name}")` in the workflow definition. 
 >
 >Expressions like `"${workflow.input.name}"` will be replaced by their value during execution.
 
@@ -157,12 +157,12 @@ In [Step 3](#step-3-running-the-application) you will see how to create an insta
 
 A worker is a function with a specific task to perform.
 
-In this example the worker just uses the input `person_to_be_greated` to say hello, as you can see in [examples/hello_world/src/worker.go](examples/hello_world/src/worker.go).
+In this example the worker just uses the input `person_to_be_greeted` to say hello, as you can see in [examples/hello_world/src/worker.go](examples/hello_world/src/worker.go).
 
 ```go
 func Greet(task *model.Task) (interface{}, error) {
 	return map[string]interface{}{
-		"hello": "Hello, " + fmt.Sprintf("%v", task.InputData["person_to_be_greated"]),
+		"hello": "Hello, " + fmt.Sprintf("%v", task.InputData["person_to_be_greeted"]),
 	}, nil
 }
 ```
