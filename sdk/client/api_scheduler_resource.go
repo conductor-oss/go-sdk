@@ -12,10 +12,11 @@ package client
 import (
 	"context"
 	"fmt"
-	"github.com/antihax/optional"
-	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"net/http"
 	"net/url"
+
+	"github.com/antihax/optional"
+	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
 type SchedulerResourceApiService struct {
@@ -341,7 +342,7 @@ func (a *SchedulerResourceApiService) GetSchedulesByTag(ctx context.Context, tag
 	queryParams := url.Values{}
 	queryParams.Add("tag", parameterToString(tag, ""))
 
-	resp, err := a.Get(ctx, path, nil, &result)
+	resp, err := a.Get(ctx, path, queryParams, &result)
 	if err != nil {
 		return nil, resp, err
 	}
