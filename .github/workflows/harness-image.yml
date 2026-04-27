@@ -74,9 +74,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
 
   dispatch-deploy:
-    if: |
-      github.event_name == 'release' ||
-      (github.event_name == 'workflow_dispatch' && inputs.deploy)
+    if: github.event_name == 'workflow_dispatch' && inputs.deploy
     needs: build-and-push
     runs-on: ubuntu-latest
     permissions:
