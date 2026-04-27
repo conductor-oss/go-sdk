@@ -15,7 +15,8 @@ import (
 
 // CanonicalDurationBuckets is the shared bucket set for all timing histograms
 // emitted by the SDK. It matches the set defined in
-// longrunning-wfstest/sdk-metrics-harmonization.md and is kept in sync with
+// https://github.com/orkes-io/certification-cloud-util/blob/main/sdk-metrics-harmonization.md
+// and is kept in sync with
 // the Python / Java / Ruby / Rust SDKs so cross-SDK dashboards line up.
 var CanonicalDurationBuckets = []float64{
 	0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10,

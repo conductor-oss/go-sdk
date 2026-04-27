@@ -217,7 +217,7 @@ go ProvideMetrics(settings.NewDefaultMetricsSettings())
 
 Worker SDK emits both legacy metric names (kept for backward compatibility)
 and canonical metric names that match the cross-SDK catalog in
-[`longrunning-wfstest/sdk-metrics-harmonization.md`](https://github.com/conductor-oss/longrunning-wfstest/blob/main/sdk-metrics-harmonization.md).
+[`sdk-metrics-harmonization.md`](https://github.com/orkes-io/certification-cloud-util/blob/main/sdk-metrics-harmonization.md).
 Both sets are emitted by every worker; prefer the canonical names for new
 dashboards.
 

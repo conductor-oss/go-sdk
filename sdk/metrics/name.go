@@ -13,7 +13,7 @@ type MetricName string
 
 // Legacy metric names. These are kept for backward compatibility and still
 // emitted alongside their canonical replacements. See
-// longrunning-wfstest/sdk-metrics-harmonization.md for the canonical catalog.
+// https://github.com/orkes-io/certification-cloud-util/blob/main/sdk-metrics-harmonization.md
 const (
 	EXTERNAL_PAYLOAD_USED     MetricName = "external_payload_used"
 	TASK_EXECUTE_ERROR        MetricName = "task_execute_error"
