@@ -72,7 +72,7 @@ var counterTemplates = map[MetricName]*MetricDetails{
 		[]MetricLabel{
 			ENTITY_NAME,
 			OPERATION,
-			PAYLOAD_TYPE,
+			PAYLOAD_TYPE_LEGACY,
 		},
 	),
 	WORKFLOW_START_ERROR: NewMetricDetails(
@@ -137,7 +137,7 @@ var counterTemplates = map[MetricName]*MetricDetails{
 	EXTERNAL_PAYLOAD_USED_TOTAL: NewMetricDetails(
 		EXTERNAL_PAYLOAD_USED_TOTAL,
 		EXTERNAL_PAYLOAD_USED_DOC,
-		[]MetricLabel{ENTITY_NAME, OPERATION, PAYLOAD_TYPE},
+		[]MetricLabel{ENTITY_NAME, OPERATION, PAYLOAD_TYPE, PAYLOAD_TYPE_LEGACY},
 	),
 	WORKFLOW_START_ERROR_TOTAL: NewMetricDetails(
 		WORKFLOW_START_ERROR_TOTAL,
@@ -248,7 +248,7 @@ func IncrementTaskAckFailed(taskType string) {
 // the canonical counter if it implements its own external-payload plumbing.
 func IncrementExternalPayloadUsed(entityName string, operation string, payloadType string) {
 	incrementCounter(EXTERNAL_PAYLOAD_USED, []string{entityName, operation, payloadType})
-	incrementCounter(EXTERNAL_PAYLOAD_USED_TOTAL, []string{entityName, operation, payloadType})
+	incrementCounter(EXTERNAL_PAYLOAD_USED_TOTAL, []string{entityName, operation, payloadType, payloadType})
 }
 
 func IncrementWorkflowStartError(workflowType string, err error) {

@@ -235,7 +235,7 @@ dashboards.
 | `task_execution_queue_full_total` | Counter | `taskType` | Worker's executor queue saturated. |
 | `task_paused_total` | Counter | `taskType` | Poll happened while worker was paused. |
 | `thread_uncaught_exceptions_total` | Counter | `exception` | Uncaught panic inside a worker goroutine. |
-| `external_payload_used_total` | Counter | `entityName`, `operation`, `payload_type` | External payload storage used. |
+| `external_payload_used_total` | Counter | `entityName`, `operation`, `payloadType`, `payload_type` | External payload storage used. `payloadType` is canonical; `payload_type` is deprecated (kept for backward compatibility). |
 | `workflow_start_error_total` | Counter | `workflowType`, `exception` | `StartWorkflow` failed client-side. |
 | `task_poll_time_seconds` | Histogram | `taskType`, `status` | Task poll latency (seconds). Standard buckets 1ms..10s. |
 | `task_execute_time_seconds` | Histogram | `taskType`, `status` | Task execution latency. |
