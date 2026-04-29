@@ -41,6 +41,11 @@ spec:
               name: conductor-credentials
               key: auth-secret
 
+        # === METRICS ===
+
+        - name: WORKER_CANONICAL_METRICS
+          value: "true"
+
         # === HARNESS TUNING (defaults match main.go) ===
         # Adjust these per-cluster if needed, or move to ConfigMap.
 

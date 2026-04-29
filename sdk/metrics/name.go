@@ -11,7 +11,7 @@ package metrics
 
 type MetricName string
 
-//List of metrics that are collected when metrics server is enabled
+// Legacy metric names. Emitted by the legacy MetricsCollector implementation.
 const (
 	EXTERNAL_PAYLOAD_USED     MetricName = "external_payload_used"
 	TASK_EXECUTE_ERROR        MetricName = "task_execute_error"
@@ -27,4 +27,30 @@ const (
 	THREAD_UNCAUGHT_EXCEPTION MetricName = "thread_uncaught_exceptions"
 	WORKFLOW_INPUT_SIZE       MetricName = "workflow_input_size"
 	WORKFLOW_START_ERROR      MetricName = "workflow_start_error"
+)
+
+// Canonical metric names. Emitted by the canonical MetricsCollector implementation.
+const (
+	TASK_POLL_TOTAL                  MetricName = "task_poll_total"
+	TASK_POLL_ERROR_TOTAL            MetricName = "task_poll_error_total"
+	TASK_EXECUTION_STARTED_TOTAL     MetricName = "task_execution_started_total"
+	TASK_EXECUTE_ERROR_TOTAL         MetricName = "task_execute_error_total"
+	TASK_UPDATE_ERROR_TOTAL          MetricName = "task_update_error_total"
+	TASK_ACK_ERROR_TOTAL             MetricName = "task_ack_error_total"
+	TASK_ACK_FAILED_TOTAL            MetricName = "task_ack_failed_total"
+	TASK_EXECUTION_QUEUE_FULL_TOTAL  MetricName = "task_execution_queue_full_total"
+	TASK_PAUSED_TOTAL                MetricName = "task_paused_total"
+	THREAD_UNCAUGHT_EXCEPTIONS_TOTAL MetricName = "thread_uncaught_exceptions_total"
+	EXTERNAL_PAYLOAD_USED_TOTAL      MetricName = "external_payload_used_total"
+	WORKFLOW_START_ERROR_TOTAL       MetricName = "workflow_start_error_total"
+
+	TASK_POLL_TIME_SECONDS          MetricName = "task_poll_time_seconds"
+	TASK_EXECUTE_TIME_SECONDS       MetricName = "task_execute_time_seconds"
+	TASK_UPDATE_TIME_SECONDS        MetricName = "task_update_time_seconds"
+	HTTP_API_CLIENT_REQUEST_SECONDS MetricName = "http_api_client_request_seconds"
+
+	TASK_RESULT_SIZE_BYTES    MetricName = "task_result_size_bytes"
+	WORKFLOW_INPUT_SIZE_BYTES MetricName = "workflow_input_size_bytes"
+
+	ACTIVE_WORKERS MetricName = "active_workers"
 )

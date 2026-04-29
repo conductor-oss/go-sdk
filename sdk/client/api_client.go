@@ -183,7 +183,7 @@ func newAPIClient(
 		DisableCompression:  false,
 	}
 	client := http.Client{
-		Transport: netTransport,
+		Transport: NewMetricsRoundTripper(netTransport),
 		Timeout:   httpSettings.Timeout,
 	}
 	return &APIClient{

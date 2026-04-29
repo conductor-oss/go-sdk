@@ -22,24 +22,26 @@ import (
 
 var collectionEnabled bool = false
 
-// ProvideMetrics start collecting metrics for the workers
-// We use prometheus to collect metrics from the workers.  When called this function starts the metrics server and publishes the worker metrics
+// InitCollector selects and registers a MetricsCollector based on env vars.
+// Call this synchronously before starting the HTTP metrics server goroutine.
+func InitCollector() {
+	collector = NewCollector()
+	collector.Register()
+	collectionEnabled = true
+}
+
+// ProvideMetrics initializes the metrics collector (if not already done) and
+// starts the HTTP metrics server. This call blocks on ListenAndServe, so it
+// should typically be launched in a goroutine.
 func ProvideMetrics(metricsSettings *settings.MetricsSettings) {
 	defer handlePanicError("provide_metrics")
 	if metricsSettings == nil {
 		metricsSettings = settings.NewDefaultMetricsSettings()
 	}
 
-	for metricName, metricDetails := range counterTemplates {
-		counterByName[metricName] = newCounter(metricDetails)
-		prometheus.MustRegister(counterByName[metricName])
+	if !collectionEnabled {
+		InitCollector()
 	}
-
-	for metricName, metricDetails := range gaugeTemplates {
-		gaugeByName[metricName] = newGauge(metricDetails)
-		prometheus.MustRegister(gaugeByName[metricName])
-	}
-	collectionEnabled = true
 
 	http.Handle(
 		metricsSettings.ApiEndpoint,
@@ -59,7 +61,7 @@ func handlePanicError(message string) {
 	if err == nil {
 		return
 	}
-	IncrementUncaughtException(message)
+	IncrementUncaughtException(err)
 	log.Warn(
 		"Uncaught panic",
 		"message", message,

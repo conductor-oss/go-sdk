@@ -12,11 +12,15 @@ package metrics
 type MetricLabel string
 
 const (
-	ENTITY_NAME      MetricLabel = "entityName"
-	EXCEPTION        MetricLabel = "exception"
-	OPERATION        MetricLabel = "operation"
-	PAYLOAD_TYPE     MetricLabel = "payload_type"
-	TASK_TYPE        MetricLabel = "taskType"
-	WORKFLOW_TYPE    MetricLabel = "workflowType"
-	WORKFLOW_VERSION MetricLabel = "version"
+	ENTITY_NAME         MetricLabel = "entityName"
+	EXCEPTION           MetricLabel = "exception"
+	METHOD              MetricLabel = "method"
+	OPERATION           MetricLabel = "operation"
+	PAYLOAD_TYPE        MetricLabel = "payloadType"
+	PAYLOAD_TYPE_LEGACY MetricLabel = "payload_type"
+	STATUS              MetricLabel = "status"
+	TASK_TYPE           MetricLabel = "taskType"
+	URI                 MetricLabel = "uri"
+	WORKFLOW_TYPE       MetricLabel = "workflowType"
+	WORKFLOW_VERSION    MetricLabel = "version"
 )

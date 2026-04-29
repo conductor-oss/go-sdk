@@ -11,6 +11,7 @@ package worker
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -337,6 +338,7 @@ func (c *TaskRunner) work4ever(taskName string, executeFunction model.ExecuteTas
 
 func (c *TaskRunner) workOnce(taskName string, executeFunction model.ExecuteTaskFunction, domain string) {
 	if c.isPaused(taskName) {
+		metrics.IncrementTaskPaused(taskName)
 		pauseOnGenericError(taskName, domain, fmt.Errorf("worker is paused"))
 		return
 	}
@@ -384,10 +386,24 @@ func (c *TaskRunner) executeAndUpdateTask(taskName string, task model.Task, exec
 	defer c.runningWorkerDone(taskName)
 	defer concurrency.HandlePanicError("execute_and_update_task " + string(task.TaskId) + ": " + string(task.Status))
 	taskResult := c.executeTask(&task, executeFunction)
+	recordTaskResultPayloadSize(taskName, taskResult)
 	err := c.updateTaskWithRetry(taskName, taskResult)
 	if err != nil {
 		log.Error("failed to update task", "taskName", taskName, "taskId", task.TaskId, "workflowId", task.WorkflowInstanceId, "error", err)
 	}
+}
+
+// recordTaskResultPayloadSize serializes the task result and emits the
+// task_result_size metric. Errors during serialization are swallowed.
+func recordTaskResultPayloadSize(taskName string, taskResult *model.TaskResult) {
+	if taskResult == nil {
+		return
+	}
+	encoded, err := json.Marshal(taskResult)
+	if err != nil {
+		return
+	}
+	metrics.RecordTaskResultPayloadSize(taskName, float64(len(encoded)))
 }
 
 func (c *TaskRunner) batchPoll(taskName string, count int, domain string) ([]model.Task, error) {
@@ -418,14 +434,9 @@ func (c *TaskRunner) batchPoll(taskName string, count int, domain string) ([]mod
 		opts,
 	)
 	spentTime := time.Since(startTime)
-	metrics.RecordTaskPollTime(
-		taskName,
-		spentTime.Seconds(),
-	)
+	metrics.RecordTaskPollTime(taskName, spentTime.Seconds(), err)
 	if err != nil {
-		metrics.IncrementTaskPollError(
-			taskName, err,
-		)
+		metrics.IncrementTaskPollError(taskName, err)
 		return nil, err
 	}
 	if response.StatusCode == 204 {
@@ -442,12 +453,11 @@ func (c *TaskRunner) executeTask(t *model.Task, executeFunction model.ExecuteTas
 		"taskId", t.TaskId,
 		"workflowId", t.WorkflowInstanceId,
 	)
+	metrics.IncrementTaskExecutionStarted(t.TaskDefName)
 	startTime := time.Now()
 	taskExecutionOutput, err := executeFunction(t)
 	spentTime := time.Since(startTime)
-	metrics.RecordTaskExecuteTime(
-		t.TaskDefName, float64(spentTime.Milliseconds()),
-	)
+	metrics.RecordTaskExecuteTime(t.TaskDefName, spentTime.Seconds(), err)
 	if err != nil {
 		metrics.IncrementTaskExecuteError(t.TaskDefName, err)
 		log.Debug(
@@ -519,8 +529,8 @@ func (c *TaskRunner) updateTaskWithRetry(taskName string, taskResult *model.Task
 func (c *TaskRunner) updateTask(taskName string, taskResult *model.TaskResult) (*http.Response, error) {
 	startTime := time.Now()
 	_, response, err := c.conductorTaskResourceClient.UpdateTask(c.getBaseContext(), taskResult)
-	spentTime := time.Since(startTime).Milliseconds()
-	metrics.RecordTaskUpdateTime(taskName, float64(spentTime))
+	spent := time.Since(startTime)
+	metrics.RecordTaskUpdateTime(taskName, spent.Seconds(), err)
 	return response, err
 }
 
@@ -567,6 +577,7 @@ func (c *TaskRunner) increaseRunningWorkers(taskName string) error {
 	c.runningWorkersByTaskNameMutex.Lock()
 	defer c.runningWorkersByTaskNameMutex.Unlock()
 	c.runningWorkersByTaskName[taskName] += 1
+	metrics.SetActiveWorkers(taskName, float64(c.runningWorkersByTaskName[taskName]))
 	c.workerWaitGroup.Add(1)
 	log.Debug("Increased running workers for task", "taskName", taskName)
 	return nil
@@ -576,6 +587,7 @@ func (c *TaskRunner) runningWorkerDone(taskName string) error {
 	c.runningWorkersByTaskNameMutex.Lock()
 	defer c.runningWorkersByTaskNameMutex.Unlock()
 	c.runningWorkersByTaskName[taskName] -= 1
+	metrics.SetActiveWorkers(taskName, float64(c.runningWorkersByTaskName[taskName]))
 	c.workerWaitGroup.Done()
 	log.Debug("Running worker done for task", "taskName", taskName)
 	return nil

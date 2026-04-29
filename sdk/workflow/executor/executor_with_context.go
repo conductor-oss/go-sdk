@@ -2,9 +2,11 @@ package executor
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -12,8 +14,30 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/client"
 	"github.com/conductor-sdk/conductor-go/sdk/event/queue"
 	"github.com/conductor-sdk/conductor-go/sdk/log"
+	"github.com/conductor-sdk/conductor-go/sdk/metrics"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
+
+// recordWorkflowInputPayloadSize serializes the workflow input and emits the
+// workflow_input_size metric. Serialization failures are swallowed.
+func recordWorkflowInputPayloadSize(req *model.StartWorkflowRequest) {
+	if req == nil {
+		return
+	}
+	size := 0
+	if req.Input != nil {
+		encoded, err := json.Marshal(req.Input)
+		if err != nil {
+			return
+		}
+		size = len(encoded)
+	}
+	version := ""
+	if req.Version != 0 {
+		version = strconv.Itoa(int(req.Version))
+	}
+	metrics.RecordWorkflowInputPayloadSize(req.Name, version, float64(size))
+}
 
 func (e *WorkflowExecutor) RegisterWorkflowWithContext(ctx context.Context, overwrite bool, workflow *model.WorkflowDef) error {
 	if err := ctx.Err(); err != nil {
@@ -40,6 +64,8 @@ func (e *WorkflowExecutor) ExecuteWorkflowWithContext(ctx context.Context, start
 
 	requestId := ""
 	version := startWorkflowRequest.Version
+
+	recordWorkflowInputPayloadSize(startWorkflowRequest)
 
 	workflowRun, _, err := e.workflowClient.ExecuteWorkflow(ctx, *startWorkflowRequest, requestId, startWorkflowRequest.Name, version, waitUntilTask)
 	if err != nil {
@@ -165,11 +191,14 @@ func (e *WorkflowExecutor) StartWorkflowWithContext(ctx context.Context, startWo
 		return "", err
 	}
 
+	recordWorkflowInputPayloadSize(startWorkflowRequest)
+
 	id, _, err := e.workflowClient.StartWorkflowWithRequest(
 		ctx,
 		*startWorkflowRequest,
 	)
 	if err != nil {
+		metrics.IncrementWorkflowStartError(startWorkflowRequest.Name, err)
 		return "", err
 	}
 	return id, nil
@@ -587,11 +616,13 @@ func (e *WorkflowExecutor) executeWorkflowWithContext(ctx context.Context, workf
 	if workflow != nil {
 		startWorkflowRequest.WorkflowDef = workflow
 	}
+	recordWorkflowInputPayloadSize(&startWorkflowRequest)
 	workflowId, response, err := e.workflowClient.StartWorkflowWithRequest(
 		ctx,
 		startWorkflowRequest,
 	)
 	if err != nil {
+		metrics.IncrementWorkflowStartError(request.Name, err)
 		log.Debug(
 			"Failed to start workflow",
 			"reason", err.Error(),

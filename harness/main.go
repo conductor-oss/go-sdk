@@ -40,9 +40,10 @@ func main() {
 
 	registerMetadata(apiClient, workflowExecutor)
 
+	metrics.InitCollector()
 	metricsPort := envIntOrDefault("HARNESS_METRICS_PORT", 9991)
 	go metrics.ProvideMetrics(settings.NewMetricsSettings("/metrics", metricsPort))
-	fmt.Printf("Prometheus metrics server started on port %d\n", metricsPort)
+	fmt.Printf("Prometheus metrics server started on port %d (collector: %s)\n", metricsPort, metrics.GetCollector().CollectorName())
 
 	workflowsPerSec := envIntOrDefault("HARNESS_WORKFLOWS_PER_SEC", 2)
 	batchSize := envIntOrDefault("HARNESS_BATCH_SIZE", 20)

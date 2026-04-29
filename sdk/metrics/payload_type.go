@@ -12,6 +12,8 @@ package metrics
 type PayloadType string
 
 const (
-	TASK_INPUT  PayloadType = "TASK_INPUT"
-	TASK_OUTPUT PayloadType = "TASK_INPUT"
+	TASK_INPUT      PayloadType = "TASK_INPUT"
+	TASK_OUTPUT     PayloadType = "TASK_OUTPUT"
+	WORKFLOW_INPUT  PayloadType = "WORKFLOW_INPUT"
+	WORKFLOW_OUTPUT PayloadType = "WORKFLOW_OUTPUT"
 )
