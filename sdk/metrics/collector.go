@@ -70,14 +70,21 @@ func GetCollector() MetricsCollector {
 	return collector
 }
 
+// envBoolTruthy returns true when the named environment variable is set to
+// one of the common truthy values ("true", "1", "yes"), case-insensitive.
+func envBoolTruthy(name string) bool {
+	v := strings.ToLower(strings.TrimSpace(os.Getenv(name)))
+	return v == "true" || v == "1" || v == "yes"
+}
+
 // NewCollector reads the WORKER_CANONICAL_METRICS / WORKER_LEGACY_METRICS
 // environment variables and returns the appropriate implementation.
 //
 // Selection logic:
-//   - WORKER_CANONICAL_METRICS=true  -> canonicalCollector
-//   - Anything else (default)        -> legacyCollector
+//   - WORKER_CANONICAL_METRICS=true/1/yes  -> canonicalCollector
+//   - Anything else (default)              -> legacyCollector
 func NewCollector() MetricsCollector {
-	if strings.EqualFold(os.Getenv("WORKER_CANONICAL_METRICS"), "true") {
+	if envBoolTruthy("WORKER_CANONICAL_METRICS") {
 		log.Info("Metrics implementation selected: canonical")
 		return &canonicalCollector{}
 	}
