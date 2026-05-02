@@ -10,6 +10,8 @@
 package rbac
 
 type UpsertUserRequest struct {
+	// Contact information for the user
+	ContactInformation map[string]interface{} `json:"contactInformation,omitempty"`
 	// Ids of the groups this user belongs to
 	Groups []string `json:"groups,omitempty"`
 	// User's full name

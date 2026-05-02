@@ -12,10 +12,13 @@ package client
 import (
 	"context"
 	"fmt"
-	"github.com/antihax/optional"
-	"github.com/conductor-sdk/conductor-go/sdk/model/rbac"
 	"net/http"
 	"net/url"
+
+	"github.com/antihax/optional"
+	"github.com/conductor-sdk/conductor-go/sdk/log"
+	"github.com/conductor-sdk/conductor-go/sdk/model/rbac"
+	"github.com/conductor-sdk/conductor-go/sdk/validation"
 )
 
 type UserResourceApiService struct {
@@ -26,15 +29,18 @@ type UserResourceApiListUsersOpts struct {
 	Apps optional.Bool
 }
 
-/*
-UserResourceApiService Get the permissions this user has over workflows and tasks
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param userId
-  - @param type_
-  - @param id
-    @return interface{}
-*/
+// CheckPermissions checks the permissions this user has over workflows and tasks
 func (a *UserResourceApiService) CheckPermissions(ctx context.Context, userId string, type_ string, id string) (map[string]interface{}, *http.Response, error) {
+	// Validate parameters
+	if err := validation.NewValidator().
+		RequiredString("userId", userId).
+		RequiredString("type", type_).
+		RequiredString("id", id).
+		Error(); err != nil {
+		log.Error("error validating parameters", "error", err)
+		return nil, nil, err
+	}
+
 	var result map[string]interface{}
 
 	path := fmt.Sprintf("/users/%s/checkPermissions", userId)
@@ -50,13 +56,16 @@ func (a *UserResourceApiService) CheckPermissions(ctx context.Context, userId st
 	return result, resp, err
 }
 
-/*
-UserResourceApiService Delete a user
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param id
-    @return Response
-*/
+// DeleteUser deletes a user
 func (a *UserResourceApiService) DeleteUser(ctx context.Context, id string) (*http.Response, error) {
+	// Validate parameters
+	if err := validation.NewValidator().
+		RequiredString("userId", id).
+		Error(); err != nil {
+		log.Error("error validating parameters", "error", err)
+		return nil, err
+	}
+
 	path := fmt.Sprintf("/users/%s", id)
 
 	resp, err := a.Delete(ctx, path, nil, nil)
@@ -66,13 +75,16 @@ func (a *UserResourceApiService) DeleteUser(ctx context.Context, id string) (*ht
 	return resp, nil
 }
 
-/*
-UserResourceApiService Get the permissions this user has over workflows and tasks
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param userId
-    @return interface{}
-*/
+// GetGrantedPermissions gets the permissions this user has over workflows and tasks
 func (a *UserResourceApiService) GetGrantedPermissions(ctx context.Context, userId string) (rbac.GrantedAccessResponse, *http.Response, error) {
+	// Validate parameters
+	if err := validation.NewValidator().
+		RequiredString("userId", userId).
+		Error(); err != nil {
+		log.Error("error validating parameters", "error", err)
+		return rbac.GrantedAccessResponse{}, nil, err
+	}
+
 	var result rbac.GrantedAccessResponse
 
 	path := fmt.Sprintf("/users/%s/permissions", userId)
@@ -84,13 +96,16 @@ func (a *UserResourceApiService) GetGrantedPermissions(ctx context.Context, user
 	return result, resp, err
 }
 
-/*
-UserResourceApiService Get a user by id
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param id
-    @return interface{}
-*/
+// GetUser gets a user by id
 func (a *UserResourceApiService) GetUser(ctx context.Context, id string) (*rbac.ConductorUser, *http.Response, error) {
+	// Validate parameters
+	if err := validation.NewValidator().
+		RequiredString("userId", id).
+		Error(); err != nil {
+		log.Error("error validating parameters", "error", err)
+		return nil, nil, err
+	}
+
 	var result rbac.ConductorUser
 
 	path := fmt.Sprintf("/users/%s", id)
@@ -102,14 +117,7 @@ func (a *UserResourceApiService) GetUser(ctx context.Context, id string) (*rbac.
 	return &result, resp, err
 }
 
-/*
-   UserResourceApiService Get all users
-   * @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-    * @param optional nil or *UserResourceApiListUsersOpts - Optional Parameters:
-        * @param "Apps" (optional.Bool) -
-   @return []ConductorUser
-*/
-
+// ListUsers lists all users
 func (a *UserResourceApiService) ListUsers(ctx context.Context, optionals *UserResourceApiListUsersOpts) ([]rbac.ConductorUser, *http.Response, error) {
 	var result []rbac.ConductorUser
 
@@ -127,14 +135,16 @@ func (a *UserResourceApiService) ListUsers(ctx context.Context, optionals *UserR
 	return result, resp, err
 }
 
-/*
-UserResourceApiService Create or update a user
-* @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-  - @param body
-  - @param id
-    @return interface{}
-*/
+// UpsertUser creates or updates a user
 func (a *UserResourceApiService) UpsertUser(ctx context.Context, body rbac.UpsertUserRequest, id string) (*rbac.ConductorUser, *http.Response, error) {
+	// Validate parameters
+	if err := validation.NewValidator().
+		RequiredString("userId", id).
+		Error(); err != nil {
+		log.Error("error validating parameters", "error", err)
+		return nil, nil, err
+	}
+
 	var result rbac.ConductorUser
 
 	path := fmt.Sprintf("/users/%s", id)
