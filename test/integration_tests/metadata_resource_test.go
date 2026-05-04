@@ -12,6 +12,7 @@ package integration_tests
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/test/testdata"
@@ -180,23 +181,30 @@ func TestRegisterTaskDefWithTags(t *testing.T) {
 
 	testdata.MetadataClient.RegisterTaskDefWithTags(context.Background(), taskDef, tags)
 
-	fetchedTags, _, err := testdata.TagsClient.GetTaskTags(context.Background(), TaskName)
-
-	require.NoError(t, err)
-	require.Equal(t, 1, len(tags))
-	assert.Equal(t, tag0.Key, fetchedTags[0].Key)
-	assert.Equal(t, tag0.Value, fetchedTags[0].Value)
+	require.Eventually(t, func() bool {
+		fetchedTags, _, err := testdata.TagsClient.GetTaskTags(context.Background(), TaskName)
+		if err != nil || len(fetchedTags) != 1 {
+			return false
+		}
+		assert.Equal(t, tag0.Key, fetchedTags[0].Key)
+		assert.Equal(t, tag0.Value, fetchedTags[0].Value)
+		return true
+	}, 10*time.Second, 500*time.Millisecond, "tags not visible after registering task def")
 
 }
 
 func TestGetTagsForTaskDef(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 
-	tags, err := testdata.MetadataClient.GetTagsForTaskDef(context.Background(), TaskName)
-	require.NoError(t, err)
-	require.Equal(t, 1, len(tags))
-	assert.Equal(t, "key_0", tags[0].Key)
-	assert.Equal(t, "value_0", tags[0].Value)
+	require.Eventually(t, func() bool {
+		tags, err := testdata.MetadataClient.GetTagsForTaskDef(context.Background(), TaskName)
+		if err != nil || len(tags) != 1 {
+			return false
+		}
+		assert.Equal(t, "key_0", tags[0].Key)
+		assert.Equal(t, "value_0", tags[0].Value)
+		return true
+	}, 10*time.Second, 500*time.Millisecond, "tags not visible for task def")
 }
 
 func TestUpdateTaskDefWithTags(t *testing.T) {
