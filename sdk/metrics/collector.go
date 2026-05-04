@@ -127,25 +127,55 @@ func statusLabel(err error) string {
 // These preserve the existing call-site API so no import changes are needed.
 // ---------------------------------------------------------------------------
 
-func IncrementTaskPoll(taskType string)                                            { collector.IncrementTaskPoll(taskType) }
-func IncrementTaskPollError(taskType string, err error)                            { collector.IncrementTaskPollError(taskType, err) }
-func IncrementTaskExecutionStarted(taskType string)                                { collector.IncrementTaskExecutionStarted(taskType) }
-func IncrementTaskExecuteError(taskType string, err error)                         { collector.IncrementTaskExecuteError(taskType, err) }
-func IncrementTaskUpdateError(taskType string, err error)                          { collector.IncrementTaskUpdateError(taskType, err) }
-func IncrementTaskAckError(taskType string, err error)                             { collector.IncrementTaskAckError(taskType, err) }
-func IncrementTaskAckFailed(taskType string)                                       { collector.IncrementTaskAckFailed(taskType) }
-func IncrementTaskExecutionQueueFull(taskType string)                              { collector.IncrementTaskExecutionQueueFull(taskType) }
-func IncrementTaskPaused(taskType string)                                          { collector.IncrementTaskPaused(taskType) }
-func IncrementUncaughtException(recovered interface{})                             { collector.IncrementUncaughtException(recovered) }
-func IncrementExternalPayloadUsed(entityName, operation, payloadType string)       { collector.IncrementExternalPayloadUsed(entityName, operation, payloadType) }
-func IncrementWorkflowStartError(workflowType string, err error)                  { collector.IncrementWorkflowStartError(workflowType, err) }
-func RecordTaskPollTime(taskType string, seconds float64, err error)               { collector.RecordTaskPollTime(taskType, seconds, err) }
-func RecordTaskExecuteTime(taskType string, seconds float64, err error)            { collector.RecordTaskExecuteTime(taskType, seconds, err) }
-func RecordTaskUpdateTime(taskType string, seconds float64, err error)             { collector.RecordTaskUpdateTime(taskType, seconds, err) }
-func RecordHTTPRequestTime(method, uri, status string, seconds float64)            { collector.RecordHTTPRequestTime(method, uri, status, seconds) }
-func RecordTaskResultPayloadSize(taskType string, bytes float64)                   { collector.RecordTaskResultPayloadSize(taskType, bytes) }
-func RecordWorkflowInputPayloadSize(workflowType, version string, bytes float64)  { collector.RecordWorkflowInputPayloadSize(workflowType, version, bytes) }
-func SetActiveWorkers(taskType string, count float64)                              { collector.SetActiveWorkers(taskType, count) }
+func IncrementTaskPoll(taskType string) { collector.IncrementTaskPoll(taskType) }
+func IncrementTaskPollError(taskType string, err error) {
+	collector.IncrementTaskPollError(taskType, err)
+}
+func IncrementTaskExecutionStarted(taskType string) {
+	collector.IncrementTaskExecutionStarted(taskType)
+}
+func IncrementTaskExecuteError(taskType string, err error) {
+	collector.IncrementTaskExecuteError(taskType, err)
+}
+func IncrementTaskUpdateError(taskType string, err error) {
+	collector.IncrementTaskUpdateError(taskType, err)
+}
+func IncrementTaskAckError(taskType string, err error) {
+	collector.IncrementTaskAckError(taskType, err)
+}
+func IncrementTaskAckFailed(taskType string) { collector.IncrementTaskAckFailed(taskType) }
+func IncrementTaskExecutionQueueFull(taskType string) {
+	collector.IncrementTaskExecutionQueueFull(taskType)
+}
+func IncrementTaskPaused(taskType string) { collector.IncrementTaskPaused(taskType) }
+func IncrementUncaughtException(recovered interface{}) {
+	collector.IncrementUncaughtException(recovered)
+}
+func IncrementExternalPayloadUsed(entityName, operation, payloadType string) {
+	collector.IncrementExternalPayloadUsed(entityName, operation, payloadType)
+}
+func IncrementWorkflowStartError(workflowType string, err error) {
+	collector.IncrementWorkflowStartError(workflowType, err)
+}
+func RecordTaskPollTime(taskType string, seconds float64, err error) {
+	collector.RecordTaskPollTime(taskType, seconds, err)
+}
+func RecordTaskExecuteTime(taskType string, seconds float64, err error) {
+	collector.RecordTaskExecuteTime(taskType, seconds, err)
+}
+func RecordTaskUpdateTime(taskType string, seconds float64, err error) {
+	collector.RecordTaskUpdateTime(taskType, seconds, err)
+}
+func RecordHTTPRequestTime(method, uri, status string, seconds float64) {
+	collector.RecordHTTPRequestTime(method, uri, status, seconds)
+}
+func RecordTaskResultPayloadSize(taskType string, bytes float64) {
+	collector.RecordTaskResultPayloadSize(taskType, bytes)
+}
+func RecordWorkflowInputPayloadSize(workflowType, version string, bytes float64) {
+	collector.RecordWorkflowInputPayloadSize(workflowType, version, bytes)
+}
+func SetActiveWorkers(taskType string, count float64) { collector.SetActiveWorkers(taskType, count) }
 
 // ---------------------------------------------------------------------------
 // noopCollector — all methods are no-ops. Used as the default before
@@ -154,24 +184,24 @@ func SetActiveWorkers(taskType string, count float64)                           
 
 type noopCollector struct{}
 
-func (n *noopCollector) Register()                                                          {}
-func (n *noopCollector) CollectorName() string                                              { return "noop" }
-func (n *noopCollector) IncrementTaskPoll(string)                                           {}
-func (n *noopCollector) IncrementTaskPollError(string, error)                               {}
-func (n *noopCollector) IncrementTaskExecutionStarted(string)                               {}
-func (n *noopCollector) IncrementTaskExecuteError(string, error)                            {}
-func (n *noopCollector) IncrementTaskUpdateError(string, error)                             {}
-func (n *noopCollector) IncrementTaskAckError(string, error)                                {}
-func (n *noopCollector) IncrementTaskAckFailed(string)                                      {}
-func (n *noopCollector) IncrementTaskExecutionQueueFull(string)                             {}
-func (n *noopCollector) IncrementTaskPaused(string)                                         {}
-func (n *noopCollector) IncrementUncaughtException(interface{})                             {}
-func (n *noopCollector) IncrementExternalPayloadUsed(string, string, string)                {}
-func (n *noopCollector) IncrementWorkflowStartError(string, error)                          {}
-func (n *noopCollector) RecordTaskPollTime(string, float64, error)                          {}
-func (n *noopCollector) RecordTaskExecuteTime(string, float64, error)                       {}
-func (n *noopCollector) RecordTaskUpdateTime(string, float64, error)                        {}
-func (n *noopCollector) RecordHTTPRequestTime(string, string, string, float64)              {}
-func (n *noopCollector) RecordTaskResultPayloadSize(string, float64)                        {}
-func (n *noopCollector) RecordWorkflowInputPayloadSize(string, string, float64)             {}
-func (n *noopCollector) SetActiveWorkers(string, float64)                                   {}
+func (n *noopCollector) Register()                                              {}
+func (n *noopCollector) CollectorName() string                                  { return "noop" }
+func (n *noopCollector) IncrementTaskPoll(string)                               {}
+func (n *noopCollector) IncrementTaskPollError(string, error)                   {}
+func (n *noopCollector) IncrementTaskExecutionStarted(string)                   {}
+func (n *noopCollector) IncrementTaskExecuteError(string, error)                {}
+func (n *noopCollector) IncrementTaskUpdateError(string, error)                 {}
+func (n *noopCollector) IncrementTaskAckError(string, error)                    {}
+func (n *noopCollector) IncrementTaskAckFailed(string)                          {}
+func (n *noopCollector) IncrementTaskExecutionQueueFull(string)                 {}
+func (n *noopCollector) IncrementTaskPaused(string)                             {}
+func (n *noopCollector) IncrementUncaughtException(interface{})                 {}
+func (n *noopCollector) IncrementExternalPayloadUsed(string, string, string)    {}
+func (n *noopCollector) IncrementWorkflowStartError(string, error)              {}
+func (n *noopCollector) RecordTaskPollTime(string, float64, error)              {}
+func (n *noopCollector) RecordTaskExecuteTime(string, float64, error)           {}
+func (n *noopCollector) RecordTaskUpdateTime(string, float64, error)            {}
+func (n *noopCollector) RecordHTTPRequestTime(string, string, string, float64)  {}
+func (n *noopCollector) RecordTaskResultPayloadSize(string, float64)            {}
+func (n *noopCollector) RecordWorkflowInputPayloadSize(string, string, float64) {}
+func (n *noopCollector) SetActiveWorkers(string, float64)                       {}

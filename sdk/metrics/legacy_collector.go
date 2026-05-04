@@ -155,8 +155,8 @@ func (l *legacyCollector) RecordWorkflowInputPayloadSize(workflowType, version s
 
 // --- Noop stubs for canonical-only methods ---
 
-func (l *legacyCollector) IncrementTaskExecutionStarted(string)                {}
-func (l *legacyCollector) IncrementTaskAckError(string, error)                 {}
-func (l *legacyCollector) IncrementTaskAckFailed(string)                       {}
+func (l *legacyCollector) IncrementTaskExecutionStarted(string)                  {}
+func (l *legacyCollector) IncrementTaskAckError(string, error)                   {}
+func (l *legacyCollector) IncrementTaskAckFailed(string)                         {}
 func (l *legacyCollector) RecordHTTPRequestTime(string, string, string, float64) {}
-func (l *legacyCollector) SetActiveWorkers(string, float64)                    {}
+func (l *legacyCollector) SetActiveWorkers(string, float64)                      {}
