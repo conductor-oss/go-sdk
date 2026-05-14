@@ -17,6 +17,7 @@ import (
 
 	"github.com/antihax/optional"
 	"github.com/conductor-sdk/conductor-go/sdk/log"
+	"github.com/conductor-sdk/conductor-go/sdk/metrics"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/sdk/validation"
 )
@@ -83,6 +84,7 @@ func (s *SchemaResourceApiService) DeleteSchema(ctx context.Context, name string
 		return nil, err
 	}
 
+	ctx = metrics.WithPathTemplate(ctx, "/schema/{name}")
 	path := fmt.Sprintf("/schema/%s", name)
 	resp, err := s.Delete(ctx, path, nil, nil)
 	if err != nil {
@@ -100,6 +102,7 @@ func (s *SchemaResourceApiService) GetSchema(ctx context.Context, name string) (
 	}
 
 	var result model.SchemaDefinition
+	ctx = metrics.WithPathTemplate(ctx, "/schema/{name}")
 	path := fmt.Sprintf("/schema/%s", name)
 	resp, err := s.Get(ctx, path, nil, &result)
 	if err != nil {
@@ -116,6 +119,7 @@ func (s *SchemaResourceApiService) DeleteSchemaVersion(ctx context.Context, name
 		return nil, err
 	}
 
+	ctx = metrics.WithPathTemplate(ctx, "/schema/{name}/{version}")
 	path := fmt.Sprintf("/schema/%s/%d", name, version)
 	resp, err := s.Delete(ctx, path, nil, nil)
 	if err != nil {
@@ -133,6 +137,7 @@ func (s *SchemaResourceApiService) GetSchemaVersion(ctx context.Context, name st
 	}
 
 	var result model.SchemaDefinition
+	ctx = metrics.WithPathTemplate(ctx, "/schema/{name}/{version}")
 	path := fmt.Sprintf("/schema/%s/%d", name, version)
 	resp, err := s.Get(ctx, path, nil, &result)
 	if err != nil {

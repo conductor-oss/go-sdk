@@ -11,6 +11,7 @@ package client
 
 import (
 	"context"
+	"github.com/conductor-sdk/conductor-go/sdk/metrics"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"net/http"
 
@@ -28,6 +29,7 @@ EnvironmentResourceApiService Create or update an environment variable (requires
   - @param key
 */
 func (a *EnvironmentResourceApiService) CreateOrUpdateEnvVariable(ctx context.Context, body string, key string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/environment/{key}")
 	path := fmt.Sprintf("/environment/%s", key)
 
 	resp, err := a.PutWithContentType(ctx, path, body, "text/plain", nil)
@@ -45,6 +47,7 @@ EnvironmentResourceApiService Delete an environment variable (requires metadata 
 */
 func (a *EnvironmentResourceApiService) DeleteEnvVariable(ctx context.Context, key string) (string, *http.Response, error) {
 	var result string
+	ctx = metrics.WithPathTemplate(ctx, "/environment/{key}")
 	path := fmt.Sprintf("/environment/%s", key)
 
 	resp, err := a.Delete(ctx, path, nil, &result)
@@ -63,6 +66,7 @@ EnvironmentResourceApiService Delete a tag for environment variable name
   - @param name
 */
 func (a *EnvironmentResourceApiService) DeleteTagForEnvVar(ctx context.Context, body []model.Tag, name string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/environment/{name}/tags")
 	path := fmt.Sprintf("/environment/%s/tags", name)
 	resp, err := a.DeleteWithBody(ctx, path, body, nil)
 	return resp, err
@@ -76,6 +80,7 @@ EnvironmentResourceApiService Get the environment value by key
 */
 func (a *EnvironmentResourceApiService) Get(ctx context.Context, key string) (string, *http.Response, error) {
 	var result string
+	ctx = metrics.WithPathTemplate(ctx, "/environment/{key}")
 	path := fmt.Sprintf("/environment/%s", key)
 
 	resp, err := a.APIClient.Get(ctx, path, nil, &result)
@@ -109,6 +114,7 @@ EnvironmentResourceApiService Get tags by environment variable name
 */
 func (a *EnvironmentResourceApiService) GetTagsForEnvVar(ctx context.Context, name string) ([]model.Tag, *http.Response, error) {
 	var result []model.Tag
+	ctx = metrics.WithPathTemplate(ctx, "/environment/{name}/tags")
 	path := fmt.Sprintf("/environment/%s/tags", name)
 	resp, err := a.APIClient.Get(ctx, path, nil, &result)
 
@@ -126,6 +132,7 @@ EnvironmentResourceApiService Put a tag to environment variable name
   - @param name
 */
 func (a *EnvironmentResourceApiService) PutTagForEnvVar(ctx context.Context, body []model.Tag, name string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/environment/{name}/tags")
 	path := fmt.Sprintf("/environment/%s/tags", name)
 	resp, err := a.Put(ctx, path, body, nil)
 	if err != nil {

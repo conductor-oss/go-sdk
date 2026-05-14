@@ -12,6 +12,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"github.com/conductor-sdk/conductor-go/sdk/metrics"
 	"github.com/conductor-sdk/conductor-go/sdk/model/rbac"
 	"net/http"
 )
@@ -29,6 +30,7 @@ GroupResourceApiService Add user to group
 */
 func (a *GroupResourceApiService) AddUserToGroup(ctx context.Context, groupId string, userId string) (interface{}, *http.Response, error) {
 	var result interface{}
+	ctx = metrics.WithPathTemplate(ctx, "/groups/{groupId}/users/{userId}")
 	path := fmt.Sprintf("/groups/%s/users/%s", groupId, userId)
 	resp, err := a.Post(ctx, path, nil, &result)
 
@@ -46,6 +48,7 @@ GroupResourceApiService Add users to group
   - @param groupId
 */
 func (a *GroupResourceApiService) AddUsersToGroup(ctx context.Context, body []string, groupId string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/groups/{groupId}/users")
 	path := fmt.Sprintf("/groups/%s/users", groupId)
 	resp, err := a.Post(ctx, path, body, nil)
 	if err != nil {
@@ -62,6 +65,7 @@ GroupResourceApiService Delete a group
     @return Response
 */
 func (a *GroupResourceApiService) DeleteGroup(ctx context.Context, id string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/groups/{id}")
 	path := fmt.Sprintf("/groups/%s", id)
 	resp, err := a.Delete(ctx, path, nil, nil)
 	if err != nil {
@@ -78,6 +82,7 @@ GroupResourceApiService Get the permissions this group has over workflows and ta
 */
 func (a *GroupResourceApiService) GetGrantedPermissions1(ctx context.Context, groupId string) (rbac.GrantedAccessResponse, *http.Response, error) {
 	var result rbac.GrantedAccessResponse
+	ctx = metrics.WithPathTemplate(ctx, "/groups/{groupId}/permissions")
 	path := fmt.Sprintf("/groups/%s/permissions", groupId)
 	resp, err := a.Get(ctx, path, nil, &result)
 
@@ -96,6 +101,7 @@ GroupResourceApiService Get a group by id
 */
 func (a *GroupResourceApiService) GetGroup(ctx context.Context, id string) (interface{}, *http.Response, error) {
 	var result interface{}
+	ctx = metrics.WithPathTemplate(ctx, "/groups/{id}")
 	path := fmt.Sprintf("/groups/%s", id)
 	resp, err := a.Get(ctx, path, nil, &result)
 
@@ -114,6 +120,7 @@ GroupResourceApiService Get all users in group
 */
 func (a *GroupResourceApiService) GetUsersInGroup(ctx context.Context, id string) (interface{}, *http.Response, error) {
 	var result interface{}
+	ctx = metrics.WithPathTemplate(ctx, "/groups/{id}/users")
 	path := fmt.Sprintf("/groups/%s/users", id)
 	resp, err := a.Get(ctx, path, nil, &result)
 
@@ -149,6 +156,7 @@ GroupResourceApiService Remove user from group
 */
 func (a *GroupResourceApiService) RemoveUserFromGroup(ctx context.Context, groupId string, userId string) (interface{}, *http.Response, error) {
 	var result interface{}
+	ctx = metrics.WithPathTemplate(ctx, "/groups/{groupId}/users/{userId}")
 	path := fmt.Sprintf("/groups/%s/users/%s", groupId, userId)
 	resp, err := a.Delete(ctx, path, nil, &result)
 
@@ -167,6 +175,7 @@ GroupResourceApiService Remove users from group
   - @param groupId
 */
 func (a *GroupResourceApiService) RemoveUsersFromGroup(ctx context.Context, body []string, groupId string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/groups/{groupId}/users")
 	path := fmt.Sprintf("/groups/%s/users", groupId)
 
 	resp, err := a.DeleteWithBody(ctx, path, body, nil)
@@ -186,6 +195,7 @@ GroupResourceApiService Create or update a group
 */
 func (a *GroupResourceApiService) UpsertGroup(ctx context.Context, body rbac.UpsertGroupRequest, id string) (interface{}, *http.Response, error) {
 	var result interface{}
+	ctx = metrics.WithPathTemplate(ctx, "/groups/{id}")
 	path := fmt.Sprintf("/groups/%s", id)
 
 	resp, err := a.Put(ctx, path, body, &result)

@@ -505,3 +505,126 @@ func TestNewMetricDetails_NoLabels(t *testing.T) {
 	assert.Equal(t, "thread_uncaught_exceptions", d.Name)
 	assert.Nil(t, d.Labels)
 }
+
+// ---------------------------------------------------------------------------
+// Prometheus output tests — verify template URIs in scraped metrics
+// ---------------------------------------------------------------------------
+
+func TestPrometheusOutput_HttpMetric_TemplateURI(t *testing.T) {
+	resetState(t)
+	c := &canonicalCollector{recordPayloadSize: true, recordHTTPRequests: true}
+	c.Register()
+	collectionEnabled = true
+	collector = c
+
+	RecordHTTPRequestTime("GET", "/workflow/{workflowId}", "200", 0.042)
+
+	families, err := prometheus.DefaultGatherer.Gather()
+	require.NoError(t, err)
+
+	found := false
+	for _, fam := range families {
+		if fam.GetName() != "http_api_client_request_seconds" {
+			continue
+		}
+		for _, m := range fam.GetMetric() {
+			for _, lp := range m.GetLabel() {
+				if lp.GetName() == "uri" && lp.GetValue() == "/workflow/{workflowId}" {
+					found = true
+				}
+			}
+		}
+	}
+	assert.True(t, found, "expected uri=/workflow/{workflowId} in Prometheus output")
+}
+
+func TestPrometheusOutput_HttpMetric_BoundedCardinality(t *testing.T) {
+	resetState(t)
+	c := &canonicalCollector{recordPayloadSize: true, recordHTTPRequests: true}
+	c.Register()
+	collectionEnabled = true
+	collector = c
+
+	for i := 0; i < 100; i++ {
+		RecordHTTPRequestTime("GET", "/workflow/{workflowId}", "200", 0.01)
+	}
+
+	families, err := prometheus.DefaultGatherer.Gather()
+	require.NoError(t, err)
+
+	uris := map[string]bool{}
+	for _, fam := range families {
+		if fam.GetName() != "http_api_client_request_seconds" {
+			continue
+		}
+		for _, m := range fam.GetMetric() {
+			for _, lp := range m.GetLabel() {
+				if lp.GetName() == "uri" {
+					uris[lp.GetValue()] = true
+				}
+			}
+		}
+	}
+	assert.Len(t, uris, 1, "expected exactly 1 distinct uri series")
+	assert.True(t, uris["/workflow/{workflowId}"])
+}
+
+func TestPrometheusOutput_HttpMetric_MultipleEndpoints(t *testing.T) {
+	resetState(t)
+	c := &canonicalCollector{recordPayloadSize: true, recordHTTPRequests: true}
+	c.Register()
+	collectionEnabled = true
+	collector = c
+
+	RecordHTTPRequestTime("GET", "/workflow/{workflowId}", "200", 0.01)
+	RecordHTTPRequestTime("POST", "/tasks/{taskId}/log", "200", 0.02)
+	RecordHTTPRequestTime("PUT", "/tasks", "500", 0.5)
+
+	families, err := prometheus.DefaultGatherer.Gather()
+	require.NoError(t, err)
+
+	uris := map[string]bool{}
+	for _, fam := range families {
+		if fam.GetName() != "http_api_client_request_seconds" {
+			continue
+		}
+		for _, m := range fam.GetMetric() {
+			for _, lp := range m.GetLabel() {
+				if lp.GetName() == "uri" {
+					uris[lp.GetValue()] = true
+				}
+			}
+		}
+	}
+	assert.True(t, uris["/workflow/{workflowId}"])
+	assert.True(t, uris["/tasks/{taskId}/log"])
+	assert.True(t, uris["/tasks"])
+}
+
+func TestPrometheusOutput_HttpMetric_ErrorStatus(t *testing.T) {
+	resetState(t)
+	c := &canonicalCollector{recordPayloadSize: true, recordHTTPRequests: true}
+	c.Register()
+	collectionEnabled = true
+	collector = c
+
+	RecordHTTPRequestTime("GET", "/workflow/{workflowId}", "0", 0.1)
+
+	families, err := prometheus.DefaultGatherer.Gather()
+	require.NoError(t, err)
+
+	foundStatus := false
+	for _, fam := range families {
+		if fam.GetName() != "http_api_client_request_seconds" {
+			continue
+		}
+		for _, m := range fam.GetMetric() {
+			for _, lp := range m.GetLabel() {
+				if lp.GetName() == "status" && lp.GetValue() == "0" {
+					foundStatus = true
+				}
+			}
+		}
+	}
+	assert.True(t, foundStatus, "expected status=0 for transport errors")
+}

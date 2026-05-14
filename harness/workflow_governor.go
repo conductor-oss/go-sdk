@@ -13,17 +13,20 @@ type WorkflowGovernor struct {
 	workflowExecutor   *executor.WorkflowExecutor
 	workflowName       string
 	workflowsPerSecond int
+	idSink             func(string)
 }
 
 func NewWorkflowGovernor(
 	workflowExecutor *executor.WorkflowExecutor,
 	workflowName string,
 	workflowsPerSecond int,
+	idSink func(string),
 ) *WorkflowGovernor {
 	return &WorkflowGovernor{
 		workflowExecutor:   workflowExecutor,
 		workflowName:       workflowName,
 		workflowsPerSecond: workflowsPerSecond,
+		idSink:             idSink,
 	}
 }
 
@@ -47,7 +50,7 @@ func (g *WorkflowGovernor) Run(ctx context.Context) {
 
 func (g *WorkflowGovernor) startBatch() {
 	for i := 0; i < g.workflowsPerSecond; i++ {
-		_, err := g.workflowExecutor.StartWorkflow(
+		id, err := g.workflowExecutor.StartWorkflow(
 			&model.StartWorkflowRequest{
 				Name:    g.workflowName,
 				Version: 1,
@@ -56,6 +59,9 @@ func (g *WorkflowGovernor) startBatch() {
 		if err != nil {
 			fmt.Printf("Governor: error starting workflows: %v\n", err)
 			return
+		}
+		if g.idSink != nil {
+			g.idSink(id)
 		}
 	}
 	fmt.Printf("Governor: started %d workflow(s)\n", g.workflowsPerSecond)

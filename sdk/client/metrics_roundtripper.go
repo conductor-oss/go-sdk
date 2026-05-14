@@ -43,8 +43,8 @@ func (m *metricsRoundTripper) RoundTrip(req *http.Request) (*http.Response, erro
 	elapsed := time.Since(start).Seconds()
 
 	method := req.Method
-	uri := ""
-	if req.URL != nil {
+	uri := metrics.PathTemplateFromContext(req.Context())
+	if uri == "" && req.URL != nil {
 		uri = req.URL.Path
 	}
 

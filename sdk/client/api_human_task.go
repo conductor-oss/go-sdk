@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	"github.com/antihax/optional"
+	"github.com/conductor-sdk/conductor-go/sdk/metrics"
 	"github.com/conductor-sdk/conductor-go/sdk/model/human"
 )
 
@@ -44,6 +45,7 @@ func (a *HumanTaskApiService) AssignAndClaim(ctx context.Context, taskId string,
 	var result human.HumanTaskEntry
 
 	// Build the path
+	ctx = metrics.WithPathTemplate(ctx, "/human/tasks/{taskId}/externalUser/{userId}")
 	path := fmt.Sprintf("/human/tasks/%s/externalUser/%s", taskId, userId)
 
 	// Build query parameters if options are provided
@@ -112,6 +114,7 @@ type HumanTaskApiClaimTaskOpts struct {
 func (a *HumanTaskApiService) ClaimTask(ctx context.Context, taskId string, optionals *HumanTaskApiClaimTaskOpts) (human.HumanTaskEntry, *http.Response, error) {
 	var result human.HumanTaskEntry
 
+	ctx = metrics.WithPathTemplate(ctx, "/human/tasks/{taskId}/claim")
 	path := fmt.Sprintf("/human/tasks/%s/claim", taskId)
 
 	// Build query parameters if options are provided
@@ -157,6 +160,7 @@ HumanTaskApiService If the workflow is disconnected from tasks, this API can be 
 */
 func (a *HumanTaskApiService) DeleteTaskFromHumanTaskRecords1(ctx context.Context, taskId string) (*http.Response, error) {
 	// Build the path
+	ctx = metrics.WithPathTemplate(ctx, "/human/tasks/delete/{taskId}")
 	path := fmt.Sprintf("/human/tasks/delete/%s", taskId)
 
 	// Make the request using our Delete helper method
@@ -172,6 +176,7 @@ HumanTaskApiService Delete all versions of user form template by name
 */
 func (a *HumanTaskApiService) DeleteTemplateByName(ctx context.Context, name string) (*http.Response, error) {
 	// Build the path
+	ctx = metrics.WithPathTemplate(ctx, "/human/template/{name}")
 	path := fmt.Sprintf("/human/template/%s", name)
 
 	// Make the request using our Delete helper method
@@ -188,6 +193,7 @@ HumanTaskApiService Delete a version of form template by name
 */
 func (a *HumanTaskApiService) DeleteTemplatesByNameAndVersion(ctx context.Context, name string, version int32) (*http.Response, error) {
 	// Build the path
+	ctx = metrics.WithPathTemplate(ctx, "/human/template/{name}/{version}")
 	path := fmt.Sprintf("/human/template/%s/%d", name, version)
 
 	// Make the request using our Delete helper method
@@ -254,6 +260,7 @@ type HumanTaskApiGetTask1Opts struct {
 func (a *HumanTaskApiService) GetTask1(ctx context.Context, taskId string, optionals *HumanTaskApiGetTask1Opts) (human.HumanTaskEntry, *http.Response, error) {
 	var result human.HumanTaskEntry
 	// Build the path
+	ctx = metrics.WithPathTemplate(ctx, "/human/tasks/{taskId}")
 	path := fmt.Sprintf("/human/tasks/%s", taskId)
 
 	// Build query parameters if options are provided
@@ -310,6 +317,7 @@ HumanTaskApiService Get user form template by name and version
 func (a *HumanTaskApiService) GetTemplateByNameAndVersion(ctx context.Context, name string, version int32) (human.HumanTaskSearch, *http.Response, error) {
 	var result human.HumanTaskSearch
 
+	ctx = metrics.WithPathTemplate(ctx, "/human/template/{name}/{version}")
 	path := fmt.Sprintf("/human/template/%s/%d", name, version)
 
 	resp, err := a.Get(ctx, path, nil, &result)
@@ -329,6 +337,7 @@ HumanTaskApiService Get user form by human task id
 func (a *HumanTaskApiService) GetTemplateByTaskId(ctx context.Context, humanTaskId string) (human.HumanTaskSearch, *http.Response, error) {
 	var result human.HumanTaskSearch
 
+	ctx = metrics.WithPathTemplate(ctx, "/human/template/{humanTaskId}")
 	path := fmt.Sprintf("/human/template/%s", humanTaskId)
 
 	resp, err := a.Get(ctx, path, nil, &result)
@@ -353,6 +362,7 @@ func (a *HumanTaskApiService) ReassignTask(ctx context.Context, body []human.Hum
 		fileBytes  []byte
 	)
 
+	ctx = metrics.WithPathTemplate(ctx, "/human/tasks/{taskId}/reassign")
 	path := "/human/tasks/{taskId}/reassign"
 	path = strings.Replace(path, "{"+"taskId"+"}", fmt.Sprintf("%v", taskId), -1)
 
@@ -393,6 +403,7 @@ HumanTaskApiService Release a task without completing it
 */
 func (a *HumanTaskApiService) ReleaseTask(ctx context.Context, taskId string) (*http.Response, error) {
 
+	ctx = metrics.WithPathTemplate(ctx, "/human/tasks/{taskId}/release")
 	path := fmt.Sprintf("/human/tasks/%s/release", taskId)
 
 	resp, err := a.Post(ctx, path, nil, nil)
@@ -496,6 +507,7 @@ type HumanTaskApiSkipTaskOpts struct {
 }
 
 func (a *HumanTaskApiService) SkipTask(ctx context.Context, taskId string, optionals *HumanTaskApiSkipTaskOpts) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/human/tasks/{taskId}/skip")
 	path := fmt.Sprintf("/human/tasks/%s/skip", taskId)
 	queryParams := url.Values{}
 	if optionals != nil && optionals.Reason.IsSet() {
@@ -523,6 +535,7 @@ type HumanTaskApiUpdateTaskOutputOpts struct {
 }
 
 func (a *HumanTaskApiService) UpdateTaskOutput(ctx context.Context, body map[string]interface{}, taskId string, optionals *HumanTaskApiUpdateTaskOutputOpts) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/human/tasks/{taskId}/update")
 	path := fmt.Sprintf("/human/tasks/%s/update", taskId)
 
 	queryParams := url.Values{}

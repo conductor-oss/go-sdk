@@ -15,6 +15,7 @@ import (
 	"net/http"
 
 	"github.com/conductor-sdk/conductor-go/sdk/log"
+	"github.com/conductor-sdk/conductor-go/sdk/metrics"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/sdk/model/rbac"
 	"github.com/conductor-sdk/conductor-go/sdk/validation"
@@ -36,6 +37,7 @@ func (a *ApplicationResourceApiService) AddRoleToApplicationUser(ctx context.Con
 		return nil, err
 	}
 
+	ctx = metrics.WithPathTemplate(ctx, "/applications/{applicationId}/roles/{role}")
 	path := fmt.Sprintf("/applications/%s/roles/%s", applicationId, role)
 	resp, err := a.Post(ctx, path, nil, nil)
 	if err != nil {
@@ -53,6 +55,7 @@ func (a *ApplicationResourceApiService) CreateAccessKey(ctx context.Context, id 
 	}
 
 	var result rbac.CreateAccessKeyResponse
+	ctx = metrics.WithPathTemplate(ctx, "/applications/{id}/accessKeys")
 	path := fmt.Sprintf("/applications/%s/accessKeys", id)
 	resp, err := a.Post(ctx, path, nil, &result)
 	if err != nil {
@@ -85,6 +88,7 @@ func (a *ApplicationResourceApiService) DeleteAccessKey(ctx context.Context, app
 		return nil, err
 	}
 
+	ctx = metrics.WithPathTemplate(ctx, "/applications/{applicationId}/accessKeys/{keyId}")
 	path := fmt.Sprintf("/applications/%s/accessKeys/%s", applicationId, keyId)
 	resp, err := a.Delete(ctx, path, nil, nil)
 	if err != nil {
@@ -103,6 +107,7 @@ func (a *ApplicationResourceApiService) DeleteApplication(ctx context.Context, i
 	}
 
 	var result rbac.DeleteApplicationResponse
+	ctx = metrics.WithPathTemplate(ctx, "/applications/{id}")
 	path := fmt.Sprintf("/applications/%s", id)
 	resp, err := a.Delete(ctx, path, nil, &result)
 	if err != nil {
@@ -122,6 +127,7 @@ func (a *ApplicationResourceApiService) DeleteTagForApplication(ctx context.Cont
 		return nil, err
 	}
 
+	ctx = metrics.WithPathTemplate(ctx, "/applications/{id}/tags")
 	path := fmt.Sprintf("/applications/%s/tags", id)
 	resp, err := a.DeleteWithBody(ctx, path, body, nil)
 	if err != nil {
@@ -139,6 +145,7 @@ func (a *ApplicationResourceApiService) GetAccessKeys(ctx context.Context, id st
 	}
 
 	var result []rbac.AccessKeyResponse
+	ctx = metrics.WithPathTemplate(ctx, "/applications/{id}/accessKeys")
 	path := fmt.Sprintf("/applications/%s/accessKeys", id)
 	resp, err := a.Get(ctx, path, nil, &result)
 	if err != nil {
@@ -156,6 +163,7 @@ func (a *ApplicationResourceApiService) GetAppByAccessKeyId(ctx context.Context,
 	}
 
 	var result rbac.ConductorApplication
+	ctx = metrics.WithPathTemplate(ctx, "/applications/key/{accessKeyId}")
 	path := fmt.Sprintf("/applications/key/%s", accessKeyId)
 	resp, err := a.Get(ctx, path, nil, &result)
 	if err != nil {
@@ -173,6 +181,7 @@ func (a *ApplicationResourceApiService) GetApplication(ctx context.Context, id s
 	}
 
 	var result rbac.ConductorApplication
+	ctx = metrics.WithPathTemplate(ctx, "/applications/{id}")
 	path := fmt.Sprintf("/applications/%s", id)
 	resp, err := a.Get(ctx, path, nil, &result)
 	if err != nil {
@@ -191,6 +200,7 @@ func (a *ApplicationResourceApiService) GetTagsForApplication(ctx context.Contex
 	}
 
 	var result []model.Tag
+	ctx = metrics.WithPathTemplate(ctx, "/applications/{id}/tags")
 	path := fmt.Sprintf("/applications/%s/tags", id)
 	resp, err := a.Get(ctx, path, nil, &result)
 	if err != nil {
@@ -220,6 +230,7 @@ func (a *ApplicationResourceApiService) PutTagForApplication(ctx context.Context
 		return nil, err
 	}
 
+	ctx = metrics.WithPathTemplate(ctx, "/applications/{id}/tags")
 	path := fmt.Sprintf("/applications/%s/tags", id)
 	resp, err := a.Put(ctx, path, body, nil)
 	if err != nil {
@@ -239,6 +250,7 @@ func (a *ApplicationResourceApiService) RemoveRoleFromApplicationUser(ctx contex
 		return nil, err
 	}
 
+	ctx = metrics.WithPathTemplate(ctx, "/applications/{applicationId}/roles/{role}")
 	path := fmt.Sprintf("/applications/%s/roles/%s", applicationId, role)
 	resp, err := a.Delete(ctx, path, nil, nil)
 	if err != nil {
@@ -259,6 +271,7 @@ func (a *ApplicationResourceApiService) ToggleAccessKeyStatus(ctx context.Contex
 	}
 
 	var result rbac.AccessKeyResponse
+	ctx = metrics.WithPathTemplate(ctx, "/applications/{applicationId}/accessKeys/{keyId}/status")
 	path := fmt.Sprintf("/applications/%s/accessKeys/%s/status", applicationId, keyId)
 	resp, err := a.Post(ctx, path, nil, &result)
 	if err != nil {
@@ -276,6 +289,7 @@ func (a *ApplicationResourceApiService) UpdateApplication(ctx context.Context, b
 	}
 
 	var result rbac.ConductorApplication
+	ctx = metrics.WithPathTemplate(ctx, "/applications/{id}")
 	path := fmt.Sprintf("/applications/%s", id)
 	resp, err := a.Put(ctx, path, body, &result)
 

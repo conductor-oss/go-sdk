@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/conductor-sdk/conductor-go/sdk/metrics"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/sdk/model/gateway"
 )
@@ -35,6 +36,7 @@ func (a *ApiGatewayResourceApiService) CreateService(ctx context.Context, servic
 // GetService retrieves an API Gateway service by ID
 func (a *ApiGatewayResourceApiService) GetService(ctx context.Context, serviceId string) (gateway.ApiGatewayService, *http.Response, error) {
 	var result gateway.ApiGatewayService
+	ctx = metrics.WithPathTemplate(ctx, "/gateway/config/services/{serviceId}")
 	path := fmt.Sprintf("/gateway/config/services/%s", serviceId)
 	resp, err := a.Get(ctx, path, nil, &result)
 	return result, resp, err
@@ -50,12 +52,14 @@ func (a *ApiGatewayResourceApiService) GetAllServices(ctx context.Context) ([]ga
 
 // UpdateService updates an existing API Gateway service
 func (a *ApiGatewayResourceApiService) UpdateService(ctx context.Context, serviceId string, service gateway.ApiGatewayService) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/gateway/config/services/{serviceId}")
 	path := fmt.Sprintf("/gateway/config/services/%s", serviceId)
 	return a.Put(ctx, path, service, nil)
 }
 
 // DeleteService deletes an API Gateway service by ID
 func (a *ApiGatewayResourceApiService) DeleteService(ctx context.Context, serviceId string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/gateway/config/services/{serviceId}")
 	path := fmt.Sprintf("/gateway/config/services/%s", serviceId)
 	return a.Delete(ctx, path, nil, nil)
 }
@@ -63,6 +67,7 @@ func (a *ApiGatewayResourceApiService) DeleteService(ctx context.Context, servic
 // GetTagsForService retrieves tags for a service
 func (a *ApiGatewayResourceApiService) GetTagsForService(ctx context.Context, serviceId string) ([]model.Tag, *http.Response, error) {
 	var result []model.Tag
+	ctx = metrics.WithPathTemplate(ctx, "/gateway/config/services/{serviceId}/tags")
 	path := fmt.Sprintf("/gateway/config/services/%s/tags", serviceId)
 	resp, err := a.Get(ctx, path, nil, &result)
 	return result, resp, err
@@ -70,6 +75,7 @@ func (a *ApiGatewayResourceApiService) GetTagsForService(ctx context.Context, se
 
 // DeleteTagsForService removes tags from a service
 func (a *ApiGatewayResourceApiService) DeleteTagsForService(ctx context.Context, serviceId string, tags []model.Tag) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/gateway/config/services/{serviceId}/tags")
 	path := fmt.Sprintf("/gateway/config/services/%s/tags", serviceId)
 	return a.DeleteWithBody(ctx, path, tags, nil)
 }
@@ -85,6 +91,7 @@ func (a *ApiGatewayResourceApiService) CreateAuthConfig(ctx context.Context, aut
 // GetAuthConfig retrieves an authentication configuration by ID
 func (a *ApiGatewayResourceApiService) GetAuthConfig(ctx context.Context, authConfigId string) (gateway.ApiGatewayAuthConfig, *http.Response, error) {
 	var result gateway.ApiGatewayAuthConfig
+	ctx = metrics.WithPathTemplate(ctx, "/gateway/config/auth/{authConfigId}")
 	path := fmt.Sprintf("/gateway/config/auth/%s", authConfigId)
 	resp, err := a.Get(ctx, path, nil, &result)
 	return result, resp, err
@@ -100,12 +107,14 @@ func (a *ApiGatewayResourceApiService) GetAllAuthConfigs(ctx context.Context) ([
 
 // UpdateAuthConfig updates an existing authentication configuration
 func (a *ApiGatewayResourceApiService) UpdateAuthConfig(ctx context.Context, authConfigId string, authConfig gateway.ApiGatewayAuthConfig) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/gateway/config/auth/{authConfigId}")
 	path := fmt.Sprintf("/gateway/config/auth/%s", authConfigId)
 	return a.Put(ctx, path, authConfig, nil)
 }
 
 // DeleteAuthConfig deletes an authentication configuration by ID
 func (a *ApiGatewayResourceApiService) DeleteAuthConfig(ctx context.Context, authConfigId string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/gateway/config/auth/{authConfigId}")
 	path := fmt.Sprintf("/gateway/config/auth/%s", authConfigId)
 	return a.Delete(ctx, path, nil, nil)
 }
@@ -114,6 +123,7 @@ func (a *ApiGatewayResourceApiService) DeleteAuthConfig(ctx context.Context, aut
 
 // CreateRoute creates a new route for a service
 func (a *ApiGatewayResourceApiService) CreateRoute(ctx context.Context, serviceId string, route gateway.ApiGatewayRoute) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/gateway/config/services/{serviceId}/routes")
 	path := fmt.Sprintf("/gateway/config/services/%s/routes", serviceId)
 	return a.Post(ctx, path, route, nil)
 }
@@ -121,6 +131,7 @@ func (a *ApiGatewayResourceApiService) CreateRoute(ctx context.Context, serviceI
 // GetRoutes retrieves all routes for a service
 func (a *ApiGatewayResourceApiService) GetRoutes(ctx context.Context, serviceId string) ([]gateway.ApiGatewayRoute, *http.Response, error) {
 	var detailsList []gateway.ServiceRouteDetails
+	ctx = metrics.WithPathTemplate(ctx, "/gateway/config/services/{serviceId}/routes")
 	path := fmt.Sprintf("/gateway/config/services/%s/routes", serviceId)
 	resp, err := a.Get(ctx, path, nil, &detailsList)
 	if err != nil {
@@ -140,6 +151,7 @@ func (a *ApiGatewayResourceApiService) GetRoutes(ctx context.Context, serviceId 
 
 // UpdateRoute updates an existing route
 func (a *ApiGatewayResourceApiService) UpdateRoute(ctx context.Context, serviceId string, routePath string, route gateway.ApiGatewayRoute) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/gateway/config/services/{serviceId}/routes")
 	path := fmt.Sprintf("/gateway/config/services/%s/routes", serviceId)
 	queryParams := url.Values{}
 	queryParams.Add("path", routePath)
@@ -148,6 +160,7 @@ func (a *ApiGatewayResourceApiService) UpdateRoute(ctx context.Context, serviceI
 
 // DeleteRoute deletes a route from a service
 func (a *ApiGatewayResourceApiService) DeleteRoute(ctx context.Context, serviceId string, httpMethod string, routePath string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/gateway/config/services/{serviceId}/routes")
 	path := fmt.Sprintf("/gateway/config/services/%s/routes", serviceId)
 	queryParams := url.Values{}
 	queryParams.Add("method", httpMethod)
@@ -157,6 +170,7 @@ func (a *ApiGatewayResourceApiService) DeleteRoute(ctx context.Context, serviceI
 
 // PutTagsForRoute replaces tags for a specific route
 func (a *ApiGatewayResourceApiService) PutTagsForRoute(ctx context.Context, serviceId string, httpMethod string, routePath string, tags []model.Tag) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/gateway/config/services/{serviceId}/routes/tags")
 	path := fmt.Sprintf("/gateway/config/services/%s/routes/tags", serviceId)
 	queryParams := url.Values{}
 	queryParams.Add("method", httpMethod)

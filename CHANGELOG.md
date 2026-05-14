@@ -9,30 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Metrics harmonization** - canonical metric surface aligned with the cross-SDK catalog, opt-in via `WORKER_CANONICAL_METRICS=true`
-  - New `canonicalCollector` emits the harmonized cross-SDK catalog: `_total`-suffixed counters, duration histograms in seconds (`task_poll_time_seconds`, `task_execute_time_seconds`, `task_update_time_seconds`, `http_api_client_request_seconds{method,uri,status}`) with buckets `0.001…10s`, size histograms in bytes (`task_result_size_bytes`, `workflow_input_size_bytes{workflowType,version}`) with buckets `100…10_000_000`, and an `active_workers{taskType}` gauge. Labels are camelCase; `status` is `SUCCESS`/`FAILURE` for task histograms and the HTTP status code (or `"0"` on transport failure) for the HTTP histogram.
-  - `metrics.NewCollector()` factory and `metrics.InitCollector()` (decoupled from the HTTP server) select between `legacyCollector` (default) and `canonicalCollector` based on `WORKER_CANONICAL_METRICS` (truthy: `true`, `1`, `yes`, case-insensitive, whitespace-trimmed). `WORKER_LEGACY_METRICS` is reserved for a future default-flip phase and is not currently read.
-  - New `metricsRoundTripper` wraps the API client transport to record `http_api_client_request_seconds` (with `status="0"` for network errors).
-  - Worker instrumentation: `IncrementTaskExecutionStarted`, `IncrementTaskPaused`, `SetActiveWorkers` on enter/exit, `recordTaskResultPayloadSize`, `recordWorkflowInputPayloadSize`, `IncrementWorkflowStartError`.
-  - `WORKER_METRICS_PAYLOAD_SIZE` and `WORKER_METRICS_HTTP_REQUESTS` env vars allow selectively disabling expensive canonical metrics (payload serialization and HTTP request timing). Both default to `true` in canonical mode; neither has any effect in legacy mode.
-  - Harness manifest sets `WORKER_CANONICAL_METRICS=true`; `harness/main.go` logs which collector is active.
+- Canonical metrics: opt-in harmonized metric surface via `WORKER_CANONICAL_METRICS=true` -- see [docs/metrics.md](docs/metrics.md) for the full catalog, configuration, and migration guide
+- `WORKER_METRICS_PAYLOAD_SIZE` and `WORKER_METRICS_HTTP_REQUESTS` env vars to selectively disable expensive canonical metrics
+- Bounded `uri` label on `http_api_client_request_seconds`: the `uri` label now uses path templates (e.g. `/workflow/{workflowId}`) instead of fully-resolved paths, preventing metric cardinality explosion from dynamic IDs
+- `WorkflowStatusProbe` in harness: opt-in probe (via `HARNESS_PROBE_RATE_PER_SEC`) that exercises UUID-bearing endpoints to validate template URI metrics
 
 ### Changed
 
-- **Metrics harmonization** - defaults preserved; legacy metrics emit unchanged when `WORKER_CANONICAL_METRICS` is unset
-  - `RecordTaskPollTime` / `RecordTaskExecuteTime` / `RecordTaskUpdateTime` signatures now take `(seconds float64, err error)`. Legacy gauge units are preserved at runtime (seconds for poll; milliseconds for execute/update).
-  - `IncrementUncaughtException` now takes the recovered value so the canonical collector can derive a bounded-cardinality `exception` label.
-  - API client transport is wrapped with `metricsRoundTripper` regardless of mode; the legacy collector treats the HTTP request observation as a no-op.
-  - Default behavior is unchanged: with no env var set, the legacy metric names (no `_total` suffix, no `exception` label, snake_case `payload_type`) and shapes shipped in v1.9.0 are preserved.
-  - New `docs/metrics.md` covering usage, env-var selection, full canonical and legacy catalogs, label semantics, metrics not applicable to Go (`worker_restart_total`, `task_ack_*_total`, `task_execution_queue_full_total`), legacy → canonical migration with PromQL recipes, and troubleshooting.
-  - `docs/workers_sdk.md` now points at `metrics.md` instead of inlining the catalog.
+- Legacy metrics emit unchanged by default; no action required for existing deployments
+- `RecordTaskPollTime` / `RecordTaskExecuteTime` / `RecordTaskUpdateTime` signatures now accept `(seconds, error)` -- see [docs/metrics.md](docs/metrics.md#detailed-technical-notes----unreleased)
 
 ### Fixed
 
-- `metrics.PayloadType.TASK_OUTPUT` constant value (was `"TASK_INPUT"`).
-- `IncrementTaskPaused` was previously never called.
-- `thread_uncaught_exceptions` counter now increments correctly in legacy mode. Previously, a label-count mismatch between the counter registration (zero labels) and the increment call site (one label) caused the increment to silently fail on every invocation.
+- `metrics.PayloadType.TASK_OUTPUT` constant value (was `"TASK_INPUT"`)
+- `IncrementTaskPaused` was previously never called
+- `thread_uncaught_exceptions` counter now increments correctly in legacy mode (was silently failing due to a label-count mismatch)
+- `JumpToTask` path had a literal `{taskReferenceName}` in the URL string (now removed; the parameter is correctly passed as a query param)
 
 ### Deprecated
 
-- Legacy gauges and counters remain the default and continue to emit unchanged. Migration to the canonical surface is documented in `docs/metrics.md`.
+- Legacy metric names remain the default. Migration guidance is in [docs/metrics.md](docs/metrics.md#migration-from-legacy-to-canonical).

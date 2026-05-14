@@ -13,6 +13,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/antihax/optional"
+	"github.com/conductor-sdk/conductor-go/sdk/metrics"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"net/http"
 	"net/url"
@@ -31,6 +32,7 @@ SchedulerResourceApiService Deletes an existing workflow schedule by name
 func (a *SchedulerResourceApiService) DeleteSchedule(ctx context.Context, name string) (interface{}, *http.Response, error) {
 	var result interface{}
 
+	ctx = metrics.WithPathTemplate(ctx, "/scheduler/schedules/{name}")
 	path := fmt.Sprintf("/scheduler/schedules/%s", name)
 
 	resp, err := a.Delete(ctx, path, nil, &result)
@@ -47,6 +49,7 @@ SchedulerResourceApiService Delete a tag for schedule
   - @param name
 */
 func (a *SchedulerResourceApiService) DeleteTagForSchedule(ctx context.Context, body []model.Tag, name string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/scheduler/schedules/{name}/tags")
 	path := fmt.Sprintf("/scheduler/schedules/%s/tags", name)
 
 	resp, err := a.DeleteWithBody(ctx, path, body, nil)
@@ -132,6 +135,7 @@ SchedulerResourceApiService Get an existing workflow schedule by name
 */
 func (a *SchedulerResourceApiService) GetSchedule(ctx context.Context, name string) (model.WorkflowSchedule, *http.Response, error) {
 	var result model.WorkflowSchedule
+	ctx = metrics.WithPathTemplate(ctx, "/scheduler/schedules/{name}")
 	path := fmt.Sprintf("/scheduler/schedules/%s", name)
 
 	resp, err := a.Get(ctx, path, nil, &result)
@@ -149,6 +153,7 @@ SchedulerResourceApiService Get tags by schedule
 */
 func (a *SchedulerResourceApiService) GetTagsForSchedule(ctx context.Context, name string) ([]model.Tag, *http.Response, error) {
 	var result []model.Tag
+	ctx = metrics.WithPathTemplate(ctx, "/scheduler/schedules/{name}/tags")
 	path := fmt.Sprintf("/scheduler/schedules/%s/tags", name)
 
 	resp, err := a.Get(ctx, path, nil, &result)
@@ -183,6 +188,7 @@ SchedulerResourceApiService Pauses an existing schedule by name
 */
 func (a *SchedulerResourceApiService) PauseSchedule(ctx context.Context, name string) (interface{}, *http.Response, error) {
 	var result interface{}
+	ctx = metrics.WithPathTemplate(ctx, "/scheduler/schedules/{name}/pause")
 	path := fmt.Sprintf("/scheduler/schedules/%s/pause", name)
 
 	resp, err := a.Get(ctx, path, nil, &result)
@@ -199,6 +205,7 @@ SchedulerResourceApiService Put a tag to schedule
   - @param name
 */
 func (a *SchedulerResourceApiService) PutTagForSchedule(ctx context.Context, body []model.Tag, name string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/scheduler/schedules/{name}/tags")
 	path := fmt.Sprintf("/scheduler/schedules/%s/tags", name)
 
 	resp, err := a.Put(ctx, path, body, nil)
@@ -251,6 +258,7 @@ SchedulerResourceApiService Resume a paused schedule by name
 func (a *SchedulerResourceApiService) ResumeSchedule(ctx context.Context, name string) (interface{}, *http.Response, error) {
 	var result interface{}
 
+	ctx = metrics.WithPathTemplate(ctx, "/scheduler/schedules/{name}/resume")
 	path := fmt.Sprintf("/scheduler/schedules/%s/resume", name)
 	resp, err := a.Get(ctx, path, nil, &result)
 	if err != nil {

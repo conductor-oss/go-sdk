@@ -13,6 +13,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/antihax/optional"
+	"github.com/conductor-sdk/conductor-go/sdk/metrics"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"net/http"
 	"net/url"
@@ -88,6 +89,7 @@ type MetadataResourceApiGetOpts struct {
 func (a *MetadataResourceApiService) Get(ctx context.Context, name string, localVarOptionals *MetadataResourceApiGetOpts) (model.WorkflowDef, *http.Response, error) {
 	var result model.WorkflowDef
 
+	ctx = metrics.WithPathTemplate(ctx, "/metadata/workflow/{name}")
 	path := fmt.Sprintf("/metadata/workflow/%s", name)
 
 	queryParams := url.Values{}
@@ -132,6 +134,7 @@ MetadataResourceApiService Gets the task definition
 */
 func (a *MetadataResourceApiService) GetTaskDef(ctx context.Context, tasktype string) (model.TaskDef, *http.Response, error) {
 	var result model.TaskDef
+	ctx = metrics.WithPathTemplate(ctx, "/metadata/taskdefs/{tasktype}")
 	path := fmt.Sprintf("/metadata/taskdefs/%s", tasktype)
 
 	resp, err := a.APIClient.Get(ctx, path, nil, &result)
@@ -246,6 +249,7 @@ MetadataResourceApiService Remove a task definition
   - @param tasktype
 */
 func (a *MetadataResourceApiService) UnregisterTaskDef(ctx context.Context, taskType string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/metadata/taskdefs/{taskType}")
 	path := fmt.Sprintf("/metadata/taskdefs/%s", taskType)
 
 	resp, err := a.APIClient.Delete(ctx, path, nil, nil)
@@ -262,6 +266,7 @@ MetadataResourceApiService Removes workflow definition. It does not remove workf
   - @param version
 */
 func (a *MetadataResourceApiService) UnregisterWorkflowDef(ctx context.Context, name string, version int32) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/metadata/workflow/{name}/{version}")
 	path := fmt.Sprintf("/metadata/workflow/%s/%d", name, version)
 
 	resp, err := a.APIClient.Delete(ctx, path, nil, nil)
@@ -311,6 +316,7 @@ func (a *MetadataResourceApiService) UpdateWorkflowDefWithTags(ctx context.Conte
 }
 
 func (a *MetadataResourceApiService) GetTagsForWorkflowDef(ctx context.Context, name string) ([]model.MetadataTag, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/metadata/workflow/{name}")
 	path := fmt.Sprintf("/metadata/workflow/%s?metadata=true", name)
 
 	var workflowDef model.WorkflowDef
@@ -333,6 +339,7 @@ func (a *MetadataResourceApiService) GetTagsForWorkflowDef(ctx context.Context, 
 }
 
 func (a *MetadataResourceApiService) GetTagsForTaskDef(ctx context.Context, tasktype string) ([]model.MetadataTag, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/metadata/taskdefs/{tasktype}")
 	path := fmt.Sprintf("/metadata/taskdefs/%s?metadata=true", tasktype)
 
 	var taskDef model.WorkflowDef

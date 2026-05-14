@@ -125,10 +125,11 @@ task_execute_time_seconds_count{taskType="my_task",status="SUCCESS"} 50
 task_execute_time_seconds_sum{taskType="my_task",status="SUCCESS"} 2.3
 ```
 
-The `uri` label for `http_api_client_request_seconds` currently uses the
-interpolated request path (e.g. `/api/tasks/poll/batch/my_task_type`). Operators
-who need bounded cardinality can apply Prometheus `metric_relabel_configs` at
-scrape time.
+The `uri` label for `http_api_client_request_seconds` uses the path template
+(e.g. `/tasks/poll/batch/{tasktype}`) rather than the fully-resolved request
+path. This keeps label cardinality bounded to the number of distinct API
+endpoints, regardless of how many unique workflow IDs, task IDs, or other
+dynamic segments appear in actual requests.
 
 ### Canonical Size Histograms
 
@@ -217,7 +218,7 @@ normal Go SDK worker output is intentional.
 | `payload_type` | Legacy `external_payload_used` | Payload type, such as `TASK_INPUT`, `TASK_OUTPUT`, `WORKFLOW_INPUT`, or `WORKFLOW_OUTPUT`. |
 | `payloadType` | Canonical `external_payload_used_total` | Payload type, such as `TASK_INPUT`, `TASK_OUTPUT`, `WORKFLOW_INPUT`, or `WORKFLOW_OUTPUT`. |
 | `method` | HTTP metrics | HTTP verb. |
-| `uri` | HTTP metrics | Request path. May contain interpolated identifiers. |
+| `uri` | HTTP metrics | Request path template (e.g. `/workflow/{workflowId}`). Bounded cardinality. |
 
 ## Migration from Legacy to Canonical
 
@@ -311,10 +312,96 @@ counter was always zero should be updated.
 
 ### High Cardinality
 
-- Watch the `uri` label on `http_api_client_request_seconds`. The Go SDK
-  records the interpolated request path, which may include task type names or
-  workflow IDs.
+- The `uri` label on `http_api_client_request_seconds` now uses path templates
+  (e.g. `/workflow/{workflowId}`), so cardinality is bounded to the number of
+  distinct API endpoints. If an API call site does not set a template, the
+  round-tripper falls back to the raw request path.
 - Prefer canonical mode for bounded `exception` labels using Go type names
   instead of error messages.
 - Avoid embedding user identifiers or unbounded values in task type, workflow
   type, or external payload labels.
+
+## Detailed Technical Notes -- Unreleased
+
+This section documents internal implementation details for developers reviewing
+the metrics harmonization changes. It is not end-user-facing and will be
+removed or folded into the relevant sections once the release is published.
+
+### Architecture
+
+The `MetricsCollector` interface (`sdk/metrics/collector.go`) defines the
+contract for recording SDK metrics. Two implementations exist:
+
+- `legacyCollector` (`sdk/metrics/legacy_collector.go`) -- emits the original
+  metric names and types (Gauges for timing, no `exception` labels).
+- `canonicalCollector` (`sdk/metrics/canonical_collector.go`) -- emits the
+  harmonized cross-SDK catalog (Histograms in seconds/bytes, `_total` counters,
+  bounded `exception` labels from Go type names).
+
+A `noopCollector` is the default singleton before `InitCollector` is called, so
+all metric calls are safe at any time.
+
+`metrics.NewCollector()` reads `WORKER_CANONICAL_METRICS` once and returns the
+appropriate implementation. `metrics.InitCollector()` is protected by
+`sync.Once` for safe concurrent use.
+
+### Capability query methods
+
+The `MetricsCollector` interface exposes `ShouldRecordPayloadSize()` and
+`ShouldRecordHTTPRequests()` so call sites can skip expensive prep work:
+
+- `noopCollector` / `legacyCollector`: both return `false`
+- `canonicalCollector`: both default to `true`, overridable to `false` via
+  `WORKER_METRICS_PAYLOAD_SIZE` and `WORKER_METRICS_HTTP_REQUESTS`
+
+`recordTaskResultPayloadSize` (in `sdk/worker/task_runner.go`) and
+`recordWorkflowInputPayloadSize` (in
+`sdk/workflow/executor/executor_with_context.go`) check
+`ShouldRecordPayloadSize()` before calling `json.Marshal`.
+
+### HTTP request timing
+
+`metricsRoundTripper` (`sdk/client/metrics_roundtripper.go`) wraps the API
+client's `http.Transport` to record `http_api_client_request_seconds`. It
+checks `ShouldRecordHTTPRequests()` at request time and short-circuits to the
+inner transport when the capability is disabled (noop, legacy, or canonical with
+the env var set to `false`).
+
+### Signature changes
+
+- `RecordTaskPollTime`, `RecordTaskExecuteTime`, `RecordTaskUpdateTime` now
+  take `(seconds float64, err error)`. Callers always pass seconds; the legacy
+  collector converts execute and update times back to milliseconds internally.
+- `IncrementUncaughtException` now takes `recovered interface{}` instead of
+  `message string`. The canonical collector derives a bounded-cardinality
+  `exception` label via `fmt.Sprintf("%T", recovered)`; the legacy collector
+  ignores the argument.
+
+### New worker instrumentation call sites
+
+- `IncrementTaskExecutionStarted` -- called in `task_runner.go` when a polled
+  task is dispatched to the worker function.
+- `IncrementTaskPaused` -- called in `task_runner.go` when `isPaused` is true
+  (was defined but never called on `main`).
+- `SetActiveWorkers` -- called on worker enter/exit in `task_runner.go`.
+- `recordTaskResultPayloadSize` -- called after task execution in
+  `task_runner.go`.
+- `recordWorkflowInputPayloadSize` -- called before workflow start in
+  `executor_with_context.go`.
+- `IncrementWorkflowStartError` -- called on workflow start failure in
+  `executor_with_context.go` (existed as dead code on `main`).
+
+### Bug fixes
+
+- `metrics.PayloadType.TASK_OUTPUT` had the value `"TASK_INPUT"` (copy-paste
+  bug). Fixed to `"TASK_OUTPUT"`.
+- `thread_uncaught_exceptions` was registered with zero labels but
+  `IncrementUncaughtException` passed one label value, causing Prometheus to
+  silently reject every increment. The legacy collector now passes `[]string{}`
+  (matching the registration), so the counter increments correctly.
+
+### Harness changes
+
+- `harness/manifests/deployment.yaml` sets `WORKER_CANONICAL_METRICS=true`.
+- `harness/main.go` calls `metrics.InitCollector()` before starting the HTTP
+  server and logs which collector is active.

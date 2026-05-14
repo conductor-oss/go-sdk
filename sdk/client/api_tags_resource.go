@@ -12,6 +12,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"github.com/conductor-sdk/conductor-go/sdk/metrics"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"net/http"
 )
@@ -31,6 +32,7 @@ TagsApiService Adds the tag to the task
 func (a *TagsApiService) AddTaskTag(ctx context.Context, body model.TagObject, taskName string) (interface{}, *http.Response, error) {
 	var result interface{}
 
+	ctx = metrics.WithPathTemplate(ctx, "/metadata/task/{taskName}/tags")
 	path := fmt.Sprintf("/metadata/task/%s/tags", taskName)
 
 	resp, err := a.Post(ctx, path, body, &result)
@@ -51,6 +53,7 @@ TagsApiService Adds the tag to the workflow
 func (a *TagsApiService) AddWorkflowTag(ctx context.Context, body model.TagObject, name string) (interface{}, *http.Response, error) {
 	var result interface{}
 
+	ctx = metrics.WithPathTemplate(ctx, "/metadata/workflow/{name}/tags")
 	path := fmt.Sprintf("/metadata/workflow/%s/tags", name)
 	resp, err := a.Post(ctx, path, body, &result)
 	if err != nil {
@@ -70,6 +73,7 @@ TagsApiService Removes the tag of the task
 func (a *TagsApiService) DeleteTaskTag(ctx context.Context, body model.TagString, taskName string) (interface{}, *http.Response, error) {
 	var result interface{}
 
+	ctx = metrics.WithPathTemplate(ctx, "/metadata/task/{taskName}/tags")
 	path := fmt.Sprintf("/metadata/task/%s/tags", taskName)
 
 	resp, err := a.DeleteWithBody(ctx, path, body, &result)
@@ -90,6 +94,7 @@ TagsApiService Removes the tag of the workflow
 func (a *TagsApiService) DeleteWorkflowTag(ctx context.Context, body model.TagObject, name string) (interface{}, *http.Response, error) {
 	var result interface{}
 
+	ctx = metrics.WithPathTemplate(ctx, "/metadata/workflow/{name}/tags")
 	localVarPath := fmt.Sprintf("/metadata/workflow/%s/tags", name)
 	resp, err := a.DeleteWithBody(ctx, localVarPath, body, &result)
 	if err != nil {
@@ -126,6 +131,7 @@ TagsApiService Returns all the tags of the task
 func (a *TagsApiService) GetTaskTags(ctx context.Context, taskName string) ([]model.TagObject, *http.Response, error) {
 	var result []model.TagObject
 
+	ctx = metrics.WithPathTemplate(ctx, "/metadata/task/{taskName}/tags")
 	localVarPath := fmt.Sprintf("/metadata/task/%s/tags", taskName)
 	resp, err := a.Get(ctx, localVarPath, nil, &result)
 	if err != nil {
@@ -144,6 +150,7 @@ TagsApiService Returns all the tags of the workflow
 func (a *TagsApiService) GetWorkflowTags(ctx context.Context, name string) ([]model.TagObject, *http.Response, error) {
 	var result []model.TagObject
 
+	ctx = metrics.WithPathTemplate(ctx, "/metadata/workflow/{name}/tags")
 	path := fmt.Sprintf("/metadata/workflow/%s/tags", name)
 	resp, err := a.Get(ctx, path, nil, &result)
 	if err != nil {
@@ -163,6 +170,7 @@ TagsApiService Adds the tag to the task
 func (a *TagsApiService) SetTaskTags(ctx context.Context, body []model.TagObject, taskName string) (interface{}, *http.Response, error) {
 	var result interface{}
 
+	ctx = metrics.WithPathTemplate(ctx, "/metadata/task/{taskName}/tags")
 	localVarPath := fmt.Sprintf("/metadata/task/%s/tags", taskName)
 	resp, err := a.Put(ctx, localVarPath, body, &result)
 	if err != nil {
@@ -182,6 +190,7 @@ TagsApiService Set the tags of the workflow
 func (a *TagsApiService) SetWorkflowTags(ctx context.Context, body []model.TagObject, name string) (interface{}, *http.Response, error) {
 	var result interface{}
 
+	ctx = metrics.WithPathTemplate(ctx, "/metadata/workflow/{name}/tags")
 	localVarPath := fmt.Sprintf("/metadata/workflow/%s/tags", name)
 	resp, err := a.Put(ctx, localVarPath, body, &result)
 	if err != nil {

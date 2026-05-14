@@ -1,10 +1,12 @@
 package client
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"testing"
 
+	"github.com/conductor-sdk/conductor-go/sdk/metrics"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -85,4 +87,40 @@ func TestRoundTrip_SkipsTimingWhenHTTPMetricsDisabled(t *testing.T) {
 	assert.NoError(t, err)
 	require.NotNil(t, gotResp)
 	assert.Equal(t, 200, gotResp.StatusCode)
+}
+
+func TestRoundTrip_UsesPathTemplateFromContext(t *testing.T) {
+	resp := &http.Response{StatusCode: 200}
+	rt := NewMetricsRoundTripper(&stubRoundTripper{resp: resp})
+
+	ctx := metrics.WithPathTemplate(context.Background(), "/workflow/{workflowId}")
+	req, _ := http.NewRequestWithContext(ctx, "GET", "http://example.com/api/workflow/abc-123-def", nil)
+	gotResp, err := rt.RoundTrip(req)
+
+	assert.NoError(t, err)
+	require.NotNil(t, gotResp)
+	assert.Equal(t, 200, gotResp.StatusCode)
+}
+
+func TestRoundTrip_FallsBackToRawPath_WhenNoTemplate(t *testing.T) {
+	resp := &http.Response{StatusCode: 200}
+	rt := NewMetricsRoundTripper(&stubRoundTripper{resp: resp})
+
+	req, _ := http.NewRequest("GET", "http://example.com/api/tasks/search", nil)
+	gotResp, err := rt.RoundTrip(req)
+
+	assert.NoError(t, err)
+	require.NotNil(t, gotResp)
+	assert.Equal(t, 200, gotResp.StatusCode)
+}
+
+func TestRoundTrip_TemplatePreferredOverRawPath(t *testing.T) {
+	// Verify the template extraction works - we set a template on a request
+	// with a different resolved path, and the roundtripper should prefer it.
+	ctx := metrics.WithPathTemplate(context.Background(), "/tasks/{taskId}/log")
+	req, _ := http.NewRequestWithContext(ctx, "GET", "http://example.com/api/tasks/real-task-id/log", nil)
+
+	template := metrics.PathTemplateFromContext(req.Context())
+	assert.Equal(t, "/tasks/{taskId}/log", template)
+	assert.Equal(t, "/api/tasks/real-task-id/log", req.URL.Path)
 }

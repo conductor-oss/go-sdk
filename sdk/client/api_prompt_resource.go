@@ -12,6 +12,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"github.com/conductor-sdk/conductor-go/sdk/metrics"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/sdk/model/integration"
 	"net/http"
@@ -28,6 +29,7 @@ PromptResourceApiService Delete Template
   - @param name
 */
 func (a *PromptResourceApiService) DeleteMessageTemplate(ctx context.Context, name string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/prompts/{name}")
 	path := fmt.Sprintf("/prompts/%s", name)
 
 	resp, err := a.Delete(ctx, path, nil, nil)
@@ -44,6 +46,7 @@ PromptResourceApiService Delete a tag for Prompt Template
   - @param name
 */
 func (a *PromptResourceApiService) DeleteTagForPromptTemplate(ctx context.Context, body []model.Tag, name string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/prompts/{name}/tags")
 	path := fmt.Sprintf("/prompts/%s/tags", name)
 
 	resp, err := a.DeleteWithBody(ctx, path, body, nil)
@@ -62,6 +65,7 @@ PromptResourceApiService Get Template
 func (a *PromptResourceApiService) GetMessageTemplate(ctx context.Context, name string) (*integration.PromptTemplate, *http.Response, error) {
 	var result integration.PromptTemplate
 
+	ctx = metrics.WithPathTemplate(ctx, "/prompts/{name}")
 	path := fmt.Sprintf("/prompts/%s", name)
 
 	resp, err := a.Get(ctx, path, nil, &result)
@@ -95,6 +99,7 @@ PromptResourceApiService Get tags by Prompt Template
 */
 func (a *PromptResourceApiService) GetTagsForPromptTemplate(ctx context.Context, name string) ([]model.Tag, *http.Response, error) {
 	var result []model.Tag
+	ctx = metrics.WithPathTemplate(ctx, "/prompts/{name}/tags")
 	path := fmt.Sprintf("/prompts/%s/tags", name)
 
 	resp, err := a.Get(ctx, path, nil, &result)
@@ -111,6 +116,7 @@ PromptResourceApiService Put a tag to Prompt Template
   - @param name
 */
 func (a *PromptResourceApiService) PutTagForPromptTemplate(ctx context.Context, body []model.Tag, name string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/prompts/{name}/tags")
 	path := fmt.Sprintf("/prompts/%s/tags", name)
 
 	resp, err := a.Put(ctx, path, body, nil)
@@ -137,6 +143,7 @@ type PromptResourceApiSaveMessageTemplateOpts struct {
 }
 
 func (a *PromptResourceApiService) SaveMessageTemplate(ctx context.Context, body string, description string, name string, optionals *PromptResourceApiSaveMessageTemplateOpts) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/prompts/{name}")
 	path := fmt.Sprintf("/prompts/%s", name)
 
 	queryParams := url.Values{}
