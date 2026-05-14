@@ -58,6 +58,13 @@ type MetricsCollector interface {
 	// --- Gauges ---
 
 	SetActiveWorkers(taskType string, count float64)
+
+	// --- Capability queries ---
+	// Call sites check these before doing expensive prep work (e.g.
+	// json.Marshal for payload size, timing in the HTTP round-tripper).
+
+	ShouldRecordPayloadSize() bool
+	ShouldRecordHTTPRequests() bool
 }
 
 // collector is the package-level singleton. Before ProvideMetrics is called it
@@ -77,6 +84,17 @@ func envBoolTruthy(name string) bool {
 	return v == "true" || v == "1" || v == "yes"
 }
 
+// envBoolDefault returns defaultVal when the environment variable is unset or
+// empty. Otherwise it applies the same truthy check as envBoolTruthy.
+func envBoolDefault(name string, defaultVal bool) bool {
+	raw := strings.TrimSpace(os.Getenv(name))
+	if raw == "" {
+		return defaultVal
+	}
+	v := strings.ToLower(raw)
+	return v == "true" || v == "1" || v == "yes"
+}
+
 // NewCollector reads the WORKER_CANONICAL_METRICS / WORKER_LEGACY_METRICS
 // environment variables and returns the appropriate implementation.
 //
@@ -86,7 +104,10 @@ func envBoolTruthy(name string) bool {
 func NewCollector() MetricsCollector {
 	if envBoolTruthy("WORKER_CANONICAL_METRICS") {
 		log.Info("Metrics implementation selected: canonical")
-		return &canonicalCollector{}
+		return &canonicalCollector{
+			recordPayloadSize:  envBoolDefault("WORKER_METRICS_PAYLOAD_SIZE", true),
+			recordHTTPRequests: envBoolDefault("WORKER_METRICS_HTTP_REQUESTS", true),
+		}
 	}
 	log.Info("Metrics implementation selected: legacy")
 	return &legacyCollector{}
@@ -176,6 +197,8 @@ func RecordWorkflowInputPayloadSize(workflowType, version string, bytes float64)
 	collector.RecordWorkflowInputPayloadSize(workflowType, version, bytes)
 }
 func SetActiveWorkers(taskType string, count float64) { collector.SetActiveWorkers(taskType, count) }
+func ShouldRecordPayloadSize() bool                   { return collector.ShouldRecordPayloadSize() }
+func ShouldRecordHTTPRequests() bool                  { return collector.ShouldRecordHTTPRequests() }
 
 // ---------------------------------------------------------------------------
 // noopCollector — all methods are no-ops. Used as the default before
@@ -205,3 +228,5 @@ func (n *noopCollector) RecordHTTPRequestTime(string, string, string, float64)  
 func (n *noopCollector) RecordTaskResultPayloadSize(string, float64)            {}
 func (n *noopCollector) RecordWorkflowInputPayloadSize(string, string, float64) {}
 func (n *noopCollector) SetActiveWorkers(string, float64)                       {}
+func (n *noopCollector) ShouldRecordPayloadSize() bool                          { return false }
+func (n *noopCollector) ShouldRecordHTTPRequests() bool                         { return false }

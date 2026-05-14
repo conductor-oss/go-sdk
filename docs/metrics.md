@@ -65,6 +65,20 @@ worker restart.
 `WORKER_LEGACY_METRICS` is reserved for a future default-flip phase and is not
 currently read by the Go SDK factory.
 
+### Disabling Expensive Canonical Metrics
+
+Two optional environment variables control expensive metric categories within
+canonical mode. Both default to `true` in canonical mode and have no effect in
+legacy mode (which never emits these metrics).
+
+| Environment variable | Default (canonical) | Effect when `false` |
+|---|---|---|
+| `WORKER_METRICS_PAYLOAD_SIZE` | `true` | Skips `json.Marshal` of task results and workflow inputs for size histograms (`task_result_size_bytes`, `workflow_input_size_bytes`). |
+| `WORKER_METRICS_HTTP_REQUESTS` | `true` | Skips per-request timing in the HTTP transport layer (`http_api_client_request_seconds`). |
+
+These variables are read once when the collector is created. Like
+`WORKER_CANONICAL_METRICS`, changing them requires a worker restart.
+
 ## Canonical Metrics Catalog
 
 Canonical timing values are seconds. Canonical size values are bytes. Label
@@ -287,6 +301,13 @@ sum(rate(task_execute_time_seconds_count[5m])) by (taskType)
 - `http_api_client_request_seconds` requires canonical mode. Legacy mode does
   not emit HTTP metrics. The canonical collector records HTTP latency via a
   `RoundTripper` wrapper on the API client.
+
+### thread_uncaught_exceptions Was Always Zero
+
+Prior to this release, the legacy `thread_uncaught_exceptions` counter never
+incremented due to a label-count mismatch bug. After upgrading, the counter
+will begin recording actual values. Alerts or dashboards that assumed this
+counter was always zero should be updated.
 
 ### High Cardinality
 

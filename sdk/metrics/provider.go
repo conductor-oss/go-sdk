@@ -12,6 +12,7 @@ package metrics
 import (
 	"net/http"
 	"strconv"
+	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -22,12 +23,22 @@ import (
 
 var collectionEnabled bool = false
 
+var initOnce = &sync.Once{}
+
+// resetInitOnce replaces the sync.Once so InitCollector can fire again.
+// Only intended for use in tests.
+func resetInitOnce() {
+	initOnce = &sync.Once{}
+}
+
 // InitCollector selects and registers a MetricsCollector based on env vars.
-// Call this synchronously before starting the HTTP metrics server goroutine.
+// Safe to call from multiple goroutines; only the first call takes effect.
 func InitCollector() {
-	collector = NewCollector()
-	collector.Register()
-	collectionEnabled = true
+	initOnce.Do(func() {
+		collector = NewCollector()
+		collector.Register()
+		collectionEnabled = true
+	})
 }
 
 // ProvideMetrics initializes the metrics collector (if not already done) and
@@ -39,9 +50,7 @@ func ProvideMetrics(metricsSettings *settings.MetricsSettings) {
 		metricsSettings = settings.NewDefaultMetricsSettings()
 	}
 
-	if !collectionEnabled {
-		InitCollector()
-	}
+	InitCollector()
 
 	http.Handle(
 		metricsSettings.ApiEndpoint,

@@ -15,7 +15,10 @@ import "github.com/prometheus/client_golang/prometheus"
 // metrics harmonization spec. Counters use _total suffix with exception
 // labels, timing uses Histograms in seconds, and sizes use Histograms in
 // bytes.
-type canonicalCollector struct{}
+type canonicalCollector struct {
+	recordPayloadSize  bool
+	recordHTTPRequests bool
+}
 
 var canonicalCounterTemplates = map[MetricName]*MetricDetails{
 	TASK_POLL_TOTAL: NewMetricDetails(
@@ -60,7 +63,7 @@ var canonicalCounterTemplates = map[MetricName]*MetricDetails{
 	),
 	EXTERNAL_PAYLOAD_USED_TOTAL: NewMetricDetails(
 		EXTERNAL_PAYLOAD_USED_TOTAL, EXTERNAL_PAYLOAD_USED_DOC,
-		[]MetricLabel{ENTITY_NAME, OPERATION, PAYLOAD_TYPE},
+		[]MetricLabel{ENTITY_NAME, OPERATION, PAYLOAD_TYPE_CAMEL},
 	),
 	WORKFLOW_START_ERROR_TOTAL: NewMetricDetails(
 		WORKFLOW_START_ERROR_TOTAL, WORKFLOW_START_ERROR_DOC,
@@ -209,3 +212,8 @@ func (c *canonicalCollector) RecordWorkflowInputPayloadSize(workflowType, versio
 func (c *canonicalCollector) SetActiveWorkers(taskType string, count float64) {
 	setGauge(ACTIVE_WORKERS, []string{taskType}, count)
 }
+
+// --- Capability queries ---
+
+func (c *canonicalCollector) ShouldRecordPayloadSize() bool  { return c.recordPayloadSize }
+func (c *canonicalCollector) ShouldRecordHTTPRequests() bool { return c.recordHTTPRequests }

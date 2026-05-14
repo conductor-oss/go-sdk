@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"sync"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -28,6 +29,7 @@ func resetState(t *testing.T) {
 	gaugeByName = map[MetricName]*prometheus.GaugeVec{}
 	collectionEnabled = false
 	collector = &noopCollector{}
+	resetInitOnce()
 
 	reg := prometheus.NewRegistry()
 	prometheus.DefaultRegisterer = reg
@@ -36,6 +38,7 @@ func resetState(t *testing.T) {
 	t.Cleanup(func() {
 		collector = origCollector
 		collectionEnabled = origEnabled
+		resetInitOnce()
 		counterByName = map[MetricName]*prometheus.CounterVec{}
 		histogramByName = map[MetricName]*prometheus.HistogramVec{}
 		gaugeByName = map[MetricName]*prometheus.GaugeVec{}
@@ -98,6 +101,41 @@ func TestStatusLabel(t *testing.T) {
 	assert.Equal(t, "FAILURE", statusLabel(errors.New("fail")))
 }
 
+func TestEnvBoolDefault(t *testing.T) {
+	const envKey = "TEST_ENVBOOLDEFAULT"
+	t.Cleanup(func() { os.Unsetenv(envKey) })
+
+	for _, tc := range []struct {
+		val        string
+		set        bool
+		defaultVal bool
+		want       bool
+	}{
+		{"true", true, false, true},
+		{"1", true, false, true},
+		{"yes", true, false, true},
+		{"YES", true, false, true},
+		{" true ", true, false, true},
+		{"false", true, true, false},
+		{"0", true, true, false},
+		{"no", true, true, false},
+		{"maybe", true, true, false},
+		{"", true, true, true},
+		{"", false, true, true},
+		{"", false, false, false},
+	} {
+		label := fmt.Sprintf("val=%q/set=%v/default=%v", tc.val, tc.set, tc.defaultVal)
+		t.Run(label, func(t *testing.T) {
+			if tc.set {
+				os.Setenv(envKey, tc.val)
+			} else {
+				os.Unsetenv(envKey)
+			}
+			assert.Equal(t, tc.want, envBoolDefault(envKey, tc.defaultVal))
+		})
+	}
+}
+
 // ---------------------------------------------------------------------------
 // NewCollector / GetCollector
 // ---------------------------------------------------------------------------
@@ -123,6 +161,12 @@ func TestGetCollector(t *testing.T) {
 // ---------------------------------------------------------------------------
 // noopCollector — exercise every method for coverage
 // ---------------------------------------------------------------------------
+
+func TestNoopCollector_Capabilities(t *testing.T) {
+	n := &noopCollector{}
+	assert.False(t, n.ShouldRecordPayloadSize())
+	assert.False(t, n.ShouldRecordHTTPRequests())
+}
 
 func TestNoopCollector(t *testing.T) {
 	n := &noopCollector{}
@@ -219,7 +263,7 @@ func TestNewHistogram(t *testing.T) {
 
 func TestCanonicalCollector_RegisterAndMethods(t *testing.T) {
 	resetState(t)
-	c := &canonicalCollector{}
+	c := &canonicalCollector{recordPayloadSize: true, recordHTTPRequests: true}
 	c.Register()
 	collectionEnabled = true
 
@@ -267,9 +311,41 @@ func TestCanonicalCollector_RegisterAndMethods(t *testing.T) {
 	assert.Equal(t, float64(3), m.GetGauge().GetValue())
 }
 
+func TestCanonicalCollector_Capabilities_Defaults(t *testing.T) {
+	os.Unsetenv("WORKER_METRICS_PAYLOAD_SIZE")
+	os.Unsetenv("WORKER_METRICS_HTTP_REQUESTS")
+	c := &canonicalCollector{
+		recordPayloadSize:  envBoolDefault("WORKER_METRICS_PAYLOAD_SIZE", true),
+		recordHTTPRequests: envBoolDefault("WORKER_METRICS_HTTP_REQUESTS", true),
+	}
+	assert.True(t, c.ShouldRecordPayloadSize())
+	assert.True(t, c.ShouldRecordHTTPRequests())
+}
+
+func TestCanonicalCollector_Capabilities_EnvOverride(t *testing.T) {
+	os.Setenv("WORKER_METRICS_PAYLOAD_SIZE", "false")
+	os.Unsetenv("WORKER_METRICS_HTTP_REQUESTS")
+	t.Cleanup(func() {
+		os.Unsetenv("WORKER_METRICS_PAYLOAD_SIZE")
+		os.Unsetenv("WORKER_METRICS_HTTP_REQUESTS")
+	})
+	c := &canonicalCollector{
+		recordPayloadSize:  envBoolDefault("WORKER_METRICS_PAYLOAD_SIZE", true),
+		recordHTTPRequests: envBoolDefault("WORKER_METRICS_HTTP_REQUESTS", true),
+	}
+	assert.False(t, c.ShouldRecordPayloadSize())
+	assert.True(t, c.ShouldRecordHTTPRequests())
+}
+
 // ---------------------------------------------------------------------------
 // legacyCollector
 // ---------------------------------------------------------------------------
+
+func TestLegacyCollector_Capabilities(t *testing.T) {
+	l := &legacyCollector{}
+	assert.False(t, l.ShouldRecordPayloadSize())
+	assert.False(t, l.ShouldRecordHTTPRequests())
+}
 
 func TestLegacyCollector_RegisterAndMethods(t *testing.T) {
 	resetState(t)
@@ -378,6 +454,24 @@ func TestInitCollector_Canonical(t *testing.T) {
 
 	assert.True(t, collectionEnabled)
 	assert.Equal(t, "canonical", collector.CollectorName())
+}
+
+func TestInitCollector_ConcurrentSafe(t *testing.T) {
+	resetState(t)
+	os.Unsetenv("WORKER_CANONICAL_METRICS")
+
+	var wg sync.WaitGroup
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			InitCollector()
+		}()
+	}
+	wg.Wait()
+
+	assert.True(t, collectionEnabled)
+	assert.Equal(t, "legacy", collector.CollectorName())
 }
 
 func TestHandlePanicError_NoPanic(t *testing.T) {

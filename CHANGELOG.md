@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `metrics.NewCollector()` factory and `metrics.InitCollector()` (decoupled from the HTTP server) select between `legacyCollector` (default) and `canonicalCollector` based on `WORKER_CANONICAL_METRICS` (truthy: `true`, `1`, `yes`, case-insensitive, whitespace-trimmed). `WORKER_LEGACY_METRICS` is reserved for a future default-flip phase and is not currently read.
   - New `metricsRoundTripper` wraps the API client transport to record `http_api_client_request_seconds` (with `status="0"` for network errors).
   - Worker instrumentation: `IncrementTaskExecutionStarted`, `IncrementTaskPaused`, `SetActiveWorkers` on enter/exit, `recordTaskResultPayloadSize`, `recordWorkflowInputPayloadSize`, `IncrementWorkflowStartError`.
+  - `WORKER_METRICS_PAYLOAD_SIZE` and `WORKER_METRICS_HTTP_REQUESTS` env vars allow selectively disabling expensive canonical metrics (payload serialization and HTTP request timing). Both default to `true` in canonical mode; neither has any effect in legacy mode.
   - Harness manifest sets `WORKER_CANONICAL_METRICS=true`; `harness/main.go` logs which collector is active.
 
 ### Changed
@@ -30,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `metrics.PayloadType.TASK_OUTPUT` constant value (was `"TASK_INPUT"`).
 - `IncrementTaskPaused` was previously never called.
+- `thread_uncaught_exceptions` counter now increments correctly in legacy mode. Previously, a label-count mismatch between the counter registration (zero labels) and the increment call site (one label) caused the increment to silently fail on every invocation.
 
 ### Deprecated
 

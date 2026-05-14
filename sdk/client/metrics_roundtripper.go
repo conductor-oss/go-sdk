@@ -34,6 +34,10 @@ func NewMetricsRoundTripper(next http.RoundTripper) http.RoundTripper {
 }
 
 func (m *metricsRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	if !metrics.ShouldRecordHTTPRequests() {
+		return m.next.RoundTrip(req)
+	}
+
 	start := time.Now()
 	resp, err := m.next.RoundTrip(req)
 	elapsed := time.Since(start).Seconds()

@@ -66,3 +66,23 @@ func TestRoundTrip_NilURL(t *testing.T) {
 	require.NotNil(t, gotResp)
 	assert.Equal(t, 204, gotResp.StatusCode)
 }
+
+// ShouldRecordHTTPRequests returns false before InitCollector is called (noop
+// collector), so the round-tripper should delegate directly without timing.
+func TestRoundTrip_SkipsTimingWhenHTTPMetricsDisabled(t *testing.T) {
+	called := false
+	stub := &stubRoundTripper{resp: &http.Response{StatusCode: 200}}
+	original := stub.resp
+
+	wrapper := NewMetricsRoundTripper(&stubRoundTripper{
+		resp: original,
+	})
+
+	req, _ := http.NewRequest("GET", "http://example.com/test", nil)
+	gotResp, err := wrapper.RoundTrip(req)
+
+	_ = called
+	assert.NoError(t, err)
+	require.NotNil(t, gotResp)
+	assert.Equal(t, 200, gotResp.StatusCode)
+}

@@ -21,7 +21,7 @@ import (
 // recordWorkflowInputPayloadSize serializes the workflow input and emits the
 // workflow_input_size metric. Serialization failures are swallowed.
 func recordWorkflowInputPayloadSize(req *model.StartWorkflowRequest) {
-	if req == nil {
+	if !metrics.ShouldRecordPayloadSize() || req == nil {
 		return
 	}
 	size := 0

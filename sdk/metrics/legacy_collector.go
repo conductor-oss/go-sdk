@@ -47,7 +47,7 @@ var legacyCounterTemplates = map[MetricName]*MetricDetails{
 	),
 	EXTERNAL_PAYLOAD_USED: NewMetricDetails(
 		EXTERNAL_PAYLOAD_USED, EXTERNAL_PAYLOAD_USED_DOC,
-		[]MetricLabel{ENTITY_NAME, OPERATION, PAYLOAD_TYPE_LEGACY},
+		[]MetricLabel{ENTITY_NAME, OPERATION, PAYLOAD_TYPE},
 	),
 	WORKFLOW_START_ERROR: NewMetricDetails(
 		WORKFLOW_START_ERROR, WORKFLOW_START_ERROR_DOC,
@@ -160,3 +160,5 @@ func (l *legacyCollector) IncrementTaskAckError(string, error)                  
 func (l *legacyCollector) IncrementTaskAckFailed(string)                         {}
 func (l *legacyCollector) RecordHTTPRequestTime(string, string, string, float64) {}
 func (l *legacyCollector) SetActiveWorkers(string, float64)                      {}
+func (l *legacyCollector) ShouldRecordPayloadSize() bool                         { return false }
+func (l *legacyCollector) ShouldRecordHTTPRequests() bool                        { return false }

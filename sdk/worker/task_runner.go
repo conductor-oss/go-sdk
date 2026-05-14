@@ -396,7 +396,7 @@ func (c *TaskRunner) executeAndUpdateTask(taskName string, task model.Task, exec
 // recordTaskResultPayloadSize serializes the task result and emits the
 // task_result_size metric. Errors during serialization are swallowed.
 func recordTaskResultPayloadSize(taskName string, taskResult *model.TaskResult) {
-	if taskResult == nil {
+	if !metrics.ShouldRecordPayloadSize() || taskResult == nil {
 		return
 	}
 	encoded, err := json.Marshal(taskResult)
