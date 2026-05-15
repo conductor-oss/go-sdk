@@ -421,14 +421,57 @@ func TestPackageLevelFunctions(t *testing.T) {
 		IncrementUncaughtException("panic!")
 		IncrementExternalPayloadUsed("e", "o", "p")
 		IncrementWorkflowStartError("w", errors.New("e"))
-		RecordTaskPollTime("t", 1.0, nil)
-		RecordTaskExecuteTime("t", 1.0, nil)
-		RecordTaskUpdateTime("t", 1.0, nil)
+		RecordTaskPollTime("t", 1.0)
+		RecordTaskExecuteTime("t", 1.0)
+		RecordTaskUpdateTime("t", 1.0)
 		RecordHTTPRequestTime("GET", "/api", "200", 0.5)
 		RecordTaskResultPayloadSize("t", 100)
 		RecordWorkflowInputPayloadSize("w", "1", 200)
 		SetActiveWorkers("t", 5)
 	})
+}
+
+func TestGetCollector_DirectCallWithError(t *testing.T) {
+	resetState(t)
+
+	os.Setenv("WORKER_CANONICAL_METRICS", "true")
+	t.Cleanup(func() { os.Unsetenv("WORKER_CANONICAL_METRICS") })
+	InitCollector()
+
+	testErr := errors.New("poll-timeout")
+	c := GetCollector()
+
+	assert.NotPanics(t, func() {
+		c.RecordTaskPollTime("myTask", 0.5, nil)
+		c.RecordTaskPollTime("myTask", 1.2, testErr)
+		c.RecordTaskExecuteTime("myTask", 0.3, nil)
+		c.RecordTaskExecuteTime("myTask", 5.0, testErr)
+		c.RecordTaskUpdateTime("myTask", 0.1, nil)
+		c.RecordTaskUpdateTime("myTask", 2.0, testErr)
+	})
+
+	families, err := prometheus.DefaultGatherer.Gather()
+	require.NoError(t, err)
+
+	foundSuccess := false
+	foundFailure := false
+	for _, fam := range families {
+		if fam.GetName() != "task_poll_time_seconds" {
+			continue
+		}
+		for _, m := range fam.GetMetric() {
+			for _, lp := range m.GetLabel() {
+				if lp.GetName() == "status" && lp.GetValue() == "SUCCESS" {
+					foundSuccess = true
+				}
+				if lp.GetName() == "status" && lp.GetValue() == "FAILURE" {
+					foundFailure = true
+				}
+			}
+		}
+	}
+	assert.True(t, foundSuccess, "expected SUCCESS status label from nil error")
+	assert.True(t, foundFailure, "expected FAILURE status label from non-nil error")
 }
 
 // ---------------------------------------------------------------------------

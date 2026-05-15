@@ -17,15 +17,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Legacy metrics emit unchanged by default; no action required for existing deployments
-- `RecordTaskPollTime` / `RecordTaskExecuteTime` / `RecordTaskUpdateTime` signatures now accept `(seconds, error)` -- see [docs/metrics.md](docs/metrics.md#detailed-technical-notes----unreleased)
+- `RecordTaskPollTime` / `RecordTaskExecuteTime` / `RecordTaskUpdateTime` package-level functions retain their original 2-argument signatures (now deprecated). The new status-aware 3-argument signatures are available on the `MetricsCollector` interface via `metrics.GetCollector()` -- see [docs/metrics.md](docs/metrics.md#detailed-technical-notes----unreleased)
+- `IncrementUncaughtException` parameter type changed from `string` to `interface{}`; existing callers passing string values are unaffected (string satisfies `interface{}`)
 
 ### Fixed
 
 - `metrics.PayloadType.TASK_OUTPUT` constant value (was `"TASK_INPUT"`)
 - `IncrementTaskPaused` was previously never called
+- `IncrementWorkflowStartError` was previously never called; the `workflow_start_error` counter will now increment on workflow start failures in both legacy and canonical mode
 - `thread_uncaught_exceptions` counter now increments correctly in legacy mode (was silently failing due to a label-count mismatch)
 - `JumpToTask` path had a literal `{taskReferenceName}` in the URL string (now removed; the parameter is correctly passed as a query param)
 
 ### Deprecated
 
 - Legacy metric names remain the default. Migration guidance is in [docs/metrics.md](docs/metrics.md#migration-from-legacy-to-canonical).
+- `RecordTaskPollTime(taskType, seconds)`, `RecordTaskExecuteTime(taskType, seconds)`, `RecordTaskUpdateTime(taskType, seconds)` package-level functions. Use `metrics.GetCollector().RecordTaskPollTime(taskType, seconds, err)` (and equivalents) for status-aware recording.

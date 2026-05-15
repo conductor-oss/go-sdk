@@ -434,7 +434,7 @@ func (c *TaskRunner) batchPoll(taskName string, count int, domain string) ([]mod
 		opts,
 	)
 	spentTime := time.Since(startTime)
-	metrics.RecordTaskPollTime(taskName, spentTime.Seconds(), err)
+	metrics.GetCollector().RecordTaskPollTime(taskName, spentTime.Seconds(), err)
 	if err != nil {
 		metrics.IncrementTaskPollError(taskName, err)
 		return nil, err
@@ -457,7 +457,7 @@ func (c *TaskRunner) executeTask(t *model.Task, executeFunction model.ExecuteTas
 	startTime := time.Now()
 	taskExecutionOutput, err := executeFunction(t)
 	spentTime := time.Since(startTime)
-	metrics.RecordTaskExecuteTime(t.TaskDefName, spentTime.Seconds(), err)
+	metrics.GetCollector().RecordTaskExecuteTime(t.TaskDefName, spentTime.Seconds(), err)
 	if err != nil {
 		metrics.IncrementTaskExecuteError(t.TaskDefName, err)
 		log.Debug(
@@ -530,7 +530,7 @@ func (c *TaskRunner) updateTask(taskName string, taskResult *model.TaskResult) (
 	startTime := time.Now()
 	_, response, err := c.conductorTaskResourceClient.UpdateTask(c.getBaseContext(), taskResult)
 	spent := time.Since(startTime)
-	metrics.RecordTaskUpdateTime(taskName, spent.Seconds(), err)
+	metrics.GetCollector().RecordTaskUpdateTime(taskName, spent.Seconds(), err)
 	return response, err
 }
 

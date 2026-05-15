@@ -178,14 +178,25 @@ func IncrementExternalPayloadUsed(entityName, operation, payloadType string) {
 func IncrementWorkflowStartError(workflowType string, err error) {
 	collector.IncrementWorkflowStartError(workflowType, err)
 }
-func RecordTaskPollTime(taskType string, seconds float64, err error) {
-	collector.RecordTaskPollTime(taskType, seconds, err)
+// Deprecated: does not propagate success/failure status to the collector.
+// Use GetCollector().RecordTaskPollTime(taskType, seconds, err) for
+// status-aware recording.
+func RecordTaskPollTime(taskType string, seconds float64) {
+	collector.RecordTaskPollTime(taskType, seconds, nil)
 }
-func RecordTaskExecuteTime(taskType string, seconds float64, err error) {
-	collector.RecordTaskExecuteTime(taskType, seconds, err)
+
+// Deprecated: does not propagate success/failure status to the collector.
+// Use GetCollector().RecordTaskExecuteTime(taskType, seconds, err) for
+// status-aware recording.
+func RecordTaskExecuteTime(taskType string, seconds float64) {
+	collector.RecordTaskExecuteTime(taskType, seconds, nil)
 }
-func RecordTaskUpdateTime(taskType string, seconds float64, err error) {
-	collector.RecordTaskUpdateTime(taskType, seconds, err)
+
+// Deprecated: does not propagate success/failure status to the collector.
+// Use GetCollector().RecordTaskUpdateTime(taskType, seconds, err) for
+// status-aware recording.
+func RecordTaskUpdateTime(taskType string, seconds float64) {
+	collector.RecordTaskUpdateTime(taskType, seconds, nil)
 }
 func RecordHTTPRequestTime(method, uri, status string, seconds float64) {
 	collector.RecordHTTPRequestTime(method, uri, status, seconds)

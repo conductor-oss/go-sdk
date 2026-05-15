@@ -367,15 +367,43 @@ checks `ShouldRecordHTTPRequests()` at request time and short-circuits to the
 inner transport when the capability is disabled (noop, legacy, or canonical with
 the env var set to `false`).
 
+The round-tripper is installed on every `APIClient` HTTP transport in
+`api_client.go`, including when legacy or noop collectors are active. When
+recording is disabled the overhead is a single `ShouldRecordHTTPRequests()`
+check (returns `false`) followed by a direct delegation to the inner
+transport -- one additional interface dispatch per HTTP request.
+
+### Context annotation for URI labels
+
+Every API resource method now calls `metrics.WithPathTemplate(ctx, template)`
+before building the URL path with `fmt.Sprintf`. This stores the parameterized
+path template (e.g. `/workflow/{workflowId}`) in the request context so the
+`metricsRoundTripper` can use it as the bounded-cardinality `uri` label.
+
+As a fallback, `executeCall` in `sdk/client/api_client.go` calls
+`metrics.WithRawPath(ctx, path)` when no template has been set. This covers
+API calls that do not have path parameters (the raw path IS the template) and
+any call sites not yet annotated.
+
+Both context enrichments use `context.WithValue`, adding one small allocation
+per API call regardless of whether metrics are active.
+
 ### Signature changes
 
-- `RecordTaskPollTime`, `RecordTaskExecuteTime`, `RecordTaskUpdateTime` now
-  take `(seconds float64, err error)`. Callers always pass seconds; the legacy
-  collector converts execute and update times back to milliseconds internally.
+- `RecordTaskPollTime`, `RecordTaskExecuteTime`, `RecordTaskUpdateTime`
+  package-level functions retain their original 2-argument signatures
+  `(taskType string, seconds float64)` and are marked `// Deprecated:`. They
+  delegate to the collector with a nil error (always records as SUCCESS in
+  canonical mode). The status-aware 3-argument signatures
+  `(taskType string, seconds float64, err error)` are available on the
+  `MetricsCollector` interface via `metrics.GetCollector()`. Internal SDK code
+  uses the 3-argument form through the interface. The legacy collector converts
+  execute and update times back to milliseconds internally.
 - `IncrementUncaughtException` now takes `recovered interface{}` instead of
-  `message string`. The canonical collector derives a bounded-cardinality
-  `exception` label via `fmt.Sprintf("%T", recovered)`; the legacy collector
-  ignores the argument.
+  `message string`. Existing callers passing string values are unaffected
+  (string satisfies `interface{}`). The canonical collector derives a
+  bounded-cardinality `exception` label via `fmt.Sprintf("%T", recovered)`;
+  the legacy collector ignores the argument.
 
 ### New worker instrumentation call sites
 
