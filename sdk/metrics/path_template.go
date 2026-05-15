@@ -12,6 +12,7 @@ package metrics
 import "context"
 
 type pathTemplateKey struct{}
+type rawPathKey struct{}
 
 // WithPathTemplate returns a derived context carrying the URI path template
 // (e.g. "/workflow/{workflowId}"). The metricsRoundTripper uses this value
@@ -24,6 +25,27 @@ func WithPathTemplate(ctx context.Context, template string) context.Context {
 // PathTemplateFromContext extracts the URI path template stored by
 // WithPathTemplate. Returns "" when the context carries no template.
 func PathTemplateFromContext(ctx context.Context) string {
-	v, _ := ctx.Value(pathTemplateKey{}).(string)
+	v, ok := ctx.Value(pathTemplateKey{}).(string)
+	if !ok {
+		return ""
+	}
+	return v
+}
+
+// WithRawPath returns a derived context carrying the pre-concatenation API
+// path (e.g. "/tasks"). This is set automatically by the HTTP client layer so
+// that the metricsRoundTripper can use the clean path when no explicit
+// template has been provided, avoiding the base-URL prefix in the uri label.
+func WithRawPath(ctx context.Context, path string) context.Context {
+	return context.WithValue(ctx, rawPathKey{}, path)
+}
+
+// RawPathFromContext extracts the raw API path stored by WithRawPath.
+// Returns "" when the context carries no raw path.
+func RawPathFromContext(ctx context.Context) string {
+	v, ok := ctx.Value(rawPathKey{}).(string)
+	if !ok {
+		return ""
+	}
 	return v
 }

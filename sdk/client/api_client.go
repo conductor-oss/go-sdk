@@ -31,6 +31,7 @@ import (
 
 	"github.com/conductor-sdk/conductor-go/sdk/authentication"
 	"github.com/conductor-sdk/conductor-go/sdk/log"
+	"github.com/conductor-sdk/conductor-go/sdk/metrics"
 	"github.com/conductor-sdk/conductor-go/sdk/settings"
 )
 
@@ -423,6 +424,10 @@ func (c *APIClient) executeCall(ctx context.Context, method, path string, queryP
 
 	// Set accept header for all requests
 	headers["Accept"] = "application/json"
+
+	if metrics.PathTemplateFromContext(ctx) == "" {
+		ctx = metrics.WithRawPath(ctx, path)
+	}
 
 	// Prepare the request
 	req, err := c.prepareRequest(ctx, path, method, body, headers, queryParams, nil, "", nil)

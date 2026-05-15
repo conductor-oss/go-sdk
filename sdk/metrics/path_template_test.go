@@ -41,3 +41,26 @@ func TestPathTemplate_DoesNotAffectParent(t *testing.T) {
 	assert.Equal(t, "", PathTemplateFromContext(parent))
 	assert.Equal(t, "/workflow/{workflowId}", PathTemplateFromContext(child))
 }
+
+func TestRawPath_RoundTrip(t *testing.T) {
+	ctx := WithRawPath(context.Background(), "/tasks")
+	assert.Equal(t, "/tasks", RawPathFromContext(ctx))
+}
+
+func TestRawPath_EmptyContext(t *testing.T) {
+	assert.Equal(t, "", RawPathFromContext(context.Background()))
+}
+
+func TestRawPath_DoesNotAffectTemplate(t *testing.T) {
+	ctx := context.Background()
+	ctx = WithRawPath(ctx, "/tasks")
+	ctx = WithPathTemplate(ctx, "/workflow/{workflowId}")
+	assert.Equal(t, "/workflow/{workflowId}", PathTemplateFromContext(ctx))
+	assert.Equal(t, "/tasks", RawPathFromContext(ctx))
+}
+
+func TestRawPath_TemplateDoesNotAffectRawPath(t *testing.T) {
+	ctx := context.Background()
+	ctx = WithPathTemplate(ctx, "/workflow/{workflowId}")
+	assert.Equal(t, "", RawPathFromContext(ctx))
+}

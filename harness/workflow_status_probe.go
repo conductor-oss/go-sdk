@@ -36,7 +36,7 @@ func NewWorkflowStatusProbe(workflowClient client.WorkflowClient, callsPerSecond
 	return &WorkflowStatusProbe{
 		workflowClient: workflowClient,
 		callsPerSecond: callsPerSecond,
-		rng:            rand.New(rand.NewSource(time.Now().UnixNano())),
+		rng:            rand.New(rand.NewSource(time.Now().UnixNano())), //nolint:gosec // jitter only, not security
 	}
 }
 
@@ -95,9 +95,15 @@ func (p *WorkflowStatusProbe) tick(ctx context.Context) {
 
 	for _, id := range ids {
 		if p.rng.Float64() < 0.5 {
-			_, _, _ = p.workflowClient.GetExecutionStatus(ctx, id, nil)
+			_, _, err := p.workflowClient.GetExecutionStatus(ctx, id, nil)
+			if err != nil {
+				fmt.Printf("probe: GetExecutionStatus(%s): %v\n", id, err)
+			}
 		} else {
-			_, _, _ = p.workflowClient.GetWorkflowState(ctx, id, false, false)
+			_, _, err := p.workflowClient.GetWorkflowState(ctx, id, false, false)
+			if err != nil {
+				fmt.Printf("probe: GetWorkflowState(%s): %v\n", id, err)
+			}
 		}
 	}
 }

@@ -44,6 +44,9 @@ func (m *metricsRoundTripper) RoundTrip(req *http.Request) (*http.Response, erro
 
 	method := req.Method
 	uri := metrics.PathTemplateFromContext(req.Context())
+	if uri == "" {
+		uri = metrics.RawPathFromContext(req.Context())
+	}
 	if uri == "" && req.URL != nil {
 		uri = req.URL.Path
 	}
