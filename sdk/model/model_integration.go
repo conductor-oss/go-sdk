@@ -8,20 +8,19 @@
 // specific language governing permissions and limitations under the License.
 package model
 
-    
-    type Integration struct {
-            Apis []IntegrationApi `json:"apis,omitempty"`
-            Category string `json:"category,omitempty"`
-            Configuration map[string]interface{} `json:"configuration,omitempty"`
-            CreateTime int64 `json:"createTime,omitempty"`
-            CreatedBy string `json:"createdBy,omitempty"`
-            Description string `json:"description,omitempty"`
-            Enabled bool `json:"enabled,omitempty"`
-            ModelsCount int64 `json:"modelsCount,omitempty"`
-            Name string `json:"name,omitempty"`
-            OwnerApp string `json:"ownerApp,omitempty"`
-            Tags []Tag `json:"tags,omitempty"`
-            Type_ string `json:"type,omitempty"`
-            UpdateTime int64 `json:"updateTime,omitempty"`
-            UpdatedBy string `json:"updatedBy,omitempty"`
-    }
+type Integration struct {
+	Apis          []IntegrationApi       `json:"apis,omitempty"`
+	Category      string                 `json:"category,omitempty"`
+	Configuration map[string]interface{} `json:"configuration,omitempty"`
+	CreateTime    int64                  `json:"createTime,omitempty"`
+	CreatedBy     string                 `json:"createdBy,omitempty"`
+	Description   string                 `json:"description,omitempty"`
+	Enabled       bool                   `json:"enabled,omitempty"`
+	ModelsCount   int64                  `json:"modelsCount,omitempty"`
+	Name          string                 `json:"name,omitempty"`
+	OwnerApp      string                 `json:"ownerApp,omitempty"`
+	Tags          []Tag                  `json:"tags,omitempty"`
+	Type_         string                 `json:"type,omitempty"`
+	UpdateTime    int64                  `json:"updateTime,omitempty"`
+	UpdatedBy     string                 `json:"updatedBy,omitempty"`
+}

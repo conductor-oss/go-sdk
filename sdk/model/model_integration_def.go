@@ -8,15 +8,14 @@
 // specific language governing permissions and limitations under the License.
 package model
 
-    
-    type IntegrationDef struct {
-            Category string `json:"category,omitempty"`
-            CategoryLabel string `json:"categoryLabel,omitempty"`
-            Configuration []IntegrationDefFormField `json:"configuration,omitempty"`
-            Description string `json:"description,omitempty"`
-            Enabled bool `json:"enabled,omitempty"`
-            IconName string `json:"iconName,omitempty"`
-            Name string `json:"name,omitempty"`
-            Tags []string `json:"tags,omitempty"`
-            Type_ string `json:"type,omitempty"`
-    }
+type IntegrationDef struct {
+	Category      string                    `json:"category,omitempty"`
+	CategoryLabel string                    `json:"categoryLabel,omitempty"`
+	Configuration []IntegrationDefFormField `json:"configuration,omitempty"`
+	Description   string                    `json:"description,omitempty"`
+	Enabled       bool                      `json:"enabled,omitempty"`
+	IconName      string                    `json:"iconName,omitempty"`
+	Name          string                    `json:"name,omitempty"`
+	Tags          []string                  `json:"tags,omitempty"`
+	Type_         string                    `json:"type,omitempty"`
+}

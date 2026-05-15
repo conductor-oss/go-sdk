@@ -178,6 +178,7 @@ func IncrementExternalPayloadUsed(entityName, operation, payloadType string) {
 func IncrementWorkflowStartError(workflowType string, err error) {
 	collector.IncrementWorkflowStartError(workflowType, err)
 }
+
 // Deprecated: does not propagate success/failure status to the collector.
 // Use GetCollector().RecordTaskPollTime(taskType, seconds, err) for
 // status-aware recording.
