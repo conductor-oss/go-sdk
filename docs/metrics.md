@@ -28,6 +28,12 @@ go metrics.ProvideMetrics(settings.NewDefaultMetricsSettings())
 been initialized. `InitCollector` reads the environment variables, creates the
 appropriate collector, registers Prometheus metrics, and enables collection.
 
+Running `ProvideMetrics` in a goroutine is concurrency-safe even while workers
+are already polling: the collector is published atomically, so readers never
+race with initialization. The only trade-off is that metrics emitted before
+initialization completes are dropped. If you need first-poll coverage, call
+`metrics.InitCollector()` synchronously before starting workers (see below).
+
 To customize the port or endpoint:
 
 ```go

@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync/atomic"
 
 	"github.com/conductor-sdk/conductor-go/sdk/log"
 )
@@ -67,14 +68,21 @@ type MetricsCollector interface {
 	ShouldRecordHTTPRequests() bool
 }
 
-// collector is the package-level singleton. Before ProvideMetrics is called it
-// is a noopCollector so all metric calls are safe to make at any time.
-var collector MetricsCollector = &noopCollector{}
+// collectorPtr holds the package-level singleton. It is published atomically so
+// readers on the worker/round-tripper hot paths never race with InitCollector.
+// Before ProvideMetrics is called it points at a noopCollector, so all metric
+// calls are safe to make at any time.
+var collectorPtr atomic.Pointer[MetricsCollector]
+
+func init() {
+	var c MetricsCollector = &noopCollector{}
+	collectorPtr.Store(&c)
+}
 
 // GetCollector returns the active MetricsCollector. Useful for callers that
 // want to hold a typed reference rather than going through package functions.
 func GetCollector() MetricsCollector {
-	return collector
+	return *collectorPtr.Load()
 }
 
 // envBoolTruthy returns true when the named environment variable is set to
@@ -144,73 +152,75 @@ func statusLabel(err error) string {
 }
 
 // ---------------------------------------------------------------------------
-// Package-level convenience functions — delegate to the singleton collector.
+// Package-level convenience functions — delegate to the active collector.
 // These preserve the existing call-site API so no import changes are needed.
 // ---------------------------------------------------------------------------
 
-func IncrementTaskPoll(taskType string) { collector.IncrementTaskPoll(taskType) }
+func IncrementTaskPoll(taskType string) { GetCollector().IncrementTaskPoll(taskType) }
 func IncrementTaskPollError(taskType string, err error) {
-	collector.IncrementTaskPollError(taskType, err)
+	GetCollector().IncrementTaskPollError(taskType, err)
 }
 func IncrementTaskExecutionStarted(taskType string) {
-	collector.IncrementTaskExecutionStarted(taskType)
+	GetCollector().IncrementTaskExecutionStarted(taskType)
 }
 func IncrementTaskExecuteError(taskType string, err error) {
-	collector.IncrementTaskExecuteError(taskType, err)
+	GetCollector().IncrementTaskExecuteError(taskType, err)
 }
 func IncrementTaskUpdateError(taskType string, err error) {
-	collector.IncrementTaskUpdateError(taskType, err)
+	GetCollector().IncrementTaskUpdateError(taskType, err)
 }
 func IncrementTaskAckError(taskType string, err error) {
-	collector.IncrementTaskAckError(taskType, err)
+	GetCollector().IncrementTaskAckError(taskType, err)
 }
-func IncrementTaskAckFailed(taskType string) { collector.IncrementTaskAckFailed(taskType) }
+func IncrementTaskAckFailed(taskType string) { GetCollector().IncrementTaskAckFailed(taskType) }
 func IncrementTaskExecutionQueueFull(taskType string) {
-	collector.IncrementTaskExecutionQueueFull(taskType)
+	GetCollector().IncrementTaskExecutionQueueFull(taskType)
 }
-func IncrementTaskPaused(taskType string) { collector.IncrementTaskPaused(taskType) }
+func IncrementTaskPaused(taskType string) { GetCollector().IncrementTaskPaused(taskType) }
 func IncrementUncaughtException(recovered interface{}) {
-	collector.IncrementUncaughtException(recovered)
+	GetCollector().IncrementUncaughtException(recovered)
 }
 func IncrementExternalPayloadUsed(entityName, operation, payloadType string) {
-	collector.IncrementExternalPayloadUsed(entityName, operation, payloadType)
+	GetCollector().IncrementExternalPayloadUsed(entityName, operation, payloadType)
 }
 func IncrementWorkflowStartError(workflowType string, err error) {
-	collector.IncrementWorkflowStartError(workflowType, err)
+	GetCollector().IncrementWorkflowStartError(workflowType, err)
 }
 
 // Deprecated: does not propagate success/failure status to the collector.
 // Use GetCollector().RecordTaskPollTime(taskType, seconds, err) for
 // status-aware recording.
 func RecordTaskPollTime(taskType string, seconds float64) {
-	collector.RecordTaskPollTime(taskType, seconds, nil)
+	GetCollector().RecordTaskPollTime(taskType, seconds, nil)
 }
 
 // Deprecated: does not propagate success/failure status to the collector.
 // Use GetCollector().RecordTaskExecuteTime(taskType, seconds, err) for
 // status-aware recording.
 func RecordTaskExecuteTime(taskType string, seconds float64) {
-	collector.RecordTaskExecuteTime(taskType, seconds, nil)
+	GetCollector().RecordTaskExecuteTime(taskType, seconds, nil)
 }
 
 // Deprecated: does not propagate success/failure status to the collector.
 // Use GetCollector().RecordTaskUpdateTime(taskType, seconds, err) for
 // status-aware recording.
 func RecordTaskUpdateTime(taskType string, seconds float64) {
-	collector.RecordTaskUpdateTime(taskType, seconds, nil)
+	GetCollector().RecordTaskUpdateTime(taskType, seconds, nil)
 }
 func RecordHTTPRequestTime(method, uri, status string, seconds float64) {
-	collector.RecordHTTPRequestTime(method, uri, status, seconds)
+	GetCollector().RecordHTTPRequestTime(method, uri, status, seconds)
 }
 func RecordTaskResultPayloadSize(taskType string, bytes float64) {
-	collector.RecordTaskResultPayloadSize(taskType, bytes)
+	GetCollector().RecordTaskResultPayloadSize(taskType, bytes)
 }
 func RecordWorkflowInputPayloadSize(workflowType, version string, bytes float64) {
-	collector.RecordWorkflowInputPayloadSize(workflowType, version, bytes)
+	GetCollector().RecordWorkflowInputPayloadSize(workflowType, version, bytes)
 }
-func SetActiveWorkers(taskType string, count float64) { collector.SetActiveWorkers(taskType, count) }
-func ShouldRecordPayloadSize() bool                   { return collector.ShouldRecordPayloadSize() }
-func ShouldRecordHTTPRequests() bool                  { return collector.ShouldRecordHTTPRequests() }
+func SetActiveWorkers(taskType string, count float64) {
+	GetCollector().SetActiveWorkers(taskType, count)
+}
+func ShouldRecordPayloadSize() bool  { return GetCollector().ShouldRecordPayloadSize() }
+func ShouldRecordHTTPRequests() bool { return GetCollector().ShouldRecordHTTPRequests() }
 
 // ---------------------------------------------------------------------------
 // noopCollector — all methods are no-ops. Used as the default before

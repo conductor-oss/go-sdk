@@ -16,7 +16,7 @@ import (
 var counterByName = map[MetricName]*prometheus.CounterVec{}
 
 func incrementCounter(metricName MetricName, labelValues []string) {
-	if !collectionEnabled {
+	if !collectionEnabled.Load() {
 		return
 	}
 

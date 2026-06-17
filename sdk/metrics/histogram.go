@@ -27,7 +27,7 @@ var CanonicalSizeBuckets = []float64{
 var histogramByName = map[MetricName]*prometheus.HistogramVec{}
 
 func observeHistogram(metricName MetricName, labelValues []string, value float64) {
-	if !collectionEnabled {
+	if !collectionEnabled.Load() {
 		return
 	}
 	hist := getHistogram(metricName, labelValues)

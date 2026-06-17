@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
+	"sync/atomic"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -21,7 +22,7 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/settings"
 )
 
-var collectionEnabled bool = false
+var collectionEnabled atomic.Bool
 
 var initOnce = &sync.Once{}
 
@@ -35,9 +36,13 @@ func resetInitOnce() {
 // Safe to call from multiple goroutines; only the first call takes effect.
 func InitCollector() {
 	initOnce.Do(func() {
-		collector = NewCollector()
-		collector.Register()
-		collectionEnabled = true
+		c := NewCollector()
+		// Register() populates the package-level metric maps. It must run before
+		// the collector is published so the atomic store below happens-after the
+		// map writes, giving readers a happens-before edge to the populated maps.
+		c.Register()
+		collectorPtr.Store(&c)
+		collectionEnabled.Store(true)
 	})
 }
 

@@ -13,22 +13,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// setCollector publishes c as the active collector. Test-only helper mirroring
+// the atomic publication done by InitCollector.
+func setCollector(c MetricsCollector) {
+	collectorPtr.Store(&c)
+}
+
 // resetState isolates each test by clearing package-level maps, disabling
 // collection, restoring the noop collector, and installing a fresh Prometheus
 // registry so MustRegister never collides with a previous test.
 func resetState(t *testing.T) {
 	t.Helper()
 
-	origCollector := collector
-	origEnabled := collectionEnabled
+	origCollector := GetCollector()
+	origEnabled := collectionEnabled.Load()
 	origRegisterer := prometheus.DefaultRegisterer
 	origGatherer := prometheus.DefaultGatherer
 
 	counterByName = map[MetricName]*prometheus.CounterVec{}
 	histogramByName = map[MetricName]*prometheus.HistogramVec{}
 	gaugeByName = map[MetricName]*prometheus.GaugeVec{}
-	collectionEnabled = false
-	collector = &noopCollector{}
+	collectionEnabled.Store(false)
+	setCollector(&noopCollector{})
 	resetInitOnce()
 
 	reg := prometheus.NewRegistry()
@@ -36,8 +42,8 @@ func resetState(t *testing.T) {
 	prometheus.DefaultGatherer = reg
 
 	t.Cleanup(func() {
-		collector = origCollector
-		collectionEnabled = origEnabled
+		setCollector(origCollector)
+		collectionEnabled.Store(origEnabled)
 		resetInitOnce()
 		counterByName = map[MetricName]*prometheus.CounterVec{}
 		histogramByName = map[MetricName]*prometheus.HistogramVec{}
@@ -265,7 +271,7 @@ func TestCanonicalCollector_RegisterAndMethods(t *testing.T) {
 	resetState(t)
 	c := &canonicalCollector{recordPayloadSize: true, recordHTTPRequests: true}
 	c.Register()
-	collectionEnabled = true
+	collectionEnabled.Store(true)
 
 	assert.Equal(t, "canonical", c.CollectorName())
 
@@ -351,7 +357,7 @@ func TestLegacyCollector_RegisterAndMethods(t *testing.T) {
 	resetState(t)
 	l := &legacyCollector{}
 	l.Register()
-	collectionEnabled = true
+	collectionEnabled.Store(true)
 
 	assert.Equal(t, "legacy", l.CollectorName())
 
@@ -484,8 +490,8 @@ func TestInitCollector(t *testing.T) {
 
 	InitCollector()
 
-	assert.True(t, collectionEnabled)
-	assert.Equal(t, "legacy", collector.CollectorName())
+	assert.True(t, collectionEnabled.Load())
+	assert.Equal(t, "legacy", GetCollector().CollectorName())
 }
 
 func TestInitCollector_Canonical(t *testing.T) {
@@ -495,8 +501,8 @@ func TestInitCollector_Canonical(t *testing.T) {
 
 	InitCollector()
 
-	assert.True(t, collectionEnabled)
-	assert.Equal(t, "canonical", collector.CollectorName())
+	assert.True(t, collectionEnabled.Load())
+	assert.Equal(t, "canonical", GetCollector().CollectorName())
 }
 
 func TestInitCollector_ConcurrentSafe(t *testing.T) {
@@ -513,8 +519,48 @@ func TestInitCollector_ConcurrentSafe(t *testing.T) {
 	}
 	wg.Wait()
 
-	assert.True(t, collectionEnabled)
-	assert.Equal(t, "legacy", collector.CollectorName())
+	assert.True(t, collectionEnabled.Load())
+	assert.Equal(t, "legacy", GetCollector().CollectorName())
+}
+
+// TestInitCollector_RaceWithReaders forces the interleaving that the singleton
+// publication has to be safe against: worker/round-tripper hot-path readers
+// hitting the package-level collector while InitCollector publishes a new one.
+// Run with `go test -race` to catch any unsynchronized access to the collector,
+// the collectionEnabled flag, or the metric maps populated by Register().
+func TestInitCollector_RaceWithReaders(t *testing.T) {
+	resetState(t)
+	os.Unsetenv("WORKER_CANONICAL_METRICS")
+
+	const readers = 8
+	start := make(chan struct{})
+	var wg sync.WaitGroup
+
+	for i := 0; i < readers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			<-start
+			for j := 0; j < 2000; j++ {
+				IncrementTaskPoll("race_task")
+				GetCollector().RecordTaskPollTime("race_task", 0.01, nil)
+				_ = ShouldRecordHTTPRequests()
+			}
+		}()
+	}
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		<-start
+		InitCollector()
+	}()
+
+	close(start)
+	wg.Wait()
+
+	assert.True(t, collectionEnabled.Load())
+	assert.Equal(t, "legacy", GetCollector().CollectorName())
 }
 
 func TestHandlePanicError_NoPanic(t *testing.T) {
@@ -557,8 +603,8 @@ func TestPrometheusOutput_HttpMetric_TemplateURI(t *testing.T) {
 	resetState(t)
 	c := &canonicalCollector{recordPayloadSize: true, recordHTTPRequests: true}
 	c.Register()
-	collectionEnabled = true
-	collector = c
+	collectionEnabled.Store(true)
+	setCollector(c)
 
 	RecordHTTPRequestTime("GET", "/workflow/{workflowId}", "200", 0.042)
 
@@ -585,8 +631,8 @@ func TestPrometheusOutput_HttpMetric_BoundedCardinality(t *testing.T) {
 	resetState(t)
 	c := &canonicalCollector{recordPayloadSize: true, recordHTTPRequests: true}
 	c.Register()
-	collectionEnabled = true
-	collector = c
+	collectionEnabled.Store(true)
+	setCollector(c)
 
 	for i := 0; i < 100; i++ {
 		RecordHTTPRequestTime("GET", "/workflow/{workflowId}", "200", 0.01)
@@ -616,8 +662,8 @@ func TestPrometheusOutput_HttpMetric_MultipleEndpoints(t *testing.T) {
 	resetState(t)
 	c := &canonicalCollector{recordPayloadSize: true, recordHTTPRequests: true}
 	c.Register()
-	collectionEnabled = true
-	collector = c
+	collectionEnabled.Store(true)
+	setCollector(c)
 
 	RecordHTTPRequestTime("GET", "/workflow/{workflowId}", "200", 0.01)
 	RecordHTTPRequestTime("POST", "/tasks/{taskId}/log", "200", 0.02)
@@ -648,8 +694,8 @@ func TestPrometheusOutput_HttpMetric_ErrorStatus(t *testing.T) {
 	resetState(t)
 	c := &canonicalCollector{recordPayloadSize: true, recordHTTPRequests: true}
 	c.Register()
-	collectionEnabled = true
-	collector = c
+	collectionEnabled.Store(true)
+	setCollector(c)
 
 	RecordHTTPRequestTime("GET", "/workflow/{workflowId}", "0", 0.1)
 

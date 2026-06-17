@@ -16,7 +16,7 @@ import (
 var gaugeByName = map[MetricName]*prometheus.GaugeVec{}
 
 func setGauge(metricName MetricName, labelValues []string, value float64) {
-	if !collectionEnabled {
+	if !collectionEnabled.Load() {
 		return
 	}
 
