@@ -21,7 +21,7 @@ func incrementCounter(metricName MetricName, labelValues []string) {
 	}
 
 	counter := getCounter(metricName, labelValues)
-	if *counter != nil {
+	if counter != nil && *counter != nil {
 		(*counter).Inc()
 	}
 }
