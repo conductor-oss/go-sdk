@@ -13,6 +13,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/conductor-sdk/conductor-go/sdk/metrics"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 
 	"net/http"
@@ -46,6 +47,7 @@ WebhooksConfigResourceApiService Delete a tag for webhook id
   - @param body
 */
 func (a *WebhooksConfigResourceApiService) DeleteTagForWebhook(ctx context.Context, id string, body []model.Tag) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/metadata/webhook/{id}/tags")
 	path := fmt.Sprintf("/metadata/webhook/%s/tags", id)
 
 	resp, err := a.DeleteWithBody(ctx, path, body, nil)
@@ -61,6 +63,7 @@ WebhooksConfigResourceApiService
   - @param id
 */
 func (a *WebhooksConfigResourceApiService) DeleteWebhook(ctx context.Context, id string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/metadata/webhook/{id}")
 	path := fmt.Sprintf("/metadata/webhook/%s", id)
 
 	resp, err := a.Delete(ctx, path, nil, nil)
@@ -96,6 +99,7 @@ WebhooksConfigResourceApiService Get tags by webhook id
 func (a *WebhooksConfigResourceApiService) GetTagsForWebhook(ctx context.Context, id string) ([]model.Tag, *http.Response, error) {
 	var result []model.Tag
 
+	ctx = metrics.WithPathTemplate(ctx, "/metadata/webhook/{id}/tags")
 	path := fmt.Sprintf("/metadata/webhook/%s/tags", id)
 	resp, err := a.Get(ctx, path, nil, &result)
 	if err != nil {
@@ -113,6 +117,7 @@ WebhooksConfigResourceApiService
 func (a *WebhooksConfigResourceApiService) GetWebhook(ctx context.Context, id string) (model.WebhookConfig, *http.Response, error) {
 	var result model.WebhookConfig
 
+	ctx = metrics.WithPathTemplate(ctx, "/metadata/webhook/{id}")
 	path := fmt.Sprintf("/metadata/webhook/%s", id)
 	resp, err := a.Get(ctx, path, nil, &result)
 	if err != nil {
@@ -128,6 +133,7 @@ WebhooksConfigResourceApiService Put a tag to webhook id
   - @param id
 */
 func (a *WebhooksConfigResourceApiService) PutTagForWebhook(ctx context.Context, body []model.Tag, id string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/metadata/webhook/{id}/tags")
 	path := fmt.Sprintf("/metadata/webhook/%s/tags", id)
 	resp, err := a.Put(ctx, path, body, nil)
 	if err != nil {
@@ -146,6 +152,7 @@ WebhooksConfigResourceApiService
 func (a *WebhooksConfigResourceApiService) UpdateWebhook(ctx context.Context, body model.WebhookConfig, id string) (model.WebhookConfig, *http.Response, error) {
 	var result model.WebhookConfig
 
+	ctx = metrics.WithPathTemplate(ctx, "/metadata/webhook/{id}")
 	path := fmt.Sprintf("/metadata/webhook/%s", id)
 	resp, err := a.Put(ctx, path, body, &result)
 	if err != nil {

@@ -19,6 +19,7 @@ import (
 	"sync"
 
 	"github.com/antihax/optional"
+	"github.com/conductor-sdk/conductor-go/sdk/metrics"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
@@ -92,6 +93,7 @@ type TaskResourceApiBatchPollOpts struct {
 func (a *TaskResourceApiService) BatchPoll(ctx context.Context, tasktype string, localVarOptionals *TaskResourceApiBatchPollOpts) ([]model.Task, *http.Response, error) {
 	var result []model.Task
 
+	ctx = metrics.WithPathTemplate(ctx, "/tasks/poll/batch/{tasktype}")
 	path := fmt.Sprintf("/tasks/poll/batch/%s", tasktype)
 
 	queryParams := url.Values{}
@@ -192,6 +194,7 @@ TaskResourceApiService Get task by Id
 func (a *TaskResourceApiService) GetTask(ctx context.Context, taskId string) (model.Task, *http.Response, error) {
 	var result model.Task
 
+	ctx = metrics.WithPathTemplate(ctx, "/tasks/{taskId}")
 	path := fmt.Sprintf("/tasks/%s", taskId)
 	resp, err := a.Get(ctx, path, nil, &result)
 	if err != nil {
@@ -211,6 +214,7 @@ TaskResourceApiService Get Task Execution Logs
 func (a *TaskResourceApiService) GetTaskLogs(ctx context.Context, taskId string) ([]model.TaskExecLog, *http.Response, error) {
 	var result []model.TaskExecLog
 
+	ctx = metrics.WithPathTemplate(ctx, "/tasks/{taskId}/log")
 	path := fmt.Sprintf("/tasks/%s/log", taskId)
 	resp, err := a.Get(ctx, path, nil, &result)
 	if err != nil {
@@ -227,6 +231,7 @@ TaskResourceApiService Log Task Execution Details
 */
 func (a *TaskResourceApiService) Log(ctx context.Context, body string, taskId string) (*http.Response, error) {
 
+	ctx = metrics.WithPathTemplate(ctx, "/tasks/{taskId}/log")
 	path := fmt.Sprintf("/tasks/%s/log", taskId)
 	resp, err := a.Post(ctx, path, body, nil)
 	if err != nil {
@@ -253,6 +258,7 @@ type TaskResourceApiPollOpts struct {
 func (a *TaskResourceApiService) Poll(ctx context.Context, tasktype string, opts *TaskResourceApiPollOpts) (model.Task, *http.Response, error) {
 	var result model.Task
 
+	ctx = metrics.WithPathTemplate(ctx, "/tasks/poll/{tasktype}")
 	path := fmt.Sprintf("/tasks/poll/%s", tasktype)
 
 	queryParams := url.Values{}
@@ -281,6 +287,7 @@ TaskResourceApiService Requeue pending tasks
 func (a *TaskResourceApiService) RequeuePendingTask(ctx context.Context, taskType string) (string, *http.Response, error) {
 	var result string
 
+	ctx = metrics.WithPathTemplate(ctx, "/tasks/queue/requeue/{taskType}")
 	path := fmt.Sprintf("/tasks/queue/requeue/%s", taskType)
 	resp, err := a.Post(ctx, path, nil, &result)
 	if err != nil {
@@ -456,6 +463,7 @@ type TaskResourceApiUpdateTaskSyncOpts struct {
 func (a *TaskResourceApiService) UpdateTaskSync(ctx context.Context, body map[string]interface{}, workflowId string, taskRefName string, status string, localVarOptionals *TaskResourceApiUpdateTaskSyncOpts) (model.Workflow, *http.Response, error) {
 	var result model.Workflow
 
+	ctx = metrics.WithPathTemplate(ctx, "/tasks/{workflowId}/{taskRefName}/{status}/sync")
 	path := fmt.Sprintf("/tasks/%v/%v/%v/sync", workflowId, taskRefName, status)
 
 	resp, err := a.Post(ctx, path, body, &result)
@@ -475,6 +483,7 @@ TaskResourceApiService SignalAsync workflow to update running task in the workfl
 */
 func (a *TaskResourceApiService) SignalAsync(ctx context.Context, body map[string]interface{}, workflowId string, status string) (*http.Response, error) {
 	// create path and map variables
+	ctx = metrics.WithPathTemplate(ctx, "/tasks/{workflowId}/{status}/signal")
 	path := fmt.Sprintf("/tasks/%v/%v/signal", workflowId, status)
 
 	resp, err := a.Post(ctx, path, body, &struct{}{})
@@ -503,6 +512,7 @@ func (a *TaskResourceApiService) signalWorkflowTaskWithReturnStrategy(
 	)
 
 	// create path and map variables
+	ctx = metrics.WithPathTemplate(ctx, "/tasks/{workflowId}/{status}/signal/sync")
 	localVarPath := fmt.Sprintf("/tasks/%v/%v/signal/sync", workflowId, status)
 
 	localVarHeaderParams := make(map[string]string)
@@ -619,6 +629,7 @@ func (a *TaskResourceApiService) UpdateTaskByRefNameWithWorkerId(ctx context.Con
 func (a *TaskResourceApiService) updateTaskByRefName(ctx context.Context, body map[string]interface{}, workflowId string, taskRefName string, status string, workerId optional.String) (string, *http.Response, error) {
 	var result string
 
+	ctx = metrics.WithPathTemplate(ctx, "/tasks/{workflowId}/{taskRefName}/{status}")
 	localVarPath := fmt.Sprintf("/tasks/%s/%s/%s", workflowId, taskRefName, status)
 
 	queryParams := url.Values{}

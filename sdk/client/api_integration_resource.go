@@ -13,6 +13,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/antihax/optional"
+	"github.com/conductor-sdk/conductor-go/sdk/metrics"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/sdk/model/integration"
 	"net/http"
@@ -32,6 +33,7 @@ IntegrationResourceApiService Associate a Prompt Template with an Integration
   - @param promptName
 */
 func (a *IntegrationResourceApiService) AssociatePromptWithIntegration(ctx context.Context, integrationProvider string, integrationName string, promptName string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/integrations/provider/{integrationProvider}/integration/{integrationName}/prompt/{promptName}")
 	path := fmt.Sprintf("/integrations/provider/%s/integration/%s/prompt/%s", integrationProvider, integrationName, promptName)
 
 	resp, err := a.Post(ctx, path, nil, nil)
@@ -49,6 +51,7 @@ IntegrationResourceApiService Delete an Integration
   - @param integrationName
 */
 func (a *IntegrationResourceApiService) DeleteIntegrationApi(ctx context.Context, name string, integrationName string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/integrations/provider/{name}/integration/{integrationName}")
 	path := fmt.Sprintf("/integrations/provider/%s/integration/%s", name, integrationName)
 
 	resp, err := a.Delete(ctx, path, nil, nil)
@@ -65,6 +68,7 @@ IntegrationResourceApiService Delete an Integration Provider
   - @param name
 */
 func (a *IntegrationResourceApiService) DeleteIntegrationProvider(ctx context.Context, name string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/integrations/provider/{name}")
 	path := fmt.Sprintf("/integrations/provider/%s", name)
 	resp, err := a.Delete(ctx, path, nil, nil)
 	if err != nil {
@@ -82,6 +86,7 @@ IntegrationResourceApiService Delete a tag for Integration
   - @param integrationName
 */
 func (a *IntegrationResourceApiService) DeleteTagForIntegration(ctx context.Context, tags []model.TagObject, name string, model string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/integrations/provider/{name}/integration/{model}/tags")
 	path := fmt.Sprintf("/integrations/provider/%s/integration/%s/tags", name, model)
 	resp, err := a.DeleteWithBody(ctx, path, tags, nil)
 	if err != nil {
@@ -97,6 +102,7 @@ IntegrationResourceApiService Delete a tag for Integration Provider
   - @param name
 */
 func (a *IntegrationResourceApiService) DeleteTagForIntegrationProvider(ctx context.Context, tags []model.TagObject, name string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/integrations/provider/{name}/tags")
 	path := fmt.Sprintf("/integrations/provider/%s/tags", name)
 
 	resp, err := a.DeleteWithBody(ctx, path, tags, nil)
@@ -118,6 +124,7 @@ IntegrationResourceApiService Get Integration details
 func (a *IntegrationResourceApiService) GetIntegrationApi(ctx context.Context, name string, model string) (integration.IntegrationApi, *http.Response, error) {
 	var result integration.IntegrationApi
 
+	ctx = metrics.WithPathTemplate(ctx, "/integrations/provider/{name}/integration/{model}")
 	path := fmt.Sprintf("/integrations/provider/%s/integration/%s", name, model)
 
 	resp, err := a.Get(ctx, path, nil, &result)
@@ -138,6 +145,7 @@ IntegrationResourceApiService Get Integrations of an Integration Provider
 
 func (a *IntegrationResourceApiService) GetIntegrationApis(ctx context.Context, name string, ActiveOnly optional.Bool) ([]integration.IntegrationApi, *http.Response, error) {
 	var result []integration.IntegrationApi
+	ctx = metrics.WithPathTemplate(ctx, "/integrations/provider/{name}/integration")
 	path := fmt.Sprintf("/integrations/provider/%s/integration", name)
 
 	queryParams := url.Values{}
@@ -161,6 +169,7 @@ IntegrationResourceApiService Get Integrations Available for an Integration Prov
 */
 func (a *IntegrationResourceApiService) GetIntegrationAvailableApis(ctx context.Context, name string) ([]string, *http.Response, error) {
 	var result []string
+	ctx = metrics.WithPathTemplate(ctx, "/integrations/provider/{name}/integration/all")
 	path := fmt.Sprintf("/integrations/provider/%s/integration/all", name)
 	resp, err := a.Get(ctx, path, nil, &result)
 	if err != nil {
@@ -180,6 +189,7 @@ IntegrationResourceApiService Get Integration provider
 func (a *IntegrationResourceApiService) GetIntegrationProvider(ctx context.Context, name string) (integration.Integration, *http.Response, error) {
 	var result integration.Integration
 
+	ctx = metrics.WithPathTemplate(ctx, "/integrations/provider/{name}")
 	path := fmt.Sprintf("/integrations/provider/%s", name)
 
 	resp, err := a.Get(ctx, path, nil, &result)
@@ -233,6 +243,7 @@ IntegrationResourceApiService Get the list of prompt templates associated with a
 func (a *IntegrationResourceApiService) GetPromptsWithIntegration(ctx context.Context, integrationProvider string, integrationName string) ([]integration.PromptTemplate, *http.Response, error) {
 	var result []integration.PromptTemplate
 
+	ctx = metrics.WithPathTemplate(ctx, "/integrations/provider/{integrationProvider}/integration/{integrationName}/prompt")
 	path := fmt.Sprintf("/integrations/provider/%s/integration/%s/prompt", integrationProvider, integrationName)
 
 	resp, err := a.Get(ctx, path, nil, &result)
@@ -289,6 +300,7 @@ IntegrationResourceApiService Get tags by Integration
 func (a *IntegrationResourceApiService) GetTagsForIntegration(ctx context.Context, name string, integrationName string) ([]model.TagObject, *http.Response, error) {
 	var result []model.TagObject
 
+	ctx = metrics.WithPathTemplate(ctx, "/integrations/provider/{name}/integration/{integrationName}/tags")
 	path := fmt.Sprintf("/integrations/provider/%s/integration/%s/tags", name, integrationName)
 
 	resp, err := a.Get(ctx, path, nil, &result)
@@ -309,6 +321,7 @@ IntegrationResourceApiService Get tags by Integration Provider
 func (a *IntegrationResourceApiService) GetTagsForIntegrationProvider(ctx context.Context, name string) ([]model.TagObject, *http.Response, error) {
 	var result []model.TagObject
 
+	ctx = metrics.WithPathTemplate(ctx, "/integrations/provider/{name}/tags")
 	path := fmt.Sprintf("/integrations/provider/%s/tags", name)
 
 	resp, err := a.Get(ctx, path, nil, &result)
@@ -329,6 +342,7 @@ IntegrationResourceApiService Get Token Usage by Integration
 func (a *IntegrationResourceApiService) GetTokenUsageForIntegration(ctx context.Context, integration string, model string) (int32, *http.Response, error) {
 	var result int32
 
+	ctx = metrics.WithPathTemplate(ctx, "/integrations/provider/{name}/integration/{model}/metrics")
 	path := fmt.Sprintf("/integrations/provider/%s/integration/%s/metrics", integration, model)
 
 	resp, err := a.Get(ctx, path, nil, &result)
@@ -348,6 +362,7 @@ IntegrationResourceApiService Get Token Usage by Integration Provider
 func (a *IntegrationResourceApiService) GetTokenUsageForIntegrationProvider(ctx context.Context, name string) (map[string]string, *http.Response, error) {
 	var result map[string]string
 
+	ctx = metrics.WithPathTemplate(ctx, "/integrations/provider/{name}/metrics")
 	path := fmt.Sprintf("/integrations/provider/%s/metrics", name)
 
 	resp, err := a.Get(ctx, path, nil, &result)
@@ -365,6 +380,7 @@ IntegrationResourceApiService Put a tag to Integration
   - @param integrationName
 */
 func (a *IntegrationResourceApiService) UpdateTagForIntegration(ctx context.Context, tags []model.TagObject, name string, model string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/integrations/provider/{name}/integration/{model}/tags")
 	path := fmt.Sprintf("/integrations/provider/%s/integration/%s/tags", name, model)
 
 	resp, err := a.Put(ctx, path, tags, nil)
@@ -381,6 +397,7 @@ IntegrationResourceApiService Put a tag to Integration Provider
   - @param name
 */
 func (a *IntegrationResourceApiService) UpdateTagForIntegrationProvider(ctx context.Context, tags []model.TagObject, name string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/integrations/provider/{name}/tags")
 	path := fmt.Sprintf("/integrations/provider/%s/tags", name)
 
 	resp, err := a.Put(ctx, path, tags, nil)
@@ -398,6 +415,7 @@ IntegrationResourceApiService Create or Update Integration
   - @param integrationName
 */
 func (a *IntegrationResourceApiService) SaveIntegrationApi(ctx context.Context, integrationApiUpdate integration.IntegrationApiUpdate, name string, integrationName string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/integrations/provider/{name}/integration/{integrationName}")
 	path := fmt.Sprintf("/integrations/provider/%s/integration/%s", name, integrationName)
 
 	resp, err := a.Post(ctx, path, integrationApiUpdate, nil)
@@ -414,6 +432,7 @@ IntegrationResourceApiService Create or Update Integration provider
   - @param name
 */
 func (a *IntegrationResourceApiService) SaveIntegrationProvider(ctx context.Context, integrationUpdate integration.IntegrationUpdate, name string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/integrations/provider/{name}")
 	path := fmt.Sprintf("/integrations/provider/%s", name)
 	resp, err := a.Post(ctx, path, integrationUpdate, nil)
 	if err != nil {
@@ -483,6 +502,7 @@ IntegrationResourceApiService Record Event Stats
 */
 func (a *IntegrationResourceApiService) RecordEventStats(ctx context.Context, body []model.EventLog, type_ string) (*http.Response, error) {
 	// create path and map variables
+	ctx = metrics.WithPathTemplate(ctx, "/integrations/eventStats/{type}")
 	path := fmt.Sprintf("/integrations/eventStats/%s", type_)
 	path = strings.Replace(path, "{"+"type"+"}", fmt.Sprintf("%v", type_), -1)
 
@@ -502,6 +522,7 @@ IntegrationResourceApiService Register Token usage
 */
 func (a *IntegrationResourceApiService) RegisterTokenUsage(ctx context.Context, body int32, name string, integrationName string) (*http.Response, error) {
 	// create path and map variables
+	ctx = metrics.WithPathTemplate(ctx, "/integrations/provider/{name}/integration/{integrationName}/metrics")
 	path := fmt.Sprintf("/integrations/provider/%s/integration/%s/metrics", name, integrationName)
 	resp, err := a.Post(ctx, path, body, nil)
 	if err != nil {

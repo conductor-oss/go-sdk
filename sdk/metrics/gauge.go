@@ -15,94 +15,15 @@ import (
 
 var gaugeByName = map[MetricName]*prometheus.GaugeVec{}
 
-var gaugeTemplates = map[MetricName]*MetricDetails{
-	WORKFLOW_INPUT_SIZE: NewMetricDetails(
-		WORKFLOW_INPUT_SIZE,
-		WORKFLOW_INPUT_SIZE_DOC,
-		[]MetricLabel{
-			WORKFLOW_TYPE,
-			WORKFLOW_VERSION,
-		},
-	),
-	TASK_RESULT_SIZE: NewMetricDetails(
-		TASK_RESULT_SIZE,
-		TASK_RESULT_SIZE_DOC,
-		[]MetricLabel{
-			TASK_TYPE,
-		},
-	),
-	TASK_POLL_TIME: NewMetricDetails(
-		TASK_POLL_TIME,
-		TASK_POLL_TIME_DOC,
-		[]MetricLabel{
-			TASK_TYPE,
-		},
-	),
-	TASK_EXECUTE_TIME: NewMetricDetails(
-		TASK_EXECUTE_TIME,
-		TASK_EXECUTE_TIME_DOC,
-		[]MetricLabel{
-			TASK_TYPE,
-		},
-	),
-	TASK_UPDATE_TIME: NewMetricDetails(
-		TASK_UPDATE_TIME,
-		TASK_UPDATE_TIME_DOC,
-		[]MetricLabel{
-			TASK_TYPE,
-		},
-	),
-}
+func setGauge(metricName MetricName, labelValues []string, value float64) {
+	if !collectionEnabled.Load() {
+		return
+	}
 
-func RecordWorkflowInputPayloadSize(workflowType string, version string, payloadSize float64) {
-	setGauge(
-		WORKFLOW_INPUT_SIZE,
-		[]string{
-			workflowType,
-			version,
-		},
-		payloadSize,
-	)
-}
-
-func RecordTaskResultPayloadSize(taskType string, payloadSize float64) {
-	setGauge(
-		TASK_RESULT_SIZE,
-		[]string{
-			taskType,
-		},
-		payloadSize,
-	)
-}
-
-func RecordTaskPollTime(taskType string, timeSpent float64) {
-	setGauge(
-		TASK_POLL_TIME,
-		[]string{
-			taskType,
-		},
-		timeSpent,
-	)
-}
-
-func RecordTaskUpdateTime(taskType string, timeSpent float64) {
-	setGauge(
-		TASK_UPDATE_TIME,
-		[]string{
-			taskType,
-		},
-		timeSpent,
-	)
-}
-
-func RecordTaskExecuteTime(taskType string, timeSpent float64) {
-	setGauge(
-		TASK_EXECUTE_TIME,
-		[]string{
-			taskType,
-		},
-		timeSpent,
-	)
+	gauge := getGauge(metricName, labelValues)
+	if gauge != nil && *gauge != nil {
+		(*gauge).Set(value)
+	}
 }
 
 func newGauge(metricDetails *MetricDetails) *prometheus.GaugeVec {
@@ -113,18 +34,6 @@ func newGauge(metricDetails *MetricDetails) *prometheus.GaugeVec {
 		},
 		metricDetails.Labels,
 	)
-}
-
-func setGauge(metricName MetricName, labelValues []string, value float64) {
-	// We skip setting gauge if Metrics collection is not enabled
-	if !collectionEnabled {
-		return
-	}
-
-	gauge := getGauge(metricName, labelValues)
-	if *gauge != nil {
-		(*gauge).Set(value)
-	}
 }
 
 func getGauge(metricName MetricName, labelValues []string) *prometheus.Gauge {

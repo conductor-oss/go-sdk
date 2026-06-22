@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/antihax/optional"
+	"github.com/conductor-sdk/conductor-go/sdk/metrics"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
@@ -32,6 +33,7 @@ type WorkflowResourceApiService struct {
 
 // Decide starts the decision task for a workflow.
 func (a *WorkflowResourceApiService) Decide(ctx context.Context, workflowId string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/workflow/decide/{workflowId}")
 	path := fmt.Sprintf("/workflow/decide/%s", workflowId)
 
 	resp, err := a.Put(ctx, path, nil, nil)
@@ -49,6 +51,7 @@ type WorkflowResourceApiDeleteOpts struct {
 
 // Delete deletes the workflow from the system
 func (a *WorkflowResourceApiService) Delete(ctx context.Context, workflowId string, localVarOptionals *WorkflowResourceApiDeleteOpts) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/workflow/{workflowId}/remove")
 	path := fmt.Sprintf("/workflow/%s/remove", workflowId)
 
 	queryParams := url.Values{}
@@ -73,6 +76,7 @@ type WorkflowResourceApiGetExecutionStatusOpts struct {
 func (a *WorkflowResourceApiService) GetExecutionStatus(ctx context.Context, workflowId string, opts *WorkflowResourceApiGetExecutionStatusOpts) (model.Workflow, *http.Response, error) {
 	var result model.Workflow
 
+	ctx = metrics.WithPathTemplate(ctx, "/workflow/{workflowId}")
 	path := fmt.Sprintf("/workflow/%s", workflowId)
 
 	queryParams := url.Values{}
@@ -92,6 +96,7 @@ func (a *WorkflowResourceApiService) GetExecutionStatus(ctx context.Context, wor
 func (a *WorkflowResourceApiService) GetWorkflowState(ctx context.Context, workflowId string, includeOutput bool, includeVariables bool) (model.WorkflowState, *http.Response, error) {
 	var result model.WorkflowState
 
+	ctx = metrics.WithPathTemplate(ctx, "/workflow/{workflowId}/status")
 	path := fmt.Sprintf("/workflow/%s/status", workflowId)
 
 	queryParams := url.Values{}
@@ -137,6 +142,7 @@ type WorkflowResourceApiGetRunningWorkflowOpts struct {
 func (a *WorkflowResourceApiService) GetRunningWorkflow(ctx context.Context, name string, opts *WorkflowResourceApiGetRunningWorkflowOpts) ([]string, *http.Response, error) {
 	var result []string
 
+	ctx = metrics.WithPathTemplate(ctx, "/workflow/running/{name}")
 	path := fmt.Sprintf("/workflow/running/%s", name)
 
 	queryParams := url.Values{}
@@ -161,6 +167,7 @@ func (a *WorkflowResourceApiService) GetRunningWorkflow(ctx context.Context, nam
 func (a *WorkflowResourceApiService) GetWorkflows(ctx context.Context, body []string, name string, opts *WorkflowResourceApiGetWorkflowsOpts) (map[string][]model.Workflow, *http.Response, error) {
 	var result map[string][]model.Workflow
 
+	ctx = metrics.WithPathTemplate(ctx, "/workflow/{name}/correlated")
 	path := fmt.Sprintf("/workflow/%s/correlated", name)
 
 	queryParams := url.Values{}
@@ -216,6 +223,7 @@ func (a *WorkflowResourceApiService) GetWorkflowsByCorrelationId(ctx context.Con
 func (a *WorkflowResourceApiService) GetWorkflows1(ctx context.Context, name string, correlationId string, opts *WorkflowResourceApiGetWorkflowsOpts) ([]model.Workflow, *http.Response, error) {
 	var result []model.Workflow
 
+	ctx = metrics.WithPathTemplate(ctx, "/workflow/{name}/correlated/{correlationId}")
 	localVarPath := fmt.Sprintf("/workflow/%s/correlated/%s", name, correlationId)
 
 	queryParams := url.Values{}
@@ -240,6 +248,7 @@ func (a *WorkflowResourceApiService) PauseWorkflow(ctx context.Context, workflow
 
 // Pause pauses an ongoing workflow execution.
 func (a *WorkflowResourceApiService) Pause(ctx context.Context, workflowId string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/workflow/{workflowId}/pause")
 	path := fmt.Sprintf("/workflow/%s/pause", workflowId)
 
 	resp, err := a.Put(ctx, path, nil, nil)
@@ -253,6 +262,7 @@ func (a *WorkflowResourceApiService) Pause(ctx context.Context, workflowId strin
 func (a *WorkflowResourceApiService) Rerun(ctx context.Context, body model.RerunWorkflowRequest, workflowId string) (string, *http.Response, error) {
 	var result string
 
+	ctx = metrics.WithPathTemplate(ctx, "/workflow/{workflowId}/rerun")
 	path := fmt.Sprintf("/workflow/%s/rerun", workflowId)
 
 	resp, err := a.Post(ctx, path, body, &result)
@@ -269,6 +279,7 @@ func (a *WorkflowResourceApiService) ResetWorkflow(ctx context.Context, workflow
 
 // Reset resets the callback times of all IN_PROGRESS tasks to 0 for the given workflow.
 func (a *WorkflowResourceApiService) Reset(ctx context.Context, workflowId string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/workflow/{workflowId}/resetcallbacks")
 	path := fmt.Sprintf("/workflow/%s/resetcallbacks", workflowId)
 
 	resp, err := a.Post(ctx, path, nil, nil)
@@ -286,6 +297,7 @@ type WorkflowResourceApiRestartOpts struct {
 
 // Restart restarts a completed workflow.
 func (a *WorkflowResourceApiService) Restart(ctx context.Context, workflowId string, opts *WorkflowResourceApiRestartOpts) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/workflow/{workflowId}/restart")
 	path := fmt.Sprintf("/workflow/%s/restart", workflowId)
 
 	queryParams := url.Values{}
@@ -307,6 +319,7 @@ func (a *WorkflowResourceApiService) ResumeWorkflow(ctx context.Context, workflo
 
 // Resume resumes a paused workflow execution.
 func (a *WorkflowResourceApiService) Resume(ctx context.Context, workflowId string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/workflow/{workflowId}/resume")
 	path := fmt.Sprintf("/workflow/%s/resume", workflowId)
 
 	resp, err := a.Put(ctx, path, nil, nil)
@@ -327,6 +340,7 @@ type WorkflowResourceApiRetryOpts struct {
 
 // Retry retries the last failed task.
 func (a *WorkflowResourceApiService) Retry(ctx context.Context, workflowId string, opts *WorkflowResourceApiRetryOpts) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/workflow/{workflowId}/retry")
 	path := fmt.Sprintf("/workflow/%s/retry", workflowId)
 
 	queryParams := url.Values{}
@@ -546,6 +560,7 @@ func (a *WorkflowResourceApiService) SearchWorkflowsByTasksV2(ctx context.Contex
 
 // SkipTaskFromWorkflow skip task from workflow.
 func (a *WorkflowResourceApiService) SkipTaskFromWorkflow(ctx context.Context, workflowId string, taskReferenceName string, skipTaskRequest model.SkipTaskRequest) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/workflow/{workflowId}/skiptask/{taskReferenceName}")
 	path := fmt.Sprintf("/workflow/%s/skiptask/%s", workflowId, taskReferenceName)
 
 	queryParams := url.Values{}
@@ -572,6 +587,7 @@ type WorkflowResourceApiStartWorkflowOpts struct {
 func (a *WorkflowResourceApiService) StartWorkflow(ctx context.Context, body map[string]interface{}, name string, opts *WorkflowResourceApiStartWorkflowOpts) (string, *http.Response, error) {
 	var result string
 
+	ctx = metrics.WithPathTemplate(ctx, "/workflow/{name}")
 	path := fmt.Sprintf("/workflow/%s", name)
 
 	queryParams := url.Values{}
@@ -611,6 +627,7 @@ func (a *WorkflowResourceApiService) executeWorkflowImpl(
 		localVarReturnValue model.SignalResponse
 	)
 
+	ctx = metrics.WithPathTemplate(ctx, "/workflow/execute/{name}/{version}")
 	path := fmt.Sprintf("/workflow/execute/%s/%d", name, version)
 
 	localVarHeaderParams := make(map[string]string)
@@ -755,6 +772,7 @@ func (a *WorkflowResourceApiService) ExecuteWorkflowWithReturnStrategy(ctx conte
 func (a *WorkflowResourceApiService) ExecuteWorkflow(ctx context.Context, body model.StartWorkflowRequest, requestId string, name string, version int32, waitUntilTask string) (model.WorkflowRun, *http.Response, error) {
 	var result model.WorkflowRun
 
+	ctx = metrics.WithPathTemplate(ctx, "/workflow/execute/{name}/{version}")
 	path := fmt.Sprintf("/workflow/execute/%s/%d", name, version)
 
 	queryParams := url.Values{}
@@ -921,6 +939,7 @@ type WorkflowResourceApiTerminateOpts struct {
 
 // Terminate terminates a workflow execution.
 func (a *WorkflowResourceApiService) Terminate(ctx context.Context, workflowId string, opts *WorkflowResourceApiTerminateOpts) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/workflow/{workflowId}")
 	path := fmt.Sprintf("/workflow/%s", workflowId)
 
 	queryParams := url.Values{}
@@ -946,7 +965,8 @@ type WorkflowResourceApiJumpToTaskOpts struct {
 
 // JumpToTask jumps to a specific task in a running workflow.
 func (a *WorkflowResourceApiService) JumpToTask(ctx context.Context, body map[string]interface{}, workflowId string, optionals *WorkflowResourceApiJumpToTaskOpts) (*http.Response, error) {
-	path := fmt.Sprintf("/workflow/%s/jump/{taskReferenceName}", workflowId)
+	ctx = metrics.WithPathTemplate(ctx, "/workflow/{workflowId}/jump")
+	path := fmt.Sprintf("/workflow/%s/jump", workflowId)
 
 	queryParams := url.Values{}
 	if optionals != nil && optionals.TaskReferenceName.IsSet() {
@@ -973,7 +993,7 @@ type WorkflowResourceApiUpdateWorkflowAndTaskStateOpts struct {
 func (a *WorkflowResourceApiService) UpdateWorkflowAndTaskState(ctx context.Context, body model.WorkflowStateUpdate, requestId string, workflowId string, optionals *WorkflowResourceApiUpdateWorkflowAndTaskStateOpts) (model.WorkflowRun, *http.Response, error) {
 	var result model.WorkflowRun
 
-	// create path and map variables
+	ctx = metrics.WithPathTemplate(ctx, "/workflow/{workflowId}/state")
 	path := fmt.Sprintf("/workflow/%s/state", workflowId)
 
 	queryParams := url.Values{}
@@ -994,7 +1014,7 @@ func (a *WorkflowResourceApiService) UpdateWorkflowAndTaskState(ctx context.Cont
 
 // UpgradeRunningWorkflowToVersion upgrade running workflow to newer version.
 func (a *WorkflowResourceApiService) UpgradeRunningWorkflowToVersion(ctx context.Context, body model.UpgradeWorkflowRequest, workflowId string) (*http.Response, error) {
-	// create path and map variables
+	ctx = metrics.WithPathTemplate(ctx, "/workflow/{workflowId}/upgrade")
 	path := fmt.Sprintf("/workflow/%s/upgrade", workflowId)
 
 	resp, err := a.Post(ctx, path, body, nil)
@@ -1032,6 +1052,7 @@ type WorkflowResourceAPIGetExecutionStatusTaskListOpts struct {
 func (a *WorkflowResourceApiService) GetExecutionStatusTaskList(ctx context.Context, workflowID string, opts *WorkflowResourceAPIGetExecutionStatusTaskListOpts) (model.TaskListSearchResultSummary, *http.Response, error) {
 	var result model.TaskListSearchResultSummary
 
+	ctx = metrics.WithPathTemplate(ctx, "/workflow/{workflowId}/tasks")
 	path := fmt.Sprintf("/workflow/%s/tasks", workflowID)
 
 	queryParams := url.Values{}
@@ -1058,6 +1079,7 @@ func (a *WorkflowResourceApiService) GetExecutionStatusTaskList(ctx context.Cont
 func (a *WorkflowResourceApiService) UpdateWorkflowState(ctx context.Context, body map[string]interface{}, workflowID string) (model.Workflow, *http.Response, error) {
 	var result model.Workflow
 
+	ctx = metrics.WithPathTemplate(ctx, "/workflow/{workflowId}/variables")
 	path := fmt.Sprintf("/workflow/%s/variables", workflowID)
 
 	resp, err := a.Post(ctx, path, body, &result)

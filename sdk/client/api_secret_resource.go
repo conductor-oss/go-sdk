@@ -12,6 +12,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"github.com/conductor-sdk/conductor-go/sdk/metrics"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"net/http"
 )
@@ -62,6 +63,7 @@ SecretResourceApiService Delete a secret value by key
 func (a *SecretResourceApiService) DeleteSecret(ctx context.Context, key string) (interface{}, *http.Response, error) {
 	var result interface{}
 
+	ctx = metrics.WithPathTemplate(ctx, "/secrets/{key}")
 	path := fmt.Sprintf("/secrets/%s", key)
 	resp, err := a.Delete(ctx, path, nil, &result)
 	if err != nil {
@@ -77,6 +79,7 @@ SecretResourceApiService Delete tags of the secret
   - @param key
 */
 func (a *SecretResourceApiService) DeleteTagForSecret(ctx context.Context, body []model.Tag, key string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/secrets/{key}/tags")
 	path := fmt.Sprintf("/secrets/%s/tags", key)
 
 	resp, err := a.DeleteWithBody(ctx, path, body, nil)
@@ -95,6 +98,7 @@ SecretResourceApiService Get secret value by key
 func (a *SecretResourceApiService) GetSecret(ctx context.Context, key string) (string, *http.Response, error) {
 	var result string
 
+	ctx = metrics.WithPathTemplate(ctx, "/secrets/{key}")
 	path := fmt.Sprintf("/secrets/%s", key)
 
 	resp, err := a.Get(ctx, path, nil, &result)
@@ -113,6 +117,7 @@ SecretResourceApiService Get tags by secret
 func (a *SecretResourceApiService) GetTags(ctx context.Context, key string) ([]model.Tag, *http.Response, error) {
 	var result []model.Tag
 
+	ctx = metrics.WithPathTemplate(ctx, "/secrets/{key}/tags")
 	path := fmt.Sprintf("/secrets/%s/tags", key)
 	resp, err := a.Get(ctx, path, nil, &result)
 	if err != nil {
@@ -182,6 +187,7 @@ SecretResourceApiService Put a secret value by key
 func (a *SecretResourceApiService) PutSecret(ctx context.Context, body string, key string) (interface{}, *http.Response, error) {
 	var result interface{}
 
+	ctx = metrics.WithPathTemplate(ctx, "/secrets/{key}")
 	path := fmt.Sprintf("/secrets/%s", key)
 	resp, err := a.Put(ctx, path, body, &result)
 	if err != nil {
@@ -197,6 +203,7 @@ SecretResourceApiService Tag a secret
   - @param key
 */
 func (a *SecretResourceApiService) PutTagForSecret(ctx context.Context, body []model.Tag, key string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/secrets/{key}/tags")
 	path := fmt.Sprintf("/secrets/%s/tags", key)
 
 	resp, err := a.Put(ctx, path, body, nil)
@@ -215,6 +222,7 @@ SecretResourceApiService Check if secret exists
 func (a *SecretResourceApiService) SecretExists(ctx context.Context, key string) (interface{}, *http.Response, error) {
 	var result interface{}
 
+	ctx = metrics.WithPathTemplate(ctx, "/secrets/{key}/exists")
 	path := fmt.Sprintf("/secrets/%s/exists", key)
 	resp, err := a.Get(ctx, path, nil, &result)
 	if err != nil {

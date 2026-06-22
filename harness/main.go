@@ -40,9 +40,10 @@ func main() {
 
 	registerMetadata(apiClient, workflowExecutor)
 
+	metrics.InitCollector()
 	metricsPort := envIntOrDefault("HARNESS_METRICS_PORT", 9991)
 	go metrics.ProvideMetrics(settings.NewMetricsSettings("/metrics", metricsPort))
-	fmt.Printf("Prometheus metrics server started on port %d\n", metricsPort)
+	fmt.Printf("Prometheus metrics server started on port %d (collector: %s)\n", metricsPort, metrics.GetCollector().CollectorName())
 
 	workflowsPerSec := envIntOrDefault("HARNESS_WORKFLOWS_PER_SEC", 2)
 	batchSize := envIntOrDefault("HARNESS_BATCH_SIZE", 20)
@@ -67,8 +68,13 @@ func main() {
 
 	taskRunner.WithBaseContext(ctx)
 
-	governor := NewWorkflowGovernor(workflowExecutor, workflowName, workflowsPerSec)
+	workflowClient := client.NewWorkflowClient(apiClient)
+	probeRate := envIntOrDefault("HARNESS_PROBE_RATE_PER_SEC", 0)
+	probe := NewWorkflowStatusProbe(workflowClient, probeRate)
+
+	governor := NewWorkflowGovernor(workflowExecutor, workflowName, workflowsPerSec, probe.Offer)
 	go governor.Run(ctx)
+	go probe.Run(ctx)
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)

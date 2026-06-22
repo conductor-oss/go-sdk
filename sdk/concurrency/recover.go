@@ -21,7 +21,7 @@ func HandlePanicError(message string) {
 	if err == nil {
 		return
 	}
-	metrics.IncrementUncaughtException(message)
+	metrics.IncrementUncaughtException(err)
 
 	log.Error(
 		"Uncaught panic",

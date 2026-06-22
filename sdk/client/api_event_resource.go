@@ -13,6 +13,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/antihax/optional"
+	"github.com/conductor-sdk/conductor-go/sdk/metrics"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"net/http"
 	"net/url"
@@ -42,6 +43,7 @@ EventResourceApiService Delete queue config by name
   - @param queueName
 */
 func (a *EventResourceApiService) DeleteQueueConfig(ctx context.Context, queueType string, queueName string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/event/queue/config/{queueType}/{queueName}")
 	path := fmt.Sprintf("/event/queue/config/%s/%s", queueType, queueName)
 	resp, err := a.Delete(ctx, path, nil, nil)
 	if err != nil {
@@ -82,6 +84,7 @@ type EventResourceApiGetEventHandlersForEventOpts struct {
 
 func (a *EventResourceApiService) GetEventHandlersForEvent(ctx context.Context, event string, opts *EventResourceApiGetEventHandlersForEventOpts) ([]model.EventHandler, *http.Response, error) {
 	var result []model.EventHandler
+	ctx = metrics.WithPathTemplate(ctx, "/event/{event}")
 	path := fmt.Sprintf("/event/%s", event)
 
 	// Build query parameters
@@ -109,6 +112,7 @@ EventResourceApiService Get queue config by name
 */
 func (a *EventResourceApiService) GetQueueConfig(ctx context.Context, queueType string, queueName string) (map[string]interface{}, *http.Response, error) {
 	var result map[string]interface{}
+	ctx = metrics.WithPathTemplate(ctx, "/event/queue/config/{queueType}/{queueName}")
 	path := fmt.Sprintf("/event/queue/config/%s/%s", queueType, queueName)
 	resp, err := a.Get(ctx, path, nil, &result)
 
@@ -144,6 +148,7 @@ EventResourceApiService Create or update queue config by name
   - @param queueName
 */
 func (a *EventResourceApiService) PutQueueConfig(ctx context.Context, body string, queueType string, queueName string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/event/queue/config/{queueType}/{queueName}")
 	path := fmt.Sprintf("/event/queue/config/%s/%s", queueType, queueName)
 
 	resp, err := a.Put(ctx, path, body, nil)
@@ -159,6 +164,7 @@ EventResourceApiService Remove an event handler
   - @param name
 */
 func (a *EventResourceApiService) RemoveEventHandler(ctx context.Context, name string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/event/{name}")
 	path := fmt.Sprintf("/event/%s", name)
 	resp, err := a.Delete(ctx, path, nil, nil)
 	if err != nil {

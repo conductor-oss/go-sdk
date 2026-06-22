@@ -12,6 +12,8 @@ package metrics
 import (
 	"net/http"
 	"strconv"
+	"sync"
+	"sync/atomic"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -20,26 +22,40 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/settings"
 )
 
-var collectionEnabled bool = false
+var collectionEnabled atomic.Bool
 
-// ProvideMetrics start collecting metrics for the workers
-// We use prometheus to collect metrics from the workers.  When called this function starts the metrics server and publishes the worker metrics
+var initOnce = &sync.Once{}
+
+// resetInitOnce replaces the sync.Once so InitCollector can fire again.
+// Only intended for use in tests.
+func resetInitOnce() {
+	initOnce = &sync.Once{}
+}
+
+// InitCollector selects and registers a MetricsCollector based on env vars.
+// Safe to call from multiple goroutines; only the first call takes effect.
+func InitCollector() {
+	initOnce.Do(func() {
+		c := NewCollector()
+		// Register() populates the package-level metric maps. It must run before
+		// the collector is published so the atomic store below happens-after the
+		// map writes, giving readers a happens-before edge to the populated maps.
+		c.Register()
+		collectorPtr.Store(&c)
+		collectionEnabled.Store(true)
+	})
+}
+
+// ProvideMetrics initializes the metrics collector (if not already done) and
+// starts the HTTP metrics server. This call blocks on ListenAndServe, so it
+// should typically be launched in a goroutine.
 func ProvideMetrics(metricsSettings *settings.MetricsSettings) {
 	defer handlePanicError("provide_metrics")
 	if metricsSettings == nil {
 		metricsSettings = settings.NewDefaultMetricsSettings()
 	}
 
-	for metricName, metricDetails := range counterTemplates {
-		counterByName[metricName] = newCounter(metricDetails)
-		prometheus.MustRegister(counterByName[metricName])
-	}
-
-	for metricName, metricDetails := range gaugeTemplates {
-		gaugeByName[metricName] = newGauge(metricDetails)
-		prometheus.MustRegister(gaugeByName[metricName])
-	}
-	collectionEnabled = true
+	InitCollector()
 
 	http.Handle(
 		metricsSettings.ApiEndpoint,
@@ -59,7 +75,7 @@ func handlePanicError(message string) {
 	if err == nil {
 		return
 	}
-	IncrementUncaughtException(message)
+	IncrementUncaughtException(err)
 	log.Warn(
 		"Uncaught panic",
 		"message", message,

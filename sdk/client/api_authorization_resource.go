@@ -12,6 +12,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"github.com/conductor-sdk/conductor-go/sdk/metrics"
 	"github.com/conductor-sdk/conductor-go/sdk/model/rbac"
 	"net/http"
 )
@@ -29,6 +30,7 @@ AuthorizationResourceApiService Get the access that have been granted over the g
 */
 func (a *AuthorizationResourceApiService) GetPermissions(ctx context.Context, type_ string, id string) (interface{}, *http.Response, error) {
 	var result interface{}
+	ctx = metrics.WithPathTemplate(ctx, "/auth/authorization/{type}/{id}")
 	path := fmt.Sprintf("/auth/authorization/%s/%s", type_, id)
 	resp, err := a.Get(ctx, path, nil, &result)
 

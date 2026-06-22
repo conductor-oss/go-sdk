@@ -13,6 +13,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/antihax/optional"
+	"github.com/conductor-sdk/conductor-go/sdk/metrics"
 	"github.com/conductor-sdk/conductor-go/sdk/model/rbac"
 	"net/http"
 	"net/url"
@@ -37,6 +38,7 @@ UserResourceApiService Get the permissions this user has over workflows and task
 func (a *UserResourceApiService) CheckPermissions(ctx context.Context, userId string, type_ string, id string) (map[string]interface{}, *http.Response, error) {
 	var result map[string]interface{}
 
+	ctx = metrics.WithPathTemplate(ctx, "/users/{userId}/checkPermissions")
 	path := fmt.Sprintf("/users/%s/checkPermissions", userId)
 
 	queryParams := url.Values{}
@@ -57,6 +59,7 @@ UserResourceApiService Delete a user
     @return Response
 */
 func (a *UserResourceApiService) DeleteUser(ctx context.Context, id string) (*http.Response, error) {
+	ctx = metrics.WithPathTemplate(ctx, "/users/{id}")
 	path := fmt.Sprintf("/users/%s", id)
 
 	resp, err := a.Delete(ctx, path, nil, nil)
@@ -75,6 +78,7 @@ UserResourceApiService Get the permissions this user has over workflows and task
 func (a *UserResourceApiService) GetGrantedPermissions(ctx context.Context, userId string) (rbac.GrantedAccessResponse, *http.Response, error) {
 	var result rbac.GrantedAccessResponse
 
+	ctx = metrics.WithPathTemplate(ctx, "/users/{userId}/permissions")
 	path := fmt.Sprintf("/users/%s/permissions", userId)
 
 	resp, err := a.Get(ctx, path, nil, &result)
@@ -93,6 +97,7 @@ UserResourceApiService Get a user by id
 func (a *UserResourceApiService) GetUser(ctx context.Context, id string) (*rbac.ConductorUser, *http.Response, error) {
 	var result rbac.ConductorUser
 
+	ctx = metrics.WithPathTemplate(ctx, "/users/{id}")
 	path := fmt.Sprintf("/users/%s", id)
 
 	resp, err := a.Get(ctx, path, nil, &result)
@@ -137,6 +142,7 @@ UserResourceApiService Create or update a user
 func (a *UserResourceApiService) UpsertUser(ctx context.Context, body rbac.UpsertUserRequest, id string) (*rbac.ConductorUser, *http.Response, error) {
 	var result rbac.ConductorUser
 
+	ctx = metrics.WithPathTemplate(ctx, "/users/{id}")
 	path := fmt.Sprintf("/users/%s", id)
 	resp, err := a.Put(ctx, path, body, &result)
 	if err != nil {
