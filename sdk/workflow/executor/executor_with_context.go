@@ -27,7 +27,7 @@ func (e *WorkflowExecutor) RegisterWorkflowWithContext(ctx context.Context, over
 		_, err := e.metadataClient.Update(ctx, []model.WorkflowDef{*workflow})
 		return err
 	}
-	_, err := e.metadataClient.RegisterWorkflowDef(ctx, overwrite, *workflow)
+	_, err := e.metadataClient.RegisterWorkflowDef(ctx, false, *workflow)
 	return err
 }
 
