@@ -183,7 +183,7 @@ clientSettings := settings.NewClientSettings(
 )
 ```
 
-For detailed TLS configuration, see [TLS Configuration Guide](tls_configuration.md).
+For detailed TLS configuration, see [TLS Configuration Guide](../security.md).
 
 ### Token Options
 
@@ -293,4 +293,4 @@ func main() {
 ## Related Documentation
 
 - [Proxy Configuration](proxy_configuration.md) - Detailed proxy setup guide
-- [TLS Configuration](tls_configuration.md) - TLS/SSL configuration guide
+- [TLS Configuration](../security.md) - TLS/SSL configuration guide

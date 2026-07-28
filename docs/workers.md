@@ -219,4 +219,4 @@ See [metrics.md](metrics.md) for the complete metrics reference, including the
 legacy and canonical metric catalogs, the `WORKER_CANONICAL_METRICS` environment
 variable, and migration guidance.
 
-### Next: [Create and Execute Workflows](workflow_sdk.md)
+### Next: [Create and Execute Workflows](workflows.md)
