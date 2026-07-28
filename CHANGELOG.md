@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Canonical metrics: opt-in harmonized metric surface via `WORKER_CANONICAL_METRICS=true` -- see [docs/metrics.md](docs/metrics.md) for the full catalog, configuration, and migration guide
+- Canonical metrics: opt-in harmonized metric surface via `WORKER_CANONICAL_METRICS=true` -- see [docs/observability.md](docs/observability.md) for the full catalog, configuration, and migration guide
 - `WORKER_METRICS_PAYLOAD_SIZE` and `WORKER_METRICS_HTTP_REQUESTS` env vars to selectively disable expensive canonical metrics
 - Bounded `uri` label on `http_api_client_request_seconds`: the `uri` label now uses path templates (e.g. `/workflow/{workflowId}`) instead of fully-resolved paths, preventing metric cardinality explosion from dynamic IDs
 - `WorkflowStatusProbe` in harness: opt-in probe (via `HARNESS_PROBE_RATE_PER_SEC`) that exercises UUID-bearing endpoints to validate template URI metrics
@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Legacy metrics emit unchanged by default; no action required for existing deployments
-- `RecordTaskPollTime` / `RecordTaskExecuteTime` / `RecordTaskUpdateTime` package-level functions retain their original 2-argument signatures (now deprecated). The new status-aware 3-argument signatures are available on the `MetricsCollector` interface via `metrics.GetCollector()` -- see [docs/metrics.md](docs/metrics.md#detailed-technical-notes----unreleased)
+- `RecordTaskPollTime` / `RecordTaskExecuteTime` / `RecordTaskUpdateTime` package-level functions retain their original 2-argument signatures (now deprecated). The new status-aware 3-argument signatures are available on the `MetricsCollector` interface via `metrics.GetCollector()` -- see [docs/observability.md](docs/observability.md#detailed-technical-notes----unreleased)
 - `IncrementUncaughtException` parameter type changed from `string` to `interface{}`; existing callers passing string values are unaffected (string satisfies `interface{}`)
 
 ### Fixed
@@ -30,5 +30,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Deprecated
 
-- Legacy metric names remain the default. Migration guidance is in [docs/metrics.md](docs/metrics.md#migration-from-legacy-to-canonical).
+- Legacy metric names remain the default. Migration guidance is in [docs/observability.md](docs/observability.md#migration-from-legacy-to-canonical).
 - `RecordTaskPollTime(taskType, seconds)`, `RecordTaskExecuteTime(taskType, seconds)`, `RecordTaskUpdateTime(taskType, seconds)` package-level functions. Use `metrics.GetCollector().RecordTaskPollTime(taskType, seconds, err)` (and equivalents) for status-aware recording.
