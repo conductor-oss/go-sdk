@@ -44,13 +44,21 @@ var canonicalPages = []string{
 }
 
 // redirectStubs were retired by the move to canonical filenames but are kept as
-// pointer-only files, because conductor-oss/conductor links to them from
-// docs/documentation/clientsdks/go-sdk.md and deleting them would 404 the
+// pointer-only files, because conductor-oss/conductor links to every one of them
+// from docs/documentation/clientsdks/go-sdk.md and deleting them would 404 the
 // published OSS documentation. They are deliberately unreachable from the hub,
 // and must not grow back into guides while they wait to be removed.
+//
+// All six are deleted together once conductor-oss/conductor#1417 repoints those
+// links. Do not add to this list for any other reason: a stub is a bridge for an
+// external referrer, not a way to keep an internal link alive.
 var redirectStubs = []string{
 	"workers_sdk.md",
+	"workflow_sdk.md",
+	"migration_guide.md",
+	"logger_sdk.md",
 	"api_client/README.md",
+	"api_client/tls_configuration.md",
 }
 
 // retiredDocPaths must never be the target of a Markdown link.
