@@ -1,6 +1,6 @@
 # Moved
 
-This guide now lives at [docs/workers.md](workers.md).
+This guide now lives at [docs/upgrading.md](upgrading.md).
 
 This file is a redirect stub, not a guide. It exists solely to keep an external
 reference alive: `conductor-oss/conductor` links here from
