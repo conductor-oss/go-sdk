@@ -102,6 +102,22 @@ func TestPauseScheduleVerbNegotiation(t *testing.T) {
 			wantMethods: []string{http.MethodPut, http.MethodGet},
 			wantErr:     true,
 		},
+		{
+			// Only 405 means "wrong verb". A 404 means the schedule or the scheduler
+			// module is absent, so a GET retry would repeat the failure and report it
+			// as a method problem.
+			name:        "404 does not trigger the fallback",
+			allow:       map[string]int{http.MethodPut: http.StatusNotFound},
+			wantMethods: []string{http.MethodPut},
+			wantErr:     true,
+		},
+		{
+			// Likewise for auth failures.
+			name:        "401 does not trigger the fallback",
+			allow:       map[string]int{http.MethodPut: http.StatusUnauthorized},
+			wantMethods: []string{http.MethodPut},
+			wantErr:     true,
+		},
 	}
 
 	for _, tt := range tests {

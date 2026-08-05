@@ -203,12 +203,13 @@ func (a *SchedulerResourceApiService) PauseSchedule(ctx context.Context, name st
 //	Orkes Conductor <  2026-07-14  GET only  (PUT returns 405)
 //
 // PUT is the RESTful verb and the only one upstream OSS accepts, so it is tried
-// first. GET is attempted only when PUT is refused with a 4xx, which keeps older
+// first. GET is attempted only when PUT is refused with a 405, which keeps older
 // Orkes deployments working while converging on PUT as they age out. Once no
 // supported server predates PUT, this helper can be reduced to a plain PUT.
 //
-// The fallback is deliberately limited to 4xx: retrying a 5xx or a transport error
-// with a different verb would mask the real fault and report it as a method problem.
+// The fallback is deliberately narrow: a 5xx, a transport error, or any 4xx other
+// than 405 is returned as-is, since retrying those with a different verb would mask
+// the real fault and report it as a method problem.
 func (a *SchedulerResourceApiService) putThenGet(ctx context.Context, path string) (interface{}, *http.Response, error) {
 	var result interface{}
 
@@ -217,11 +218,12 @@ func (a *SchedulerResourceApiService) putThenGet(ctx context.Context, path strin
 		return result, resp, nil
 	}
 
+	// 405 is the only status that means "wrong verb". Other 4xx have distinct causes
+	// — 404 for a missing schedule or absent scheduler module, 401/403 for auth — and
+	// retrying those with GET would just repeat the failure while reporting it as a
+	// method problem.
 	var swaggerErr GenericSwaggerError
-	if !errors.As(err, &swaggerErr) {
-		return nil, resp, err
-	}
-	if code := swaggerErr.StatusCode(); code < 400 || code >= 500 {
+	if !errors.As(err, &swaggerErr) || swaggerErr.StatusCode() != http.StatusMethodNotAllowed {
 		return nil, resp, err
 	}
 
