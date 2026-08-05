@@ -194,22 +194,14 @@ func (a *SchedulerResourceApiService) PauseSchedule(ctx context.Context, name st
 	return a.putThenGet(ctx, path)
 }
 
-// putThenGet issues a PUT and falls back to a GET if the server rejects it with a
-// 4xx. It exists because the verb accepted for per-schedule pause/resume differs by
-// deployment:
+// putThenGet issues a PUT and falls back to a GET on 405.
 //
-//	OSS Conductor                  PUT only  (GET returns 405)
-//	Orkes Conductor >= 2026-07-14  PUT or GET
-//	Orkes Conductor <  2026-07-14  GET only  (PUT returns 405)
+// OSS Conductor accepts only PUT on these endpoints. Orkes accepted only GET before
+// 2026-07-14 and accepts both since. PUT first therefore works everywhere, and the
+// fallback can be dropped once no supported server needs GET.
 //
-// PUT is the RESTful verb and the only one upstream OSS accepts, so it is tried
-// first. GET is attempted only when PUT is refused with a 405, which keeps older
-// Orkes deployments working while converging on PUT as they age out. Once no
-// supported server predates PUT, this helper can be reduced to a plain PUT.
-//
-// The fallback is deliberately narrow: a 5xx, a transport error, or any 4xx other
-// than 405 is returned as-is, since retrying those with a different verb would mask
-// the real fault and report it as a method problem.
+// Only 405 falls back; any other status is returned as-is, since retrying it would
+// report a method problem instead of the real cause.
 func (a *SchedulerResourceApiService) putThenGet(ctx context.Context, path string) (interface{}, *http.Response, error) {
 	var result interface{}
 
@@ -218,16 +210,11 @@ func (a *SchedulerResourceApiService) putThenGet(ctx context.Context, path strin
 		return result, resp, nil
 	}
 
-	// 405 is the only status that means "wrong verb". Other 4xx have distinct causes
-	// — 404 for a missing schedule or absent scheduler module, 401/403 for auth — and
-	// retrying those with GET would just repeat the failure while reporting it as a
-	// method problem.
 	var swaggerErr GenericSwaggerError
 	if !errors.As(err, &swaggerErr) || swaggerErr.StatusCode() != http.StatusMethodNotAllowed {
 		return nil, resp, err
 	}
 
-	// Legacy deployments expose these endpoints as GET.
 	result = nil
 	getResp, getErr := a.Get(ctx, path, nil, &result)
 	if getErr != nil {
