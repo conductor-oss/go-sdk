@@ -964,14 +964,22 @@ type WorkflowResourceApiJumpToTaskOpts struct {
 }
 
 // JumpToTask jumps to a specific task in a running workflow.
+//
+// The task reference goes in the path — the server route is
+// /workflow/{workflowId}/jump/{taskReferenceName} and returns 404 without that
+// segment. It is also sent as a query parameter because the handler reads the value
+// from there rather than from the path.
 func (a *WorkflowResourceApiService) JumpToTask(ctx context.Context, body map[string]interface{}, workflowId string, optionals *WorkflowResourceApiJumpToTaskOpts) (*http.Response, error) {
-	ctx = metrics.WithPathTemplate(ctx, "/workflow/{workflowId}/jump")
-	path := fmt.Sprintf("/workflow/%s/jump", workflowId)
+	ctx = metrics.WithPathTemplate(ctx, "/workflow/{workflowId}/jump/{taskReferenceName}")
 
 	queryParams := url.Values{}
+	taskReferenceName := ""
 	if optionals != nil && optionals.TaskReferenceName.IsSet() {
-		queryParams.Add("taskReferenceName", parameterToString(optionals.TaskReferenceName.Value(), ""))
+		taskReferenceName = parameterToString(optionals.TaskReferenceName.Value(), "")
+		queryParams.Add("taskReferenceName", taskReferenceName)
 	}
+
+	path := fmt.Sprintf("/workflow/%s/jump/%s", workflowId, url.PathEscape(taskReferenceName))
 
 	resp, err := a.PostWithParams(ctx, path, queryParams, body, nil)
 	if err != nil {
