@@ -603,15 +603,34 @@ func TestRetryWorkflowWithDecide(t *testing.T) {
 	assert.NoError(t, err, "Failed to wait for workflow to fail")
 	assert.Equal(t, model.FailedWorkflow, failedWorkflow.Status, "Workflow should be failed")
 
+	tasksBeforeRetry := len(failedWorkflow.Tasks)
+
 	_, err = testdata.WorkflowClient.Retry(context.Background(), workflowId, nil)
 	assert.NoError(t, err, "Failed to retry workflow")
 
-	// Verify workflow is running after retry
-	workflowAfterRetry, err := testdata.WaitForWorkflowStatus(workflowId,
-		[]model.WorkflowStatus{model.RunningWorkflow}, testdata.WorkflowValidationTimeout)
+	// Assert on the fresh task attempt rather than on a transient RUNNING status.
+	// This workflow's only task throws immediately, so on a fast server it fails again
+	// before any poll can observe RUNNING — which made the previous assertion depend on
+	// server speed. What retry actually guarantees is a new attempt of the failed task.
+	var workflowAfterRetry *model.Workflow
+	deadline := time.Now().Add(testdata.WorkflowValidationTimeout)
+	for time.Now().Before(deadline) {
+		workflowAfterRetry, err = testdata.WorkflowExecutor.GetWorkflow(workflowId, true)
+		if err == nil && len(workflowAfterRetry.Tasks) > tasksBeforeRetry {
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
 	assert.NoError(t, err, "Failed to get workflow after retry")
-	assert.Equal(t, model.RunningWorkflow, workflowAfterRetry.Status, "Workflow should be running after retry")
+	require.NotNil(t, workflowAfterRetry, "Expected to read the workflow after retry")
+	assert.Greater(t, len(workflowAfterRetry.Tasks), tasksBeforeRetry,
+		"Retry should add a new attempt of the failed task")
 	assert.Equal(t, workflowId, workflowAfterRetry.WorkflowId, "Workflow ID should be the same")
+
+	lastAttempt := workflowAfterRetry.Tasks[len(workflowAfterRetry.Tasks)-1]
+	assert.Equal(t, "failing_inline_task", lastAttempt.ReferenceTaskName,
+		"Newest attempt should be of the task that failed")
+	assert.Greater(t, lastAttempt.RetryCount, int32(0), "Newest attempt should be a retry")
 
 	_, err = testdata.WorkflowClient.Decide(context.Background(), workflowId)
 	assert.NoError(t, err, "Failed to trigger decide")
