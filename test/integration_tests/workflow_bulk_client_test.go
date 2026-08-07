@@ -76,11 +76,21 @@ func TestWorkflowBulkDelete(t *testing.T) {
 	assert.Equal(t, len(response.BulkSuccessfulResults), len(workflowIds),
 		"Bulk successful results should be equal to workflow count")
 
-	// Verify workflows are deleted
+	// Verify workflows are deleted. Bulk delete is accepted before it has taken effect,
+	// so poll rather than reading once — a single immediate read is a race that shows up
+	// intermittently in CI.
 	for _, id := range workflowIds {
-		_, err := testdata.WorkflowExecutor.GetWorkflow(id, false)
-		require.Error(t, err, "Workflow %s should be deleted", id)
-		assert.Contains(t, err.Error(), "no such workflow by Id", "Error should indicate workflow not found")
+		var lastErr error
+		deadline := time.Now().Add(testdata.WorkflowValidationTimeout)
+		for time.Now().Before(deadline) {
+			_, lastErr = testdata.WorkflowExecutor.GetWorkflow(id, false)
+			if lastErr != nil {
+				break
+			}
+			time.Sleep(250 * time.Millisecond)
+		}
+		require.Error(t, lastErr, "Workflow %s should be deleted", id)
+		assert.Contains(t, lastErr.Error(), "no such workflow by Id", "Error should indicate workflow not found")
 	}
 }
 
