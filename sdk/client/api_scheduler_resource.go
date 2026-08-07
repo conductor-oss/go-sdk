@@ -11,6 +11,7 @@ package client
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/antihax/optional"
 	"github.com/conductor-sdk/conductor-go/sdk/metrics"
@@ -187,15 +188,39 @@ SchedulerResourceApiService Pauses an existing schedule by name
     @return interface{}
 */
 func (a *SchedulerResourceApiService) PauseSchedule(ctx context.Context, name string) (interface{}, *http.Response, error) {
-	var result interface{}
 	ctx = metrics.WithPathTemplate(ctx, "/scheduler/schedules/{name}/pause")
 	path := fmt.Sprintf("/scheduler/schedules/%s/pause", name)
 
-	resp, err := a.Get(ctx, path, nil, &result)
-	if err != nil {
+	return a.putThenGet(ctx, path)
+}
+
+// putThenGet issues a PUT and falls back to a GET on 405.
+//
+// OSS Conductor accepts only PUT on these endpoints. Orkes accepted only GET before
+// 2026-07-14 and accepts both since. PUT first therefore works everywhere, and the
+// fallback can be dropped once no supported server needs GET.
+//
+// Only 405 falls back; any other status is returned as-is, since retrying it would
+// report a method problem instead of the real cause.
+func (a *SchedulerResourceApiService) putThenGet(ctx context.Context, path string) (interface{}, *http.Response, error) {
+	var result interface{}
+
+	resp, err := a.Put(ctx, path, nil, &result)
+	if err == nil {
+		return result, resp, nil
+	}
+
+	var swaggerErr GenericSwaggerError
+	if !errors.As(err, &swaggerErr) || swaggerErr.StatusCode() != http.StatusMethodNotAllowed {
 		return nil, resp, err
 	}
-	return result, resp, nil
+
+	result = nil
+	getResp, getErr := a.Get(ctx, path, nil, &result)
+	if getErr != nil {
+		return nil, getResp, getErr
+	}
+	return result, getResp, nil
 }
 
 /*
@@ -256,15 +281,10 @@ SchedulerResourceApiService Resume a paused schedule by name
     @return interface{}
 */
 func (a *SchedulerResourceApiService) ResumeSchedule(ctx context.Context, name string) (interface{}, *http.Response, error) {
-	var result interface{}
-
 	ctx = metrics.WithPathTemplate(ctx, "/scheduler/schedules/{name}/resume")
 	path := fmt.Sprintf("/scheduler/schedules/%s/resume", name)
-	resp, err := a.Get(ctx, path, nil, &result)
-	if err != nil {
-		return nil, resp, err
-	}
-	return result, resp, nil
+
+	return a.putThenGet(ctx, path)
 }
 
 /*
