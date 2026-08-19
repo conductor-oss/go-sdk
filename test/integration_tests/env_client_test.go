@@ -13,6 +13,7 @@ import (
 
 func TestCreateOrUpdateEnvVariable(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, "Environment Variables API (/environment) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/environment')")
 
 	ctx := context.Background()
 	envClient := NewEnvironmentClient()
@@ -29,6 +30,7 @@ func TestCreateOrUpdateEnvVariable(t *testing.T) {
 
 func TestDeleteEnvVariable(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, "Environment Variables API (/environment) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/environment')")
 
 	TestCreateOrUpdateEnvVariable(t)
 	ctx := context.Background()
@@ -43,6 +45,7 @@ func TestDeleteEnvVariable(t *testing.T) {
 
 func TestDeleteTagForEnvVar(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, "Environment Variables API (/environment) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/environment')")
 
 	TestCreateOrUpdateEnvVariable(t)
 	ctx := context.Background()
@@ -58,6 +61,7 @@ func TestDeleteTagForEnvVar(t *testing.T) {
 
 func TestGetEnvVariable(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, "Environment Variables API (/environment) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/environment')")
 
 	ctx := context.Background()
 	envClient := NewEnvironmentClient()
@@ -71,6 +75,7 @@ func TestGetEnvVariable(t *testing.T) {
 
 func TestGetAllEnvVariables(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, "Environment Variables API (/environment) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/environment')")
 
 	TestCreateOrUpdateEnvVariable(t)
 	ctx := context.Background()
@@ -84,6 +89,7 @@ func TestGetAllEnvVariables(t *testing.T) {
 
 func TestGetTagsForEnvVar(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, "Environment Variables API (/environment) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/environment')")
 
 	TestUpsertUser(t)
 	ctx := context.Background()
@@ -99,6 +105,7 @@ func TestGetTagsForEnvVar(t *testing.T) {
 
 func TestPutTagForEnvVar(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, "Environment Variables API (/environment) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/environment')")
 
 	ctx := context.Background()
 	envClient := NewEnvironmentClient()

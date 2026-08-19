@@ -27,6 +27,7 @@ import (
 // TestWorkflowBulkDelete tests the Delete endpoint for bulk workflow operations
 func TestWorkflowBulkDelete(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, "POST /workflow/bulk/delete is not implemented by plain OSS Conductor, confirmed empirically (404 'No static resource api/workflow/bulk/delete')")
 
 	// Create a simple workflow for testing
 	uniqueSuffix := strconv.Itoa(time.Now().Nanosecond())

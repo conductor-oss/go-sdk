@@ -13,6 +13,7 @@ import (
 
 func TestSecretResourceApiService(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, "Secrets API (/secrets) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/secrets')")
 
 	// Setup
 	secretClient := testdata.SecretClient // Assuming this exists in your testdata package

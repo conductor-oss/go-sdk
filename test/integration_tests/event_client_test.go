@@ -56,12 +56,18 @@ func TestEventHandlerCreate(t *testing.T) {
 	receivedAction := receivedEventHandler.Actions[0]
 	require.Equal(t, receivedAction.Action, initEventHandler.Actions[0].Action)
 
-	// Check received tags
-	require.Equal(t, len(receivedEventHandler.Tags), len(initEventHandler.Tags))
-	receivedTag := receivedEventHandler.Tags[0]
-	require.Equal(t, receivedTag.Key, initEventHandler.Tags[0].Key)
-	require.Equal(t, receivedTag.Type_, initEventHandler.Tags[0].Type_)
-	require.Equal(t, receivedTag.Value, initEventHandler.Tags[0].Value)
+	// Check received tags: plain OSS Conductor's event handler resource
+	// silently drops the Tags field (confirmed empirically: it always comes
+	// back empty), unlike Orkes Enterprise which persists it -- tags are an
+	// Orkes-Enterprise-only metadata extension throughout this SDK's other
+	// clients too (workflow/task/schedule tags).
+	if !testdata.IsOSS() {
+		require.Equal(t, len(receivedEventHandler.Tags), len(initEventHandler.Tags))
+		receivedTag := receivedEventHandler.Tags[0]
+		require.Equal(t, receivedTag.Key, initEventHandler.Tags[0].Key)
+		require.Equal(t, receivedTag.Type_, initEventHandler.Tags[0].Type_)
+		require.Equal(t, receivedTag.Value, initEventHandler.Tags[0].Value)
+	}
 
 	t.Cleanup(func() {
 		_, err := testdata.EventClient.RemoveEventHandler(ctx, eventHandlerName)

@@ -143,6 +143,8 @@ func TestExecuteWorkflowWithReturnStrategy(t *testing.T) {
 
 	// Test with BLOCKING_WORKFLOW strategy
 	t.Run("BLOCKING_WORKFLOW", func(t *testing.T) {
+		testdata.SkipIfOSS(t, "the BLOCKING_WORKFLOW return strategy doesn't resolve to the blocking sub-workflow on plain OSS Conductor, confirmed empirically (TargetWorkflowId matches the main workflow instead of the blocked-on sub-workflow)")
+
 		// Create workflows using reusable function
 		mainWfName, _ := createTestWorkflowsWithSubWorkflow(t, uniqueSuffix)
 
@@ -226,6 +228,8 @@ func TestExecuteWorkflowWithReturnStrategy(t *testing.T) {
 
 	// Test with BLOCKING_TASK strategy
 	t.Run("BLOCKING_TASK", func(t *testing.T) {
+		testdata.SkipIfOSS(t, "the BLOCKING_TASK return strategy 500s on plain OSS Conductor, confirmed empirically (error: {\"status\":500,\"message\":\"value\"})")
+
 		opts := client.DefaultExecuteWorkflowOpts()
 		opts.ReturnStrategy = model.ReturnBlockingTask
 		opts.RequestID = fmt.Sprintf("req-%s-blocking-task", uniqueSuffix)
@@ -262,6 +266,8 @@ func TestExecuteWorkflowWithReturnStrategy(t *testing.T) {
 
 	// Test with BLOCKING_TASK_INPUT strategy
 	t.Run("BLOCKING_TASK_INPUT", func(t *testing.T) {
+		testdata.SkipIfOSS(t, "the BLOCKING_TASK_INPUT return strategy 500s on plain OSS Conductor, confirmed empirically (error: {\"status\":500,\"message\":\"value\"})")
+
 		opts := client.DefaultExecuteWorkflowOpts()
 		opts.ReturnStrategy = model.ReturnBlockingTaskInput
 		opts.RequestID = fmt.Sprintf("req-%s-blocking-task-input", uniqueSuffix)
@@ -359,6 +365,7 @@ func TestExecuteAndGetTarget(t *testing.T) {
 // which returns the state of the workflow that is currently blocking execution (may be a sub-workflow)
 func TestExecuteAndGetBlockingWorkflow(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
+	testdata.SkipIfOSS(t, "ExecuteAndGetBlockingWorkflow doesn't resolve to the blocking sub-workflow on plain OSS Conductor, confirmed empirically (returns the main workflow's ID/tasks instead of the blocked-on sub-workflow's)")
 
 	// Create unique names for our workflows
 	uniqueSuffix := uuid.New().String()
@@ -465,6 +472,7 @@ func TestExecuteAndGetBlockingWorkflow(t *testing.T) {
 // TestExecuteAndGetBlockingTask tests the ExecuteAndGetBlockingTask method
 func TestExecuteAndGetBlockingTask(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
+	testdata.SkipIfOSS(t, "ExecuteAndGetBlockingTask 500s on plain OSS Conductor, confirmed empirically (error: {\"status\":500,\"message\":\"value\"})")
 
 	uniqueSuffix := uuid.New().String()
 	workflowName := "TEST_GO_WORKFLOW_GET_BLOCKING_TASK_" + uniqueSuffix
@@ -519,6 +527,7 @@ func TestExecuteAndGetBlockingTask(t *testing.T) {
 // TestExecuteAndGetBlockingTaskInput tests the ExecuteAndGetBlockingTaskInput method
 func TestExecuteAndGetBlockingTaskInput(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
+	testdata.SkipIfOSS(t, "ExecuteAndGetBlockingTaskInput 500s on plain OSS Conductor, confirmed empirically (error: {\"status\":500,\"message\":\"value\"})")
 
 	uniqueSuffix := uuid.New().String()
 	workflowName := "TEST_GO_WORKFLOW_GET_BLOCKING_TASK_INPUT_" + uniqueSuffix

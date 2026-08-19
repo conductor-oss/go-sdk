@@ -73,6 +73,7 @@ func TestRegisterWorkflow(t *testing.T) {
 
 func TestRegisterWorkflowWithTags(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, "metadata tagging (/metadata/workflow/{name}/tags) is Orkes-Enterprise-only, confirmed empirically")
 
 	executor := testdata.WorkflowExecutor
 
@@ -159,6 +160,7 @@ func TestGetWorkflow(t *testing.T) {
 
 func TestUpdateTaskByRefName(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, "OSS returns 200 instead of 404 for updates against a nonexistent workflow ID")
 
 	executor := testdata.WorkflowExecutor
 	err := executor.UpdateTaskByRefName("task_ref", notFoundWorkflowId, model.CompletedTask, map[string]interface{}{})
@@ -547,6 +549,7 @@ func getWorkflowDef(filename string) (*model.WorkflowDef, error) {
 
 func TestSignal_AllStrategies_Comprehensive(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
+	testdata.SkipIfOSS(t, "signal endpoints (/tasks/{workflowId}/{status}/signal(/sync)) are broken on plain OSS Conductor: server-side routing bug resolves {status} to the literal string \"signal\" regardless of actual URL, confirmed empirically via a direct curl bypassing the SDK")
 
 	registerComplexWorkflows(t)
 	testCases := []struct {
@@ -860,6 +863,7 @@ func TestSignal_AllStrategies_Comprehensive(t *testing.T) {
 // Add a separate test for default strategy to ensure it behaves like TARGET_WORKFLOW
 func TestSignal_DefaultStrategy_IsTargetWorkflow(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
+	testdata.SkipIfOSS(t, "signal endpoints (/tasks/{workflowId}/{status}/signal(/sync)) are broken on plain OSS Conductor: server-side routing bug resolves {status} to the literal string \"signal\" regardless of actual URL, confirmed empirically via a direct curl bypassing the SDK")
 
 	// Setup workflow (same setup code as in your original test)
 	executor := testdata.WorkflowExecutor
@@ -919,6 +923,7 @@ func TestSignal_DefaultStrategy_IsTargetWorkflow(t *testing.T) {
 // Add a separate test for mixed strategy
 func TestSignal_MixedStrategy(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
+	testdata.SkipIfOSS(t, "signal endpoints (/tasks/{workflowId}/{status}/signal(/sync)) are broken on plain OSS Conductor: server-side routing bug resolves {status} to the literal string \"signal\" regardless of actual URL, confirmed empirically via a direct curl bypassing the SDK")
 
 	// Setup workflow (same setup code as in your original test)
 	executor := testdata.WorkflowExecutor

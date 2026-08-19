@@ -601,11 +601,55 @@ func parseVersion(version string) string {
 
 func RequireAtLeast(t *testing.T, min string) {
 	t.Helper()
-	have := VersionResource
 
+	// VersionResourceV41/V52 refer to Orkes Enterprise release versions;
+	// plain OSS Conductor has its own, unrelated version numbering (e.g.
+	// "3.32", confirmed empirically via GET /version against the local OSS
+	// stack) that is numerically lower despite supporting most of the same
+	// core APIs. Comparing it against an Enterprise version number would
+	// incorrectly skip nearly the entire suite, so this check only applies
+	// when actually running against Orkes; OSS-specific gaps are instead
+	// gated per-test via SkipIfOSS once empirically confirmed.
+	if os.Getenv("CONDUCTOR_SERVER_TYPE") == "oss" {
+		return
+	}
+
+	have := VersionResource
 	if !isVersionAtLeast(have, min) {
 		t.Skipf("skip: requires >= %s, have %s", min, have)
 	}
+}
+
+// SkipIfOSS skips the current test when running against plain OSS Conductor
+// (CONDUCTOR_SERVER_TYPE=oss, set by scripts/run-integration-oss.sh and the
+// integration-tests-oss CI job). Use this for Orkes-Enterprise-only
+// functionality that has been empirically confirmed not to exist on OSS
+// (e.g. RBAC/applications/users/groups, secrets, environment variables,
+// service registry, webhooks, rate limiting, prompts, schemas) rather than
+// letting those tests fail against a local OSS stack.
+//
+// CONDUCTOR_INCLUDE_GATED_TESTS=true (set by
+// scripts/run-integration-oss.sh --include-gated) opts back into running
+// these too, to see what actually happens against OSS instead of skipping.
+// This is intentionally a separate variable from CONDUCTOR_SERVER_TYPE:
+// that one must stay set to "oss" even in this mode, since RequireAtLeast
+// also depends on it (to bypass comparing OSS's own version numbering
+// against Enterprise version thresholds) and unsetting it would instead
+// cause nearly the entire suite to skip for an unrelated reason.
+func SkipIfOSS(t *testing.T, reason string) {
+	t.Helper()
+	if os.Getenv("CONDUCTOR_SERVER_TYPE") == "oss" && os.Getenv("CONDUCTOR_INCLUDE_GATED_TESTS") != "true" {
+		t.Skipf("skip: not supported on plain OSS Conductor (%s)", reason)
+	}
+}
+
+// IsOSS reports whether the suite is currently running against plain OSS
+// Conductor rather than Orkes Enterprise, per the same CONDUCTOR_SERVER_TYPE
+// signal SkipIfOSS checks. Use this to gate a portion of a test (e.g. a few
+// assertions in an otherwise-shared test function) rather than skipping the
+// whole test outright.
+func IsOSS() bool {
+	return os.Getenv("CONDUCTOR_SERVER_TYPE") == "oss"
 }
 
 func isVersionAtLeast(have, min string) bool {

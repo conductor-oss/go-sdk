@@ -16,3 +16,6 @@
 pkg/
 go.sum
 !examples/go.sum
+
+# Local env vars / output from ad-hoc runs of scripts/run-integration-oss.sh
+env.sh

@@ -16,6 +16,7 @@ import (
 
 func TestApplicationLifecycle(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, "Applications/Authorization API (/applications) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/applications')")
 
 	appClient := testdata.ApplicationClient
 
@@ -52,6 +53,7 @@ func TestApplicationLifecycle(t *testing.T) {
 
 func TestRoleManagementForApplicationUser(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, "Applications/Authorization API (/applications) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/applications')")
 
 	appClient := testdata.ApplicationClient
 
@@ -84,6 +86,7 @@ func TestRoleManagementForApplicationUser(t *testing.T) {
 
 func TestAuthorizationResourcePermissions(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, "Applications/Authorization API (/applications) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/applications')")
 
 	// Setup
 	appClient := testdata.ApplicationClient
@@ -152,6 +155,7 @@ func TestAuthorizationResourcePermissions(t *testing.T) {
 
 func TestAccessKeyLifecycle(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, "Applications/Authorization API (/applications) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/applications')")
 
 	appClient := testdata.ApplicationClient
 
@@ -186,6 +190,7 @@ func TestAccessKeyLifecycle(t *testing.T) {
 
 func TestGetTagsForApplication(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, "Applications/Authorization API (/applications) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/applications')")
 
 	appClient := testdata.ApplicationClient
 
@@ -229,6 +234,7 @@ func TestGetTagsForApplication(t *testing.T) {
 
 func TestApplicationClientIntegration(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, "Applications/Authorization API (/applications) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/applications')")
 
 	// Initialize ApplicationClient
 	appClient := testdata.ApplicationClient
@@ -329,6 +335,7 @@ func TestApplicationClientIntegration(t *testing.T) {
 
 func TestApplicationClientErrorHandling(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, "Applications/Authorization API (/applications) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/applications')")
 
 	// Initialize ApplicationClient
 	appClient := testdata.ApplicationClient
@@ -393,6 +400,7 @@ func TestApplicationClientErrorHandling(t *testing.T) {
 
 func TestGetAccessKeys(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, "Applications/Authorization API (/applications) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/applications')")
 
 	// Initialize ApplicationClient
 	appClient := testdata.ApplicationClient
@@ -464,6 +472,7 @@ func TestGetAccessKeys(t *testing.T) {
 
 func TestGetAppByAccessKeyId(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, "Applications/Authorization API (/applications) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/applications')")
 
 	// Initialize ApplicationClient
 	appClient := testdata.ApplicationClient

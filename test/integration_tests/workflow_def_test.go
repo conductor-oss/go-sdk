@@ -261,6 +261,7 @@ func TestComplexSwitchWorkflow(t *testing.T) {
 
 func TestRegisterWorkflow_SwitchEmptyDefaultCase(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, "the javascript evaluator on plain OSS Conductor doesn't support anonymous function expressions the way Orkes Enterprise does, confirmed empirically (SyntaxError parsing \"function() { return 'true'; }\")")
 
 	wf := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).
 		Name("TEST_GO_SWITCH_EMPTY_DEFAULT_" + time.Now().Format("150405")).
@@ -283,6 +284,7 @@ func TestRegisterWorkflow_SwitchEmptyDefaultCase(t *testing.T) {
 
 func TestGetWorkflowTask(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, "the GET_WORKFLOW system task is not executed on plain OSS Conductor, confirmed empirically (task stays SCHEDULED forever, no worker picks it up)")
 
 	uuid := uuid.New().String()
 	// First, create and run a simple workflow that we'll reference
@@ -379,6 +381,7 @@ func TestGetWorkflowTask(t *testing.T) {
 
 func TestGetWorkflowTaskWithDynamicInput(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, "the GET_WORKFLOW system task is not executed on plain OSS Conductor, confirmed empirically (task stays SCHEDULED forever, no worker picks it up)")
 
 	uuid := uuid.New().String()
 	// First, create and run a simple workflow that we'll reference
@@ -479,6 +482,7 @@ func TestGetWorkflowTaskWithDynamicInput(t *testing.T) {
 
 func TestYieldTask(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
+	testdata.SkipIfOSS(t, "signal endpoints (/tasks/{workflowId}/{status}/signal(/sync)) are broken on plain OSS Conductor: server-side routing bug resolves {status} to the literal string \"signal\" regardless of actual URL, confirmed empirically via a direct curl bypassing the SDK")
 
 	uid := uuid.New().String()
 	wf := workflow.NewConductorWorkflow(testdata.WorkflowExecutor).

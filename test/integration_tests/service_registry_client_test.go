@@ -54,6 +54,7 @@ func (s *ServiceRegistryClientTestSuite) cleanup(t *testing.T) {
 
 func TestServiceRegistryClient_HTTPService(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
+	testdata.SkipIfOSS(t, "Service Registry API (/service-registry) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/service-registry')")
 
 	suite := setupServiceRegistryTest(t)
 	defer suite.cleanup(t)
@@ -149,6 +150,7 @@ func TestServiceRegistryClient_HTTPService(t *testing.T) {
 
 func TestServiceRegistryClient_GRPCService(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
+	testdata.SkipIfOSS(t, "Service Registry API (/service-registry) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/service-registry')")
 
 	suite := setupServiceRegistryTest(t)
 	defer suite.cleanup(t)
@@ -247,6 +249,7 @@ func TestServiceRegistryClient_GRPCService(t *testing.T) {
 
 func TestServiceRegistryClient_CircuitBreaker(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
+	testdata.SkipIfOSS(t, "Service Registry API (/service-registry) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/service-registry')")
 
 	suite := setupServiceRegistryTest(t)
 	defer suite.cleanup(t)
@@ -287,6 +290,7 @@ func TestServiceRegistryClient_CircuitBreaker(t *testing.T) {
 
 func TestServiceRegistryClient_MethodOperations(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
+	testdata.SkipIfOSS(t, "Service Registry API (/service-registry) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/service-registry')")
 
 	suite := setupServiceRegistryTest(t)
 	defer suite.cleanup(t)

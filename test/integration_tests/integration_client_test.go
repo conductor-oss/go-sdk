@@ -15,6 +15,7 @@ import (
 
 func TestIntegrationClient(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, "Integrations/Prompts APIs (/integrations, /prompts) are Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/integrations|prompts')")
 
 	ctx := context.Background()
 
