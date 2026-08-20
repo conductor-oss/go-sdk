@@ -422,8 +422,8 @@ func TestSubWorkflowSignalWithSyncConsistency(t *testing.T) {
 
 	t.Logf("Sent COMPLETED signal to workflow")
 
-	// Small delay to allow workflow to process
-	time.Sleep(2 * time.Second)
+	err = waitForWorkflowCompletion(executor, parentWorkflowId, 10*time.Second)
+	assert.NoError(t, err)
 
 	// 4. Check if WF status is completed
 	workflowDetails, err := executor.GetWorkflow(parentWorkflowId, true)
