@@ -1,0 +1,33 @@
+name: Documentation
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  links:
+    name: Validate documentation links
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Matches the Java SDK's link validation. --offline keeps CI independent of
+      # third-party site availability; --include-fragments makes the #anchor
+      # targets in CHANGELOG.md real assertions rather than decoration.
+      - name: Validate documentation links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --offline --no-progress --include-fragments README.md CHANGELOG.md docs
+          fail: true

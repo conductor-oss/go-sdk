@@ -8,6 +8,11 @@ RUN go build -v ./...
 
 FROM build as test
 COPY /test/unit_tests /package/test/unit_tests
+# docs_test.go asserts on the documentation tree, so it needs the Markdown
+# sources in the image. Without these the documentation tests cannot run in CI.
+COPY /docs /package/docs
+COPY /README.md /package/README.md
+COPY /CHANGELOG.md /package/CHANGELOG.md
 # Run SDK unit tests
 RUN go test -v -race ./sdk/...
 # Run additional unit tests
