@@ -122,19 +122,6 @@ jobs:
             tail -1 coverage/coverage.txt || echo "No integration test coverage data"
           fi
           
-      - name: Upload coverage to Codecov
-        if: ${{ always() && matrix.suite == 'integration' }}
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: |
-            coverage/coverage-unit.out
-            coverage/coverage-sdk.out
-            coverage/coverage-integration-${{ matrix.cluster }}.out
-          flags: integration-tests-${{ matrix.cluster }}
-          name: go-sdk-integration-${{ matrix.cluster }}
-          fail_ci_if_error: false
-          
       - name: Check Integration Tests Status
         if: ${{ matrix.suite == 'integration' && steps.integration_tests.outcome == 'failure' }}
         run: exit 1
