@@ -167,7 +167,7 @@ func Greet(task *model.Task) (interface{}, error) {
 }
 ```
 
-To learn more about workers take a look at [Writing Workers with the Go SDK](docs/workers_sdk.md).
+To learn more about workers take a look at [Writing Workers with the Go SDK](docs/workers.md).
 
 > [!note]
 > A single workflow can have task workers written in different languages and deployed anywhere, making your workflow polyglot and distributed!
@@ -272,12 +272,12 @@ INFO[0000] Output of the workflow:map[Greetings:Hello, Gopher]
 ```
 
 ## Deprecated Methods
-Some methods in the SDK client interfaces are now deprecated. They’ve been replaced with newer methods that follow more consistent naming. Please refer to our [Migration Guide](docs/migration_guide.md) for detailed information on how to update your code.
+Some methods in the SDK client interfaces are now deprecated. They’ve been replaced with newer methods that follow more consistent naming. Please refer to our [Migration Guide](docs/upgrading.md) for detailed information on how to update your code.
 # Further Reading
 
-- [Writing Workers with the Go SDK](docs/workers_sdk.md)
-- [Authoring Workflows with the Go SDK](docs/workflow_sdk.md)
+- [Writing Workers with the Go SDK](docs/workers.md)
+- [Authoring Workflows with the Go SDK](docs/workflows.md)
 - [Logging Configuration](docs/logger_sdk.md)
-- [Migration Guide: Deprecated Methods](docs/migration_guide.md)
+- [Migration Guide: Deprecated Methods](docs/upgrading.md)
 - [API Client Configuration](docs/api_client/README.md) - Complete guide to API client setup, authentication, and proxy configuration
-- [TLS Configuration Guide](docs/api_client/tls_configuration.md) - TLS/SSL configuration for self-signed certificates and mTLS
+- [TLS Configuration Guide](docs/security.md) - TLS/SSL configuration for self-signed certificates and mTLS
