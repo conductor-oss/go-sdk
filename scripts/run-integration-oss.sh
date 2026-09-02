@@ -2,9 +2,10 @@
 #
 # Spin up a local Conductor OSS stack and run the integration suite against
 # it, mirroring the `integration-tests-oss` job in
-# .github/workflows/integration-tests-sm.yml. Orkes-Enterprise-only tests are
-# skipped via testdata.SkipIfOSS (see test/testdata/util.go and the
-# individual test files for the empirically-confirmed gaps).
+# .github/workflows/integration-tests-sm.yml. Tests covering functionality
+# plain OSS Conductor doesn't support are skipped via testdata.SkipIfOSS, and
+# individual assertions via testdata.OSSGapSkipped; every gap and the evidence
+# for it is listed in test/integration_tests/oss_gaps_test.go.
 #
 # The stack (Conductor OSS + Postgres + httpbin) is defined in
 # scripts/docker-compose-oss.yaml and is torn down automatically on exit. The

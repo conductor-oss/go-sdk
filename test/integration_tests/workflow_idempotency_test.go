@@ -17,7 +17,7 @@ import (
 
 func TestIdempotencyCombinations(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
-	testdata.SkipIfOSS(t, "workflow start idempotency keys are not honored by plain OSS Conductor, confirmed empirically (a duplicate start with an existing idempotencyKey returns a new workflow ID instead of the existing one / no conflict error)")
+	testdata.SkipIfOSS(t, ossGapIdempotencyKeys)
 
 	executor := testdata.WorkflowExecutor
 	wf := workflow.NewConductorWorkflow(executor)
@@ -59,7 +59,7 @@ func TestIdempotencyCombinations(t *testing.T) {
 
 func TestIdempotencyFailOnRunning(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
-	testdata.SkipIfOSS(t, "workflow start idempotency keys are not honored by plain OSS Conductor, confirmed empirically (a duplicate start with an existing idempotencyKey returns a new workflow ID instead of the existing one / no conflict error)")
+	testdata.SkipIfOSS(t, ossGapIdempotencyKeys)
 
 	executor := testdata.WorkflowExecutor
 	wf := workflow.NewConductorWorkflow(executor)

@@ -52,6 +52,9 @@ func TestWorkflowSearch(t *testing.T) {
 		expectMinResults   int
 		expectExactResults int
 		validateResults    func(t *testing.T, results []model.WorkflowSummary, workflowId1, workflowId2, wf1Name string)
+		// ossSkipReason, when set, skips this case against plain OSS
+		// Conductor -- see oss_gaps_test.go.
+		ossSkipReason string
 	}{
 		{
 			name: "BasicSearch",
@@ -275,7 +278,15 @@ func TestWorkflowSearch(t *testing.T) {
 				assert.True(t, firstPageWorkflowId == workflowId1 || firstPageWorkflowId == workflowId2,
 					"First page should contain one of our test workflows")
 
-				// Test second page with size 1
+				// Test second page with size 1. Only the start>0 fetch is
+				// gated: the first-page assertions above (page size honored,
+				// correct workflow returned) do pass against plain OSS
+				// Conductor. See ossGapSearchPaging.
+				if testdata.OSSGapSkipped() {
+					t.Logf("skipping second-page assertions: %s", ossGapSearchPaging)
+					return
+				}
+
 				opts2 := &client.WorkflowResourceApiSearchOpts{
 					Query: optional.NewString(fmt.Sprintf("status = COMPLETED AND workflowType IN (%s, %s)", wf1Name, wf2Name)),
 					Start: optional.NewInt32(1),
@@ -313,8 +324,8 @@ func TestWorkflowSearch(t *testing.T) {
 	// Run table-driven tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.name == "SearchWithPagination" {
-				testdata.SkipIfOSS(t, "GET /workflow/search pagination (start>0) returns 0 results for this IN-operator query on plain OSS Conductor, confirmed empirically")
+			if tt.ossSkipReason != "" {
+				testdata.SkipIfOSS(t, tt.ossSkipReason)
 			}
 
 			var searchResult model.SearchResultWorkflowSummary

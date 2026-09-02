@@ -2,18 +2,33 @@
 # Conductor. Shared by scripts/run-integration-oss.sh and the
 # integration-tests-oss job in .github/workflows/integration-tests-sm.yml.
 #
-# OSS_CONDUCTOR_VERSION defaults to `latest` for local runs; CI pins it via the
-# E2E_TEST_OSS_CONDUCTOR_VERSION org variable (or a workflow_dispatch input).
+# OSS_CONDUCTOR_VERSION defaults to `latest` for local runs. CI resolves it from
+# the E2E_TEST_OSS_CONDUCTOR_VERSION org variable (or a workflow_dispatch
+# input); that variable is currently set to `latest` too, so CI tracks whatever
+# `latest` resolves to at run time rather than a fixed version. Set the org
+# variable to a real tag if the job needs to be deterministic -- note that the
+# suite has no version gating on OSS (see testdata.RequireAtLeast), so pinning
+# an older tag surfaces as test failures rather than skips.
 #
 # httpbin: a handful of integration tests exercise the HTTP task type against
 # a fixed "http://httpbin:8081/..." URL (hardcoded in test fixtures/JSON
 # workflow defs, not configurable). This service exists purely to give that
-# hostname something to resolve to on the compose network.
+# hostname something to resolve to on the compose network. Pinned to the same
+# tag python-sdk uses, so the two suites exercise identical behavior.
 services:
   conductor-server:
     image: conductoross/conductor:${OSS_CONDUCTOR_VERSION:-latest}
     environment:
       - CONFIG_PROP=config-postgres.properties
+      # Dummy, non-sensitive value so OSS's bundled env-backed SecretsDAO has
+      # something real to read back in TestSecretResourceApiService (get/list/
+      # exists -- writes are 501 on that read-only backend). OSS Conductor has
+      # no authentication at all, so an unauthenticated /api/secrets/{key}
+      # read doesn't change the threat model versus any other unauthenticated
+      # OSS endpoint -- don't put a real credential here. Keep the name and
+      # value in sync with ossSeededSecretName/Value in
+      # test/integration_tests/secret_client_test.go.
+      - CONDUCTOR_SECRET_GO_SDK_INTEGRATION_TEST=go-sdk-oss-secret-value
     ports:
       - "8080:8080"
     healthcheck:
@@ -37,4 +52,6 @@ services:
       timeout: 5s
       retries: 12
   httpbin:
-    image: ghcr.io/conductor-oss/httpbin:latest
+    image: ghcr.io/conductor-oss/httpbin:v1.0.1
+    expose:
+      - "8081"

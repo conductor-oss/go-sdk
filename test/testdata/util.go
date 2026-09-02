@@ -610,7 +610,7 @@ func RequireAtLeast(t *testing.T, min string) {
 	// incorrectly skip nearly the entire suite, so this check only applies
 	// when actually running against Orkes; OSS-specific gaps are instead
 	// gated per-test via SkipIfOSS once empirically confirmed.
-	if os.Getenv("CONDUCTOR_SERVER_TYPE") == "oss" {
+	if IsOSS() {
 		return
 	}
 
@@ -620,13 +620,40 @@ func RequireAtLeast(t *testing.T, min string) {
 	}
 }
 
-// SkipIfOSS skips the current test when running against plain OSS Conductor
-// (CONDUCTOR_SERVER_TYPE=oss, set by scripts/run-integration-oss.sh and the
-// integration-tests-oss CI job). Use this for Orkes-Enterprise-only
-// functionality that has been empirically confirmed not to exist on OSS
-// (e.g. RBAC/applications/users/groups, secrets, environment variables,
-// service registry, webhooks, rate limiting, prompts, schemas) rather than
-// letting those tests fail against a local OSS stack.
+// IsOSS reports whether the suite is currently running against plain OSS
+// Conductor rather than Orkes Enterprise (CONDUCTOR_SERVER_TYPE=oss, set by
+// scripts/run-integration-oss.sh and the integration-tests-oss CI job).
+//
+// This answers "which server am I talking to", nothing more. To gate
+// something that OSS does not support, use SkipIfOSS or OSSGapSkipped
+// instead: those also honor the CONDUCTOR_INCLUDE_GATED_TESTS override, so
+// they can be turned back on to re-check whether a gap still exists. Reach
+// for IsOSS only when the two servers need genuinely different assertions
+// rather than one of them running less.
+func IsOSS() bool {
+	return os.Getenv("CONDUCTOR_SERVER_TYPE") == "oss"
+}
+
+// OSSGapSkipped reports whether assertions covering a known OSS gap should be
+// skipped: true when running against plain OSS Conductor, unless
+// CONDUCTOR_INCLUDE_GATED_TESTS=true asks for them to run anyway.
+//
+// Use this to gate a portion of a test (e.g. a few assertions in an
+// otherwise-shared test function) the same way SkipIfOSS gates a whole test,
+// so that --include-gated re-enables both kinds of gate. Gating a section on
+// bare IsOSS() instead would leave it silently disabled in that mode, which
+// defeats the point of the flag.
+func OSSGapSkipped() bool {
+	return IsOSS() && os.Getenv("CONDUCTOR_INCLUDE_GATED_TESTS") != "true"
+}
+
+// SkipIfOSS skips the current test when running against plain OSS Conductor.
+// Use this for functionality that has been empirically confirmed not to work
+// on OSS -- either Orkes-Enterprise-only APIs (e.g. RBAC/applications/users/
+// groups, service registry, webhooks, prompts, schemas) or behavior that
+// differs -- rather than letting those tests fail against a local OSS stack.
+// The reason strings live in test/integration_tests/oss_gaps_test.go; keep
+// them accurate, since they are the only record of why coverage is missing.
 //
 // CONDUCTOR_INCLUDE_GATED_TESTS=true (set by
 // scripts/run-integration-oss.sh --include-gated) opts back into running
@@ -638,18 +665,9 @@ func RequireAtLeast(t *testing.T, min string) {
 // cause nearly the entire suite to skip for an unrelated reason.
 func SkipIfOSS(t *testing.T, reason string) {
 	t.Helper()
-	if os.Getenv("CONDUCTOR_SERVER_TYPE") == "oss" && os.Getenv("CONDUCTOR_INCLUDE_GATED_TESTS") != "true" {
+	if OSSGapSkipped() {
 		t.Skipf("skip: not supported on plain OSS Conductor (%s)", reason)
 	}
-}
-
-// IsOSS reports whether the suite is currently running against plain OSS
-// Conductor rather than Orkes Enterprise, per the same CONDUCTOR_SERVER_TYPE
-// signal SkipIfOSS checks. Use this to gate a portion of a test (e.g. a few
-// assertions in an otherwise-shared test function) rather than skipping the
-// whole test outright.
-func IsOSS() bool {
-	return os.Getenv("CONDUCTOR_SERVER_TYPE") == "oss"
 }
 
 func isVersionAtLeast(have, min string) bool {

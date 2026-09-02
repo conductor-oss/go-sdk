@@ -13,7 +13,7 @@ import (
 
 func TestCreateOrUpdateEnvVariable(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
-	testdata.SkipIfOSS(t, "Environment Variables API (/environment) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/environment')")
+	testdata.SkipIfOSS(t, ossGapEnvVarWrites)
 
 	ctx := context.Background()
 	envClient := NewEnvironmentClient()
@@ -30,7 +30,7 @@ func TestCreateOrUpdateEnvVariable(t *testing.T) {
 
 func TestDeleteEnvVariable(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
-	testdata.SkipIfOSS(t, "Environment Variables API (/environment) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/environment')")
+	testdata.SkipIfOSS(t, ossGapEnvVarWrites)
 
 	TestCreateOrUpdateEnvVariable(t)
 	ctx := context.Background()
@@ -45,7 +45,7 @@ func TestDeleteEnvVariable(t *testing.T) {
 
 func TestDeleteTagForEnvVar(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
-	testdata.SkipIfOSS(t, "Environment Variables API (/environment) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/environment')")
+	testdata.SkipIfOSS(t, ossGapEnvVarTags)
 
 	TestCreateOrUpdateEnvVariable(t)
 	ctx := context.Background()
@@ -61,7 +61,7 @@ func TestDeleteTagForEnvVar(t *testing.T) {
 
 func TestGetEnvVariable(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
-	testdata.SkipIfOSS(t, "Environment Variables API (/environment) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/environment')")
+	testdata.SkipIfOSS(t, ossGapEnvVarWrites)
 
 	ctx := context.Background()
 	envClient := NewEnvironmentClient()
@@ -75,11 +75,25 @@ func TestGetEnvVariable(t *testing.T) {
 
 func TestGetAllEnvVariables(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
-	testdata.SkipIfOSS(t, "Environment Variables API (/environment) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/environment')")
 
-	TestCreateOrUpdateEnvVariable(t)
 	ctx := context.Background()
 	envClient := NewEnvironmentClient()
+
+	if testdata.OSSGapSkipped() {
+		// OSS serves GET /environment but has no way to seed a variable
+		// (create/update is Orkes-Enterprise-only, see ossGapEnvVarWrites),
+		// so assert the list call itself works rather than skipping the whole
+		// test. An OSS image predating EnvironmentResource 404s here.
+		variables, resp, err := envClient.GetAll(ctx)
+		if err != nil {
+			t.Skipf("skip: environment API unavailable on this OSS server (GetAll: %v)", err)
+		}
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.NotNil(t, variables)
+		return
+	}
+
+	TestCreateOrUpdateEnvVariable(t)
 
 	variables, resp, err := envClient.GetAll(ctx)
 	assert.NoError(t, err)
@@ -89,7 +103,7 @@ func TestGetAllEnvVariables(t *testing.T) {
 
 func TestGetTagsForEnvVar(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
-	testdata.SkipIfOSS(t, "Environment Variables API (/environment) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/environment')")
+	testdata.SkipIfOSS(t, ossGapEnvVarTags)
 
 	TestUpsertUser(t)
 	ctx := context.Background()
@@ -105,7 +119,7 @@ func TestGetTagsForEnvVar(t *testing.T) {
 
 func TestPutTagForEnvVar(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
-	testdata.SkipIfOSS(t, "Environment Variables API (/environment) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/environment')")
+	testdata.SkipIfOSS(t, ossGapEnvVarTags)
 
 	ctx := context.Background()
 	envClient := NewEnvironmentClient()

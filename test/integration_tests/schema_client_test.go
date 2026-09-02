@@ -33,7 +33,7 @@ func createTestSchema(schemaName string) model.SchemaDefinition {
 
 func TestSchemaLifecycle(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
-	testdata.SkipIfOSS(t, "Schema API (/schema) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/schema')")
+	testdata.SkipIfOSS(t, ossGapSchemaAPI)
 
 	schemaClient := testdata.SchemaClient
 
@@ -75,7 +75,7 @@ func TestSchemaLifecycle(t *testing.T) {
 
 func TestSchemaVersioning(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
-	testdata.SkipIfOSS(t, "Schema API (/schema) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/schema')")
+	testdata.SkipIfOSS(t, ossGapSchemaAPI)
 
 	schemaClient := testdata.SchemaClient
 
@@ -146,7 +146,7 @@ func TestSchemaVersioning(t *testing.T) {
 
 func TestGetAllSchemas(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
-	testdata.SkipIfOSS(t, "Schema API (/schema) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/schema')")
+	testdata.SkipIfOSS(t, ossGapSchemaAPI)
 
 	schemaClient := testdata.SchemaClient
 
@@ -189,7 +189,7 @@ func TestGetAllSchemas(t *testing.T) {
 
 func TestCreateMultipleSchemas(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
-	testdata.SkipIfOSS(t, "Schema API (/schema) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/schema')")
+	testdata.SkipIfOSS(t, ossGapSchemaAPI)
 
 	schemaClient := testdata.SchemaClient
 
@@ -232,7 +232,7 @@ func TestCreateMultipleSchemas(t *testing.T) {
 // Tests using GetSchema method (requires version 5.0+)
 func TestSchemaLifecycleWithGetSchema(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
-	testdata.SkipIfOSS(t, "Schema API (/schema) is Orkes-Enterprise-only, confirmed empirically (404 'No static resource api/schema')")
+	testdata.SkipIfOSS(t, ossGapSchemaAPI)
 
 	schemaClient := testdata.SchemaClient
 

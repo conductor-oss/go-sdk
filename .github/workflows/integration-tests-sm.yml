@@ -239,7 +239,9 @@ jobs:
         run: docker compose -f scripts/docker-compose-oss.yaml up -d
 
       - name: Wait for Conductor to be healthy
-        run: timeout 120 bash -c 'until curl -sf http://localhost:8080/health; do sleep 5; done'
+        # Matches HEALTH_TIMEOUT in scripts/run-integration-oss.sh, and stays
+        # under the compose healthcheck's own ~200s budget (10s x 20 retries).
+        run: timeout 180 bash -c 'until curl -sf http://localhost:8080/health; do sleep 5; done'
 
       - name: Run Integration tests (OSS)
         id: integration_tests

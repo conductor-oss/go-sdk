@@ -155,7 +155,7 @@ func TestExecuteWorkflow(t *testing.T) {
 
 func TestExecuteWorkflowWithCorrelationIds(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
-	testdata.SkipIfOSS(t, "GET /workflow/correlated/batch is not implemented by plain OSS Conductor, confirmed empirically (404 'No static resource api/workflow/correlated/batch')")
+	testdata.SkipIfOSS(t, ossGapCorrelatedBatch)
 
 	executor := testdata.WorkflowExecutor
 	correlationId1 := "correlationId1-" + uuid.New().String()
@@ -195,7 +195,7 @@ func TestExecuteWorkflowWithCorrelationIds(t *testing.T) {
 
 func TestTerminateWorkflowWithFailure(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
-	testdata.SkipIfOSS(t, "terminate-with-failure-workflow-trigger is not honored by plain OSS Conductor, confirmed empirically (conductor.failure_workflow output never gets set)")
+	testdata.SkipIfOSS(t, ossGapFailureWorkflow)
 
 	executor := testdata.WorkflowExecutor
 	wf := workflow.NewConductorWorkflow(executor).
@@ -735,7 +735,7 @@ func TestRestartWorkflow(t *testing.T) {
 
 func TestUpgradeRunningWorkflowToVersion(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
-	testdata.SkipIfOSS(t, "POST /workflow/{id}/upgrade is not implemented by plain OSS Conductor, confirmed empirically (404 'No static resource api/workflow/{id}/upgrade')")
+	testdata.SkipIfOSS(t, ossGapWorkflowUpgrade)
 
 	// Create version 1 of the workflow - use a WAIT task that waits indefinitely until signaled
 	uniqueSuffix := strconv.Itoa(time.Now().Nanosecond())
@@ -1053,7 +1053,7 @@ func TestGetRunningWorkflow(t *testing.T) {
 // TestGetWorkflowsBatch tests the GetWorkflowsBatch API endpoint
 func TestGetWorkflowsBatch(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
-	testdata.SkipIfOSS(t, "GET /workflow/correlated/batch is not implemented by plain OSS Conductor, confirmed empirically (404 'No static resource api/workflow/correlated/batch')")
+	testdata.SkipIfOSS(t, ossGapCorrelatedBatch)
 
 	// Create multiple correlation IDs and workflows
 	correlationIds := make([]string, 3)
@@ -1536,7 +1536,7 @@ func TestWorkflowTest(t *testing.T) {
 
 func TestJumpToTask(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
-	testdata.SkipIfOSS(t, "POST /workflow/{id}/jump/{taskRefName} is not implemented by plain OSS Conductor, confirmed empirically (404 'No static resource api/workflow/{id}/jump/{ref}')")
+	testdata.SkipIfOSS(t, ossGapWorkflowJump)
 
 	uniqueSuffix := strconv.Itoa(time.Now().Nanosecond())
 
@@ -1620,7 +1620,6 @@ func TestJumpToTask(t *testing.T) {
 // TestSkipTaskFromWorkflow tests the SkipTaskFromWorkflow API endpoint
 func TestSkipTaskFromWorkflow(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
-	testdata.SkipIfOSS(t, "the skip-task endpoint's TaskOutput override is not applied by plain OSS Conductor, confirmed empirically (skipped task's outputData never contains the provided TaskOutput)")
 
 	// Create a workflow with multiple tasks
 	uniqueSuffix := strconv.Itoa(time.Now().Nanosecond())
@@ -1695,8 +1694,12 @@ func TestSkipTaskFromWorkflow(t *testing.T) {
 	for _, task := range updatedWorkflow.Tasks {
 		if task.ReferenceTaskName == "wait_task_skip" && task.Status == model.SkippedTask {
 			waitTaskSkipped = true
-			// Verify the skip task output
-			if task.OutputData != nil {
+			// Verify the skip task output. The endpoint itself works on plain
+			// OSS Conductor -- the task does reach SKIPPED, which is what the
+			// assertion below covers -- but the TaskOutput override is not
+			// applied there, so only this assertion is gated. See
+			// ossGapSkipTaskOutput.
+			if task.OutputData != nil && !testdata.OSSGapSkipped() {
 				assert.Equal(t, "skipped_by_test", task.OutputData["result"], "Skip task output should match")
 			}
 			break
@@ -1708,7 +1711,7 @@ func TestSkipTaskFromWorkflow(t *testing.T) {
 // TestUpdateWorkflowAndTaskState tests the UpdateWorkflowAndTaskState API endpoint
 func TestUpdateWorkflowAndTaskState(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
-	testdata.SkipIfOSS(t, "PUT /workflow/{id}/variables and GET /workflow/{id}/status are not implemented by plain OSS Conductor, confirmed empirically (404 'No static resource api/workflow/{id}/variables|status')")
+	testdata.SkipIfOSS(t, ossGapWorkflowVariables)
 
 	// Create a workflow with a simple task
 	uniqueSuffix := strconv.Itoa(time.Now().Nanosecond())
@@ -1824,7 +1827,7 @@ func TestUpdateWorkflowAndTaskState(t *testing.T) {
 // TestUpdateWorkflowState tests the UpdateWorkflowState API endpoint
 func TestUpdateWorkflowState(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
-	testdata.SkipIfOSS(t, "PUT /workflow/{id}/state is not implemented by plain OSS Conductor, confirmed empirically (404 'No static resource api/workflow/{id}/state')")
+	testdata.SkipIfOSS(t, ossGapWorkflowState)
 
 	// Create a workflow with variables
 	uniqueSuffix := strconv.Itoa(time.Now().Nanosecond())
