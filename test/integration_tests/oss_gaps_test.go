@@ -78,7 +78,7 @@ const (
 	ossGapIdempotencyKeys = "workflow start idempotency keys are not honored by plain OSS Conductor, confirmed empirically (a duplicate start with an existing idempotencyKey returns a new workflow ID instead of the existing one / no conflict error)"
 	ossGapFailureWorkflow = "terminate-with-failure-workflow-trigger is not honored by plain OSS Conductor, confirmed empirically (conductor.failure_workflow output never gets set)"
 	ossGapSkipTaskOutput  = "the skip-task endpoint's TaskOutput override is not applied by plain OSS Conductor, confirmed empirically (skipped task's outputData never contains the provided TaskOutput)"
-	ossGapUpdateNotFound  = "OSS returns 200 instead of 404 for updates against a nonexistent workflow ID"
+	ossGapUpdateNotFound  = "POST /tasks/{workflowId}/{taskRefName}/{status} against a nonexistent workflow ID succeeds on plain OSS Conductor instead of returning 404, confirmed empirically via --include-gated: the call returns 2xx, so the SDK surfaces no error at all rather than a GenericSwaggerError with StatusCode() == 404"
 	ossGapSearchPaging    = "GET /workflow/search pagination (start>0) returns 0 results for this IN-operator query on plain OSS Conductor, confirmed empirically"
 
 	// Both return-strategy gaps below cover the ReturnStrategy subtests and
