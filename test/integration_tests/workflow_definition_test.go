@@ -1697,9 +1697,8 @@ func TestSkipTaskFromWorkflow(t *testing.T) {
 			// Verify the skip task output. The endpoint itself works on plain
 			// OSS Conductor -- the task does reach SKIPPED, which is what the
 			// assertion below covers -- but the TaskOutput override is not
-			// applied there, so only this assertion is gated. See
-			// ossGapSkipTaskOutput.
-			if task.OutputData != nil && !testdata.OSSGapSkipped() {
+			// applied there, so only this assertion is gated.
+			if !testdata.OSSGapSkippedReason(t, ossGapSkipTaskOutput) && task.OutputData != nil {
 				assert.Equal(t, "skipped_by_test", task.OutputData["result"], "Skip task output should match")
 			}
 			break

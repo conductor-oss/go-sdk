@@ -21,8 +21,8 @@ services:
     environment:
       - CONFIG_PROP=config-postgres.properties
       # Dummy, non-sensitive value so OSS's bundled env-backed SecretsDAO has
-      # something real to read back in TestSecretResourceApiService (get/list/
-      # exists -- writes are 501 on that read-only backend). OSS Conductor has
+      # something real to read back in TestSecretReads (get/list/exists --
+      # writes are 501 on that read-only backend). OSS Conductor has
       # no authentication at all, so an unauthenticated /api/secrets/{key}
       # read doesn't change the threat model versus any other unauthenticated
       # OSS endpoint -- don't put a real credential here. Keep the name and

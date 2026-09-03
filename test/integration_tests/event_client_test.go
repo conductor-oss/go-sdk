@@ -56,10 +56,10 @@ func TestEventHandlerCreate(t *testing.T) {
 	receivedAction := receivedEventHandler.Actions[0]
 	require.Equal(t, receivedAction.Action, initEventHandler.Actions[0].Action)
 
-	// Check received tags. See ossGapEventHandlerTags -- tags are an
-	// Orkes-Enterprise-only metadata extension throughout this SDK's other
-	// clients too (workflow/task/schedule/secret tags).
-	if !testdata.OSSGapSkipped() {
+	// Check received tags. Tags are an Orkes-Enterprise-only metadata
+	// extension throughout this SDK's other clients too
+	// (workflow/task/schedule/secret tags).
+	if !testdata.OSSGapSkippedReason(t, ossGapEventHandlerTags) {
 		require.Equal(t, len(receivedEventHandler.Tags), len(initEventHandler.Tags))
 		receivedTag := receivedEventHandler.Tags[0]
 		require.Equal(t, receivedTag.Key, initEventHandler.Tags[0].Key)

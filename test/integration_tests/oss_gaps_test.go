@@ -13,12 +13,17 @@ package integration_tests
 //
 // Whole tests are gated with testdata.SkipIfOSS(t, ossGapX). Individual
 // assertion blocks inside an otherwise-shared test are gated with
-// testdata.OSSGapSkipped(), which honors the same
-// CONDUCTOR_INCLUDE_GATED_TESTS override. Prefer the narrow form: gate only
-// the assertions that OSS actually fails, so the rest of the test keeps
-// running. A few constants below are therefore referenced only from the
-// comment on such a block rather than passed as an argument -- they are still
-// the inventory entry for that gap.
+// testdata.OSSGapSkippedReason(t, ossGapX), which honors the same
+// CONDUCTOR_INCLUDE_GATED_TESTS override and logs the reason so a partial gate
+// doesn't report a silent PASS. Prefer the narrow form: gate only the
+// assertions that OSS actually fails, so the rest of the test keeps running.
+//
+// Every constant below is passed to one of those two helpers, so the compiler
+// tracks the link between a gap and the gate it justifies -- keep it that way.
+// The one exception is bare testdata.OSSGapSkipped(), used where OSS takes a
+// genuinely different assertion path rather than running less (see
+// TestGetAllEnvVariables); its gap is documented by whichever SkipIfOSS site
+// shares the constant.
 const (
 	// --- Orkes-Enterprise-only APIs: OSS registers no controller at all. ---
 

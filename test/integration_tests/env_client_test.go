@@ -61,6 +61,9 @@ func TestDeleteTagForEnvVar(t *testing.T) {
 
 func TestGetEnvVariable(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	// Gated on the write, not the read: this test seeds the variable it reads
+	// back, and it is the seeding that OSS can't do. The read path itself is
+	// covered on OSS by TestGetAllEnvVariables.
 	testdata.SkipIfOSS(t, ossGapEnvVarWrites)
 
 	ctx := context.Background()

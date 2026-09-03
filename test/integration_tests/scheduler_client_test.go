@@ -94,10 +94,10 @@ func TestSchedulerResourceApiService(t *testing.T) {
 	assert.Equal(t, "0 0/5 * * * ?", schedule.CronExpression)
 	assert.Equal(t, WorkflowName, schedule.StartWorkflowRequest.Name)
 
-	// Test case 3/4: Add and verify tags on the schedule. See
-	// ossGapScheduleTags -- skip these on plain OSS Conductor but keep
-	// exercising the surrounding core scheduler CRUD either way.
-	if !testdata.OSSGapSkipped() {
+	// Test case 3/4: Add and verify tags on the schedule. Skipped on plain OSS
+	// Conductor, but the surrounding core scheduler CRUD is exercised either
+	// way.
+	if !testdata.OSSGapSkippedReason(t, ossGapScheduleTags) {
 		tags := []model.Tag{
 			{
 				Key:   "environment",
@@ -202,7 +202,7 @@ func TestSchedulerResourceApiService(t *testing.T) {
 
 	// Test case 12/13: Delete a tag and verify it's gone. Same OSS gap as
 	// test case 3/4 above.
-	if !testdata.OSSGapSkipped() {
+	if !testdata.OSSGapSkippedReason(t, ossGapScheduleTags) {
 		tagToDelete := []model.Tag{
 			{
 				Key:   "environment",

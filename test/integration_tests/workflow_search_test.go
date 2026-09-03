@@ -52,9 +52,6 @@ func TestWorkflowSearch(t *testing.T) {
 		expectMinResults   int
 		expectExactResults int
 		validateResults    func(t *testing.T, results []model.WorkflowSummary, workflowId1, workflowId2, wf1Name string)
-		// ossSkipReason, when set, skips this case against plain OSS
-		// Conductor -- see oss_gaps_test.go.
-		ossSkipReason string
 	}{
 		{
 			name: "BasicSearch",
@@ -281,9 +278,8 @@ func TestWorkflowSearch(t *testing.T) {
 				// Test second page with size 1. Only the start>0 fetch is
 				// gated: the first-page assertions above (page size honored,
 				// correct workflow returned) do pass against plain OSS
-				// Conductor. See ossGapSearchPaging.
-				if testdata.OSSGapSkipped() {
-					t.Logf("skipping second-page assertions: %s", ossGapSearchPaging)
+				// Conductor.
+				if testdata.OSSGapSkippedReason(t, ossGapSearchPaging) {
 					return
 				}
 
@@ -324,10 +320,6 @@ func TestWorkflowSearch(t *testing.T) {
 	// Run table-driven tests
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.ossSkipReason != "" {
-				testdata.SkipIfOSS(t, tt.ossSkipReason)
-			}
-
 			var searchResult model.SearchResultWorkflowSummary
 			var err error
 

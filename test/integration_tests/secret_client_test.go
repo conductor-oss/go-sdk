@@ -23,63 +23,54 @@ const (
 // Conductor does serve (list / get / exists), unlike the writes and tags that
 // TestSecretResourceApiService below exercises.
 //
-// On OSS the reads run against the secret seeded into the compose stack, since
-// the only bundled SecretsDAO backends (env-var, noop) are read-only; writes
-// are asserted to fail with 501 rather than persisting. An OSS image old
-// enough to predate the secrets controller entirely 404s on every call, so a
-// failed first read skips with a clear message instead of being reported as an
-// SDK bug.
+// This is OSS-only: on Orkes the same three reads are already covered by
+// TestSecretResourceApiService, so running here too would only duplicate them
+// and write another secret to a shared cluster.
+//
+// The reads run against the secret seeded into the compose stack, since the
+// only bundled SecretsDAO backends (env-var, noop) are read-only; a write is
+// asserted to fail with 501 rather than persisting. An OSS image old enough to
+// predate the secrets controller entirely 404s on every call, so a failed first
+// read skips with a clear message instead of being reported as an SDK bug.
 func TestSecretReads(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	if !testdata.IsOSS() {
+		t.Skip("skip: read coverage on Orkes is already provided by TestSecretResourceApiService")
+	}
 
 	secretClient := testdata.SecretClient
 	ctx := context.Background()
 
-	secretKey, secretValue := ossSeededSecretName, ossSeededSecretValue
-	if !testdata.IsOSS() {
-		// Orkes has no seeded secret; create one to read back.
-		secretKey = fmt.Sprintf("test-secret-read-%d", time.Now().UnixNano())
-		secretValue = "this-is-a-test-secret-value"
-
-		_, resp, err := secretClient.PutSecret(ctx, secretValue, secretKey)
-		require.NoError(t, err)
-		require.Equal(t, 200, resp.StatusCode)
-		t.Cleanup(func() {
-			_, _, _ = secretClient.DeleteSecret(context.Background(), secretKey)
-		})
+	retrieved, resp, err := secretClient.GetSecret(ctx, ossSeededSecretName)
+	if err != nil {
+		t.Skipf("skip: secrets API unavailable on this OSS server (GetSecret(%q): %v)", ossSeededSecretName, err)
 	}
+	require.Equal(t, 200, resp.StatusCode)
+	assert.Equal(t, ossSeededSecretValue, retrieved)
 
-	retrieved, resp, err := secretClient.GetSecret(ctx, secretKey)
-	if err != nil && testdata.IsOSS() {
-		t.Skipf("skip: secrets API unavailable on this OSS server (GetSecret(%q): %v)", secretKey, err)
-	}
+	existsResult, resp, err := secretClient.SecretExists(ctx, ossSeededSecretName)
 	require.NoError(t, err)
-	assert.Equal(t, 200, resp.StatusCode)
-	assert.Equal(t, secretValue, retrieved)
-
-	existsResult, resp, err := secretClient.SecretExists(ctx, secretKey)
-	assert.NoError(t, err)
 	assert.Equal(t, 200, resp.StatusCode)
 	assert.NotNil(t, existsResult)
 
 	allSecretNames, resp, err := secretClient.ListAllSecretNames(ctx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, 200, resp.StatusCode)
-	assert.Contains(t, allSecretNames, secretKey)
+	assert.Contains(t, allSecretNames, ossSeededSecretName)
 
-	if testdata.IsOSS() {
-		// Read-only backend: a write must fail rather than silently no-op.
-		// Success is accepted too, in case a future OSS release ships a
-		// writable backend -- that is a signal to revisit ossGapSecretWrites,
-		// not a failure.
-		throwaway := fmt.Sprintf("test-secret-write-%d", time.Now().UnixNano())
-		_, resp, err := secretClient.PutSecret(ctx, "value", throwaway)
-		if err == nil {
-			_, _, _ = secretClient.DeleteSecret(ctx, throwaway)
-		} else {
-			assert.Equal(t, 501, resp.StatusCode,
-				"expected PutSecret to fail with 501 on OSS's read-only SecretsDAO")
-		}
+	// Read-only backend: a write must fail rather than silently no-op. Success
+	// is accepted too, in case a future OSS release ships a writable backend --
+	// that is a signal to revisit ossGapSecretWrites, not a failure.
+	throwaway := fmt.Sprintf("test-secret-write-%d", time.Now().UnixNano())
+	_, resp, err = secretClient.PutSecret(ctx, "value", throwaway)
+	switch {
+	case err == nil:
+		_, _, _ = secretClient.DeleteSecret(ctx, throwaway)
+	case resp != nil:
+		assert.Equal(t, 501, resp.StatusCode,
+			"expected PutSecret to fail with 501 on OSS's read-only SecretsDAO")
+	default:
+		t.Errorf("PutSecret failed with no HTTP response: %v", err)
 	}
 }
 

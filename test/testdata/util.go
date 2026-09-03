@@ -643,8 +643,26 @@ func IsOSS() bool {
 // so that --include-gated re-enables both kinds of gate. Gating a section on
 // bare IsOSS() instead would leave it silently disabled in that mode, which
 // defeats the point of the flag.
+//
+// Prefer OSSGapSkippedReason when the block is simply skipped on OSS; this
+// bare form is for the case where OSS takes a genuinely different path rather
+// than running less, and a "skipping assertions" log would be misleading.
 func OSSGapSkipped() bool {
 	return IsOSS() && os.Getenv("CONDUCTOR_INCLUDE_GATED_TESTS") != "true"
+}
+
+// OSSGapSkippedReason is OSSGapSkipped plus a log line naming the gap. Use it
+// for assertion blocks whose reason would otherwise live only in a comment, so
+// that the gap constant in test/integration_tests/oss_gaps_test.go stays a
+// real reference the compiler tracks, and so a partial gate announces itself
+// in the test output instead of reporting a silent PASS.
+func OSSGapSkippedReason(t *testing.T, reason string) bool {
+	t.Helper()
+	if OSSGapSkipped() {
+		t.Logf("skipping assertions not supported on plain OSS Conductor (%s)", reason)
+		return true
+	}
+	return false
 }
 
 // SkipIfOSS skips the current test when running against plain OSS Conductor.
