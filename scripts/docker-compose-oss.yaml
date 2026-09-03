@@ -29,17 +29,24 @@ services:
       # value in sync with ossSeededSecretName/Value in
       # test/integration_tests/secret_client_test.go.
       - CONDUCTOR_SECRET_GO_SDK_INTEGRATION_TEST=go-sdk-oss-secret-value
-      # OSS does not advance a FORK_JOIN branch when a branch task completes --
-      # the continuation waits for the workflow sweeper, which postpones by
-      # conductor.app.workflowOffsetTimeout (30s default, unset in this image's
-      # config-postgres.properties). Enterprise schedules the continuation
-      # immediately, so tests written against it (e.g.
-      # TestParallelExecutionIntegration, 7s budget) can never pass here at 30s.
-      # This is the postpone on the workflow's _deciderQueue message, i.e. how
-      # long before WorkflowSweeper can pop it and call decide() -- not a sweep
-      # interval; the sweeper threads poll continuously. Shortened so a parked
-      # workflow becomes sweepable in ~1s instead of 30s. Changes only when the
-      # server re-decides, not any SDK behavior.
+      # Needed by TestParallelExecutionIntegration (FORK_JOIN, 7s budget).
+      #
+      # OSS decides a workflow inline when a task completes, EXCEPT when
+      # WorkflowExecutorOps.isLazyEvaluateWorkflow() returns true -- which it
+      # does for a task inside a FORK_JOIN that some JOIN's joinOn lists and
+      # that succeeded. That test's join_ref joins on all four branch tasks
+      # (including the intermediate ones), so completing a branch head skips
+      # the inline decide and the branch continuation waits for the sweeper.
+      # Orkes Enterprise has no such check -- OrkesWorkflowExecutor.updateTask
+      # always dispatches the decide -- which is why the same workflow
+      # definition completes sub-second there.
+      #
+      # This value is the postpone on the workflow's _deciderQueue message,
+      # i.e. how long before WorkflowSweeper can pop it and call decide() --
+      # NOT a sweep interval; the sweeper threads poll continuously. 30s is the
+      # default and this image's config-postgres.properties does not set it.
+      # Shortened so a parked workflow becomes sweepable in ~1s. Changes only
+      # when the server re-decides, no SDK behavior.
       - CONDUCTOR_APP_WORKFLOWOFFSETTIMEOUT=1s
     ports:
       - "8080:8080"
