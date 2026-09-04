@@ -155,6 +155,7 @@ func TestExecuteWorkflow(t *testing.T) {
 
 func TestExecuteWorkflowWithCorrelationIds(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, ossGapCorrelatedBatch)
 
 	executor := testdata.WorkflowExecutor
 	correlationId1 := "correlationId1-" + uuid.New().String()
@@ -194,6 +195,7 @@ func TestExecuteWorkflowWithCorrelationIds(t *testing.T) {
 
 func TestTerminateWorkflowWithFailure(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, ossGapFailureWorkflow)
 
 	executor := testdata.WorkflowExecutor
 	wf := workflow.NewConductorWorkflow(executor).
@@ -733,6 +735,7 @@ func TestRestartWorkflow(t *testing.T) {
 
 func TestUpgradeRunningWorkflowToVersion(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, ossGapWorkflowUpgrade)
 
 	// Create version 1 of the workflow - use a WAIT task that waits indefinitely until signaled
 	uniqueSuffix := strconv.Itoa(time.Now().Nanosecond())
@@ -1050,6 +1053,7 @@ func TestGetRunningWorkflow(t *testing.T) {
 // TestGetWorkflowsBatch tests the GetWorkflowsBatch API endpoint
 func TestGetWorkflowsBatch(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, ossGapCorrelatedBatch)
 
 	// Create multiple correlation IDs and workflows
 	correlationIds := make([]string, 3)
@@ -1532,6 +1536,7 @@ func TestWorkflowTest(t *testing.T) {
 
 func TestJumpToTask(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
+	testdata.SkipIfOSS(t, ossGapWorkflowJump)
 
 	uniqueSuffix := strconv.Itoa(time.Now().Nanosecond())
 
@@ -1689,8 +1694,11 @@ func TestSkipTaskFromWorkflow(t *testing.T) {
 	for _, task := range updatedWorkflow.Tasks {
 		if task.ReferenceTaskName == "wait_task_skip" && task.Status == model.SkippedTask {
 			waitTaskSkipped = true
-			// Verify the skip task output
-			if task.OutputData != nil {
+			// Verify the skip task output. The endpoint itself works on plain
+			// OSS Conductor -- the task does reach SKIPPED, which is what the
+			// assertion below covers -- but the TaskOutput override is not
+			// applied there, so only this assertion is gated.
+			if !testdata.OSSGapSkippedReason(t, ossGapSkipTaskOutput) && task.OutputData != nil {
 				assert.Equal(t, "skipped_by_test", task.OutputData["result"], "Skip task output should match")
 			}
 			break
@@ -1702,6 +1710,7 @@ func TestSkipTaskFromWorkflow(t *testing.T) {
 // TestUpdateWorkflowAndTaskState tests the UpdateWorkflowAndTaskState API endpoint
 func TestUpdateWorkflowAndTaskState(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, ossGapWorkflowVariables)
 
 	// Create a workflow with a simple task
 	uniqueSuffix := strconv.Itoa(time.Now().Nanosecond())
@@ -1817,6 +1826,7 @@ func TestUpdateWorkflowAndTaskState(t *testing.T) {
 // TestUpdateWorkflowState tests the UpdateWorkflowState API endpoint
 func TestUpdateWorkflowState(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, ossGapWorkflowState)
 
 	// Create a workflow with variables
 	uniqueSuffix := strconv.Itoa(time.Now().Nanosecond())

@@ -15,6 +15,7 @@ import (
 
 func TestIntegrationClient(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, ossGapIntegrationsAPI)
 
 	ctx := context.Background()
 

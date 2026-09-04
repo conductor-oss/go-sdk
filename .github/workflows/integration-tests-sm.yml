@@ -8,6 +8,11 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      oss_conductor_version:
+        description: 'OSS Conductor image tag (falls back to E2E_TEST_OSS_CONDUCTOR_VERSION org var)'
+        required: false
+        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -184,3 +189,105 @@ jobs:
               echo "✅ Tests passed after $((ATTEMPT-1)) attempts"
             } >> "$GITHUB_STEP_SUMMARY"
           fi
+
+  # Runs the same integration suite as integration-tests-sm above, but against a
+  # local, disposable OSS Conductor stack (scripts/docker-compose-oss.yaml)
+  # instead of a deployed SM cluster. Orkes-Enterprise-only functionality is
+  # skipped per-test via testdata.SkipIfOSS (see test/testdata/util.go and
+  # scripts/run-integration-oss.sh, which runs the equivalent suite locally).
+  integration-tests-oss:
+    runs-on: ubuntu-latest
+    name: Integration Tests (OSS)
+    timeout-minutes: 30
+
+    permissions:
+      contents: read       # minimal read access
+      checks: write        # needed for test report annotations
+
+    env:
+      CONDUCTOR_SERVER_URL: http://localhost:8080/api
+      CONDUCTOR_SERVER_TYPE: oss
+      OSS_CONDUCTOR_VERSION: ${{ inputs.oss_conductor_version || vars.E2E_TEST_OSS_CONDUCTOR_VERSION }}
+
+    steps:
+      - name: Verify OSS Conductor version is set
+        run: |
+          if [ -z "$OSS_CONDUCTOR_VERSION" ]; then
+            echo "::error::No Conductor OSS image tag resolved. Set the E2E_TEST_OSS_CONDUCTOR_VERSION organization variable (and ensure its repository access policy includes this repo), or pass the oss_conductor_version input via workflow_dispatch."
+            exit 1
+          fi
+          echo "Using conductoross/conductor:$OSS_CONDUCTOR_VERSION"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Build
+        run: go build ./...
+
+      - name: Install gotestsum
+        run: go install gotest.tools/gotestsum@v1.12.0
+
+      - name: Start Conductor OSS stack
+        run: docker compose -f scripts/docker-compose-oss.yaml up -d
+
+      - name: Wait for Conductor to be healthy
+        # Matches HEALTH_TIMEOUT in scripts/run-integration-oss.sh, and stays
+        # under the compose healthcheck's own ~200s budget (10s x 20 retries).
+        run: timeout 180 bash -c 'until curl -sf http://localhost:8080/health; do sleep 5; done'
+
+      - name: Run Integration tests (OSS)
+        id: integration_tests
+        continue-on-error: true
+        run: |
+          REPORT=report-oss.xml
+          RERUN=rerun-report-oss.txt
+          gotestsum --format testname --junitfile "$REPORT" --rerun-fails=3 --rerun-fails-report="$RERUN" --packages="./test/integration_tests/..." -- -v -count=1
+
+      - name: Dump Conductor logs
+        if: ${{ failure() || steps.integration_tests.outcome == 'failure' }}
+        run: docker compose -f scripts/docker-compose-oss.yaml logs conductor-server
+
+      - name: Publish test results (OSS)
+        if: always()
+        uses: dorny/test-reporter@v2
+        with:
+          name: Integration tests report (OSS)
+          path: report-oss.xml
+          reporter: java-junit
+          fail-on-error: false
+          fail-on-empty: true
+
+      - name: Append rerun details to Summary
+        if: always()
+        run: |
+          RERUN=rerun-report-oss.txt
+          if [ -f "$RERUN" ]; then
+            {
+              echo "### Rerun details (OSS)"
+              echo '```'
+              cat "$RERUN"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Check Integration Tests Status
+        if: ${{ steps.integration_tests.outcome == 'failure' }}
+        run: exit 1
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-and-reruns-oss
+          path: |
+            report-oss.xml
+            rerun-report-oss.txt
+          if-no-files-found: warn
