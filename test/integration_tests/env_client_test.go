@@ -9,6 +9,7 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/test/testdata"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCreateOrUpdateEnvVariable(t *testing.T) {
@@ -89,7 +90,14 @@ func TestGetAllEnvVariables(t *testing.T) {
 		// test. An OSS image predating EnvironmentResource 404s here.
 		variables, resp, err := envClient.GetAll(ctx)
 		if err != nil {
-			t.Skipf("skip: environment API unavailable on this OSS server (GetAll: %v)", err)
+			// Only a 404 means this build predates EnvironmentResource. Any
+			// other error is a real failure and has to be reported as one --
+			// skipping on it would leave this test silently green while the
+			// only OSS coverage of GetAll had stopped working.
+			if swaggerErr, ok := err.(client.GenericSwaggerError); ok && swaggerErr.StatusCode() == http.StatusNotFound {
+				t.Skip("skip: environment API not served by this OSS server (GetAll: 404)")
+			}
+			require.NoError(t, err, "GetAll")
 		}
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		assert.NotNil(t, variables)

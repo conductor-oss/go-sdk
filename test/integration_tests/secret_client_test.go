@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/conductor-sdk/conductor-go/sdk/client"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/test/testdata"
 	"github.com/stretchr/testify/assert"
@@ -17,6 +18,11 @@ import (
 const (
 	ossSeededSecretName  = "GO_SDK_INTEGRATION_TEST"
 	ossSeededSecretValue = "go-sdk-oss-secret-value"
+
+	// A name that is deliberately never seeded, so the /exists check has a
+	// negative case. Matches the server's allowed key pattern
+	// ([a-zA-Z0-9_-]+), so it exercises a real lookup rather than a 400.
+	ossMissingSecretName = "GO_SDK_NO_SUCH_SECRET"
 )
 
 // TestSecretReads covers the read half of the secrets API, which plain OSS
@@ -30,8 +36,9 @@ const (
 // The reads run against the secret seeded into the compose stack, since the
 // only bundled SecretsDAO backends (env-var, noop) are read-only; a write is
 // asserted to fail with 501 rather than persisting. An OSS image old enough to
-// predate the secrets controller entirely 404s on every call, so a failed first
-// read skips with a clear message instead of being reported as an SDK bug.
+// predate the secrets controller entirely 404s on every call, so a 404 on the
+// first read skips with a clear message -- but only a 404: every other error
+// fails the test, since those are SDK or server bugs, not a missing endpoint.
 func TestSecretReads(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 	if !testdata.IsOSS() {
@@ -43,15 +50,34 @@ func TestSecretReads(t *testing.T) {
 
 	retrieved, resp, err := secretClient.GetSecret(ctx, ossSeededSecretName)
 	if err != nil {
-		t.Skipf("skip: secrets API unavailable on this OSS server (GetSecret(%q): %v)", ossSeededSecretName, err)
+		// Only a 404 means "this OSS build does not serve the endpoint", which
+		// is the one case worth skipping for. Anything else -- a 5xx, a
+		// transport error, a decode failure -- is a real failure, and turning
+		// it into a skip would leave the whole test silently green.
+		if swaggerErr, ok := err.(client.GenericSwaggerError); ok && swaggerErr.StatusCode() == 404 {
+			t.Skipf("skip: secrets API not served by this OSS server (GetSecret(%q): 404)", ossSeededSecretName)
+		}
+		require.NoError(t, err, "GetSecret(%q)", ossSeededSecretName)
 	}
 	require.Equal(t, 200, resp.StatusCode)
 	assert.Equal(t, ossSeededSecretValue, retrieved)
 
+	// /secrets/{key}/exists answers with a bare JSON boolean, which the client
+	// hands back as an interface{} holding a bool. Assert the value rather than
+	// non-nil: a JSON `false` is a perfectly non-nil interface, so NotNil would
+	// pass whether or not the secret is there.
 	existsResult, resp, err := secretClient.SecretExists(ctx, ossSeededSecretName)
 	require.NoError(t, err)
 	assert.Equal(t, 200, resp.StatusCode)
-	assert.NotNil(t, existsResult)
+	assert.Equal(t, true, existsResult, "seeded secret should report exists=true")
+
+	// The negative case is what actually proves the endpoint discriminates:
+	// asserting only the true case would still pass against a server that
+	// always answers true.
+	missingResult, resp, err := secretClient.SecretExists(ctx, ossMissingSecretName)
+	require.NoError(t, err)
+	assert.Equal(t, 200, resp.StatusCode)
+	assert.Equal(t, false, missingResult, "unseeded secret should report exists=false")
 
 	allSecretNames, resp, err := secretClient.ListAllSecretNames(ctx)
 	require.NoError(t, err)
