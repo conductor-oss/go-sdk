@@ -74,3 +74,9 @@ type taskContextKey struct{}
 func withTaskContext(ctx context.Context, task *model.Task) context.Context {
 	return context.WithValue(ctx, taskContextKey{}, task)
 }
+
+// taskFromContext returns the task a tool is currently serving.
+func taskFromContext(ctx context.Context) (*model.Task, bool) {
+	t, ok := ctx.Value(taskContextKey{}).(*model.Task)
+	return t, ok
+}

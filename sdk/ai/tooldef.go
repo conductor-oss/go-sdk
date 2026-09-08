@@ -9,7 +9,11 @@
 
 package ai
 
-import "fmt"
+import (
+	"fmt"
+	"regexp"
+	"slices"
+)
 
 // ToolType selects how the server dispatches a tool call.
 //
@@ -108,12 +112,55 @@ func (t ToolDef) Validate() error {
 			return fmt.Errorf("invalid toolType %q for tool %q", t.ToolType, t.Name)
 		}
 	}
+	if t.ToolType == ToolTypeMCP {
+		if u, ok := t.Config["server_url"].(string); !ok || u == "" {
+			return fmt.Errorf("mcp tool %q has no server_url", t.Name)
+		}
+		// A ${NAME} in a header is resolved by the server from the credentials
+		// the tool declares, so an undeclared one would reach the MCP server
+		// as literal text. Python refuses the same way.
+		for _, ref := range credentialRefs(t.Config["headers"]) {
+			if !slices.Contains(t.Credentials, ref) {
+				return fmt.Errorf("mcp tool %q: header placeholder ${%s} is not declared "+
+					"in credentials %v", t.Name, ref, t.Credentials)
+			}
+		}
+	}
 	return nil
+}
+
+var credentialRef = regexp.MustCompile(`\$\{(\w+)\}`)
+
+// credentialRefs lists the ${NAME} placeholders in a header map, which a
+// constructor may have typed as map[string]string or map[string]any.
+func credentialRefs(headers any) []string {
+	var refs []string
+	visit := func(v string) {
+		for _, m := range credentialRef.FindAllStringSubmatch(v, -1) {
+			refs = append(refs, m[1])
+		}
+	}
+	switch h := headers.(type) {
+	case map[string]string:
+		for _, v := range h {
+			visit(v)
+		}
+	case map[string]any:
+		for _, v := range h {
+			if s, ok := v.(string); ok {
+				visit(s)
+			}
+		}
+	}
+	return refs
 }
 
 // toolConfig serializes one tool. Optional fields are emitted only when set,
 // matching the Python serializer field for field.
-func (t ToolDef) toolConfig() map[string]any {
+//
+// agentStateful is the agent's own Stateful flag: it has no key of its own on
+// the wire and instead marks every tool on that agent stateful.
+func (t ToolDef) toolConfig(agentStateful bool) map[string]any {
 	tt := t.ToolType
 	if tt == "" {
 		tt = ToolTypeWorker
@@ -130,7 +177,7 @@ func (t ToolDef) toolConfig() map[string]any {
 	if t.ApprovalRequired {
 		cfg["approvalRequired"] = true
 	}
-	if t.Stateful {
+	if t.Stateful || agentStateful {
 		cfg["stateful"] = true
 	}
 	if t.TimeoutSeconds != nil {
@@ -140,23 +187,7 @@ func (t ToolDef) toolConfig() map[string]any {
 		cfg["maxCalls"] = *t.MaxCalls
 	}
 
-	// Credentials ride inside config, not at the top level: the server's
-	// compiler reads tool.config["credentials"] when collecting what a task
-	// definition may resolve.
-	var conf map[string]any
-	if len(t.Config) > 0 {
-		conf = map[string]any{}
-		for k, v := range t.Config {
-			conf[k] = v
-		}
-	}
-	if len(t.Credentials) > 0 {
-		if conf == nil {
-			conf = map[string]any{}
-		}
-		conf["credentials"] = t.Credentials
-	}
-	if conf != nil {
+	if conf := t.configMap(); conf != nil {
 		cfg["config"] = conf
 	}
 
@@ -168,4 +199,34 @@ func (t ToolDef) toolConfig() map[string]any {
 		cfg["guardrails"] = gs
 	}
 	return cfg
+}
+
+// configMap assembles the wire config: the type-specific settings, an
+// agent-as-tool's nested document, and the declared credentials.
+//
+// Credentials ride inside config, not at the top level: the server's
+// compiler reads tool.config["credentials"] when collecting what a task
+// definition may resolve.
+func (t ToolDef) configMap() map[string]any {
+	var conf map[string]any
+	if len(t.Config) > 0 {
+		conf = map[string]any{}
+		for k, v := range t.Config {
+			conf[k] = v
+		}
+		// An agent-as-tool carries the sub-agent itself. Its document has to be
+		// produced by this serializer, not by the tool constructor, so the
+		// translation happens here.
+		if sub, ok := conf["agent"].(*Agent); ok {
+			delete(conf, "agent")
+			conf["agentConfig"] = sub.toConfig()
+		}
+	}
+	if len(t.Credentials) > 0 {
+		if conf == nil {
+			conf = map[string]any{}
+		}
+		conf["credentials"] = t.Credentials
+	}
+	return conf
 }
