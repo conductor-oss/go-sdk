@@ -1,0 +1,245 @@
+[
+  {
+    "config": {
+      "llmProvider": "openai",
+      "model": "dall-e-3",
+      "taskType": "GENERATE_IMAGE"
+    },
+    "description": "Generate image",
+    "inputSchema": {
+      "properties": {
+        "height": {
+          "default": 1024,
+          "description": "Image height in pixels.",
+          "type": "integer"
+        },
+        "n": {
+          "default": 1,
+          "description": "Number of images to generate.",
+          "type": "integer"
+        },
+        "outputFormat": {
+          "default": "png",
+          "description": "Output format: 'png', 'jpg', or 'webp'.",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "Text description of the image to generate.",
+          "type": "string"
+        },
+        "size": {
+          "description": "Image size (e.g. '1024x1024'). Alternative to width/height.",
+          "type": "string"
+        },
+        "style": {
+          "description": "Image style: 'vivid' or 'natural'.",
+          "type": "string"
+        },
+        "weight": {
+          "description": "Image weight parameter.",
+          "type": "number"
+        },
+        "width": {
+          "default": 1024,
+          "description": "Image width in pixels.",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "prompt"
+      ],
+      "type": "object"
+    },
+    "name": "ks_image",
+    "toolType": "generate_image"
+  },
+  {
+    "config": {
+      "llmProvider": "openai",
+      "model": "tts-1",
+      "taskType": "GENERATE_AUDIO"
+    },
+    "description": "Generate audio",
+    "inputSchema": {
+      "properties": {
+        "n": {
+          "default": 1,
+          "description": "Number of audio outputs to generate.",
+          "type": "integer"
+        },
+        "responseFormat": {
+          "default": "mp3",
+          "description": "Audio format: 'mp3', 'wav', 'opus', 'aac', or 'flac'.",
+          "type": "string"
+        },
+        "speed": {
+          "default": 1.0,
+          "description": "Speech speed multiplier (0.25 to 4.0).",
+          "type": "number"
+        },
+        "text": {
+          "description": "Text to convert to speech.",
+          "type": "string"
+        },
+        "voice": {
+          "default": "alloy",
+          "description": "Voice to use.",
+          "enum": [
+            "alloy",
+            "echo",
+            "fable",
+            "onyx",
+            "nova",
+            "shimmer"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "type": "object"
+    },
+    "name": "ks_audio",
+    "toolType": "generate_audio"
+  },
+  {
+    "config": {
+      "llmProvider": "openai",
+      "model": "sora",
+      "taskType": "GENERATE_VIDEO"
+    },
+    "description": "Generate video",
+    "inputSchema": {
+      "properties": {
+        "aspectRatio": {
+          "description": "Aspect ratio (e.g. '16:9', '1:1').",
+          "type": "string"
+        },
+        "duration": {
+          "default": 5,
+          "description": "Video duration in seconds.",
+          "type": "integer"
+        },
+        "fps": {
+          "default": 24,
+          "description": "Frames per second.",
+          "type": "integer"
+        },
+        "generateAudio": {
+          "description": "Whether to generate audio with the video.",
+          "type": "boolean"
+        },
+        "guidanceScale": {
+          "description": "Prompt adherence strength (1.0 to 20.0).",
+          "type": "number"
+        },
+        "height": {
+          "default": 720,
+          "description": "Video height in pixels.",
+          "type": "integer"
+        },
+        "inputImage": {
+          "description": "Base64-encoded or URL image for image-to-video generation.",
+          "type": "string"
+        },
+        "maxCostDollars": {
+          "description": "Maximum cost limit in dollars.",
+          "type": "number"
+        },
+        "maxDurationSeconds": {
+          "description": "Maximum duration ceiling in seconds.",
+          "type": "integer"
+        },
+        "motion": {
+          "description": "Movement intensity (e.g. 'slow', 'normal', 'extreme').",
+          "type": "string"
+        },
+        "n": {
+          "default": 1,
+          "description": "Number of videos to generate.",
+          "type": "integer"
+        },
+        "negativePrompt": {
+          "description": "Description of what to exclude from the video.",
+          "type": "string"
+        },
+        "outputFormat": {
+          "default": "mp4",
+          "description": "Video format (e.g. 'mp4').",
+          "type": "string"
+        },
+        "personGeneration": {
+          "description": "Controls for human figure generation.",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "Text description of the video scene.",
+          "type": "string"
+        },
+        "resolution": {
+          "description": "Quality level (e.g. '720p', '1080p').",
+          "type": "string"
+        },
+        "seed": {
+          "description": "Seed for reproducibility.",
+          "type": "integer"
+        },
+        "size": {
+          "description": "Video size specification (e.g. '1280x720').",
+          "type": "string"
+        },
+        "style": {
+          "description": "Video style (e.g. 'cinematic', 'natural').",
+          "type": "string"
+        },
+        "width": {
+          "default": 1280,
+          "description": "Video width in pixels.",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "prompt"
+      ],
+      "type": "object"
+    },
+    "name": "ks_video",
+    "toolType": "generate_video"
+  },
+  {
+    "config": {
+      "taskType": "GENERATE_PDF"
+    },
+    "description": "Generate PDF",
+    "inputSchema": {
+      "properties": {
+        "baseFontSize": {
+          "default": 11,
+          "description": "Base font size in points.",
+          "type": "number"
+        },
+        "markdown": {
+          "description": "Markdown text to convert to PDF.",
+          "type": "string"
+        },
+        "pageSize": {
+          "default": "A4",
+          "description": "Page size: A4, LETTER, LEGAL, A3, or A5.",
+          "type": "string"
+        },
+        "theme": {
+          "default": "default",
+          "description": "Style preset: 'default' or 'compact'.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "markdown"
+      ],
+      "type": "object"
+    },
+    "name": "ks_pdf",
+    "toolType": "generate_pdf"
+  }
+]
