@@ -124,10 +124,45 @@ type Agent struct {
 
 	// Tools the agent may call. Build them with the tool package.
 	Tools []ToolDef
-	// RequiredTools names tools the run must call before it may finish. Use it
-	// when a step is mandatory rather than a suggestion: a prompt asking for a
-	// tool call is a request the model can decline, this is not.
+	// RequiredTools names tools the run should call before it finishes. Matches
+	// Python's required_tools and Java's requiredTools. Not usable on current
+	// servers: the compiled check nests a DO_WHILE inside a DO_WHILE, which
+	// Conductor does not support, and the run deadlocks.
 	RequiredTools []string
+
+	// OutputType constrains the final answer to a struct's shape. Pass a zero
+	// value of the type, as in OutputType: Ticket{}; the schema is derived from
+	// its json tags the same way a tool's input schema is.
+	//
+	// The wire schema leaves the inner document open (additionalProperties is
+	// true), so what the SDKs send inside it differs: Python carries Pydantic's
+	// per-field titles and Java sends types only, as Go does here.
+	OutputType any
+
+	// CodeExecution and CLI give the agent derived tools for running code and
+	// shell commands. Both execute server side; see CodeExecutionConfig.
+	CodeExecution *CodeExecutionConfig
+	CLI           *CLIConfig
+
+	// Credentials are secret names available to every tool on this agent, as a
+	// fallback for tools whose own declaration cannot name them. Prefer
+	// tool.WithCredentials, which scopes a secret to the one tool that reads it.
+	Credentials []string
+
+	// MaskedFields names input and output fields the server redacts from
+	// execution history and the UI.
+	MaskedFields []string
+
+	// Introduction is the agent's opening message to a user.
+	Introduction string
+
+	// Metadata is arbitrary data carried with the agent definition.
+	Metadata map[string]any
+
+	// Stateful routes every tool on this agent to a per-execution worker
+	// domain, so calls in one run reach the same worker process. It is not a
+	// field of its own on the wire: it stamps stateful onto each tool.
+	Stateful bool
 
 	// Agents are sub-agents; a non-empty value makes this a multi-agent system
 	// and causes Strategy to be sent.

@@ -18,6 +18,8 @@ import (
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/conductor-sdk/conductor-go/sdk/ai/internal/schema"
 )
 
 // goldenDir holds agentConfig documents captured from the Python SDK's
@@ -175,12 +177,129 @@ var goldenFixtures = map[string]func() *Agent{
 	},
 
 	// Pending. Each needs the wire surface named below.
-	"08_handoffs":            nil, // handoff conditions + allowedTransitions
-	"09_guardrails":          nil, // regex / llm / custom guardrails
-	"11_output_type":         nil, // struct to JSON Schema
-	"13_plan_execute":        nil, // planner and fallback slots
-	"14_tools_nonworker":     nil, // http / human / agent tools
-	"15_execution_and_creds": nil, // code execution, CLI, credentials
+	"08_handoffs":     nil, // handoff conditions + allowedTransitions
+	"09_guardrails":   nil, // regex / llm / custom guardrails
+	"11_output_type":  structuredAgent,
+	"13_plan_execute": nil, // planner and fallback slots
+
+	"14_tools_nonworker":     nonWorkerToolsAgent,
+	"15_execution_and_creds": executorAgent,
+	"17_tools_mcp":           mcpToolsAgent,
+}
+
+// MCP tools: a bare one and one with every option, pinning both the defaults
+// and the snake_case config keys the server's compiler reads.
+func mcpToolsAgent() *Agent {
+	return &Agent{
+		Name:         "tools_mcp",
+		Model:        testModel,
+		Instructions: "MCP tool types.",
+		Tools: []ToolDef{
+			{
+				Name:        "mcp_tools",
+				Description: "MCP tools from http://localhost:3001/mcp",
+				InputSchema: map[string]any{},
+				ToolType:    ToolTypeMCP,
+				Config:      map[string]any{"server_url": "http://localhost:3001/mcp", "max_tools": 64},
+			},
+			{
+				Name:        "secured_mcp",
+				Description: "Authenticated MCP tools.",
+				InputSchema: map[string]any{},
+				ToolType:    ToolTypeMCP,
+				Config: map[string]any{
+					"server_url": "http://localhost:3002/mcp",
+					"max_tools":  16,
+					"headers":    map[string]string{"Authorization": "Bearer ${MCP_AUTH_KEY}"},
+					"tool_names": []string{"get_weather", "math_add"},
+				},
+				Credentials: []string{"MCP_AUTH_KEY"},
+			},
+		},
+	}
+}
+
+// A ticket, as the structured-output fixture's answer type.
+type Ticket struct {
+	Summary  string   `json:"summary"`
+	Priority int      `json:"priority"`
+	Tags     []string `json:"tags"`
+}
+
+func structuredAgent() *Agent {
+	return &Agent{
+		Name:         "structured",
+		Model:        testModel,
+		Instructions: "Return a ticket.",
+		OutputType:   Ticket{},
+	}
+}
+
+// The non-worker tool types: the server dispatches all three itself, so none
+// of them registers a Go function.
+func nonWorkerToolsAgent() *Agent {
+	return &Agent{
+		Name:         "tools_nonworker",
+		Model:        testModel,
+		Instructions: "Non-worker tool types.",
+		Tools: []ToolDef{
+			{
+				Name:        "lookup",
+				Description: "Look up a record.",
+				InputSchema: schema.EmptyObject(),
+				ToolType:    ToolTypeHTTP,
+				Config: map[string]any{
+					"url":         "https://example.test/api/{id}",
+					"method":      "GET",
+					"headers":     map[string]string{"X-Api-Version": "2"},
+					"accept":      []string{"application/json"},
+					"contentType": "application/json",
+				},
+			},
+			{
+				Name:        "ask_human",
+				Description: "Ask a person to decide.",
+				InputSchema: schema.HumanInput(),
+				ToolType:    ToolTypeHuman,
+			},
+			{
+				Name:        "delegate_billing",
+				Description: "Delegate.",
+				InputSchema: schema.AgentRequest(),
+				ToolType:    ToolTypeAgent,
+				Config: map[string]any{"agent": &Agent{
+					Name:         "billing",
+					Model:        testModel,
+					Instructions: "Handle billing.",
+				}},
+			},
+		},
+	}
+}
+
+// The executor fixture: both execution configs, their derived tools, and the
+// agent-level fields that ride alongside them.
+func executorAgent() *Agent {
+	return &Agent{
+		Name:         "executor",
+		Model:        testModel,
+		Instructions: "Run code and commands.",
+		CodeExecution: &CodeExecutionConfig{
+			AllowedLanguages: []string{"python", "bash"},
+			TimeoutSeconds:   60,
+		},
+		CLI: &CLIConfig{
+			AllowedCommands: []string{"git", "ls"},
+			TimeoutSeconds:  45,
+			AllowShell:      true,
+		},
+		Credentials:   []string{"GITHUB_TOKEN", "OPENAI_API_KEY"},
+		RequiredTools: []string{"get_weather"},
+		MaskedFields:  []string{"ssn", "card"},
+		Introduction:  "Hi, I run code.",
+		Metadata:      map[string]any{"team": "platform", "tier": 2},
+		Stateful:      true,
+	}
 }
 
 // TestGoldenAgentConfig checks the Go serializer against documents captured
@@ -219,8 +338,8 @@ func TestGoldenAgentConfig(t *testing.T) {
 				t.Fatalf("fixture does not validate: %v", err)
 			}
 
-			got := normalize(t, agent.toConfig())
-			want := readGolden(t, name)
+			got := dropSchemaTitles(normalize(t, agent.toConfig()))
+			want := dropSchemaTitles(readGolden(t, name))
 
 			if !reflect.DeepEqual(got, want) {
 				t.Errorf("agentConfig mismatch for %s\n--- got ---\n%s\n--- want ---\n%s",
@@ -251,6 +370,46 @@ func TestGoldenCoverage(t *testing.T) {
 
 // normalize round-trips a config through JSON so both sides of the comparison
 // use the same Go types (all numbers become float64, all maps map[string]any).
+// dropSchemaTitles removes "title" from the outputType schema on both sides of
+// the comparison.
+//
+// The wire schema declares outputType.schema with additionalProperties true —
+// an opaque JSON Schema document it deliberately does not constrain. Python
+// builds that document with Pydantic, which adds a title per field and one for
+// the model; Java generates it from declared fields and adds none. Both are
+// conformant, so Go cannot match one without diverging from the other, and
+// matching Python here would mean carrying a Pydantic artifact that means
+// nothing in Go.
+//
+// Everything else in the fixture is still compared exactly, including the
+// property types, the required list and its order, and className.
+func dropSchemaTitles(cfg map[string]any) map[string]any {
+	ot, ok := cfg["outputType"].(map[string]any)
+	if !ok {
+		return cfg
+	}
+	sch, ok := ot["schema"].(map[string]any)
+	if !ok {
+		return cfg
+	}
+	stripTitles(sch)
+	return cfg
+}
+
+func stripTitles(node any) {
+	switch v := node.(type) {
+	case map[string]any:
+		delete(v, "title")
+		for _, child := range v {
+			stripTitles(child)
+		}
+	case []any:
+		for _, child := range v {
+			stripTitles(child)
+		}
+	}
+}
+
 func normalize(t *testing.T, cfg map[string]any) map[string]any {
 	t.Helper()
 	raw, err := json.Marshal(cfg)

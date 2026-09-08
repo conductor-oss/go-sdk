@@ -9,6 +9,12 @@
 
 package ai
 
+import (
+	"reflect"
+
+	"github.com/conductor-sdk/conductor-go/sdk/ai/internal/schema"
+)
+
 // toConfig serializes the agent tree into the agentConfig document the server
 // compiles.
 //
@@ -39,6 +45,7 @@ func (a *Agent) toConfig() map[string]any {
 	a.addLLMKnobs(cfg)
 	a.addMemory(cfg)
 	a.addTools(cfg)
+	a.addDefinition(cfg)
 	a.addComposition(cfg)
 	return cfg
 }
@@ -115,15 +122,53 @@ func (a *Agent) addMemory(cfg map[string]any) {
 
 // addTools emits the tool list and the required-tool names.
 func (a *Agent) addTools(cfg map[string]any) {
-	if len(a.Tools) > 0 {
-		tools := make([]any, 0, len(a.Tools))
+	declared := a.derivedTools()
+	if len(a.Tools) > 0 || len(declared) > 0 {
+		tools := make([]any, 0, len(a.Tools)+len(declared))
 		for _, t := range a.Tools {
-			tools = append(tools, t.toolConfig())
+			tools = append(tools, t.toolConfig(a.Stateful))
+		}
+		for _, t := range declared {
+			tools = append(tools, t.toolConfig(a.Stateful))
 		}
 		cfg["tools"] = tools
 	}
 	if len(a.RequiredTools) > 0 {
 		cfg["requiredTools"] = a.RequiredTools
+	}
+}
+
+// addDefinition emits structured output, execution config, credentials and
+// the descriptive fields.
+func (a *Agent) addDefinition(cfg map[string]any) {
+	if a.OutputType != nil {
+		t := reflect.TypeOf(a.OutputType)
+		for t.Kind() == reflect.Ptr {
+			t = t.Elem()
+		}
+		cfg["outputType"] = map[string]any{
+			"schema":    schema.Of(t),
+			"className": t.Name(),
+		}
+	}
+
+	if a.CodeExecution != nil {
+		cfg["codeExecution"] = a.CodeExecution.config()
+	}
+	if a.CLI != nil {
+		cfg["cliConfig"] = a.CLI.config()
+	}
+	if len(a.Credentials) > 0 {
+		cfg["credentials"] = a.Credentials
+	}
+	if len(a.MaskedFields) > 0 {
+		cfg["maskedFields"] = a.MaskedFields
+	}
+	if a.Introduction != "" {
+		cfg["introduction"] = a.Introduction
+	}
+	if len(a.Metadata) > 0 {
+		cfg["metadata"] = a.Metadata
 	}
 }
 

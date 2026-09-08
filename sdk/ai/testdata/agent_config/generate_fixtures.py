@@ -45,6 +45,7 @@ from conductor.ai.agents import (
     guardrail,
     http_tool,
     human_tool,
+    mcp_tool,
     tool,
 )
 from conductor.ai.agents.config_serializer import AgentConfigSerializer
@@ -259,6 +260,24 @@ def fixtures() -> Dict[str, Agent]:
             ),
             human_tool(name="ask_human", description="Ask a person to decide."),
             agent_tool(billing, name="delegate_billing", description="Delegate."),
+        ],
+    )
+
+    out["17_tools_mcp"] = Agent(
+        name="tools_mcp",
+        model=MODEL,
+        instructions="MCP tool types.",
+        tools=[
+            mcp_tool(server_url="http://localhost:3001/mcp"),
+            mcp_tool(
+                server_url="http://localhost:3002/mcp",
+                name="secured_mcp",
+                description="Authenticated MCP tools.",
+                headers={"Authorization": "Bearer ${MCP_AUTH_KEY}"},
+                tool_names=["get_weather", "math_add"],
+                max_tools=16,
+                credentials=["MCP_AUTH_KEY"],
+            ),
         ],
     )
 
