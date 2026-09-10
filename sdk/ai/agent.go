@@ -232,6 +232,11 @@ type Agent struct {
 	// External marks the agent as served elsewhere; no workers are started
 	// for it locally.
 	External bool
+
+	// skill is set by LoadSkill. A skill agent is serialized as the raw skill
+	// document the server's SkillNormalizer compiles, not as agentConfig, so
+	// of the fields above only Name and Model apply to it.
+	skill *skillConfig
 }
 
 // Ptr returns a pointer to v, for setting optional fields inline:

@@ -12,6 +12,7 @@ package ai
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -185,6 +186,47 @@ var goldenFixtures = map[string]func() *Agent{
 	"14_tools_nonworker":     nonWorkerToolsAgent,
 	"15_execution_and_creds": executorAgent,
 	"17_tools_mcp":           mcpToolsAgent,
+
+	"18_skill":         skillAgent,
+	"19_skill_as_tool": skillAsToolAgent,
+}
+
+// The skill fixtures read testdata/agent_config/skills/review-skill, the same
+// directory generate_fixtures.py read, so the embedded file contents match by
+// construction and the comparison is about what the loader does with them.
+func mustLoadSkill(name string, opts ...SkillOption) *Agent {
+	agent, err := LoadSkill(filepath.Join(goldenDir, "skills", name), opts...)
+	if err != nil {
+		panic(fmt.Sprintf("load fixture skill %s: %v", name, err))
+	}
+	return agent
+}
+
+// Every convention at once: sub-agent files, three scripts (two by extension,
+// one by shebang), a loose resource and a references/ file, a cross-skill
+// reference to the sibling cleanup-skill, and params merged from frontmatter
+// defaults with an override and an addition.
+func skillAgent() *Agent {
+	return mustLoadSkill("review-skill",
+		WithSkillModel(testModel),
+		WithAgentModels(map[string]string{"critic": "openai/gpt-4o-mini"}),
+		WithSkillParams(map[string]any{"rounds": 1, "style": "terse"}))
+}
+
+// The skill nested under an agent tool, with only its frontmatter defaults.
+func skillAsToolAgent() *Agent {
+	return &Agent{
+		Name:         "lead",
+		Model:        testModel,
+		Instructions: "Delegate reviews.",
+		Tools: []ToolDef{{
+			Name:        "review",
+			Description: "Run the review skill.",
+			InputSchema: schema.AgentRequest(),
+			ToolType:    ToolTypeAgent,
+			Config:      map[string]any{"agent": mustLoadSkill("review-skill", WithSkillModel(testModel))},
+		}},
+	}
 }
 
 // MCP tools: a bare one and one with every option, pinning both the defaults

@@ -30,6 +30,12 @@ import (
 // The golden-file tests in serializer_golden_test.go hold this honest against
 // documents captured from the Python SDK.
 func (a *Agent) toConfig() map[string]any {
+	// A skill is not described by the fields below: its document is the raw
+	// skill directory, marked with _framework so the server normalizes it.
+	// See skill.go; golden fixture 18_skill pins the shape.
+	if a.skill != nil {
+		return a.skill.wireConfig(a.Name)
+	}
 	cfg := map[string]any{
 		"name":           a.Name,
 		"maxTurns":       a.maxTurnsOrDefault(),

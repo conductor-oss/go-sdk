@@ -1,0 +1,63 @@
+{
+  "_framework": "skill",
+  "agentFiles": {
+    "critic": "# You Are the Critic\nReview the code with precision. Find real bugs, not style nits.\n",
+    "defender": "# You Are the Defender\nDefend the code. Concede real issues, defend valid choices.\n"
+  },
+  "agentModels": {
+    "critic": "openai/gpt-4o-mini"
+  },
+  "crossSkillRefs": {
+    "cleanup-skill": {
+      "agentFiles": {},
+      "crossSkillRefs": {},
+      "defaultParams": {
+        "dry_run": false
+      },
+      "params": {
+        "dry_run": false
+      },
+      "resourceFiles": [
+        "references/notes.md"
+      ],
+      "scripts": {
+        "tidy": {
+          "filename": "tidy.sh",
+          "language": "bash"
+        }
+      },
+      "skillMd": "---\nname: cleanup-skill\ndescription: Tidies a workspace after a review. Use when a review is complete.\nparams:\n  dry_run: false\n---\n# Cleanup Skill\n\nRun the tidy script, then confirm what was removed. Consult references/notes.md\nfor files that must never be deleted.\n",
+      "skillSections": {}
+    }
+  },
+  "defaultParams": {
+    "rounds": 3,
+    "verbose": true
+  },
+  "model": "openai/gpt-4o",
+  "name": "review-skill",
+  "params": {
+    "rounds": 1,
+    "style": "terse",
+    "verbose": true
+  },
+  "resourceFiles": [
+    "references/guide.md",
+    "comic-template.html"
+  ],
+  "scripts": {
+    "count_lines": {
+      "filename": "count_lines.sh",
+      "language": "bash"
+    },
+    "echo_args": {
+      "filename": "echo_args.py",
+      "language": "python"
+    },
+    "render": {
+      "filename": "render",
+      "language": "node"
+    }
+  },
+  "skillMd": "---\nname: review-skill\ndescription: Adversarial code review with two sub-agents. Use for code review.\nmetadata:\n  author: fixtures\nparams:\n  rounds:\n    type: integer\n    default: 3\n    description: Number of review rounds\n  verbose: true\n---\n# Review Skill\n\nDispatch the critic agent to review the code, then dispatch the defender agent\nto respond. Repeat for the configured number of rounds. Read comic-template.html\nto render the final verdict.\n\n## Steps\n\n1. Run the echo_args script with the user's request to record it.\n2. Alternate critic and defender until the rounds are exhausted.\n3. When finished, invoke the cleanup-skill skill to tidy the workspace.\n\n\n[Skill Parameters]\nrounds: 1\nverbose: True\nstyle: terse\n"
+}

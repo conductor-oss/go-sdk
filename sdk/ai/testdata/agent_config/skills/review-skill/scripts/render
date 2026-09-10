@@ -1,0 +1,2 @@
+#!/usr/bin/env node
+console.log("RENDERED:" + process.argv.slice(2).join(" "));

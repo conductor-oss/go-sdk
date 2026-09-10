@@ -46,11 +46,17 @@ from conductor.ai.agents import (
     http_tool,
     human_tool,
     mcp_tool,
+    skill,
     tool,
 )
 from conductor.ai.agents.config_serializer import AgentConfigSerializer
 
 MODEL = "openai/gpt-4o"
+
+# Skill fixtures live next to this script so both generators read the same
+# directories. The documents embed file contents verbatim, so any edit to a
+# fixture skill is a wire change and needs a regeneration.
+SKILLS_DIR = Path(__file__).resolve().parent / "skills"
 
 
 # ── tools ───────────────────────────────────────────────────────────────
@@ -309,6 +315,34 @@ def fixtures() -> Dict[str, Agent]:
                 agents=[billing, tech],
             ),
             refunds,
+        ],
+    )
+
+    # A skill is the raw directory document, not an agentConfig: sub-agent
+    # files, scripts with detected languages (extension and shebang), the
+    # resource list, a cross-skill reference resolved from the sibling
+    # directory, and params merged from frontmatter defaults and overrides
+    # into the [Skill Parameters] block appended to skillMd.
+    out["18_skill"] = skill(
+        SKILLS_DIR / "review-skill",
+        model=MODEL,
+        agent_models={"critic": "openai/gpt-4o-mini"},
+        params={"rounds": 1, "style": "terse"},
+    )
+
+    # Nested under an agent tool, the same document rides inside
+    # config.agentConfig with its _framework marker, which is how the server
+    # knows to normalize it rather than read it as agentConfig.
+    out["19_skill_as_tool"] = Agent(
+        name="lead",
+        model=MODEL,
+        instructions="Delegate reviews.",
+        tools=[
+            agent_tool(
+                skill(SKILLS_DIR / "review-skill", model=MODEL),
+                name="review",
+                description="Run the review skill.",
+            )
         ],
     )
 

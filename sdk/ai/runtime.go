@@ -130,6 +130,20 @@ func (r *Runtime) startPayload(agent *Agent, prompt string, opts []RunOption) (m
 		return nil, err
 	}
 
+	// A skill does not travel as agentConfig. The server's SkillNormalizer
+	// compiles the raw document, which /agent/start accepts under
+	// framework and rawConfig — the same request the Python SDK sends.
+	if agent.skill != nil {
+		return map[string]any{
+			"framework": skillFramework,
+			"rawConfig": agent.skill.rawConfig(),
+			"prompt":    prompt,
+			"sessionId": "",
+			"media":     []any{},
+			"context":   map[string]any{},
+		}, nil
+	}
+
 	payload := map[string]any{
 		"agentConfig": agent.toConfig(),
 		"prompt":      prompt,
@@ -273,6 +287,13 @@ func (r *Runtime) registerWorkers(agent *Agent) error {
 			tools = append(tools, ToolDef{Name: g.Name, Handler: g.guardrailHandler()})
 		}
 
+		// A skill's scripts and its read_skill_file tool run here too; the
+		// server emits worker tools under these names when it normalizes the
+		// skill document.
+		if a.skill != nil {
+			tools = append(tools, a.skill.workers(a.Name)...)
+		}
+
 		for _, t := range tools {
 			if t.Handler == nil || r.started[t.Name] {
 				continue
@@ -290,6 +311,16 @@ func (r *Runtime) registerWorkers(agent *Agent) error {
 		for _, sub := range a.Agents {
 			if err := walk(sub); err != nil {
 				return err
+			}
+		}
+		// An agent exposed as a tool runs as its own workflow, and its worker
+		// tools are dispatched the same way as the parent's, so it needs its
+		// workers registered too. This is what lets a skill serve as a tool.
+		for _, t := range a.Tools {
+			if sub, ok := t.Config["agent"].(*Agent); ok {
+				if err := walk(sub); err != nil {
+					return err
+				}
 			}
 		}
 		if a.Router != nil {
