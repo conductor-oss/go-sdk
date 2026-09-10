@@ -1,0 +1,112 @@
+{
+  "requiredWorkers": [],
+  "workflowDef": {
+    "createTime": 0,
+    "description": "Agent workflow for e2e_no_base_url",
+    "enforceSchema": true,
+    "inputParameters": [
+      "prompt",
+      "session_id",
+      "media",
+      "cwd"
+    ],
+    "inputTemplate": {},
+    "maskedFields": [],
+    "metadata": {
+      "agentDef": {
+        "external": false,
+        "instructions": "Say hello.",
+        "maxTurns": 25,
+        "model": "anthropic/claude-sonnet-4-6",
+        "name": "e2e_no_base_url",
+        "strategy": "handoff",
+        "timeoutSeconds": 0
+      },
+      "agent_capabilities": [
+        "simple"
+      ],
+      "agent_sdk": "conductor",
+      "classifier": "agent",
+      "normalizedAgentDef": {
+        "external": false,
+        "instructions": "Say hello.",
+        "maxTurns": 25,
+        "model": "anthropic/claude-sonnet-4-6",
+        "name": "e2e_no_base_url",
+        "strategy": "handoff",
+        "timeoutSeconds": 0
+      }
+    },
+    "name": "e2e_no_base_url",
+    "outputParameters": {
+      "context": "${workflow.input.context}",
+      "finishReason": "${e2e_no_base_url_llm.output.finishReason}",
+      "result": "${e2e_no_base_url_llm.output.result}"
+    },
+    "restartable": true,
+    "schemaVersion": 2,
+    "tasks": [
+      {
+        "asyncComplete": false,
+        "decisionCases": {},
+        "defaultCase": [],
+        "defaultExclusiveJoinTask": [],
+        "forkTasks": [],
+        "inputParameters": {
+          "llmProvider": "anthropic",
+          "maxTokens": 16384,
+          "messages": [
+            {
+              "message": "Say hello.",
+              "role": "system"
+            },
+            {
+              "media": "${workflow.input.media}",
+              "message": "${workflow.input.prompt}",
+              "role": "user"
+            }
+          ],
+          "model": "claude-sonnet-4-6"
+        },
+        "joinOn": [],
+        "loopOver": [],
+        "metadata": {},
+        "name": "llm_chat_complete",
+        "onStateChange": {},
+        "optional": false,
+        "permissive": false,
+        "startDelay": 0,
+        "taskDefinition": {
+          "backoffJitterMs": 0,
+          "backoffScaleFactor": 2,
+          "createTime": 0,
+          "enforceSchema": false,
+          "inputKeys": [],
+          "inputTemplate": {},
+          "maxRetryDelaySeconds": 0,
+          "name": "LLM_CHAT_COMPLETE",
+          "outputKeys": [],
+          "rateLimitFrequencyInSeconds": 1,
+          "rateLimitPerFrequency": 0,
+          "responseTimeoutSeconds": 3600,
+          "retryCount": 3,
+          "retryDelaySeconds": 2,
+          "retryLogic": "EXPONENTIAL_BACKOFF",
+          "runtimeMetadata": [],
+          "taskStatusListenerEnabled": true,
+          "timeoutPolicy": "TIME_OUT_WF",
+          "timeoutSeconds": 0,
+          "totalTimeoutSeconds": 0,
+          "updateTime": 0
+        },
+        "taskReferenceName": "e2e_no_base_url_llm",
+        "type": "LLM_CHAT_COMPLETE"
+      }
+    ],
+    "timeoutSeconds": 60,
+    "updateTime": 0,
+    "variables": {},
+    "version": 1,
+    "workflowStatusListenerEnabled": false
+  }
+}

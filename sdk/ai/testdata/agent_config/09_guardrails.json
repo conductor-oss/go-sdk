@@ -1,0 +1,41 @@
+{
+  "external": false,
+  "guardrails": [
+    {
+      "guardrailType": "regex",
+      "maxRetries": 3,
+      "message": "no cards",
+      "mode": "block",
+      "name": "regex_guardrail",
+      "onFail": "raise",
+      "patterns": [
+        "\\d{16}",
+        "sk-\\w+"
+      ],
+      "position": "output"
+    },
+    {
+      "guardrailType": "llm",
+      "maxRetries": 3,
+      "maxTokens": 256,
+      "model": "openai/gpt-4o",
+      "name": "llm_guardrail",
+      "onFail": "raise",
+      "policy": "No medical advice.",
+      "position": "output"
+    },
+    {
+      "guardrailType": "custom",
+      "maxRetries": 3,
+      "name": "no_secrets",
+      "onFail": "retry",
+      "position": "output",
+      "taskName": "no_secrets"
+    }
+  ],
+  "instructions": "Be careful.",
+  "maxTurns": 25,
+  "model": "openai/gpt-4o",
+  "name": "guarded",
+  "timeoutSeconds": 0
+}

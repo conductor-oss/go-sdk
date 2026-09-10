@@ -1,0 +1,74 @@
+{
+  "external": false,
+  "instructions": "Non-worker tool types.",
+  "maxTurns": 25,
+  "model": "openai/gpt-4o",
+  "name": "tools_nonworker",
+  "timeoutSeconds": 0,
+  "tools": [
+    {
+      "config": {
+        "accept": [
+          "application/json"
+        ],
+        "contentType": "application/json",
+        "headers": {
+          "X-Api-Version": "2"
+        },
+        "method": "GET",
+        "url": "https://example.test/api/{id}"
+      },
+      "description": "Look up a record.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "lookup",
+      "toolType": "http"
+    },
+    {
+      "description": "Ask a person to decide.",
+      "inputSchema": {
+        "properties": {
+          "question": {
+            "description": "The question or prompt to present to the human.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "type": "object"
+      },
+      "name": "ask_human",
+      "toolType": "human"
+    },
+    {
+      "config": {
+        "agentConfig": {
+          "external": false,
+          "instructions": "Handle billing.",
+          "maxTurns": 25,
+          "model": "openai/gpt-4o",
+          "name": "billing",
+          "timeoutSeconds": 0
+        }
+      },
+      "description": "Delegate.",
+      "inputSchema": {
+        "properties": {
+          "request": {
+            "description": "The request or question to send to this agent.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request"
+        ],
+        "type": "object"
+      },
+      "name": "delegate_billing",
+      "toolType": "agent_tool"
+    }
+  ]
+}
