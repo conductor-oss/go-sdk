@@ -43,8 +43,13 @@ from conductor.ai.agents import (
     TokenUsageTermination,
     agent_tool,
     guardrail,
+    audio_tool,
     http_tool,
     human_tool,
+    image_tool,
+    mcp_tool,
+    pdf_tool,
+    video_tool,
     tool,
 )
 from conductor.ai.agents.config_serializer import AgentConfigSerializer
@@ -262,6 +267,24 @@ def fixtures() -> Dict[str, Agent]:
         ],
     )
 
+    out["17_tools_mcp"] = Agent(
+        name="tools_mcp",
+        model=MODEL,
+        instructions="MCP tool types.",
+        tools=[
+            mcp_tool(server_url="http://localhost:3001/mcp"),
+            mcp_tool(
+                server_url="http://localhost:3002/mcp",
+                name="secured_mcp",
+                description="Authenticated MCP tools.",
+                headers={"Authorization": "Bearer ${MCP_AUTH_KEY}"},
+                tool_names=["get_weather", "math_add"],
+                max_tools=16,
+                credentials=["MCP_AUTH_KEY"],
+            ),
+        ],
+    )
+
     out["15_execution_and_creds"] = Agent(
         name="executor",
         model=MODEL,
@@ -310,6 +333,23 @@ def main() -> int:
     args.out.mkdir(parents=True, exist_ok=True)
 
     serializer = AgentConfigSerializer()
+
+    # The media tools' default schemas, for sdk/ai/tool's own test: the tool
+    # package cannot be imported by the ai package's golden test, so it pins
+    # its constructors against this list directly.
+    media = [
+        image_tool(name="ks_image", description="Generate image", llm_provider="openai", model="dall-e-3"),
+        audio_tool(name="ks_audio", description="Generate audio", llm_provider="openai", model="tts-1"),
+        video_tool(name="ks_video", description="Generate video", llm_provider="openai", model="sora"),
+        pdf_tool(name="ks_pdf", description="Generate PDF"),
+    ]
+    tool_dir = args.out.parent.parent / "tool" / "testdata"
+    tool_dir.mkdir(parents=True, exist_ok=True)
+    (tool_dir / "tools_media.json").write_text(
+        json.dumps([serializer._serialize_tool(t) for t in media], indent=2, sort_keys=True) + "\n"
+    )
+    print(f"wrote {tool_dir / 'tools_media.json'}")
+
     written = 0
     for name, agent in sorted(fixtures().items()):
         config = serializer.serialize(agent)
