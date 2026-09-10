@@ -1,0 +1,60 @@
+{
+  "agents": [
+    {
+      "external": false,
+      "instructions": "Handle billing.",
+      "maxTurns": 25,
+      "model": "openai/gpt-4o",
+      "name": "billing",
+      "timeoutSeconds": 0
+    },
+    {
+      "external": false,
+      "instructions": "Handle refunds.",
+      "maxTurns": 25,
+      "model": "openai/gpt-4o",
+      "name": "refunds",
+      "timeoutSeconds": 0
+    },
+    {
+      "external": false,
+      "instructions": "Handle tech support.",
+      "maxTurns": 25,
+      "model": "openai/gpt-4o",
+      "name": "tech",
+      "timeoutSeconds": 0
+    }
+  ],
+  "allowedTransitions": {
+    "billing": [
+      "refunds"
+    ],
+    "refunds": [
+      "tech"
+    ]
+  },
+  "external": false,
+  "handoffs": [
+    {
+      "resultContains": "ok",
+      "target": "refunds",
+      "toolName": "refund",
+      "type": "on_tool_result"
+    },
+    {
+      "target": "tech",
+      "text": "broken",
+      "type": "on_text_mention"
+    },
+    {
+      "target": "billing",
+      "taskName": "swarm_handoff_billing",
+      "type": "on_condition"
+    }
+  ],
+  "maxTurns": 25,
+  "model": "openai/gpt-4o",
+  "name": "swarm",
+  "strategy": "swarm",
+  "timeoutSeconds": 0
+}

@@ -1,0 +1,784 @@
+{
+  "requiredWorkers": [],
+  "workflowDef": {
+    "createTime": 0,
+    "description": "Handoff agent: e2e_parent",
+    "enforceSchema": true,
+    "inputParameters": [
+      "prompt",
+      "session_id",
+      "media",
+      "cwd"
+    ],
+    "inputTemplate": {},
+    "maskedFields": [],
+    "metadata": {
+      "agentDef": {
+        "agents": [
+          {
+            "external": false,
+            "instructions": "You are a helper.",
+            "maxTurns": 25,
+            "model": "anthropic/claude-sonnet-4-6",
+            "name": "e2e_child",
+            "strategy": "handoff",
+            "timeoutSeconds": 0
+          }
+        ],
+        "external": false,
+        "instructions": "Delegate to child.",
+        "maxTurns": 25,
+        "model": "anthropic/claude-sonnet-4-6",
+        "name": "e2e_parent",
+        "strategy": "handoff",
+        "timeoutSeconds": 0
+      },
+      "agent_capabilities": [
+        "multi-agent-handoff",
+        "simple"
+      ],
+      "agent_sdk": "conductor",
+      "classifier": "agent",
+      "normalizedAgentDef": {
+        "agents": [
+          {
+            "external": false,
+            "instructions": "You are a helper.",
+            "maxTurns": 25,
+            "model": "anthropic/claude-sonnet-4-6",
+            "name": "e2e_child",
+            "strategy": "handoff",
+            "timeoutSeconds": 0
+          }
+        ],
+        "external": false,
+        "instructions": "Delegate to child.",
+        "maxTurns": 25,
+        "model": "anthropic/claude-sonnet-4-6",
+        "name": "e2e_parent",
+        "strategy": "handoff",
+        "timeoutSeconds": 0
+      }
+    },
+    "name": "e2e_parent",
+    "outputParameters": {
+      "context": "${workflow.variables._agent_state}",
+      "result": "${e2e_parent_final.output.result}"
+    },
+    "restartable": true,
+    "schemaVersion": 2,
+    "tasks": [
+      {
+        "asyncComplete": false,
+        "decisionCases": {},
+        "defaultCase": [],
+        "defaultExclusiveJoinTask": [],
+        "forkTasks": [],
+        "inputParameters": {
+          "ctx": "${workflow.input.context}",
+          "evaluatorType": "graaljs",
+          "expression": "(function() {return $.ctx || {};})()"
+        },
+        "joinOn": [],
+        "loopOver": [],
+        "metadata": {},
+        "name": "e2e_parent_ctx_resolve",
+        "onStateChange": {},
+        "optional": false,
+        "permissive": false,
+        "startDelay": 0,
+        "taskReferenceName": "e2e_parent_ctx_resolve",
+        "type": "INLINE"
+      },
+      {
+        "asyncComplete": false,
+        "decisionCases": {},
+        "defaultCase": [],
+        "defaultExclusiveJoinTask": [],
+        "forkTasks": [],
+        "inputParameters": {
+          "_agent_state": "${e2e_parent_ctx_resolve.output.result}",
+          "conversation": "${workflow.input.prompt}"
+        },
+        "joinOn": [],
+        "loopOver": [],
+        "metadata": {},
+        "name": "e2e_parent_init",
+        "onStateChange": {},
+        "optional": false,
+        "permissive": false,
+        "startDelay": 0,
+        "taskReferenceName": "e2e_parent_init",
+        "type": "SET_VARIABLE"
+      },
+      {
+        "asyncComplete": false,
+        "decisionCases": {},
+        "defaultCase": [],
+        "defaultExclusiveJoinTask": [],
+        "forkTasks": [],
+        "inputParameters": {
+          "e2e_parent_loop": "${e2e_parent_loop}",
+          "e2e_parent_route_norm": "${e2e_parent_route_norm}"
+        },
+        "joinOn": [],
+        "loopCondition": "if ( $.e2e_parent_loop['iteration'] < 25 && $.e2e_parent_route_norm['result'] != 'DONE' ) { true; } else { false; }",
+        "loopOver": [
+          {
+            "asyncComplete": false,
+            "decisionCases": {},
+            "defaultCase": [],
+            "defaultExclusiveJoinTask": [],
+            "forkTasks": [],
+            "inputParameters": {
+              "conversation": "${workflow.variables.conversation}"
+            },
+            "joinOn": [],
+            "loopOver": [],
+            "metadata": {},
+            "name": "e2e_parent_router",
+            "onStateChange": {},
+            "optional": false,
+            "permissive": false,
+            "startDelay": 0,
+            "subWorkflowParam": {
+              "name": "e2e_parent_router_wf",
+              "version": 1,
+              "workflowDefinition": {
+                "createTime": 0,
+                "description": "Router sub-workflow for e2e_parent_router",
+                "enforceSchema": true,
+                "inputParameters": [
+                  "conversation"
+                ],
+                "inputTemplate": {},
+                "maskedFields": [],
+                "metadata": {
+                  "agentDef": {
+                    "agents": [
+                      {
+                        "external": false,
+                        "instructions": "You are a helper.",
+                        "maxTurns": 25,
+                        "model": "anthropic/claude-sonnet-4-6",
+                        "name": "e2e_child",
+                        "strategy": "handoff",
+                        "timeoutSeconds": 0
+                      }
+                    ],
+                    "external": false,
+                    "instructions": "Delegate to child.",
+                    "maxTurns": 25,
+                    "model": "anthropic/claude-sonnet-4-6",
+                    "name": "e2e_parent",
+                    "strategy": "handoff",
+                    "timeoutSeconds": 0
+                  },
+                  "agent_capabilities": [
+                    "multi-agent-handoff",
+                    "simple"
+                  ],
+                  "classifier": "agent"
+                },
+                "name": "e2e_parent_router_wf",
+                "outputParameters": {
+                  "result": "${e2e_parent_router_llm.output.result}"
+                },
+                "restartable": true,
+                "schemaVersion": 2,
+                "tasks": [
+                  {
+                    "asyncComplete": false,
+                    "decisionCases": {},
+                    "defaultCase": [],
+                    "defaultExclusiveJoinTask": [],
+                    "forkTasks": [],
+                    "inputParameters": {
+                      "llmProvider": "anthropic",
+                      "maxTokens": 4096,
+                      "messages": [
+                        {
+                          "message": "Delegate to child.\n\nYou are a coordinator that delegates tasks to specialized agents.\n\nAvailable agents:\n- e2e_child: You are a helper.\n\nScope of your responsibility:\n- You may have been delegated only PART of a larger request. If the conversation contains a delegation note addressed to your team 'e2e_parent' \u2014 a line like '[<sender> -> e2e_parent]: <instructions>' \u2014 judge completion against the MOST RECENT such note's instructions, not the entire original request.\n- If the most recent note addressed to you carries no instructions, complete the parts of the request your agents can handle, then respond DONE.\n- A part of the request is OUT OF SCOPE only if NONE of your available agents could plausibly handle it. Out-of-scope parts are NOT your responsibility: never delegate them, and do NOT withhold DONE because of them. When in doubt, delegate to the closest-matching agent.\n\nBased on the conversation so far, decide the next action:\n- Carefully analyze the user's COMPLETE request. It may contain MULTIPLE parts that require DIFFERENT agents.\n- If ANY in-scope part of the request has NOT yet been addressed by an appropriate agent, respond with ONLY the name of the agent that should handle the unaddressed part (one of: e2e_child)\n- ONLY if ALL parts of the request that are in scope have been fully addressed, respond with ONLY the word DONE\n\nImportant: Review the full conversation to check which parts have been handled. Do NOT say DONE until every distinct in-scope part of the request has received a response from a suitable agent.\n\nRespond with a single word \u2014 either an agent name or DONE. No other text.",
+                          "role": "system"
+                        },
+                        {
+                          "message": "${workflow.input.conversation}",
+                          "role": "user"
+                        }
+                      ],
+                      "model": "claude-sonnet-4-6",
+                      "temperature": 0
+                    },
+                    "joinOn": [],
+                    "loopOver": [],
+                    "metadata": {},
+                    "name": "llm_chat_complete",
+                    "onStateChange": {},
+                    "optional": false,
+                    "permissive": false,
+                    "startDelay": 0,
+                    "taskReferenceName": "e2e_parent_router_llm",
+                    "type": "LLM_CHAT_COMPLETE"
+                  }
+                ],
+                "timeoutPolicy": "ALERT_ONLY",
+                "timeoutSeconds": 0,
+                "updateTime": 0,
+                "variables": {},
+                "version": 1,
+                "workflowStatusListenerEnabled": false
+              }
+            },
+            "taskReferenceName": "e2e_parent_router",
+            "type": "SUB_WORKFLOW"
+          },
+          {
+            "asyncComplete": false,
+            "decisionCases": {},
+            "defaultCase": [],
+            "defaultExclusiveJoinTask": [],
+            "forkTasks": [],
+            "inputParameters": {
+              "evaluatorType": "graaljs",
+              "expression": "(function() {var agents = [\"e2e_child\"];var raw = $.raw;if (raw == null) return 'DONE';var s = String(raw).trim();var isWord = function(c) {  return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')      || (c >= '0' && c <= '9') || c === '_';};var start = 0, end = s.length;while (start < end && !isWord(s.charAt(start))) start++;while (end > start && !isWord(s.charAt(end - 1))) end--;s = s.substring(start, end);if (s === '') return 'DONE';var lower = s.toLowerCase();for (var i = 0; i < agents.length; i++) {  if (lower === String(agents[i]).toLowerCase()) return agents[i];}if (lower === 'done') return 'DONE';var sorted = agents.slice().sort(function(a, b) {  return String(b).length - String(a).length;});var scan = lower;var matched = [];for (var j = 0; j < sorted.length; j++) {  var name = String(sorted[j]);  var nl = name.toLowerCase();  var from = 0; var found = false;  while (true) {    var idx = scan.indexOf(nl, from);    if (idx < 0) break;    var beforeOk = idx === 0 || !isWord(scan.charAt(idx - 1));    var afterIdx = idx + nl.length;    var afterOk = afterIdx >= scan.length || !isWord(scan.charAt(afterIdx));    if (beforeOk && afterOk) {      found = true;      scan = scan.substring(0, idx)          + Array(nl.length + 1).join('#') + scan.substring(afterIdx);      from = afterIdx;    } else {      from = idx + 1;    }  }  if (found) matched.push(name);}if (matched.length === 1) return matched[0];return 'DONE';})()",
+              "raw": "${e2e_parent_router.output.result}"
+            },
+            "joinOn": [],
+            "loopOver": [],
+            "metadata": {},
+            "name": "e2e_parent_route_norm",
+            "onStateChange": {},
+            "optional": false,
+            "permissive": false,
+            "startDelay": 0,
+            "taskReferenceName": "e2e_parent_route_norm",
+            "type": "INLINE"
+          },
+          {
+            "asyncComplete": false,
+            "decisionCases": {},
+            "defaultCase": [],
+            "defaultExclusiveJoinTask": [],
+            "forkTasks": [],
+            "inputParameters": {
+              "decision": "${e2e_parent_route_norm.output.result}",
+              "evaluatorType": "graaljs",
+              "expression": "(function() { var d = $.decision; if (d === 'DONE') return $.prev; return $.prev + '\\n\\n[coordinator -> ' + d + ']'; })()",
+              "prev": "${workflow.variables.conversation}"
+            },
+            "joinOn": [],
+            "loopOver": [],
+            "metadata": {},
+            "name": "e2e_parent_route_annotate",
+            "onStateChange": {},
+            "optional": false,
+            "permissive": false,
+            "startDelay": 0,
+            "taskReferenceName": "e2e_parent_route_annotate",
+            "type": "INLINE"
+          },
+          {
+            "asyncComplete": false,
+            "decisionCases": {},
+            "defaultCase": [],
+            "defaultExclusiveJoinTask": [],
+            "forkTasks": [],
+            "inputParameters": {
+              "conversation": "${e2e_parent_route_annotate.output.result}"
+            },
+            "joinOn": [],
+            "loopOver": [],
+            "metadata": {},
+            "name": "e2e_parent_route_set",
+            "onStateChange": {},
+            "optional": false,
+            "permissive": false,
+            "startDelay": 0,
+            "taskReferenceName": "e2e_parent_route_set",
+            "type": "SET_VARIABLE"
+          },
+          {
+            "asyncComplete": false,
+            "decisionCases": {
+              "DONE": [
+                {
+                  "asyncComplete": false,
+                  "decisionCases": {},
+                  "defaultCase": [],
+                  "defaultExclusiveJoinTask": [],
+                  "forkTasks": [],
+                  "inputParameters": {
+                    "evaluatorType": "graaljs",
+                    "expression": "(function() { return {result: 'done'}; })()"
+                  },
+                  "joinOn": [],
+                  "loopOver": [],
+                  "metadata": {},
+                  "name": "e2e_parent_done_noop",
+                  "onStateChange": {},
+                  "optional": false,
+                  "permissive": false,
+                  "startDelay": 0,
+                  "taskReferenceName": "e2e_parent_done_noop",
+                  "type": "INLINE"
+                }
+              ],
+              "e2e_child": [
+                {
+                  "asyncComplete": false,
+                  "decisionCases": {},
+                  "defaultCase": [],
+                  "defaultExclusiveJoinTask": [],
+                  "forkTasks": [],
+                  "inputParameters": {
+                    "context": "${workflow.variables._agent_state}",
+                    "media": "${workflow.input.media}",
+                    "prompt": "${workflow.variables.conversation}",
+                    "session_id": "${workflow.input.session_id}"
+                  },
+                  "joinOn": [],
+                  "loopOver": [],
+                  "metadata": {},
+                  "name": "e2e_child",
+                  "onStateChange": {},
+                  "optional": false,
+                  "permissive": false,
+                  "startDelay": 0,
+                  "subWorkflowParam": {
+                    "name": "e2e_child",
+                    "version": 1,
+                    "workflowDefinition": {
+                      "createTime": 0,
+                      "description": "Agent workflow for e2e_child",
+                      "enforceSchema": true,
+                      "inputParameters": [
+                        "prompt",
+                        "session_id",
+                        "media",
+                        "cwd"
+                      ],
+                      "inputTemplate": {},
+                      "maskedFields": [],
+                      "metadata": {
+                        "agentDef": {
+                          "external": false,
+                          "instructions": "You are a helper.",
+                          "maxTurns": 25,
+                          "model": "anthropic/claude-sonnet-4-6",
+                          "name": "e2e_child",
+                          "strategy": "handoff",
+                          "timeoutSeconds": 0
+                        },
+                        "agent_capabilities": [
+                          "simple"
+                        ],
+                        "classifier": "agent"
+                      },
+                      "name": "e2e_child",
+                      "outputParameters": {
+                        "context": "${workflow.input.context}",
+                        "finishReason": "${e2e_child_llm.output.finishReason}",
+                        "result": "${e2e_child_llm.output.result}"
+                      },
+                      "restartable": true,
+                      "schemaVersion": 2,
+                      "tasks": [
+                        {
+                          "asyncComplete": false,
+                          "decisionCases": {},
+                          "defaultCase": [],
+                          "defaultExclusiveJoinTask": [],
+                          "forkTasks": [],
+                          "inputParameters": {
+                            "llmProvider": "anthropic",
+                            "maxTokens": 16384,
+                            "messages": [
+                              {
+                                "message": "You are a helper.",
+                                "role": "system"
+                              },
+                              {
+                                "media": "${workflow.input.media}",
+                                "message": "${workflow.input.prompt}",
+                                "role": "user"
+                              }
+                            ],
+                            "model": "claude-sonnet-4-6"
+                          },
+                          "joinOn": [],
+                          "loopOver": [],
+                          "metadata": {},
+                          "name": "llm_chat_complete",
+                          "onStateChange": {},
+                          "optional": false,
+                          "permissive": false,
+                          "startDelay": 0,
+                          "taskDefinition": {
+                            "backoffJitterMs": 0,
+                            "backoffScaleFactor": 2,
+                            "createTime": 0,
+                            "enforceSchema": false,
+                            "inputKeys": [],
+                            "inputTemplate": {},
+                            "maxRetryDelaySeconds": 0,
+                            "name": "LLM_CHAT_COMPLETE",
+                            "outputKeys": [],
+                            "rateLimitFrequencyInSeconds": 1,
+                            "rateLimitPerFrequency": 0,
+                            "responseTimeoutSeconds": 3600,
+                            "retryCount": 3,
+                            "retryDelaySeconds": 2,
+                            "retryLogic": "EXPONENTIAL_BACKOFF",
+                            "runtimeMetadata": [],
+                            "taskStatusListenerEnabled": true,
+                            "timeoutPolicy": "TIME_OUT_WF",
+                            "timeoutSeconds": 0,
+                            "totalTimeoutSeconds": 0,
+                            "updateTime": 0
+                          },
+                          "taskReferenceName": "e2e_child_llm",
+                          "type": "LLM_CHAT_COMPLETE"
+                        }
+                      ],
+                      "timeoutSeconds": 60,
+                      "updateTime": 0,
+                      "variables": {},
+                      "version": 1,
+                      "workflowStatusListenerEnabled": false
+                    }
+                  },
+                  "taskReferenceName": "e2e_parent_handoff_0_e2e_child",
+                  "type": "SUB_WORKFLOW"
+                },
+                {
+                  "asyncComplete": false,
+                  "decisionCases": {},
+                  "defaultCase": [],
+                  "defaultExclusiveJoinTask": [],
+                  "forkTasks": [],
+                  "inputParameters": {
+                    "evaluatorType": "graaljs",
+                    "expression": "(function() { var r = $.response; r = (r == null || r === undefined) ? '' : (typeof r === 'object' ? JSON.stringify(r) : String(r)); return $.prev + '\\n\\n[e2e_child]: ' + r; })()",
+                    "prev": "${workflow.variables.conversation}",
+                    "response": "${e2e_parent_handoff_0_e2e_child.output.result}"
+                  },
+                  "joinOn": [],
+                  "loopOver": [],
+                  "metadata": {},
+                  "name": "e2e_parent_hconcat_0",
+                  "onStateChange": {},
+                  "optional": false,
+                  "permissive": false,
+                  "startDelay": 0,
+                  "taskReferenceName": "e2e_parent_hconcat_0",
+                  "type": "INLINE"
+                },
+                {
+                  "asyncComplete": false,
+                  "decisionCases": {},
+                  "defaultCase": [],
+                  "defaultExclusiveJoinTask": [],
+                  "forkTasks": [],
+                  "inputParameters": {
+                    "child": "${e2e_parent_handoff_0_e2e_child.output.context}",
+                    "evaluatorType": "graaljs",
+                    "expression": "(function() {var parent = $.parent || {};var child = $.child || {};var merged = {};for (var k in parent) { var v = parent.get ? parent.get(k) : parent[k]; if (v != null) merged[k] = '' + v; }for (var k in child) { var v = child.get ? child.get(k) : child[k]; if (v != null) merged[k] = '' + v; }return merged;})()",
+                    "parent": "${workflow.variables._agent_state}"
+                  },
+                  "joinOn": [],
+                  "loopOver": [],
+                  "metadata": {},
+                  "name": "e2e_parent_hctx_merge_0",
+                  "onStateChange": {},
+                  "optional": false,
+                  "permissive": false,
+                  "startDelay": 0,
+                  "taskReferenceName": "e2e_parent_hctx_merge_0",
+                  "type": "INLINE"
+                },
+                {
+                  "asyncComplete": false,
+                  "decisionCases": {},
+                  "defaultCase": [],
+                  "defaultExclusiveJoinTask": [],
+                  "forkTasks": [],
+                  "inputParameters": {
+                    "_agent_state": "${e2e_parent_hctx_merge_0.output.result}",
+                    "conversation": "${e2e_parent_hconcat_0.output.result}"
+                  },
+                  "joinOn": [],
+                  "loopOver": [],
+                  "metadata": {},
+                  "name": "e2e_parent_hset_0",
+                  "onStateChange": {},
+                  "optional": false,
+                  "permissive": false,
+                  "startDelay": 0,
+                  "taskReferenceName": "e2e_parent_hset_0",
+                  "type": "SET_VARIABLE"
+                }
+              ]
+            },
+            "defaultCase": [
+              {
+                "asyncComplete": false,
+                "decisionCases": {},
+                "defaultCase": [],
+                "defaultExclusiveJoinTask": [],
+                "forkTasks": [],
+                "inputParameters": {
+                  "context": "${workflow.variables._agent_state}",
+                  "media": "${workflow.input.media}",
+                  "prompt": "${workflow.variables.conversation}",
+                  "session_id": "${workflow.input.session_id}"
+                },
+                "joinOn": [],
+                "loopOver": [],
+                "metadata": {},
+                "name": "e2e_child",
+                "onStateChange": {},
+                "optional": false,
+                "permissive": false,
+                "startDelay": 0,
+                "subWorkflowParam": {
+                  "name": "e2e_child",
+                  "version": 1,
+                  "workflowDefinition": {
+                    "createTime": 0,
+                    "description": "Agent workflow for e2e_child",
+                    "enforceSchema": true,
+                    "inputParameters": [
+                      "prompt",
+                      "session_id",
+                      "media",
+                      "cwd"
+                    ],
+                    "inputTemplate": {},
+                    "maskedFields": [],
+                    "metadata": {
+                      "agentDef": {
+                        "external": false,
+                        "instructions": "You are a helper.",
+                        "maxTurns": 25,
+                        "model": "anthropic/claude-sonnet-4-6",
+                        "name": "e2e_child",
+                        "strategy": "handoff",
+                        "timeoutSeconds": 0
+                      },
+                      "agent_capabilities": [
+                        "simple"
+                      ],
+                      "classifier": "agent"
+                    },
+                    "name": "e2e_child",
+                    "outputParameters": {
+                      "context": "${workflow.input.context}",
+                      "finishReason": "${e2e_child_llm.output.finishReason}",
+                      "result": "${e2e_child_llm.output.result}"
+                    },
+                    "restartable": true,
+                    "schemaVersion": 2,
+                    "tasks": [
+                      {
+                        "asyncComplete": false,
+                        "decisionCases": {},
+                        "defaultCase": [],
+                        "defaultExclusiveJoinTask": [],
+                        "forkTasks": [],
+                        "inputParameters": {
+                          "llmProvider": "anthropic",
+                          "maxTokens": 16384,
+                          "messages": [
+                            {
+                              "message": "You are a helper.",
+                              "role": "system"
+                            },
+                            {
+                              "media": "${workflow.input.media}",
+                              "message": "${workflow.input.prompt}",
+                              "role": "user"
+                            }
+                          ],
+                          "model": "claude-sonnet-4-6"
+                        },
+                        "joinOn": [],
+                        "loopOver": [],
+                        "metadata": {},
+                        "name": "llm_chat_complete",
+                        "onStateChange": {},
+                        "optional": false,
+                        "permissive": false,
+                        "startDelay": 0,
+                        "taskDefinition": {
+                          "backoffJitterMs": 0,
+                          "backoffScaleFactor": 2,
+                          "createTime": 0,
+                          "enforceSchema": false,
+                          "inputKeys": [],
+                          "inputTemplate": {},
+                          "maxRetryDelaySeconds": 0,
+                          "name": "LLM_CHAT_COMPLETE",
+                          "outputKeys": [],
+                          "rateLimitFrequencyInSeconds": 1,
+                          "rateLimitPerFrequency": 0,
+                          "responseTimeoutSeconds": 3600,
+                          "retryCount": 3,
+                          "retryDelaySeconds": 2,
+                          "retryLogic": "EXPONENTIAL_BACKOFF",
+                          "runtimeMetadata": [],
+                          "taskStatusListenerEnabled": true,
+                          "timeoutPolicy": "TIME_OUT_WF",
+                          "timeoutSeconds": 0,
+                          "totalTimeoutSeconds": 0,
+                          "updateTime": 0
+                        },
+                        "taskReferenceName": "e2e_child_llm",
+                        "type": "LLM_CHAT_COMPLETE"
+                      }
+                    ],
+                    "timeoutSeconds": 60,
+                    "updateTime": 0,
+                    "variables": {},
+                    "version": 1,
+                    "workflowStatusListenerEnabled": false
+                  }
+                },
+                "taskReferenceName": "e2e_parent_handoff_0_e2e_child_default",
+                "type": "SUB_WORKFLOW"
+              },
+              {
+                "asyncComplete": false,
+                "decisionCases": {},
+                "defaultCase": [],
+                "defaultExclusiveJoinTask": [],
+                "forkTasks": [],
+                "inputParameters": {
+                  "evaluatorType": "graaljs",
+                  "expression": "(function() { var r = $.response; r = (r == null || r === undefined) ? '' : (typeof r === 'object' ? JSON.stringify(r) : String(r)); return $.prev + '\\n\\n[e2e_child]: ' + r; })()",
+                  "prev": "${workflow.variables.conversation}",
+                  "response": "${e2e_parent_handoff_0_e2e_child_default.output.result}"
+                },
+                "joinOn": [],
+                "loopOver": [],
+                "metadata": {},
+                "name": "e2e_parent_hconcat_0_default",
+                "onStateChange": {},
+                "optional": false,
+                "permissive": false,
+                "startDelay": 0,
+                "taskReferenceName": "e2e_parent_hconcat_0_default",
+                "type": "INLINE"
+              },
+              {
+                "asyncComplete": false,
+                "decisionCases": {},
+                "defaultCase": [],
+                "defaultExclusiveJoinTask": [],
+                "forkTasks": [],
+                "inputParameters": {
+                  "child": "${e2e_parent_handoff_0_e2e_child_default.output.context}",
+                  "evaluatorType": "graaljs",
+                  "expression": "(function() {var parent = $.parent || {};var child = $.child || {};var merged = {};for (var k in parent) { var v = parent.get ? parent.get(k) : parent[k]; if (v != null) merged[k] = '' + v; }for (var k in child) { var v = child.get ? child.get(k) : child[k]; if (v != null) merged[k] = '' + v; }return merged;})()",
+                  "parent": "${workflow.variables._agent_state}"
+                },
+                "joinOn": [],
+                "loopOver": [],
+                "metadata": {},
+                "name": "e2e_parent_hctx_merge_0_default",
+                "onStateChange": {},
+                "optional": false,
+                "permissive": false,
+                "startDelay": 0,
+                "taskReferenceName": "e2e_parent_hctx_merge_0_default",
+                "type": "INLINE"
+              },
+              {
+                "asyncComplete": false,
+                "decisionCases": {},
+                "defaultCase": [],
+                "defaultExclusiveJoinTask": [],
+                "forkTasks": [],
+                "inputParameters": {
+                  "_agent_state": "${e2e_parent_hctx_merge_0_default.output.result}",
+                  "conversation": "${e2e_parent_hconcat_0_default.output.result}"
+                },
+                "joinOn": [],
+                "loopOver": [],
+                "metadata": {},
+                "name": "e2e_parent_hset_0_default",
+                "onStateChange": {},
+                "optional": false,
+                "permissive": false,
+                "startDelay": 0,
+                "taskReferenceName": "e2e_parent_hset_0_default",
+                "type": "SET_VARIABLE"
+              }
+            ],
+            "defaultExclusiveJoinTask": [],
+            "evaluatorType": "value-param",
+            "expression": "switchCaseValue",
+            "forkTasks": [],
+            "inputParameters": {
+              "switchCaseValue": "${e2e_parent_route_norm.output.result}"
+            },
+            "joinOn": [],
+            "loopOver": [],
+            "metadata": {},
+            "name": "e2e_parent_switch",
+            "onStateChange": {},
+            "optional": false,
+            "permissive": false,
+            "startDelay": 0,
+            "taskReferenceName": "e2e_parent_switch",
+            "type": "SWITCH"
+          }
+        ],
+        "metadata": {},
+        "name": "e2e_parent_loop",
+        "onStateChange": {},
+        "optional": false,
+        "permissive": false,
+        "startDelay": 0,
+        "taskReferenceName": "e2e_parent_loop",
+        "type": "DO_WHILE"
+      },
+      {
+        "asyncComplete": false,
+        "decisionCases": {},
+        "defaultCase": [],
+        "defaultExclusiveJoinTask": [],
+        "forkTasks": [],
+        "inputParameters": {
+          "llmProvider": "anthropic",
+          "maxTokens": 16384,
+          "messages": [
+            {
+              "message": "Delegate to child.\n\nBased on the work done by the agents above, provide your final response to the user. IMPORTANT: Include ALL details from every agent's response \u2014 do NOT summarize or omit code examples, technical specifications, or specific recommendations. Organize the information coherently but preserve completeness.",
+              "role": "system"
+            },
+            {
+              "message": "${workflow.variables.conversation}",
+              "role": "user"
+            }
+          ],
+          "model": "claude-sonnet-4-6"
+        },
+        "joinOn": [],
+        "loopOver": [],
+        "metadata": {},
+        "name": "llm_chat_complete",
+        "onStateChange": {},
+        "optional": false,
+        "permissive": false,
+        "startDelay": 0,
+        "taskReferenceName": "e2e_parent_final",
+        "type": "LLM_CHAT_COMPLETE"
+      }
+    ],
+    "timeoutSeconds": 0,
+    "updateTime": 0,
+    "variables": {},
+    "version": 1,
+    "workflowStatusListenerEnabled": false
+  }
+}

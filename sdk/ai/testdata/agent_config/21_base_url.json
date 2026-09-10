@@ -1,0 +1,9 @@
+{
+  "baseUrl": "https://my-custom-proxy.example.com/v1",
+  "external": false,
+  "instructions": "Say hello.",
+  "maxTurns": 25,
+  "model": "openai/gpt-4o",
+  "name": "proxied",
+  "timeoutSeconds": 0
+}

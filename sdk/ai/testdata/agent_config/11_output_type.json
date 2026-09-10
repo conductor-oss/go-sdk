@@ -1,0 +1,37 @@
+{
+  "external": false,
+  "instructions": "Return a ticket.",
+  "maxTurns": 25,
+  "model": "openai/gpt-4o",
+  "name": "structured",
+  "outputType": {
+    "className": "Ticket",
+    "schema": {
+      "properties": {
+        "priority": {
+          "title": "Priority",
+          "type": "integer"
+        },
+        "summary": {
+          "title": "Summary",
+          "type": "string"
+        },
+        "tags": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        }
+      },
+      "required": [
+        "summary",
+        "priority",
+        "tags"
+      ],
+      "title": "Ticket",
+      "type": "object"
+    }
+  },
+  "timeoutSeconds": 0
+}
