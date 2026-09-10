@@ -1,0 +1,102 @@
+{
+  "cliConfig": {
+    "allowShell": true,
+    "allowedCommands": [
+      "git",
+      "ls"
+    ],
+    "enabled": true,
+    "timeout": 45
+  },
+  "codeExecution": {
+    "allowedCommands": [],
+    "allowedLanguages": [
+      "python",
+      "bash"
+    ],
+    "enabled": true,
+    "timeout": 60
+  },
+  "credentials": [
+    "GITHUB_TOKEN",
+    "OPENAI_API_KEY"
+  ],
+  "external": false,
+  "instructions": "Run code and commands.",
+  "introduction": "Hi, I run code.",
+  "maskedFields": [
+    "ssn",
+    "card"
+  ],
+  "maxTurns": 25,
+  "metadata": {
+    "team": "platform",
+    "tier": 2
+  },
+  "model": "openai/gpt-4o",
+  "name": "executor",
+  "requiredTools": [
+    "get_weather"
+  ],
+  "timeoutSeconds": 0,
+  "tools": [
+    {
+      "description": "Execute code in a sandboxed environment. Supported languages: python, bash. Timeout: 60s.",
+      "inputSchema": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "type": "object"
+      },
+      "name": "executor_execute_code",
+      "outputSchema": {
+        "additionalProperties": {},
+        "type": "object"
+      },
+      "stateful": true,
+      "toolType": "worker"
+    },
+    {
+      "description": "Run a CLI command directly. Timeout: 45s. Allowed commands: git, ls. If you need to save a command's output for later pipeline steps, set context_key. Well-known keys: repo, branch, working_dir, issue_number, pr_url, commit_sha.",
+      "inputSchema": {
+        "properties": {
+          "args": {
+            "items": {},
+            "type": "array"
+          },
+          "command": {
+            "type": "string"
+          },
+          "context_key": {
+            "type": "string"
+          },
+          "cwd": {
+            "type": "string"
+          },
+          "shell": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "command"
+        ],
+        "type": "object"
+      },
+      "name": "executor_run_command",
+      "outputSchema": {
+        "additionalProperties": {},
+        "type": "object"
+      },
+      "stateful": true,
+      "toolType": "worker"
+    }
+  ]
+}
