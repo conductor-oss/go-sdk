@@ -73,7 +73,18 @@ feature lives on the server's `feature/llm_mock_impl` branch (see its
     export CONDUCTOR_SERVER_JAR=/path/to/conductor/server/build/libs/conductor-server-*-boot.jar
 
 Recordings live under `testdata/llm-recordings/<group>/`, one directory per
-group of tests recorded together, and are checked in.
+group of tests recorded together, and are checked in. `suite/` holds the
+whole package recorded in one pass with `openai/gpt-4o-mini`; replay it with
+no `-run` filter. The credential tests were recorded with the secret
+provisioned, so the server needs it in both modes and the tests need to be
+told it is there:
+
+    CONDUCTOR_SECRET_GH_TOKEN=ghp_fake_e2e_token_value_12345 \
+        test/ai_e2e/scripts/conductor-server.sh replay test/ai_e2e/testdata/llm-recordings/suite
+    CONDUCTOR_SERVER_URL=http://localhost:8080/api CONDUCTOR_AGENT_LLM_MODEL=mock/mockLLM \
+        CONDUCTOR_E2E_SECRET_PROVISIONED=1 go test -tags e2e -count=1 -v ./test/ai_e2e/
+
+Without the secret those two tests skip, and their recordings go unused.
 
 **Record.** The server calls the real model and writes one JSON file per
 response into the directory. Run only the tests you mean to record: every
@@ -118,6 +129,23 @@ generation options. So between the recording run and a replay:
   and the recorder does not normalize it away. A test that uses `tool.Agent`
   should skip when `model(t) == mockModel`; fixing it needs a server change
   in `RecordedRequestNormalizer`.
+- MCP tool loops need three server fixes that are not yet on
+  `feature/llm_mock_impl`: name a tool result
+  after the call it answers rather than the task type (`LLMHelper`), treat a
+  history the recorder cannot describe as a miss rather than an error
+  (`MockLLM`), and render tool results under the dispatched tool's name rather
+  than a reference built from the model's call ID (`ToolCompiler` and
+  `JavaScriptBuilder`). The `suite/` recordings were made with those fixes, so
+  `TestMCPToolResultReachesTheAnswer` fails in replay against a server
+  without them. Ordinary worker tools replay on the branch as is.
+- Paths in prompts must be stable. `TestCLICommand` lists a fixed relative
+  directory rather than `t.TempDir()`, whose random name would make every
+  run's prompt unique.
+- Tests recorded together must not send identical requests. The model may
+  answer the same prompt two ways, and playback refuses to start when one
+  request has two answers ("Conflicting recorded responses for the same
+  request"). Give each test its own prompt; the two guardrail tests ask
+  different questions for this reason.
 
 ## Adding a test
 

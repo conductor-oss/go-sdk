@@ -1,0 +1,85 @@
+{
+  "schemaVersion" : 3,
+  "request" : {
+    "messages" : [ {
+      "role" : "system",
+      "text" : "You are a weather assistant. Use the available MCP tools to answer questions about weather conditions.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "user",
+      "text" : "What is the weather in San Francisco right now?",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    } ],
+    "tools" : [ {
+      "name" : "get_weather",
+      "description" : "Get weather for a city. Always returns fixed deterministic data (77°F, sunny).",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "city" : {
+            "title" : "City",
+            "type" : "string"
+          }
+        },
+        "required" : [ "city" ]
+      }
+    } ],
+    "jsonOutput" : false,
+    "outputSchema" : null,
+    "generationOptions" : {
+      "maxTokens" : 16384,
+      "thinkingTokenLimit" : 0
+    }
+  },
+  "response" : {
+    "metadata" : {
+      "id" : "resp_083cf51ef851ba21006aa3235e603087d0868c391cc32c1393",
+      "model" : "gpt-4o-mini-2024-07-18",
+      "usage" : {
+        "promptTokens" : 83,
+        "completionTokens" : 16,
+        "totalTokens" : 99,
+        "nativeUsage" : null
+      },
+      "rateLimit" : {
+        "requestsLimit" : 0,
+        "requestsRemaining" : 0,
+        "requestsReset" : 0,
+        "tokensLimit" : 0,
+        "tokensRemaining" : 0,
+        "tokensReset" : 0
+      },
+      "promptMetadata" : [ ],
+      "properties" : {
+        "response_id" : "resp_083cf51ef851ba21006aa3235e603087d0868c391cc32c1393",
+        "reasoning_tokens" : 0
+      }
+    },
+    "results" : [ {
+      "output" : {
+        "text" : "",
+        "metadata" : {
+          "messageType" : "ASSISTANT"
+        },
+        "toolCalls" : [ {
+          "id" : "call_lG1yMBZN8V1axROk11z3chO8",
+          "type" : "function",
+          "name" : "get_weather",
+          "arguments" : "{\"city\":\"San Francisco\"}"
+        } ],
+        "media" : [ ]
+      },
+      "metadata" : {
+        "finishReason" : "TOOL_CALLS",
+        "contentFilters" : [ ],
+        "properties" : { }
+      }
+    } ]
+  },
+  "modelSettings" : {
+    "model" : "gpt-4o-mini",
+    "supportsAssistantPrefill" : true
+  }
+}

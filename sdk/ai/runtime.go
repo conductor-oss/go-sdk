@@ -12,6 +12,7 @@ package ai
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sync"
 	"time"
 
@@ -87,14 +88,43 @@ func NewRuntimeWithClient(apiClient *client.APIClient, cfg Config) *Runtime {
 // AgentClient exposes the control plane for operations Runtime does not wrap.
 func (r *Runtime) AgentClient() client.AgentClient { return r.agents }
 
-// Run starts an agent and blocks until the execution finishes.
+// RunOption adjusts how Run and Start begin a run.
+type RunOption func(*runOptions)
+
+type runOptions struct {
+	plan *Plan
+}
+
+// WithPlan supplies the plan a StrategyPlanExecute agent carries out, in place
+// of one written by its Planner.
 //
-// It validates the agent, registers a worker for every tool that has a Go
-// handler, starts the run, then polls until the server reports a terminal
-// state. Tool calls arrive as Conductor tasks while this is waiting.
-func (r *Runtime) Run(ctx context.Context, agent *Agent, prompt string) (*AgentResult, error) {
+// The server still requires the Planner slot to be set — the strategy is
+// compiled around it — but with a plan supplied the planner never runs, so
+// its instructions can say as much. The plan is validated before the run
+// starts; see Plan.Validate for what is checked.
+func WithPlan(plan *Plan) RunOption {
+	return func(o *runOptions) { o.plan = plan }
+}
+
+// startPayload validates the agent and any options, registers the agent's
+// workers, and builds the body of the /agent/start request. Run and Start
+// share it so a plan reaches the server the same way from either.
+func (r *Runtime) startPayload(agent *Agent, prompt string, opts []RunOption) (map[string]any, error) {
 	if err := agent.Validate(); err != nil {
 		return nil, err
+	}
+	var o runOptions
+	for _, opt := range opts {
+		opt(&o)
+	}
+	if o.plan != nil {
+		if agent.Strategy != StrategyPlanExecute {
+			return nil, fmt.Errorf(
+				"agent %q: WithPlan requires StrategyPlanExecute, got %q", agent.Name, agent.Strategy)
+		}
+		if err := o.plan.Validate(); err != nil {
+			return nil, fmt.Errorf("agent %q: %w", agent.Name, err)
+		}
 	}
 	if err := r.registerWorkers(agent); err != nil {
 		return nil, err
@@ -105,6 +135,45 @@ func (r *Runtime) Run(ctx context.Context, agent *Agent, prompt string) (*AgentR
 		"prompt":      prompt,
 		"sessionId":   "",
 		"media":       []any{},
+	}
+	if o.plan != nil {
+		// The server reads workflow.input.static_plan ahead of the planner's
+		// output; the key matches AgentRequest in Java and runtime.run(plan=)
+		// in Python.
+		payload["static_plan"] = o.plan.toPayload()
+	}
+	return payload, nil
+}
+
+// Start begins a run and returns at once.
+//
+// Workers for the agent's tools are registered before the run starts, so a tool
+// call cannot arrive before something is polling for it.
+func (r *Runtime) Start(ctx context.Context, agent *Agent, prompt string, opts ...RunOption) (*AgentHandle, error) {
+	payload, err := r.startPayload(agent, prompt, opts)
+	if err != nil {
+		return nil, err
+	}
+	started, err := r.agents.Start(ctx, payload)
+	if err != nil {
+		return nil, fmt.Errorf("start agent %q: %w", agent.Name, err)
+	}
+	executionID, ok := started["executionId"].(string)
+	if !ok || executionID == "" {
+		return nil, fmt.Errorf("start agent %q: server returned no executionId", agent.Name)
+	}
+	return &AgentHandle{ExecutionID: executionID, rt: r}, nil
+}
+
+// Run starts an agent and blocks until the execution finishes.
+//
+// It validates the agent, registers a worker for every tool that has a Go
+// handler, starts the run, then polls until the server reports a terminal
+// state. Tool calls arrive as Conductor tasks while this is waiting.
+func (r *Runtime) Run(ctx context.Context, agent *Agent, prompt string, opts ...RunOption) (*AgentResult, error) {
+	payload, err := r.startPayload(agent, prompt, opts)
+	if err != nil {
+		return nil, err
 	}
 	started, err := r.agents.Start(ctx, payload)
 	if err != nil {
@@ -159,7 +228,52 @@ func (r *Runtime) registerWorkers(agent *Agent) error {
 
 	var walk func(a *Agent) error
 	walk = func(a *Agent) error {
-		for _, t := range a.Tools {
+		// The derived execution tools are serialized as worker tools, so they
+		// need workers too. Without this the server queues a task nothing
+		// polls for and the run stalls.
+		tools := slices.Clone(a.Tools)
+		if a.CodeExecution != nil && enabledOrDefault(a.CodeExecution.Enabled) {
+			t := a.CodeExecution.codeTool(a.Name)
+			t.Handler = a.CodeExecution.executeCode
+			tools = append(tools, t)
+		}
+		if a.CLI != nil && enabledOrDefault(a.CLI.Enabled) {
+			t := a.CLI.cliTool(a.Name)
+			t.Handler = a.CLI.runCommand
+			tools = append(tools, t)
+		}
+		// on_condition handoffs are worker-backed too. The server compiles each
+		// into a SIMPLE task named "<agent>_handoff_<target>", so without a worker
+		// under exactly that name the run stalls the way code execution used to.
+		if conds := a.onConditions(); len(conds) > 0 {
+			// The server reports the active agent as an index into
+			// [parent, sub-agents...] — MultiAgentCompiler builds allSwarmAgents
+			// with the parent first — so index 0 is this agent, not its first
+			// child. The names go in that order so the handler resolves the
+			// index the same way.
+			names := make([]string, 0, 1+len(a.Agents))
+			names = append(names, a.Name)
+			for _, sub := range a.Agents {
+				if sub != nil {
+					names = append(names, sub.Name)
+				}
+			}
+			for _, c := range conds {
+				tools = append(tools, ToolDef{
+					Name:    handoffTaskName(a.Name, c.Target),
+					Handler: c.handoffHandler(names),
+				})
+			}
+		}
+
+		// Custom guardrails are worker-backed as well: the server compiles each
+		// into a SIMPLE task named after the guardrail, agent-level and
+		// tool-level alike.
+		for _, g := range a.customGuardrails() {
+			tools = append(tools, ToolDef{Name: g.Name, Handler: g.guardrailHandler()})
+		}
+
+		for _, t := range tools {
 			if t.Handler == nil || r.started[t.Name] {
 				continue
 			}
@@ -179,7 +293,17 @@ func (r *Runtime) registerWorkers(agent *Agent) error {
 			}
 		}
 		if a.Router != nil {
-			return walk(a.Router)
+			if err := walk(a.Router); err != nil {
+				return err
+			}
+		}
+		if a.Planner != nil {
+			if err := walk(a.Planner); err != nil {
+				return err
+			}
+		}
+		if a.Fallback != nil {
+			return walk(a.Fallback)
 		}
 		return nil
 	}

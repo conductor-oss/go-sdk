@@ -177,10 +177,10 @@ var goldenFixtures = map[string]func() *Agent{
 	},
 
 	// Pending. Each needs the wire surface named below.
-	"08_handoffs":     nil, // handoff conditions + allowedTransitions
-	"09_guardrails":   nil, // regex / llm / custom guardrails
+	"08_handoffs":     swarmAgent,
+	"09_guardrails":   guardedAgent,
 	"11_output_type":  structuredAgent,
-	"13_plan_execute": nil, // planner and fallback slots
+	"13_plan_execute": planExecuteAgent,
 
 	"14_tools_nonworker":     nonWorkerToolsAgent,
 	"15_execution_and_creds": executorAgent,
@@ -214,6 +214,91 @@ func mcpToolsAgent() *Agent {
 					"tool_names": []string{"get_weather", "math_add"},
 				},
 				Credentials: []string{"MCP_AUTH_KEY"},
+			},
+		},
+	}
+}
+
+// The plan-execute slots. The parent's tools are what the plan may name, so
+// they are part of the fixture rather than incidental.
+func planExecuteAgent() *Agent {
+	return &Agent{
+		Name:         "planner_root",
+		Model:        testModel,
+		Instructions: "Plan then execute.",
+		Strategy:     StrategyPlanExecute,
+		Tools: []ToolDef{
+			mkTool("get_weather", "Get the current weather for a city.",
+				weatherIn{}, map[string]any{}),
+			mkTool("container_kinds",
+				"List and dict parameters, to pin items/additionalProperties.",
+				containerKindsIn{}, map[string]any{}),
+		},
+		Planner: &Agent{
+			Name: "the_planner", Model: testModel, Instructions: "Emit JSON plan.",
+		},
+		Fallback: &Agent{
+			Name: "the_fallback", Model: testModel, Instructions: "Best effort.",
+		},
+		FallbackMaxTurns: 4,
+	}
+}
+
+// A swarm with all three handoff kinds and a transition allow-list.
+func swarmAgent() *Agent {
+	sub := func(name, instructions string) *Agent {
+		return &Agent{Name: name, Model: testModel, Instructions: instructions}
+	}
+	return &Agent{
+		Name:     "swarm",
+		Model:    testModel,
+		Strategy: StrategySwarm,
+		Agents: []*Agent{
+			sub("billing", "Handle billing."),
+			sub("refunds", "Handle refunds."),
+			sub("tech", "Handle tech support."),
+		},
+		Handoffs: []HandoffCondition{
+			&OnToolResult{Target: "refunds", ToolName: "refund", ResultContains: "ok"},
+			&OnTextMention{Target: "tech", Text: "broken"},
+			&OnCondition{Target: "billing", Condition: func(context.Context, HandoffState) (bool, error) {
+				return false, nil
+			}},
+		},
+		AllowedTransitions: map[string][]string{
+			"billing": {"refunds"},
+			"refunds": {"tech"},
+		},
+	}
+}
+
+// All three guardrail kinds on one agent: two the server evaluates itself and
+// one backed by a worker.
+func guardedAgent() *Agent {
+	return &Agent{
+		Name:         "guarded",
+		Model:        testModel,
+		Instructions: "Be careful.",
+		Guardrails: []Guardrail{
+			&RegexGuardrail{
+				Patterns: []string{`\d{16}`, `sk-\w+`},
+				Mode:     "block",
+				Message:  "no cards",
+			},
+			&LLMGuardrail{
+				Model:     testModel,
+				Policy:    "No medical advice.",
+				MaxTokens: 256,
+			},
+			&CustomGuardrail{
+				guardrailBase: guardrailBase{
+					Name:     "no_secrets",
+					Position: PositionOutput,
+					OnFail:   OnFailRetry,
+				},
+				Check: func(context.Context, GuardrailInput) (GuardrailResult, error) {
+					return GuardrailResult{Passed: true}, nil
+				},
 			},
 		},
 	}
