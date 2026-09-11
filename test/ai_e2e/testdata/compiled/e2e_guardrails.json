@@ -1,0 +1,771 @@
+{
+  "requiredWorkers": [
+    "no_pii",
+    "greet"
+  ],
+  "workflowDef": {
+    "createTime": 0,
+    "description": "Agent workflow for e2e_guardrails",
+    "enforceSchema": true,
+    "inputParameters": [
+      "prompt",
+      "session_id",
+      "media",
+      "cwd"
+    ],
+    "inputTemplate": {},
+    "maskedFields": [],
+    "metadata": {
+      "agentDef": {
+        "external": false,
+        "guardrails": [
+          {
+            "guardrailType": "custom",
+            "maxRetries": 3,
+            "name": "check_input",
+            "onFail": "retry",
+            "position": "input",
+            "taskName": "check_input"
+          },
+          {
+            "guardrailType": "custom",
+            "maxRetries": 3,
+            "name": "no_pii",
+            "onFail": "retry",
+            "position": "output",
+            "taskName": "no_pii"
+          },
+          {
+            "guardrailType": "regex",
+            "maxRetries": 3,
+            "message": "No SSNs allowed.",
+            "mode": "block",
+            "name": "no_ssn",
+            "onFail": "retry",
+            "patterns": [
+              "\\b\\d{3}-\\d{2}-\\d{4}\\b"
+            ],
+            "position": "output"
+          }
+        ],
+        "instructions": "Answer questions.",
+        "maxTurns": 25,
+        "model": "anthropic/claude-sonnet-4-6",
+        "name": "e2e_guardrails",
+        "strategy": "handoff",
+        "timeoutSeconds": 0,
+        "tools": [
+          {
+            "approvalRequired": false,
+            "description": "Greet someone.",
+            "inputSchema": {
+              "properties": {
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name"
+              ],
+              "type": "object"
+            },
+            "name": "greet",
+            "outputSchema": {
+              "type": "string"
+            },
+            "stateful": false,
+            "toolType": "worker"
+          }
+        ]
+      },
+      "agent_capabilities": [
+        "tool-calling"
+      ],
+      "agent_sdk": "conductor",
+      "classifier": "agent",
+      "normalizedAgentDef": {
+        "external": false,
+        "guardrails": [
+          {
+            "guardrailType": "custom",
+            "maxRetries": 3,
+            "name": "check_input",
+            "onFail": "retry",
+            "position": "input",
+            "taskName": "check_input"
+          },
+          {
+            "guardrailType": "custom",
+            "maxRetries": 3,
+            "name": "no_pii",
+            "onFail": "retry",
+            "position": "output",
+            "taskName": "no_pii"
+          },
+          {
+            "guardrailType": "regex",
+            "maxRetries": 3,
+            "message": "No SSNs allowed.",
+            "mode": "block",
+            "name": "no_ssn",
+            "onFail": "retry",
+            "patterns": [
+              "\\b\\d{3}-\\d{2}-\\d{4}\\b"
+            ],
+            "position": "output"
+          }
+        ],
+        "instructions": "Answer questions.",
+        "maxTurns": 25,
+        "model": "anthropic/claude-sonnet-4-6",
+        "name": "e2e_guardrails",
+        "strategy": "handoff",
+        "timeoutSeconds": 0,
+        "tools": [
+          {
+            "approvalRequired": false,
+            "description": "Greet someone.",
+            "inputSchema": {
+              "properties": {
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name"
+              ],
+              "type": "object"
+            },
+            "name": "greet",
+            "outputSchema": {
+              "type": "string"
+            },
+            "stateful": false,
+            "toolType": "worker"
+          }
+        ]
+      }
+    },
+    "name": "e2e_guardrails",
+    "outputParameters": {
+      "context": "${workflow.variables._agent_state}",
+      "finishReason": "${e2e_guardrails_resolve_output.output.result.finishReason}",
+      "rejectionReason": "${workflow.variables.rejectionReason}",
+      "result": "${e2e_guardrails_resolve_output.output.result.result}"
+    },
+    "restartable": true,
+    "schemaVersion": 2,
+    "tasks": [
+      {
+        "asyncComplete": false,
+        "decisionCases": {},
+        "defaultCase": [],
+        "defaultExclusiveJoinTask": [],
+        "forkTasks": [],
+        "inputParameters": {
+          "ctx": "${workflow.input.context}",
+          "evaluatorType": "graaljs",
+          "expression": "(function() {return $.ctx || {};})()"
+        },
+        "joinOn": [],
+        "loopOver": [],
+        "metadata": {},
+        "name": "e2e_guardrails_ctx_resolve",
+        "onStateChange": {},
+        "optional": false,
+        "permissive": false,
+        "startDelay": 0,
+        "taskReferenceName": "e2e_guardrails_ctx_resolve",
+        "type": "INLINE"
+      },
+      {
+        "asyncComplete": false,
+        "decisionCases": {},
+        "defaultCase": [],
+        "defaultExclusiveJoinTask": [],
+        "forkTasks": [],
+        "inputParameters": {
+          "_agent_state": "${e2e_guardrails_ctx_resolve.output.result}",
+          "_last_tool_results": [],
+          "_signal_injection": "",
+          "_stop_requested": false
+        },
+        "joinOn": [],
+        "loopOver": [],
+        "metadata": {},
+        "name": "e2e_guardrails_init_state",
+        "onStateChange": {},
+        "optional": false,
+        "permissive": false,
+        "startDelay": 0,
+        "taskReferenceName": "e2e_guardrails_init_state",
+        "type": "SET_VARIABLE"
+      },
+      {
+        "asyncComplete": false,
+        "decisionCases": {},
+        "defaultCase": [],
+        "defaultExclusiveJoinTask": [],
+        "forkTasks": [],
+        "inputParameters": {
+          "_stop_requested": "${workflow.variables._stop_requested}",
+          "e2e_guardrails_llm": "${e2e_guardrails_llm}",
+          "e2e_guardrails_loop": "${e2e_guardrails_loop}",
+          "e2e_guardrails_output_guardrail_no_pii": "${e2e_guardrails_output_guardrail_no_pii}",
+          "e2e_guardrails_regex_guardrail_no_ssn": "${e2e_guardrails_regex_guardrail_no_ssn}"
+        },
+        "joinOn": [],
+        "loopCondition": "if ( $.e2e_guardrails_loop['iteration'] < 25 && $._stop_requested != true && ($.e2e_guardrails_llm['finishReason'] == 'LENGTH' || $.e2e_guardrails_llm['finishReason'] == 'MAX_TOKENS' || (($.e2e_guardrails_llm['toolCalls'] != null && $.e2e_guardrails_llm['toolCalls'].length > 0) || ($.e2e_guardrails_output_guardrail_no_pii != null && $.e2e_guardrails_output_guardrail_no_pii.result != null && $.e2e_guardrails_output_guardrail_no_pii.result.should_continue == true) || ($.e2e_guardrails_regex_guardrail_no_ssn != null && $.e2e_guardrails_regex_guardrail_no_ssn.result != null && $.e2e_guardrails_regex_guardrail_no_ssn.result.should_continue == true))) ) { true; } else { false; }",
+        "loopOver": [
+          {
+            "asyncComplete": false,
+            "decisionCases": {},
+            "defaultCase": [],
+            "defaultExclusiveJoinTask": [],
+            "forkTasks": [],
+            "inputParameters": {
+              "evaluatorType": "graaljs",
+              "expression": "(function() {var rawState = $.state;var signals = $.signals || '';var toolResults = $.toolResults;if (!rawState && !signals && !toolResults) return '';var maxSize = $.maxSize || 32768;var maxValueSize = $.maxValueSize || 4096;var state = {};if (rawState) {  for (var k in rawState) {    var v = rawState.get(k);    if (v != null) state[k] = '' + v;  }}var keys = Object.keys(state);var truncated = {};for (var i = 0; i < keys.length; i++) {  var k = keys[i]; var s = state[k];  if (s.length > maxValueSize) {    truncated[k] = s.substring(0, maxValueSize) + '[truncated]';  } else { truncated[k] = s; }}var json = JSON.stringify(truncated);var tKeys = Object.keys(truncated);while (json.length > maxSize && tKeys.length > 0) {  delete truncated[tKeys.shift()];  json = JSON.stringify(truncated);}var parts = [];if (signals) { parts.push('[SIGNALS]\\n' + signals + '\\n[/SIGNALS]'); }var toPlain=function(v){ if(v==null||typeof v!=='object')return v; if(Array.isArray(v)){var nativeArray=[];for(var ai=0;ai<v.length;ai++)nativeArray.push(toPlain(v[ai]));return nativeArray;} if(v.entrySet){var obj={};var it=v.entrySet().iterator();while(it.hasNext()){var entry=it.next();obj[String(entry.getKey())]=toPlain(entry.getValue());}return obj;} if(v.size&&v.get){var javaArray=[];var count=Number(v.size());for(var li=0;li<count;li++)javaArray.push(toPlain(v.get(li)));return javaArray;} return v;};if (toolResults) {  var renderedTools = '';  try { renderedTools = JSON.stringify(toPlain(toolResults)); } catch (e) {}  if (!renderedTools || renderedTools === '{}' || renderedTools === '[]') renderedTools = '' + toolResults;  if (renderedTools && renderedTools !== '[]') parts.push('[TOOL RESULTS]\\n' + renderedTools + '\\n[/TOOL RESULTS]');}if (Object.keys(truncated).length > 0) {  parts.push('Context:\\n```json\\n' + JSON.stringify(truncated, null, 2) + '\\n```');}if (parts.length === 0) return '';return parts.join('\\n\\n') + '\\n\\n';})()",
+              "maxSize": 32768,
+              "maxValueSize": 4096,
+              "signals": "${workflow.variables._signal_injection}",
+              "state": "${workflow.variables._agent_state}",
+              "toolResults": "${workflow.variables._last_tool_results}"
+            },
+            "joinOn": [],
+            "loopOver": [],
+            "metadata": {},
+            "name": "e2e_guardrails_ctx_inject",
+            "onStateChange": {},
+            "optional": false,
+            "permissive": false,
+            "startDelay": 0,
+            "taskReferenceName": "e2e_guardrails_ctx_inject",
+            "type": "INLINE"
+          },
+          {
+            "asyncComplete": false,
+            "decisionCases": {},
+            "defaultCase": [],
+            "defaultExclusiveJoinTask": [],
+            "forkTasks": [],
+            "inputParameters": {
+              "llmProvider": "anthropic",
+              "maxTokens": 16384,
+              "messages": [
+                {
+                  "message": "Answer questions.",
+                  "role": "system"
+                },
+                {
+                  "media": "${workflow.input.media}",
+                  "message": "${e2e_guardrails_ctx_inject.output.result}${workflow.input.prompt}",
+                  "role": "user"
+                }
+              ],
+              "model": "claude-sonnet-4-6",
+              "participants": {
+                "e2e_guardrails_guardrail_retry_0": "user",
+                "e2e_guardrails_guardrail_retry_1": "user"
+              },
+              "temperature": 0,
+              "tools": [
+                {
+                  "configParams": {
+                    "selfDescribing": true
+                  },
+                  "description": "Greet someone.",
+                  "inputSchema": {
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "name"
+                    ],
+                    "type": "object"
+                  },
+                  "name": "greet",
+                  "outputSchema": {
+                    "type": "string"
+                  },
+                  "selfDescribing": true,
+                  "type": "SIMPLE"
+                }
+              ]
+            },
+            "joinOn": [],
+            "loopOver": [],
+            "metadata": {},
+            "name": "llm_chat_complete",
+            "onStateChange": {},
+            "optional": false,
+            "permissive": false,
+            "startDelay": 0,
+            "taskDefinition": {
+              "backoffJitterMs": 0,
+              "backoffScaleFactor": 2,
+              "createTime": 0,
+              "enforceSchema": false,
+              "inputKeys": [],
+              "inputTemplate": {},
+              "maxRetryDelaySeconds": 0,
+              "name": "LLM_CHAT_COMPLETE",
+              "outputKeys": [],
+              "rateLimitFrequencyInSeconds": 1,
+              "rateLimitPerFrequency": 0,
+              "responseTimeoutSeconds": 3600,
+              "retryCount": 3,
+              "retryDelaySeconds": 2,
+              "retryLogic": "EXPONENTIAL_BACKOFF",
+              "runtimeMetadata": [],
+              "taskStatusListenerEnabled": true,
+              "timeoutPolicy": "TIME_OUT_WF",
+              "timeoutSeconds": 0,
+              "totalTimeoutSeconds": 0,
+              "updateTime": 0
+            },
+            "taskReferenceName": "e2e_guardrails_llm",
+            "type": "LLM_CHAT_COMPLETE"
+          },
+          {
+            "asyncComplete": false,
+            "decisionCases": {},
+            "defaultCase": [],
+            "defaultExclusiveJoinTask": [],
+            "forkTasks": [],
+            "inputParameters": {
+              "agentOutput": "${e2e_guardrails_llm.output.result}",
+              "agent_output": "${e2e_guardrails_llm.output.result}",
+              "content": "${e2e_guardrails_llm.output.result}",
+              "input": "${e2e_guardrails_llm.output.result}",
+              "input_text": "${e2e_guardrails_llm.output.result}",
+              "iteration": "${e2e_guardrails_loop.output.iteration}",
+              "output": "${e2e_guardrails_llm.output.result}"
+            },
+            "joinOn": [],
+            "loopOver": [],
+            "metadata": {},
+            "name": "no_pii",
+            "onStateChange": {},
+            "optional": false,
+            "permissive": false,
+            "startDelay": 0,
+            "taskReferenceName": "e2e_guardrails_output_guardrail_no_pii_worker",
+            "type": "SIMPLE"
+          },
+          {
+            "asyncComplete": false,
+            "decisionCases": {},
+            "defaultCase": [],
+            "defaultExclusiveJoinTask": [],
+            "forkTasks": [],
+            "inputParameters": {
+              "default_on_fail": "retry",
+              "evaluatorType": "graaljs",
+              "expression": "(function() {  var raw = $.worker_output;  var guardrailName = $.guardrail_name || 'guardrail';  var defaultOnFail = $.default_on_fail || 'retry';  var __toolCalls = $.toolCalls;  if (__toolCalls && __toolCalls.length > 0) {    return {passed: true, message: '', on_fail: null,            fixed_output: null, guardrail_name: guardrailName,            should_continue: false};  }  var iteration = $.iteration || 0;  var max_retries = $.max_retries || 0;  function escalate(of, fixedOutput) {    if (of === 'retry' && iteration >= max_retries) return 'raise';    if (of === 'fix' && (fixedOutput === null || fixedOutput === undefined)) return 'raise';    return of;  }  if (raw == null) {    return {passed: true, message: '', on_fail: null,            fixed_output: null, guardrail_name: guardrailName,            should_continue: false};  }  if (typeof raw === 'object' && raw.result !== undefined      && raw.on_fail === undefined && raw.onFail === undefined      && raw.tripwire_triggered === undefined && raw.tripwireTriggered === undefined      && raw.output_info === undefined && raw.outputInfo === undefined) {    raw = raw.result;  }  if (raw != null && typeof raw === 'object'      && (raw.on_fail !== undefined || raw.onFail !== undefined          || raw.passed !== undefined || raw.fixed_output !== undefined          || raw.fixedOutput !== undefined)) {    var existingOnFail = raw.on_fail !== undefined ? raw.on_fail : raw.onFail;    var fixedOutput = raw.fixed_output !== undefined ? raw.fixed_output : raw.fixedOutput;    var passed = raw.passed !== false && (existingOnFail == null || existingOnFail === 'pass');    var actualOnFail = passed ? existingOnFail : escalate(existingOnFail, fixedOutput);    return {passed: passed, message: raw.message || '', on_fail: actualOnFail,            fixed_output: fixedOutput, guardrail_name: raw.guardrail_name || raw.guardrailName || guardrailName,            should_continue: actualOnFail === 'retry'};  }  if (raw != null && typeof raw === 'object'      && (raw.tripwire_triggered !== undefined || raw.tripwireTriggered !== undefined          || raw.output_info !== undefined || raw.outputInfo !== undefined)) {    var tripwire = raw.tripwire_triggered === true || raw.tripwireTriggered === true;    var info = raw.output_info !== undefined ? raw.output_info : raw.outputInfo;    var reason = '';    if (typeof info === 'string') {      reason = info;    } else if (info != null && typeof info === 'object' && info.reason != null) {      reason = String(info.reason);    }    if (!tripwire) {      return {passed: true, message: reason, on_fail: null,              fixed_output: null, guardrail_name: guardrailName,              should_continue: false};    }    var tripwireOnFail = escalate(defaultOnFail, null);    return {passed: false, message: reason || (guardrailName + ' triggered'),            on_fail: tripwireOnFail, fixed_output: null,            guardrail_name: guardrailName, should_continue: tripwireOnFail === 'retry'};  }  return {passed: true, message: '', on_fail: null,          fixed_output: null, guardrail_name: guardrailName,          should_continue: false};})()",
+              "guardrail_name": "no_pii",
+              "iteration": "${e2e_guardrails_loop.output.iteration}",
+              "max_retries": 3,
+              "toolCalls": "${e2e_guardrails_llm.output.toolCalls}",
+              "worker_output": "${e2e_guardrails_output_guardrail_no_pii_worker.output}"
+            },
+            "joinOn": [],
+            "loopOver": [],
+            "metadata": {},
+            "name": "e2e_guardrails_output_guardrail_no_pii",
+            "onStateChange": {},
+            "optional": false,
+            "permissive": false,
+            "startDelay": 0,
+            "taskReferenceName": "e2e_guardrails_output_guardrail_no_pii",
+            "type": "INLINE"
+          },
+          {
+            "asyncComplete": false,
+            "decisionCases": {
+              "raise": [
+                {
+                  "asyncComplete": false,
+                  "decisionCases": {},
+                  "defaultCase": [],
+                  "defaultExclusiveJoinTask": [],
+                  "forkTasks": [],
+                  "inputParameters": {
+                    "terminationReason": "${e2e_guardrails_output_guardrail_no_pii.output.result.message}",
+                    "terminationStatus": "FAILED"
+                  },
+                  "joinOn": [],
+                  "loopOver": [],
+                  "metadata": {},
+                  "name": "e2e_guardrails_guardrail_terminate_0",
+                  "onStateChange": {},
+                  "optional": false,
+                  "permissive": false,
+                  "startDelay": 0,
+                  "taskReferenceName": "e2e_guardrails_guardrail_terminate_0",
+                  "type": "TERMINATE"
+                }
+              ],
+              "retry": [
+                {
+                  "asyncComplete": false,
+                  "decisionCases": {},
+                  "defaultCase": [],
+                  "defaultExclusiveJoinTask": [],
+                  "forkTasks": [],
+                  "inputParameters": {
+                    "evaluatorType": "graaljs",
+                    "expression": "(function() {  return {result: '[Output validation failed: '    + $.guardrail_message    + '. Please revise your response.]'};})()",
+                    "guardrail_message": "${e2e_guardrails_output_guardrail_no_pii.output.result.message}",
+                    "llm_output": "${e2e_guardrails_llm.output.result}"
+                  },
+                  "joinOn": [],
+                  "loopOver": [],
+                  "metadata": {},
+                  "name": "e2e_guardrails_guardrail_retry_0",
+                  "onStateChange": {},
+                  "optional": false,
+                  "permissive": false,
+                  "startDelay": 0,
+                  "taskReferenceName": "e2e_guardrails_guardrail_retry_0",
+                  "type": "INLINE"
+                }
+              ]
+            },
+            "defaultCase": [
+              {
+                "asyncComplete": false,
+                "decisionCases": {},
+                "defaultCase": [],
+                "defaultExclusiveJoinTask": [],
+                "forkTasks": [],
+                "inputParameters": {
+                  "_guardrail_passed": true
+                },
+                "joinOn": [],
+                "loopOver": [],
+                "metadata": {},
+                "name": "e2e_guardrails_guardrail_pass_noop_0",
+                "onStateChange": {},
+                "optional": false,
+                "permissive": false,
+                "startDelay": 0,
+                "taskReferenceName": "e2e_guardrails_guardrail_pass_noop_0",
+                "type": "SET_VARIABLE"
+              }
+            ],
+            "defaultExclusiveJoinTask": [],
+            "evaluatorType": "value-param",
+            "expression": "switchCaseValue",
+            "forkTasks": [],
+            "inputParameters": {
+              "switchCaseValue": "${e2e_guardrails_output_guardrail_no_pii.output.result.on_fail}"
+            },
+            "joinOn": [],
+            "loopOver": [],
+            "metadata": {},
+            "name": "e2e_guardrails_guardrail_route_0",
+            "onStateChange": {},
+            "optional": false,
+            "permissive": false,
+            "startDelay": 0,
+            "taskReferenceName": "e2e_guardrails_guardrail_route_0",
+            "type": "SWITCH"
+          },
+          {
+            "asyncComplete": false,
+            "decisionCases": {},
+            "defaultCase": [],
+            "defaultExclusiveJoinTask": [],
+            "forkTasks": [],
+            "inputParameters": {
+              "content": "${e2e_guardrails_llm.output.result}",
+              "evaluatorType": "graaljs",
+              "expression": "(function() {  var __toolCalls = $.toolCalls;  if (__toolCalls && __toolCalls.length > 0) {    return {passed: true, message: '', on_fail: 'pass',            fixed_output: null, guardrail_name: '', should_continue: false};  }  var content = $.content;  var iteration = $.iteration;  var patterns = [\"\\\\b\\\\d{3}-\\\\d{2}-\\\\d{4}\\\\b\"];  var mode = \"block\";  var on_fail = \"retry\";  var message = \"No SSNs allowed.\";  var max_retries = 3;  var guardrail_name = \"no_ssn\";  var matched = false;  for (var i = 0; i < patterns.length; i++) {    if (new RegExp(patterns[i]).test(content)) { matched = true; break; }  }  var failed = (mode === 'block' && matched) || (mode === 'allow' && !matched);  if (!failed) {    return {passed: true, message: '', on_fail: 'pass',            fixed_output: null, guardrail_name: '', should_continue: false};  }  var actual_fail = on_fail;  if (on_fail === 'retry' && iteration >= max_retries) actual_fail = 'raise';  if (on_fail === 'fix') actual_fail = 'raise';  return {passed: false, message: message, on_fail: actual_fail,          fixed_output: null, guardrail_name: guardrail_name,          should_continue: actual_fail === 'retry'};})()",
+              "iteration": "${e2e_guardrails_loop.output.iteration}",
+              "toolCalls": "${e2e_guardrails_llm.output.toolCalls}"
+            },
+            "joinOn": [],
+            "loopOver": [],
+            "metadata": {},
+            "name": "e2e_guardrails_regex_guardrail_no_ssn",
+            "onStateChange": {},
+            "optional": false,
+            "permissive": false,
+            "startDelay": 0,
+            "taskReferenceName": "e2e_guardrails_regex_guardrail_no_ssn",
+            "type": "INLINE"
+          },
+          {
+            "asyncComplete": false,
+            "decisionCases": {
+              "raise": [
+                {
+                  "asyncComplete": false,
+                  "decisionCases": {},
+                  "defaultCase": [],
+                  "defaultExclusiveJoinTask": [],
+                  "forkTasks": [],
+                  "inputParameters": {
+                    "terminationReason": "${e2e_guardrails_regex_guardrail_no_ssn.output.result.message}",
+                    "terminationStatus": "FAILED"
+                  },
+                  "joinOn": [],
+                  "loopOver": [],
+                  "metadata": {},
+                  "name": "e2e_guardrails_guardrail_terminate_1",
+                  "onStateChange": {},
+                  "optional": false,
+                  "permissive": false,
+                  "startDelay": 0,
+                  "taskReferenceName": "e2e_guardrails_guardrail_terminate_1",
+                  "type": "TERMINATE"
+                }
+              ],
+              "retry": [
+                {
+                  "asyncComplete": false,
+                  "decisionCases": {},
+                  "defaultCase": [],
+                  "defaultExclusiveJoinTask": [],
+                  "forkTasks": [],
+                  "inputParameters": {
+                    "evaluatorType": "graaljs",
+                    "expression": "(function() {  return {result: '[Output validation failed: '    + $.guardrail_message    + '. Please revise your response.]'};})()",
+                    "guardrail_message": "${e2e_guardrails_regex_guardrail_no_ssn.output.result.message}",
+                    "llm_output": "${e2e_guardrails_llm.output.result}"
+                  },
+                  "joinOn": [],
+                  "loopOver": [],
+                  "metadata": {},
+                  "name": "e2e_guardrails_guardrail_retry_1",
+                  "onStateChange": {},
+                  "optional": false,
+                  "permissive": false,
+                  "startDelay": 0,
+                  "taskReferenceName": "e2e_guardrails_guardrail_retry_1",
+                  "type": "INLINE"
+                }
+              ]
+            },
+            "defaultCase": [
+              {
+                "asyncComplete": false,
+                "decisionCases": {},
+                "defaultCase": [],
+                "defaultExclusiveJoinTask": [],
+                "forkTasks": [],
+                "inputParameters": {
+                  "_guardrail_passed": true
+                },
+                "joinOn": [],
+                "loopOver": [],
+                "metadata": {},
+                "name": "e2e_guardrails_guardrail_pass_noop_1",
+                "onStateChange": {},
+                "optional": false,
+                "permissive": false,
+                "startDelay": 0,
+                "taskReferenceName": "e2e_guardrails_guardrail_pass_noop_1",
+                "type": "SET_VARIABLE"
+              }
+            ],
+            "defaultExclusiveJoinTask": [],
+            "evaluatorType": "value-param",
+            "expression": "switchCaseValue",
+            "forkTasks": [],
+            "inputParameters": {
+              "switchCaseValue": "${e2e_guardrails_regex_guardrail_no_ssn.output.result.on_fail}"
+            },
+            "joinOn": [],
+            "loopOver": [],
+            "metadata": {},
+            "name": "e2e_guardrails_guardrail_route_1",
+            "onStateChange": {},
+            "optional": false,
+            "permissive": false,
+            "startDelay": 0,
+            "taskReferenceName": "e2e_guardrails_guardrail_route_1",
+            "type": "SWITCH"
+          },
+          {
+            "asyncComplete": false,
+            "decisionCases": {
+              "tool_call": [
+                {
+                  "asyncComplete": false,
+                  "decisionCases": {},
+                  "defaultCase": [],
+                  "defaultExclusiveJoinTask": [],
+                  "forkTasks": [],
+                  "inputParameters": {
+                    "agentState": "${workflow.variables._agent_state}",
+                    "evaluatorType": "graaljs",
+                    "expression": "(function() {  var httpCfg = {};  var mcpCfg = {};  var mediaCfg = {};  var agentToolCfg = {};  var ragCfg = {};  var cliCfg = {};  var humanCfg = {};  var wmqCfg = {};  var knownNames = {\"greet\":true};  var _sec = function(h) { var o = {}; h = h || {};    for (var _hk in h) { o[_hk] = String(h[_hk]).replace(/#\\{([A-Za-z_][A-Za-z0-9_.]*)\\}/g,      function(_m, _n) { return '$' + '{workflow.secrets.' + _n + '}'; }); }    return o; };  var _plain = function(v) { var o = {}; if (v == null) return o;    if (typeof v.entrySet === 'function') { var it = v.entrySet().iterator();      while (it.hasNext()) { var e = it.next(); o[String(e.getKey())] = e.getValue(); } return o; }    for (var k in v) { if (Object.prototype.hasOwnProperty.call(v, k)) o[k] = v[k]; } return o; };  var agentState = $.agentState || {};  var tcs = $.toolCalls || [];  var result = [];  for (var i = 0; i < tcs.length; i++) {    var tc = tcs[i]; var n = tc.name;    var isCfg = !!(httpCfg[n] || mcpCfg[n] || agentToolCfg[n] ||                  mediaCfg[n] || ragCfg[n] || humanCfg[n] || wmqCfg[n]);    var isUnknown = !isCfg && !(knownNames && knownNames[n]);    if (isUnknown) {      var availList = [];      for (var nm in knownNames) availList.push(nm);      var unknownErr = ('Unknown tool \\'' + n + '\\'. Available tools: ' + availList.join(', '));      var errTask = {name: n, taskReferenceName: tc.taskReferenceName || n,                     type: 'INLINE',                     inputParameters: {evaluatorType: 'graaljs',                       expression: 'function e(){return {result: $.errorMessage, is_error: true};} e();',                       errorMessage: unknownErr},                     optional: true};      result.push(errTask);      continue;    }    var t = {name: n, taskReferenceName: (tc.taskReferenceName || n) + '_' + i,             type: tc.type || 'SIMPLE', inputParameters: tc.inputParameters || {},             optional: true,             retryCount: 2, retryLogic: 'LINEAR_BACKOFF',             retryDelaySeconds: 2};    if (httpCfg[n]) {      t.type = 'HTTP';      var hc = httpCfg[n];      var hargs = _plain(tc.inputParameters);      var huri = hc.url || '';      var hmethod = String(hc.method || 'GET').toUpperCase();      var bodyless = hmethod === 'GET' || hmethod === 'HEAD' || hmethod === 'DELETE' || hmethod === 'OPTIONS';      var hbody = {}; for (var ha in hargs) { if (ha !== 'method') hbody[ha] = hargs[ha]; }      if (hc.pathTemplate || hc.queryParams || bodyless) {        var consumed = {method:true};        if (hc.pathTemplate) {          huri = huri + hc.pathTemplate.replace(/\\{(\\w+)\\}/g,            function(m, k) { consumed[k] = true;              return encodeURIComponent(String(hargs[k] == null ? '' : hargs[k])); });        }        var queryKeys = hc.queryParams || (bodyless ? Object.keys(hargs) : []);        if (queryKeys.length) {          var qs = [];          for (var qi = 0; qi < queryKeys.length; qi++) {            var qk = queryKeys[qi]; var qv = hargs[qk];            if (qk === 'method' || qv == null || qv === '') continue; consumed[qk] = true;            if (Array.isArray(qv)) { for (var qj = 0; qj < qv.length; qj++) { if (qv[qj] != null && qv[qj] !== '') qs.push(encodeURIComponent(qk) + '=' + encodeURIComponent(String(qv[qj]))); } }            else { var qtext = typeof qv === 'object' ? JSON.stringify(qv) : String(qv); if (qtext != null) qs.push(encodeURIComponent(qk) + '=' + encodeURIComponent(qtext)); }          }          if (qs.length) { var hash = huri.indexOf('#'); var base = hash >= 0 ? huri.substring(0, hash) : huri; var frag = hash >= 0 ? huri.substring(hash) : ''; huri = base + (base.indexOf('?') >= 0 && !base.endsWith('?') ? '&' : '?') + qs.join('&') + frag; }        }        hbody = {};        if (!bodyless) { for (var hk in hargs) { if (!consumed[hk]) hbody[hk] = hargs[hk]; } }      }      var hrequest = {        uri: huri,        method: hmethod,        headers: _sec(hc.headers),        accept: hc.accept || 'application/json',        contentType: hc.contentType || 'application/json',        connectionTimeOut: 30000,        readTimeOut: 30000};      if (!bodyless) hrequest.body = hbody;      t.inputParameters = {http_request: hrequest};    } else if (mcpCfg[n]) {      t.type = 'CALL_MCP_TOOL';      t.name = 'call_mcp_tool';      t.inputParameters = {        mcpServer: mcpCfg[n].mcpServer || '',        method: n,        arguments: Object.keys(_plain(tc.inputParameters)).filter(function(k) { return k !== 'method'; }).reduce(function(a, k) { a[k] = _plain(tc.inputParameters)[k]; return a; }, {}),        headers: _sec(mcpCfg[n].headers)};    } else if (agentToolCfg[n]) {      t.type = 'SUB_WORKFLOW';      t.name = agentToolCfg[n].workflowName;      t.subWorkflowParam = {name: agentToolCfg[n].workflowName, version: 1};      var _p = tc.inputParameters || {};      var _req = _p.request || _p.prompt || _p.message || _p.input || _p.query || '';      if (!_req && typeof _p === 'object') {        for (var _k in _p) {          if (_k !== 'method' && typeof _p[_k] === 'string' && _p[_k].length > 0) { _req = _p[_k]; break; }        }      }      if (!_req || _req === '{}' || _req === JSON.stringify(_p)) {        _req = $.userPrompt || '';      }      if (!_req) _req = JSON.stringify(_p);      t.inputParameters = {        prompt: _req,        session_id: $.session_id || '',        __today__: new Date().toISOString().slice(0, 10)};      if (agentToolCfg[n].retryCount !== undefined) t.retryCount = agentToolCfg[n].retryCount;      if (agentToolCfg[n].retryDelaySeconds !== undefined) t.retryDelaySeconds = agentToolCfg[n].retryDelaySeconds;      if (agentToolCfg[n].optional !== undefined) t.optional = agentToolCfg[n].optional;    } else if (mediaCfg[n]) {      t.type = mediaCfg[n].taskType;      t.name = mediaCfg[n].taskType.toLowerCase();      var merged = {};      var defs = mediaCfg[n].defaults || {};      for (var k in defs) { merged[k] = defs[k]; }      var inp = tc.inputParameters || {};      for (var k in inp) { merged[k] = inp[k]; }      t.inputParameters = merged;    } else if (ragCfg[n]) {      t.type = ragCfg[n].taskType;      t.name = ragCfg[n].taskType.toLowerCase();      var merged = {};      var defs = ragCfg[n].defaults || {};      for (var k in defs) { merged[k] = defs[k]; }      var inp = tc.inputParameters || {};      for (var k in inp) { merged[k] = inp[k]; }      t.inputParameters = merged;    } else if (humanCfg[n]) {      t.type = 'HUMAN';      t.name = n;      var hDef = {assignmentCompletionStrategy: 'LEAVE_OPEN',                  displayName: humanCfg[n].displayName || n,                  userFormTemplate: {version: 0}};      var hInputs = {__humanTaskDefinition: hDef};      hInputs.response_schema = {type: 'object', properties: {        response: {type: 'string', title: 'Response',                   description: 'Provide your response'}}};      hInputs.response_ui_schema = {'ui:order': ['response'],        response: {'ui:widget': 'textarea'}};      var inp = tc.inputParameters || {};      for (var k in inp) { hInputs[k] = inp[k]; }      if (humanCfg[n].description) hInputs._description = humanCfg[n].description;      t.inputParameters = hInputs;      t.optional = false;    } else if (wmqCfg[n]) {      t.type = 'PULL_WORKFLOW_MESSAGES';      t.name = n;      t.inputParameters = {batchSize: wmqCfg[n].batchSize || 1};      t.retryCount = 0;      t.optional = false;    }    if (t.type === 'SIMPLE') {      t.inputParameters._agent_state = agentState;      if (cliCfg[n]) { t.inputParameters._allowed_commands = cliCfg[n].allowedCommands; }    }    t.inputParameters._agent_tool_name = n;    result.push(t);  }  return {dynamicTasks: result};})()",
+                    "toolCalls": "${e2e_guardrails_llm.output.toolCalls}",
+                    "userPrompt": "${workflow.input.prompt}"
+                  },
+                  "joinOn": [],
+                  "loopOver": [],
+                  "metadata": {},
+                  "name": "e2e_guardrails_enrich_tools",
+                  "onStateChange": {},
+                  "optional": false,
+                  "permissive": false,
+                  "startDelay": 0,
+                  "taskReferenceName": "e2e_guardrails_enrich_tools",
+                  "type": "INLINE"
+                },
+                {
+                  "asyncComplete": false,
+                  "decisionCases": {},
+                  "defaultCase": [],
+                  "defaultExclusiveJoinTask": [],
+                  "dynamicForkTasksInputParamName": "dynamicTasksInputs",
+                  "dynamicForkTasksParam": "dynamicTasks",
+                  "forkTasks": [],
+                  "inputParameters": {
+                    "dynamicTasks": "${e2e_guardrails_enrich_tools.output.result.dynamicTasks}",
+                    "dynamicTasksInputs": {}
+                  },
+                  "joinOn": [],
+                  "loopOver": [],
+                  "metadata": {},
+                  "name": "FORK_JOIN_DYNAMIC",
+                  "onStateChange": {},
+                  "optional": false,
+                  "permissive": false,
+                  "startDelay": 0,
+                  "taskReferenceName": "e2e_guardrails_fork",
+                  "type": "FORK_JOIN_DYNAMIC"
+                },
+                {
+                  "asyncComplete": false,
+                  "decisionCases": {},
+                  "defaultCase": [],
+                  "defaultExclusiveJoinTask": [],
+                  "forkTasks": [],
+                  "inputParameters": {},
+                  "joinOn": [],
+                  "loopOver": [],
+                  "metadata": {},
+                  "name": "JOIN",
+                  "onStateChange": {},
+                  "optional": false,
+                  "permissive": false,
+                  "startDelay": 0,
+                  "taskReferenceName": "e2e_guardrails_fork_join",
+                  "type": "JOIN"
+                },
+                {
+                  "asyncComplete": false,
+                  "decisionCases": {},
+                  "defaultCase": [],
+                  "defaultExclusiveJoinTask": [],
+                  "forkTasks": [],
+                  "inputParameters": {
+                    "currentState": "${workflow.variables._agent_state}",
+                    "dispatched": "${e2e_guardrails_enrich_tools.output.result.dynamicTasks}",
+                    "evaluatorType": "graaljs",
+                    "expression": "(function() {  var base = $.currentState || {};  var previousToolResults = $.previousToolResults || [];  var joinOutput = $.joinOutput || {};  var toolResults = [];  var previousCount = previousToolResults.size ? previousToolResults.size() : (previousToolResults.length || 0);  for (var p = 0; p < previousCount; p++) {    var prior = previousToolResults.get ? previousToolResults.get(p) : previousToolResults[p];    if (prior != null) toolResults.push(prior);  }  var dispatched = $.dispatched || [];  var dispatchedCount = dispatched.size ? dispatched.size() : (dispatched.length || 0);  var dispatchedNames = {};  for (var q = 0; q < dispatchedCount; q++) {    var dt = dispatched.get ? dispatched.get(q) : dispatched[q];    if (dt && dt.taskReferenceName) {      var dp = dt.inputParameters || {};      dispatchedNames[String(dt.taskReferenceName)] = String(dp._agent_tool_name || dp.method || dt.name);    }  }  function dispatchedName(k) {    if (dispatchedNames[k]) return dispatchedNames[k];    var it = k.match(/^(.*)__[0-9]+$/);    if (it && dispatchedNames[it[1]]) return dispatchedNames[it[1]];    return null;  }  for (var key in joinOutput) {    var taskOut = joinOutput[key] || {};    var rawOutput = taskOut._agent_tool_output || taskOut;    var toolName = taskOut._agent_tool_name || rawOutput._agent_tool_name || dispatchedName(key) || key.replace(/_[0-9]+$/, '');    toolResults.push({name: String(toolName), output: rawOutput});    var updates = rawOutput._state_updates || taskOut._state_updates;    if (updates) {      for (var k in updates) {        var bv = base[k]; var uv = updates[k];        if (Array.isArray(bv) && Array.isArray(uv)) {          for (var i = 0; i < uv.length; i++) {            var found = false;            for (var j = 0; j < bv.length; j++) {              if (JSON.stringify(bv[j]) === JSON.stringify(uv[i])) { found = true; break; }            }            if (!found) bv.push(uv[i]);          }        } else { base[k] = uv; }      }    }  }  return {mergedState: base, toolResults: toolResults};})()",
+                    "joinOutput": "${e2e_guardrails_fork_join.output}",
+                    "previousToolResults": "${workflow.variables._last_tool_results}"
+                  },
+                  "joinOn": [],
+                  "loopOver": [],
+                  "metadata": {},
+                  "name": "e2e_guardrails_merge_state",
+                  "onStateChange": {},
+                  "optional": false,
+                  "permissive": false,
+                  "startDelay": 0,
+                  "taskReferenceName": "e2e_guardrails_merge_state",
+                  "type": "INLINE"
+                },
+                {
+                  "asyncComplete": false,
+                  "decisionCases": {},
+                  "defaultCase": [],
+                  "defaultExclusiveJoinTask": [],
+                  "forkTasks": [],
+                  "inputParameters": {
+                    "_agent_state": "${e2e_guardrails_merge_state.output.result.mergedState}",
+                    "_last_tool_results": "${e2e_guardrails_merge_state.output.result.toolResults}"
+                  },
+                  "joinOn": [],
+                  "loopOver": [],
+                  "metadata": {},
+                  "name": "e2e_guardrails_set_state",
+                  "onStateChange": {},
+                  "optional": false,
+                  "permissive": false,
+                  "startDelay": 0,
+                  "taskReferenceName": "e2e_guardrails_set_state",
+                  "type": "SET_VARIABLE"
+                }
+              ]
+            },
+            "defaultCase": [],
+            "defaultExclusiveJoinTask": [],
+            "evaluatorType": "graaljs",
+            "expression": "$.toolCalls != null && $.toolCalls.length > 0 ? 'tool_call' : 'none'",
+            "forkTasks": [],
+            "inputParameters": {
+              "toolCalls": "${e2e_guardrails_llm.output.toolCalls}"
+            },
+            "joinOn": [],
+            "loopOver": [],
+            "metadata": {},
+            "name": "SWITCH",
+            "onStateChange": {},
+            "optional": false,
+            "permissive": false,
+            "startDelay": 0,
+            "taskReferenceName": "e2e_guardrails_tool_router",
+            "type": "SWITCH"
+          }
+        ],
+        "metadata": {},
+        "name": "e2e_guardrails_loop",
+        "onStateChange": {},
+        "optional": false,
+        "permissive": false,
+        "startDelay": 0,
+        "taskReferenceName": "e2e_guardrails_loop",
+        "type": "DO_WHILE"
+      },
+      {
+        "asyncComplete": false,
+        "decisionCases": {},
+        "defaultCase": [],
+        "defaultExclusiveJoinTask": [],
+        "forkTasks": [],
+        "inputParameters": {
+          "edited_output": "${workflow.variables._human_edited_output}",
+          "evaluatorType": "graaljs",
+          "expression": "(function() {  var fixed = $.fixed_output;  var edited = $.edited_output;  if (edited != null && edited !== '' && edited !== 'null') {    return {result: edited, finishReason: 'STOP'};  } else if (fixed != null && fixed !== '' && fixed !== 'null') {    return {result: fixed, finishReason: 'STOP'};  } else {    return {result: $.llm_result, finishReason: $.finish_reason};  }})()",
+          "finish_reason": "${e2e_guardrails_llm.output.finishReason}",
+          "fixed_output": "${workflow.variables._fixed_output}",
+          "llm_result": "${e2e_guardrails_llm.output.result}"
+        },
+        "joinOn": [],
+        "loopOver": [],
+        "metadata": {},
+        "name": "e2e_guardrails_resolve_output",
+        "onStateChange": {},
+        "optional": false,
+        "permissive": false,
+        "startDelay": 0,
+        "taskReferenceName": "e2e_guardrails_resolve_output",
+        "type": "INLINE"
+      }
+    ],
+    "timeoutSeconds": 0,
+    "updateTime": 0,
+    "variables": {},
+    "version": 1,
+    "workflowStatusListenerEnabled": false
+  }
+}

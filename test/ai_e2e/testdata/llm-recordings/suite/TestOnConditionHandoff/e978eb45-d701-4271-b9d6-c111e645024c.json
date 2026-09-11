@@ -1,0 +1,94 @@
+{
+  "schemaVersion" : 3,
+  "request" : {
+    "messages" : [ {
+      "role" : "system",
+      "text" : "You handle billing. Reply in one short sentence. Do not transfer.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "user",
+      "text" : "I was charged twice for my order last month.\n\n[go_e2e_swarm -> billing]: Customer reports being charged twice for their order last month; please investigate and resolve.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    } ],
+    "tools" : [ {
+      "name" : "billing_transfer_to_go_e2e_swarm",
+      "description" : "Transfer the conversation to go_e2e_swarm. Agent: go_e2e_swarm Call at most ONE transfer tool per turn.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "message" : {
+            "description" : "Hand-off note for go_e2e_swarm: what they should do next and any context they need.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "message" ]
+      }
+    }, {
+      "name" : "billing_transfer_to_triage",
+      "description" : "Transfer the conversation to triage. You triage requests. Do NOT call any transfer tool. Reply in one plain sentence and end it with the exact phrase ROUTE-TO-BILLING. Call at most ONE transfer tool per turn.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "message" : {
+            "description" : "Hand-off note for triage: what they should do next and any context they need.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "message" ]
+      }
+    } ],
+    "jsonOutput" : false,
+    "outputSchema" : null,
+    "generationOptions" : {
+      "temperature" : 0.0,
+      "maxTokens" : 16384,
+      "thinkingTokenLimit" : 0
+    }
+  },
+  "response" : {
+    "metadata" : {
+      "id" : "resp_02f006f92abe3555006aa34e21e57087d094c0cb9bb673f430",
+      "model" : "gpt-4o-mini-2024-07-18",
+      "usage" : {
+        "promptTokens" : 227,
+        "completionTokens" : 17,
+        "totalTokens" : 244,
+        "nativeUsage" : null
+      },
+      "rateLimit" : {
+        "requestsLimit" : 0,
+        "requestsRemaining" : 0,
+        "requestsReset" : 0,
+        "tokensLimit" : 0,
+        "tokensRemaining" : 0,
+        "tokensReset" : 0
+      },
+      "promptMetadata" : [ ],
+      "properties" : {
+        "response_id" : "resp_02f006f92abe3555006aa34e21e57087d094c0cb9bb673f430",
+        "reasoning_tokens" : 0
+      }
+    },
+    "results" : [ {
+      "output" : {
+        "text" : "Please provide the order details so I can assist you with the duplicate charges.",
+        "metadata" : {
+          "messageType" : "ASSISTANT"
+        },
+        "toolCalls" : [ ],
+        "media" : [ ]
+      },
+      "metadata" : {
+        "finishReason" : "STOP",
+        "contentFilters" : [ ],
+        "properties" : { }
+      }
+    } ]
+  },
+  "modelSettings" : {
+    "model" : "gpt-4o-mini",
+    "supportsAssistantPrefill" : true
+  }
+}

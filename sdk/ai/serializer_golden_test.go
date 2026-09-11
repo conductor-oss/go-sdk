@@ -12,6 +12,7 @@ package ai
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -183,14 +184,55 @@ var goldenFixtures = map[string]func() *Agent{
 	},
 
 	// Pending. Each needs the wire surface named below.
-	"08_handoffs":     nil, // handoff conditions + allowedTransitions
-	"09_guardrails":   nil, // regex / llm / custom guardrails
+	"08_handoffs":     swarmAgent,
+	"09_guardrails":   guardedAgent,
 	"11_output_type":  structuredAgent,
-	"13_plan_execute": nil, // planner and fallback slots
+	"13_plan_execute": planExecuteAgent,
 
 	"14_tools_nonworker":     nonWorkerToolsAgent,
 	"15_execution_and_creds": executorAgent,
 	"17_tools_mcp":           mcpToolsAgent,
+
+	"18_skill":         skillAgent,
+	"19_skill_as_tool": skillAsToolAgent,
+}
+
+// The skill fixtures read testdata/agent_config/skills/review-skill, the same
+// directory generate_fixtures.py read, so the embedded file contents match by
+// construction and the comparison is about what the loader does with them.
+func mustLoadSkill(name string, opts ...SkillOption) *Agent {
+	agent, err := LoadSkill(filepath.Join(goldenDir, "skills", name), opts...)
+	if err != nil {
+		panic(fmt.Sprintf("load fixture skill %s: %v", name, err))
+	}
+	return agent
+}
+
+// Every convention at once: sub-agent files, three scripts (two by extension,
+// one by shebang), a loose resource and a references/ file, a cross-skill
+// reference to the sibling cleanup-skill, and params merged from frontmatter
+// defaults with an override and an addition.
+func skillAgent() *Agent {
+	return mustLoadSkill("review-skill",
+		WithSkillModel(testModel),
+		WithAgentModels(map[string]string{"critic": "openai/gpt-4o-mini"}),
+		WithSkillParams(map[string]any{"rounds": 1, "style": "terse"}))
+}
+
+// The skill nested under an agent tool, with only its frontmatter defaults.
+func skillAsToolAgent() *Agent {
+	return &Agent{
+		Name:         "lead",
+		Model:        testModel,
+		Instructions: "Delegate reviews.",
+		Tools: []ToolDef{{
+			Name:        "review",
+			Description: "Run the review skill.",
+			InputSchema: schema.AgentRequest(),
+			ToolType:    ToolTypeAgent,
+			Config:      map[string]any{"agent": mustLoadSkill("review-skill", WithSkillModel(testModel))},
+		}},
+	}
 }
 
 // MCP tools: a bare one and one with every option, pinning both the defaults
@@ -220,6 +262,91 @@ func mcpToolsAgent() *Agent {
 					"tool_names": []string{"get_weather", "math_add"},
 				},
 				Credentials: []string{"MCP_AUTH_KEY"},
+			},
+		},
+	}
+}
+
+// The plan-execute slots. The parent's tools are what the plan may name, so
+// they are part of the fixture rather than incidental.
+func planExecuteAgent() *Agent {
+	return &Agent{
+		Name:         "planner_root",
+		Model:        testModel,
+		Instructions: "Plan then execute.",
+		Strategy:     StrategyPlanExecute,
+		Tools: []ToolDef{
+			mkTool("get_weather", "Get the current weather for a city.",
+				weatherIn{}, map[string]any{}),
+			mkTool("container_kinds",
+				"List and dict parameters, to pin items/additionalProperties.",
+				containerKindsIn{}, map[string]any{}),
+		},
+		Planner: &Agent{
+			Name: "the_planner", Model: testModel, Instructions: "Emit JSON plan.",
+		},
+		Fallback: &Agent{
+			Name: "the_fallback", Model: testModel, Instructions: "Best effort.",
+		},
+		FallbackMaxTurns: 4,
+	}
+}
+
+// A swarm with all three handoff kinds and a transition allow-list.
+func swarmAgent() *Agent {
+	sub := func(name, instructions string) *Agent {
+		return &Agent{Name: name, Model: testModel, Instructions: instructions}
+	}
+	return &Agent{
+		Name:     "swarm",
+		Model:    testModel,
+		Strategy: StrategySwarm,
+		Agents: []*Agent{
+			sub("billing", "Handle billing."),
+			sub("refunds", "Handle refunds."),
+			sub("tech", "Handle tech support."),
+		},
+		Handoffs: []HandoffCondition{
+			&OnToolResult{Target: "refunds", ToolName: "refund", ResultContains: "ok"},
+			&OnTextMention{Target: "tech", Text: "broken"},
+			&OnCondition{Target: "billing", Condition: func(context.Context, HandoffState) (bool, error) {
+				return false, nil
+			}},
+		},
+		AllowedTransitions: map[string][]string{
+			"billing": {"refunds"},
+			"refunds": {"tech"},
+		},
+	}
+}
+
+// All three guardrail kinds on one agent: two the server evaluates itself and
+// one backed by a worker.
+func guardedAgent() *Agent {
+	return &Agent{
+		Name:         "guarded",
+		Model:        testModel,
+		Instructions: "Be careful.",
+		Guardrails: []Guardrail{
+			&RegexGuardrail{
+				Patterns: []string{`\d{16}`, `sk-\w+`},
+				Mode:     "block",
+				Message:  "no cards",
+			},
+			&LLMGuardrail{
+				Model:     testModel,
+				Policy:    "No medical advice.",
+				MaxTokens: 256,
+			},
+			&CustomGuardrail{
+				guardrailBase: guardrailBase{
+					Name:     "no_secrets",
+					Position: PositionOutput,
+					OnFail:   OnFailRetry,
+				},
+				Check: func(context.Context, GuardrailInput) (GuardrailResult, error) {
+					return GuardrailResult{Passed: true}, nil
+				},
 			},
 		},
 	}

@@ -1,0 +1,112 @@
+{
+  "schemaVersion" : 3,
+  "request" : {
+    "messages" : [ {
+      "role" : "system",
+      "text" : "You are an operations assistant. Work one tool call at a time: first check_service, then restart_service if unhealthy, then delete_service_data if asked to clear data. A human approves the deletion, not you — never ask for approval in your reply.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "user",
+      "text" : "The payments service is down. Do all three of these, in order: check it, restart it, and then clear its stale cache data. The cache deletion is required — do not finish until you have called delete_service_data.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    } ],
+    "tools" : [ {
+      "name" : "check_service",
+      "description" : "Check the health of a service",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "service_name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "service_name" ]
+      }
+    }, {
+      "name" : "restart_service",
+      "description" : "Restart a service",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "service_name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "service_name" ]
+      }
+    }, {
+      "name" : "delete_service_data",
+      "description" : "Delete service data. Destructive.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "service_name" : {
+            "type" : "string"
+          },
+          "data_type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "service_name", "data_type" ]
+      }
+    } ],
+    "jsonOutput" : false,
+    "outputSchema" : null,
+    "generationOptions" : {
+      "temperature" : 0.0,
+      "maxTokens" : 16384,
+      "thinkingTokenLimit" : 0
+    }
+  },
+  "response" : {
+    "metadata" : {
+      "id" : "resp_0855bb8ad9c4214c006aa34e37960887d099fa963a51d0746c",
+      "model" : "gpt-4o-mini-2024-07-18",
+      "usage" : {
+        "promptTokens" : 187,
+        "completionTokens" : 16,
+        "totalTokens" : 203,
+        "nativeUsage" : null
+      },
+      "rateLimit" : {
+        "requestsLimit" : 0,
+        "requestsRemaining" : 0,
+        "requestsReset" : 0,
+        "tokensLimit" : 0,
+        "tokensRemaining" : 0,
+        "tokensReset" : 0
+      },
+      "promptMetadata" : [ ],
+      "properties" : {
+        "response_id" : "resp_0855bb8ad9c4214c006aa34e37960887d099fa963a51d0746c",
+        "reasoning_tokens" : 0
+      }
+    },
+    "results" : [ {
+      "output" : {
+        "text" : "",
+        "metadata" : {
+          "messageType" : "ASSISTANT"
+        },
+        "toolCalls" : [ {
+          "id" : "call_c27gtyP2Hqc4pyFMqjFXns6j",
+          "type" : "function",
+          "name" : "check_service",
+          "arguments" : "{\"service_name\":\"payments\"}"
+        } ],
+        "media" : [ ]
+      },
+      "metadata" : {
+        "finishReason" : "TOOL_CALLS",
+        "contentFilters" : [ ],
+        "properties" : { }
+      }
+    } ]
+  },
+  "modelSettings" : {
+    "model" : "gpt-4o-mini",
+    "supportsAssistantPrefill" : true
+  }
+}
