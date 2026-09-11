@@ -62,6 +62,7 @@ type Runtime struct {
 	api      *client.APIClient
 	agents   client.AgentClient
 	metadata client.MetadataClient
+	workflow client.WorkflowClient
 	runner   *worker.TaskRunner
 	config   Config
 	mu       sync.Mutex
@@ -86,6 +87,7 @@ func NewRuntimeWithClient(apiClient *client.APIClient, cfg Config) *Runtime {
 		api:        apiClient,
 		agents:     client.NewAgentClient(apiClient),
 		metadata:   client.NewMetadataClient(apiClient),
+		workflow:   client.NewWorkflowClient(apiClient),
 		runner:     worker.NewTaskRunnerWithApiClient(apiClient),
 		config:     cfg,
 		started:    map[string]bool{},
@@ -575,6 +577,30 @@ func (r *Runtime) SendMessage(ctx context.Context, executionID string, message a
 		body = map[string]any{"message": message}
 	}
 	return r.agents.SendMessage(ctx, executionID, body)
+}
+
+// Pause suspends a running execution. It stops advancing but keeps its state,
+// so Resume continues it from where it paused.
+func (r *Runtime) Pause(ctx context.Context, executionID string) error {
+	if _, err := r.workflow.Pause(ctx, executionID); err != nil {
+		return fmt.Errorf("pause %s: %w", executionID, err)
+	}
+	return nil
+}
+
+// Resume continues a paused execution, the inverse of Pause.
+//
+// Note this is not "resume from an instance" — re-registering workers for a
+// run started by another process, which the Python SDK spells
+// runtime.resume(id, agent). That case is deferred until the Go runtime
+// routes stateful agents to per-execution worker domains, since without that
+// its main use, re-attaching to a specific execution's domain, cannot be
+// exercised; a standing Serve already covers the domainless fleet case.
+func (r *Runtime) Resume(ctx context.Context, executionID string) error {
+	if _, err := r.workflow.Resume(ctx, executionID); err != nil {
+		return fmt.Errorf("resume %s: %w", executionID, err)
+	}
+	return nil
 }
 
 // Shutdown stops every worker this runtime started.

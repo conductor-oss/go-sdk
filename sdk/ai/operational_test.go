@@ -242,3 +242,72 @@ func TestServeDeploysRegistersAndBlocksUntilCancel(t *testing.T) {
 		t.Error("Serve with no agents should error")
 	}
 }
+
+// captureAll is captureServer with the request method recorded too, for the
+// pause/resume tests where the path alone is not enough.
+type methodHit struct {
+	method, path string
+}
+
+func TestPauseResumeAndHandleDelegation(t *testing.T) {
+	var mu sync.Mutex
+	var hits []methodHit
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/token", func(w http.ResponseWriter, r *http.Request) {
+		json.NewEncoder(w).Encode(map[string]string{"token": "fake-token"})
+	})
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		hits = append(hits, methodHit{r.Method, r.URL.Path})
+		mu.Unlock()
+		w.Write([]byte("{}"))
+	})
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		mux.ServeHTTP(w, r)
+	}))
+	defer srv.Close()
+	api := client.NewAPIClient(
+		settings.NewAuthenticationSettings("key", "secret"),
+		settings.NewHttpSettings(srv.URL+"/api"),
+	)
+	rt := NewRuntimeWithClient(api, Config{})
+	defer rt.Shutdown()
+	ctx := context.Background()
+
+	seen := func(method, path string) bool {
+		mu.Lock()
+		defer mu.Unlock()
+		for _, h := range hits {
+			if h.method == method && h.path == path {
+				return true
+			}
+		}
+		return false
+	}
+
+	if err := rt.Pause(ctx, "e1"); err != nil {
+		t.Fatal(err)
+	}
+	if !seen("PUT", "/api/workflow/e1/pause") {
+		t.Errorf("Pause did not PUT /workflow/e1/pause; hits=%v", hits)
+	}
+	if err := rt.Resume(ctx, "e1"); err != nil {
+		t.Fatal(err)
+	}
+	if !seen("PUT", "/api/workflow/e1/resume") {
+		t.Errorf("Resume did not PUT /workflow/e1/resume; hits=%v", hits)
+	}
+
+	// The handle delegates to the runtime.
+	h := &AgentHandle{ExecutionID: "e2", rt: rt}
+	if err := h.Pause(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if err := h.Resume(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if !seen("PUT", "/api/workflow/e2/pause") || !seen("PUT", "/api/workflow/e2/resume") {
+		t.Errorf("handle pause/resume did not reach the workflow endpoints; hits=%v", hits)
+	}
+}
