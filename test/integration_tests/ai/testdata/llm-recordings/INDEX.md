@@ -33,6 +33,10 @@ one LLM response the server recorded while that test ran.
 - `11f24501-1975-4af6-9b49-afc3ec910cb9.json`: 2 messages; tools: none; user: 'I was charged twice for my order last month.'
 - `e978eb45-d701-4271-b9d6-c111e645024c.json`: 2 messages; tools: billing_transfer_to_go_e2e_swarm, billing_transfer_to_triage; user: 'I was charged twice for my order last month.'
 
+## TestRunLLMOnlyAgentCompletes (1)
+
+- `035c5b57-b580-4af1-a45a-4c0e06b43bd8.json`: 2 messages; tools: none; user: 'What is 2 + 2? Reply with only the number.'
+
 ## TestSecretRequiresDeclaration (2)
 
 - `0930287c-46b6-4a44-a463-633e070590e7.json`: 2 messages; tools: peek; user: "Call peek with the title 'test'."
@@ -57,6 +61,10 @@ one LLM response the server recorded while that test ran.
 
 - `a81c5b8a-2938-4b46-b8ce-e987e00f66a7.json`: 2 messages; tools: go_e2e_skill__echo_args, go_e2e_skill__read_skill_file; user: 'tool_parity_proof. Call go_e2e_skill__echo_args exactly once with tool_parity_proof as the'
 - `f5255938-f229-4763-a2c5-a55180379dc8.json`: 5 messages; tools: go_e2e_skill__echo_args, go_e2e_skill__read_skill_file; user: '[TOOL RESULTS]'
+
+## TestStartReturnsHandleThenJoins (1)
+
+- `fdfe2214-ddd3-4532-bcea-f4c81b173ccc.json`: 2 messages; tools: none; user: 'Say ok'
 
 ## TestStreamingWithApproval (4)
 
