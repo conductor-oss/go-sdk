@@ -15,6 +15,7 @@ import (
 // TestCheckPermissions checks if permissions for a user can be retrieved correctly.
 func TestCheckPermissions(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, ossGapUsersAPI)
 
 	TestUpsertUser(t)
 	client := NewUserClient()
@@ -33,6 +34,7 @@ func TestCheckPermissions(t *testing.T) {
 // TestDeleteUser verifies that a user can be successfully deleted.
 func TestDeleteUser(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, ossGapUsersAPI)
 
 	TestUpsertUser(t)
 	client := NewUserClient()
@@ -47,6 +49,7 @@ func TestDeleteUser(t *testing.T) {
 // TestGetGrantedPermissions checks if granted permissions can be fetched for a user.
 func TestGetGrantedPermissions(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, ossGapUsersAPI)
 
 	TestUpsertUser(t)
 	client := NewUserClient()
@@ -62,6 +65,7 @@ func TestGetGrantedPermissions(t *testing.T) {
 // TestGetUser checks fetching a specific user's details.
 func TestGetUser(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, ossGapUsersAPI)
 
 	TestUpsertUser(t)
 	client := NewUserClient()
@@ -76,6 +80,7 @@ func TestGetUser(t *testing.T) {
 
 func TestGetUserNotFound(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, ossGapUsersAPI)
 
 	TestUpsertUser(t)
 	client := NewUserClient()
@@ -91,6 +96,7 @@ func TestGetUserNotFound(t *testing.T) {
 // TestListUsers checks listing users with optional parameters.
 func TestListUsers(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, ossGapUsersAPI)
 
 	user_client := NewUserClient()
 	ctx := context.Background()
@@ -105,6 +111,7 @@ func TestListUsers(t *testing.T) {
 // TestUpsertUser verifies that a user can be updated or inserted.
 func TestUpsertUser(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, ossGapUsersAPI)
 
 	client := NewUserClient()
 	ctx := context.Background()

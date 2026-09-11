@@ -275,7 +275,14 @@ func TestWorkflowSearch(t *testing.T) {
 				assert.True(t, firstPageWorkflowId == workflowId1 || firstPageWorkflowId == workflowId2,
 					"First page should contain one of our test workflows")
 
-				// Test second page with size 1
+				// Test second page with size 1. Only the start>0 fetch is
+				// gated: the first-page assertions above (page size honored,
+				// correct workflow returned) do pass against plain OSS
+				// Conductor.
+				if testdata.OSSGapSkippedReason(t, ossGapSearchPaging) {
+					return
+				}
+
 				opts2 := &client.WorkflowResourceApiSearchOpts{
 					Query: optional.NewString(fmt.Sprintf("status = COMPLETED AND workflowType IN (%s, %s)", wf1Name, wf2Name)),
 					Start: optional.NewInt32(1),

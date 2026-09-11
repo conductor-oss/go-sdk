@@ -13,6 +13,7 @@ import (
 
 func TestWebhooksConfigResourceApiService(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, ossGapWebhooksAPI)
 
 	// Setup
 	webhookClient := testdata.WebhookClient // Assuming this exists in your testdata package

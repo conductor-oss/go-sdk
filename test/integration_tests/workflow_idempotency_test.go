@@ -17,6 +17,7 @@ import (
 
 func TestIdempotencyCombinations(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, ossGapIdempotencyKeys)
 
 	executor := testdata.WorkflowExecutor
 	wf := workflow.NewConductorWorkflow(executor)
@@ -58,6 +59,7 @@ func TestIdempotencyCombinations(t *testing.T) {
 
 func TestIdempotencyFailOnRunning(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, ossGapIdempotencyKeys)
 
 	executor := testdata.WorkflowExecutor
 	wf := workflow.NewConductorWorkflow(executor)

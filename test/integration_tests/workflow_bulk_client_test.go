@@ -27,6 +27,7 @@ import (
 // TestWorkflowBulkDelete tests the Delete endpoint for bulk workflow operations
 func TestWorkflowBulkDelete(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, ossGapBulkDelete)
 
 	// Create a simple workflow for testing
 	uniqueSuffix := strconv.Itoa(time.Now().Nanosecond())
