@@ -48,6 +48,10 @@ type AgentClient interface {
 	Stop(ctx context.Context, executionID string) error
 	// Signal sends a message into a running execution.
 	Signal(ctx context.Context, executionID, message string) error
+	// SendMessage pushes a message into a running execution's workflow message
+	// queue, for an agent waiting on a wait_for_message tool. The server needs
+	// conductor.workflow-message-queue.enabled=true.
+	SendMessage(ctx context.Context, executionID string, message map[string]any) error
 }
 
 type agentClient struct {
@@ -113,4 +117,10 @@ func (c *agentClient) Stop(ctx context.Context, executionID string) error {
 func (c *agentClient) Signal(ctx context.Context, executionID, message string) error {
 	return c.post(ctx, fmt.Sprintf("/agent/%s/signal", executionID),
 		map[string]any{"message": message}, nil)
+}
+
+// SendMessage posts to /workflow/{id}/messages, the workflow message queue,
+// which is a workflow endpoint rather than an /agent one.
+func (c *agentClient) SendMessage(ctx context.Context, executionID string, message map[string]any) error {
+	return c.post(ctx, fmt.Sprintf("/workflow/%s/messages", executionID), message, nil)
 }

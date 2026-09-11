@@ -38,7 +38,18 @@ registers task definitions the same way and `WithRetry` feeds them; and
 Then port Python suites 12 (termination gates, 5 tests) and 20 (plan execute,
 9 tests) and record them with Python. Not yet done.
 
-## Step 2: the operational runtime
+## Step 2: the operational runtime — PARTLY DONE 2026-09-11
+
+Done on `feat/agent-golden-fixtures` (uncommitted at time of writing):
+`Runtime.Deploy`, `Runtime.Serve`, `Runtime.Signal`, `Runtime.SendMessage`
+(the last two also on `AgentHandle`), and per-run `WithMedia` and
+`WithRunSettings`. `SendMessage` posts to `/workflow/{id}/messages`, added
+to the agent client. Unit tests cover all of it against a fake server;
+suite 24's two run tests are ported and replay green. Still open in this
+step: `Runtime.Prepare` (macOS fork batching, Python-specific, likely
+unneeded in Go), and a live e2e for `Serve` and for `SendMessage` (needs a
+WMQ-enabled server). Suite 25 (media input) is not e2e-ported yet: it needs
+a vision-model recording and the server's allowed media directory.
 
 In this order; the first three are wiring over calls the client already has.
 

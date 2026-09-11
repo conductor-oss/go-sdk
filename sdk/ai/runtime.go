@@ -119,7 +119,43 @@ func (r *Runtime) Plan(ctx context.Context, agent *Agent) (map[string]any, error
 type RunOption func(*runOptions)
 
 type runOptions struct {
-	plan *Plan
+	plan     *Plan
+	media    []string
+	settings *RunSettings
+}
+
+// RunSettings overrides the agent's model parameters for one run, without
+// changing the stored agent. It is the counterpart of the Python SDK's
+// RunSettings: the set fields are merged into the agentConfig sent to the
+// server before the run starts. Apply it with WithRunSettings.
+type RunSettings struct {
+	Model                string
+	Temperature          *float64
+	MaxTokens            *int
+	ReasoningEffort      ReasoningEffort
+	ThinkingBudgetTokens *int
+}
+
+// configOverrides is the wire map merged onto the agentConfig, field for field
+// with Python's RunSettings.to_config_overrides.
+func (rs *RunSettings) configOverrides() map[string]any {
+	out := map[string]any{}
+	if rs.Model != "" {
+		out["model"] = rs.Model
+	}
+	if rs.Temperature != nil {
+		out["temperature"] = *rs.Temperature
+	}
+	if rs.MaxTokens != nil {
+		out["maxTokens"] = *rs.MaxTokens
+	}
+	if rs.ReasoningEffort != "" {
+		out["reasoningEffort"] = string(rs.ReasoningEffort)
+	}
+	if rs.ThinkingBudgetTokens != nil {
+		out["thinkingConfig"] = map[string]any{"enabled": true, "budgetTokens": *rs.ThinkingBudgetTokens}
+	}
+	return out
 }
 
 // WithPlan supplies the plan a StrategyPlanExecute agent carries out, in place
@@ -131,6 +167,19 @@ type runOptions struct {
 // starts; see Plan.Validate for what is checked.
 func WithPlan(plan *Plan) RunOption {
 	return func(o *runOptions) { o.plan = plan }
+}
+
+// WithMedia attaches media inputs to the run, such as image or document paths
+// the server can read, or URLs. It is the counterpart of the Python SDK's
+// run(..., media=[...]). The server reads the paths itself, so a local path
+// must sit under the server's allowed media directory.
+func WithMedia(media ...string) RunOption {
+	return func(o *runOptions) { o.media = append(o.media, media...) }
+}
+
+// WithRunSettings overrides the agent's model parameters for this run only.
+func WithRunSettings(rs RunSettings) RunOption {
+	return func(o *runOptions) { o.settings = &rs }
 }
 
 // startPayload validates the agent and any options, registers the agent's
@@ -166,16 +215,24 @@ func (r *Runtime) startPayload(agent *Agent, prompt string, opts []RunOption) (m
 			"rawConfig": agent.skill.rawConfig(),
 			"prompt":    prompt,
 			"sessionId": "",
-			"media":     []any{},
+			"media":     mediaWire(o.media),
 			"context":   map[string]any{},
 		}, nil
 	}
 
+	// Per-run settings mutate a copy of the agentConfig before it is sent, so
+	// they reach the LLM tasks without a new server field, as in Python.
+	config := agent.toConfig()
+	if o.settings != nil {
+		for k, v := range o.settings.configOverrides() {
+			config[k] = v
+		}
+	}
 	payload := map[string]any{
-		"agentConfig": agent.toConfig(),
+		"agentConfig": config,
 		"prompt":      prompt,
 		"sessionId":   "",
-		"media":       []any{},
+		"media":       mediaWire(o.media),
 	}
 	if o.plan != nil {
 		// The server reads workflow.input.static_plan ahead of the planner's
@@ -184,6 +241,16 @@ func (r *Runtime) startPayload(agent *Agent, prompt string, opts []RunOption) (m
 		payload["static_plan"] = o.plan.toPayload()
 	}
 	return payload, nil
+}
+
+// mediaWire renders the media list for the request, always as a JSON array
+// even when empty, which is what the server expects.
+func mediaWire(media []string) []any {
+	out := make([]any, 0, len(media))
+	for _, m := range media {
+		out = append(out, m)
+	}
+	return out
 }
 
 // Start begins a run and returns at once.
@@ -431,6 +498,83 @@ func (r *Runtime) registerTaskDefs(ctx context.Context) error {
 		r.registered[name] = true
 	}
 	return nil
+}
+
+// Deploy compiles and registers the agent on the server without starting a
+// run, and returns the workflow name it was registered under. It is the
+// counterpart of the Python SDK's runtime.deploy for a single agent: deploy
+// once from a release step, then start runs against the stored agent by name,
+// or bring up workers for it with Serve.
+func (r *Runtime) Deploy(ctx context.Context, agent *Agent) (string, error) {
+	if err := agent.Validate(); err != nil {
+		return "", err
+	}
+	var payload map[string]any
+	if agent.skill != nil {
+		payload = map[string]any{"framework": skillFramework, "rawConfig": agent.skill.rawConfig()}
+	} else {
+		payload = map[string]any{"agentConfig": agent.toConfig()}
+	}
+	out, err := r.agents.Deploy(ctx, payload)
+	if err != nil {
+		return "", fmt.Errorf("deploy agent %q: %w", agent.Name, err)
+	}
+	name, _ := out["agentName"].(string)
+	if name == "" {
+		name = agent.Name
+	}
+	return name, nil
+}
+
+// Serve hosts the workers the given agents' tools need and blocks until ctx is
+// cancelled. It deploys each agent, registers its task definitions and starts
+// its workers, so a separate process can start runs against these agents by
+// name while this one answers their tool calls. It is the counterpart of the
+// Python SDK's runtime.serve; a caller wanting it non-blocking runs it in a
+// goroutine and cancels ctx to stop.
+func (r *Runtime) Serve(ctx context.Context, agents ...*Agent) error {
+	if len(agents) == 0 {
+		return fmt.Errorf("Serve requires at least one agent")
+	}
+	for _, agent := range agents {
+		if err := agent.Validate(); err != nil {
+			return err
+		}
+		// Deploy first: compiling the agent makes the server write its own task
+		// definitions, so register ours afterwards to override them, the same
+		// order Run uses around a start.
+		if _, err := r.Deploy(ctx, agent); err != nil {
+			return err
+		}
+		if err := r.registerWorkers(agent); err != nil {
+			return err
+		}
+		if err := r.registerTaskDefs(ctx); err != nil {
+			return err
+		}
+	}
+	<-ctx.Done()
+	r.Shutdown()
+	return ctx.Err()
+}
+
+// Signal injects a persistent signal into a running execution's context. The
+// agent prepends it to the next LLM turn; it persists until overwritten, and
+// an empty message clears it. This works on any agent, unlike SendMessage.
+func (r *Runtime) Signal(ctx context.Context, executionID, message string) error {
+	return r.agents.Signal(ctx, executionID, message)
+}
+
+// SendMessage pushes a message into a running execution's workflow message
+// queue, for an agent waiting on a wait_for_message tool. A non-map value is
+// wrapped as {"message": value}, matching the Python SDK, so the agent
+// receives it under the message key.
+func (r *Runtime) SendMessage(ctx context.Context, executionID string, message any) error {
+	body, ok := message.(map[string]any)
+	if !ok {
+		body = map[string]any{"message": message}
+	}
+	return r.agents.SendMessage(ctx, executionID, body)
 }
 
 // Shutdown stops every worker this runtime started.

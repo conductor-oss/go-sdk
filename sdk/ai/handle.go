@@ -173,6 +173,18 @@ func (h *AgentHandle) Result(ctx context.Context) (*AgentResult, error) {
 	return h.rt.awaitResult(ctx, h.ExecutionID)
 }
 
+// Signal injects a persistent signal into this run's context; see
+// Runtime.Signal.
+func (h *AgentHandle) Signal(ctx context.Context, message string) error {
+	return h.rt.Signal(ctx, h.ExecutionID, message)
+}
+
+// SendMessage pushes a message into this run's workflow message queue; see
+// Runtime.SendMessage.
+func (h *AgentHandle) SendMessage(ctx context.Context, message any) error {
+	return h.rt.SendMessage(ctx, h.ExecutionID, message)
+}
+
 // decodeEvent normalizes one SSE frame.
 //
 // The event name may arrive as the SSE "event:" field or inside the JSON
