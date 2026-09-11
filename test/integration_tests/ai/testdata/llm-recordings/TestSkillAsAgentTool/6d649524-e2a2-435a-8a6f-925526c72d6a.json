@@ -1,0 +1,86 @@
+{
+  "schemaVersion" : 3,
+  "request" : {
+    "messages" : [ {
+      "role" : "system",
+      "text" : "You have one tool: go_e2e_skill. Call it once with the user's request, then return the result.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "user",
+      "text" : "Echo 'proof42'",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    } ],
+    "tools" : [ {
+      "name" : "go_e2e_skill",
+      "description" : "Run the test skill, which echoes its input with echo_args",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "request" : {
+            "description" : "The request or question to send to this agent.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "request" ]
+      }
+    } ],
+    "jsonOutput" : false,
+    "outputSchema" : null,
+    "generationOptions" : {
+      "temperature" : 0.0,
+      "maxTokens" : 16384,
+      "thinkingTokenLimit" : 0
+    }
+  },
+  "response" : {
+    "metadata" : {
+      "id" : "resp_082c8cf7a3940d02006aa34ed9d80887d0aacfebd83933f569",
+      "model" : "gpt-4o-mini-2024-07-18",
+      "usage" : {
+        "promptTokens" : 91,
+        "completionTokens" : 19,
+        "totalTokens" : 110,
+        "nativeUsage" : null
+      },
+      "rateLimit" : {
+        "requestsLimit" : 0,
+        "requestsRemaining" : 0,
+        "requestsReset" : 0,
+        "tokensLimit" : 0,
+        "tokensRemaining" : 0,
+        "tokensReset" : 0
+      },
+      "promptMetadata" : [ ],
+      "properties" : {
+        "response_id" : "resp_082c8cf7a3940d02006aa34ed9d80887d0aacfebd83933f569",
+        "reasoning_tokens" : 0
+      }
+    },
+    "results" : [ {
+      "output" : {
+        "text" : "",
+        "metadata" : {
+          "messageType" : "ASSISTANT"
+        },
+        "toolCalls" : [ {
+          "id" : "call_ij0r28i71diGc4yKB7ISMszy",
+          "type" : "function",
+          "name" : "go_e2e_skill",
+          "arguments" : "{\"request\":\"proof42\"}"
+        } ],
+        "media" : [ ]
+      },
+      "metadata" : {
+        "finishReason" : "TOOL_CALLS",
+        "contentFilters" : [ ],
+        "properties" : { }
+      }
+    } ]
+  },
+  "modelSettings" : {
+    "model" : "gpt-4o-mini",
+    "supportsAssistantPrefill" : true
+  }
+}

@@ -157,7 +157,15 @@ func runApprovalAttempt(t *testing.T, attempt int, last bool) bool {
 	// Consume the stream concurrently. Its events are the evidence that
 	// streaming works at all; the control flow below uses status polling so the
 	// test does not hang if a build stops emitting a particular event.
-	events, err := h.Events(ctx)
+	// The stream gets its own context so it can be shut down as soon as the
+	// outcome is known. Waiting for the server to close it instead burns the
+	// whole budget whenever the run finishes before the stream does — a
+	// success that takes 90s rather than 7, and a failure if the deadline
+	// lands before Result returns.
+	streamCtx, stopStream := context.WithCancel(ctx)
+	defer stopStream()
+
+	events, err := h.Events(streamCtx)
 	if err != nil {
 		t.Fatalf("Events: %v", err)
 	}
@@ -192,6 +200,7 @@ func runApprovalAttempt(t *testing.T, attempt int, last bool) bool {
 
 	res, err := h.Result(ctx)
 	if err != nil {
+		stopStream()
 		streamDone.Wait()
 		// Two stall modes were measured over twenty runs, each about once: the
 		// run produces no turns at all, and the model runs away instead of
@@ -211,6 +220,7 @@ func runApprovalAttempt(t *testing.T, attempt int, last bool) bool {
 			attempt, err, len(rec.snapshot()))
 		return false
 	}
+	stopStream()
 	streamDone.Wait()
 
 	if !approved {

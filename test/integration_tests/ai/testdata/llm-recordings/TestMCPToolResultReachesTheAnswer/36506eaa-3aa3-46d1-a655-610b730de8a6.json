@@ -1,0 +1,120 @@
+{
+  "schemaVersion" : 3,
+  "request" : {
+    "messages" : [ {
+      "role" : "system",
+      "text" : "You are a weather assistant. Use the available MCP tools to answer questions about weather conditions.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "user",
+      "text" : "[TOOL RESULTS]\n[{\"output\":{\"isError\":false,\"content\":[{\"parsed\":{\"condition\":\"sunny\",\"wind_mph\":5,\"city\":\"San Francisco\",\"humidity_pct\":45,\"temperature_c\":25,\"temperature_f\":77},\"text\":\"{\\\"city\\\": \\\"San Francisco\\\", \\\"temperature_f\\\": 77, \\\"temperature_c\\\": 25, \\\"condition\\\": \\\"sunny\\\", \\\"humidity_pct\\\": 45, \\\"wind_mph\\\": 5}\",\"type\":\"text\"}]},\"name\":\"get_weather\"}]\n[/TOOL RESULTS]\n\nWhat is the weather in San Francisco right now?",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "assistant",
+      "text" : "{}",
+      "toolCalls" : [ {
+        "reference" : "call_0",
+        "name" : "get_weather",
+        "arguments" : {
+          "method" : "get_weather",
+          "city" : "San Francisco"
+        }
+      } ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "tool",
+      "text" : "",
+      "toolCalls" : [ ],
+      "toolResults" : [ {
+        "reference" : "call_0",
+        "name" : "get_weather",
+        "value" : {
+          "content" : [ {
+            "type" : "text",
+            "text" : "{\"city\": \"San Francisco\", \"temperature_f\": 77, \"temperature_c\": 25, \"condition\": \"sunny\", \"humidity_pct\": 45, \"wind_mph\": 5}",
+            "parsed" : {
+              "city" : "San Francisco",
+              "temperature_f" : 77,
+              "temperature_c" : 25,
+              "condition" : "sunny",
+              "humidity_pct" : 45,
+              "wind_mph" : 5
+            }
+          } ],
+          "isError" : false
+        }
+      } ]
+    }, {
+      "role" : "user",
+      "text" : "Please continue where you left off.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    } ],
+    "tools" : [ {
+      "name" : "get_weather",
+      "description" : "Get weather for a city. Always returns fixed deterministic data (77°F, sunny).",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "city" : {
+            "title" : "City",
+            "type" : "string"
+          }
+        },
+        "required" : [ "city" ]
+      }
+    } ],
+    "jsonOutput" : false,
+    "outputSchema" : null,
+    "generationOptions" : {
+      "maxTokens" : 16384,
+      "thinkingTokenLimit" : 0
+    }
+  },
+  "response" : {
+    "metadata" : {
+      "id" : "resp_0fb91a3abf1b20b5006aa34e29625487d0a190ec344ea5ebab",
+      "model" : "gpt-4o-mini-2024-07-18",
+      "usage" : {
+        "promptTokens" : 326,
+        "completionTokens" : 54,
+        "totalTokens" : 380,
+        "nativeUsage" : null
+      },
+      "rateLimit" : {
+        "requestsLimit" : 0,
+        "requestsRemaining" : 0,
+        "requestsReset" : 0,
+        "tokensLimit" : 0,
+        "tokensRemaining" : 0,
+        "tokensReset" : 0
+      },
+      "promptMetadata" : [ ],
+      "properties" : {
+        "response_id" : "resp_0fb91a3abf1b20b5006aa34e29625487d0a190ec344ea5ebab",
+        "reasoning_tokens" : 0
+      }
+    },
+    "results" : [ {
+      "output" : {
+        "text" : "The current weather in San Francisco is as follows:\n\n- **Temperature:** 77°F (25°C)\n- **Condition:** Sunny\n- **Humidity:** 45%\n- **Wind Speed:** 5 mph\n\nLet me know if you need more information!",
+        "metadata" : {
+          "messageType" : "ASSISTANT"
+        },
+        "toolCalls" : [ ],
+        "media" : [ ]
+      },
+      "metadata" : {
+        "finishReason" : "STOP",
+        "contentFilters" : [ ],
+        "properties" : { }
+      }
+    } ]
+  },
+  "modelSettings" : {
+    "model" : "gpt-4o-mini",
+    "supportsAssistantPrefill" : true
+  }
+}

@@ -12,6 +12,7 @@ package ai
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sync"
 	"time"
 
@@ -105,17 +106,60 @@ func (r *Runtime) Plan(ctx context.Context, agent *Agent) (map[string]any, error
 	return plan, nil
 }
 
-// Run starts an agent and blocks until the execution finishes.
+// RunOption adjusts how Run and Start begin a run.
+type RunOption func(*runOptions)
+
+type runOptions struct {
+	plan *Plan
+}
+
+// WithPlan supplies the plan a StrategyPlanExecute agent carries out, in place
+// of one written by its Planner.
 //
-// It validates the agent, registers a worker for every tool that has a Go
-// handler, starts the run, then polls until the server reports a terminal
-// state. Tool calls arrive as Conductor tasks while this is waiting.
-func (r *Runtime) Run(ctx context.Context, agent *Agent, prompt string) (*AgentResult, error) {
+// The server still requires the Planner slot to be set — the strategy is
+// compiled around it — but with a plan supplied the planner never runs, so
+// its instructions can say as much. The plan is validated before the run
+// starts; see Plan.Validate for what is checked.
+func WithPlan(plan *Plan) RunOption {
+	return func(o *runOptions) { o.plan = plan }
+}
+
+// startPayload validates the agent and any options, registers the agent's
+// workers, and builds the body of the /agent/start request. Run and Start
+// share it so a plan reaches the server the same way from either.
+func (r *Runtime) startPayload(agent *Agent, prompt string, opts []RunOption) (map[string]any, error) {
 	if err := agent.Validate(); err != nil {
 		return nil, err
 	}
+	var o runOptions
+	for _, opt := range opts {
+		opt(&o)
+	}
+	if o.plan != nil {
+		if agent.Strategy != StrategyPlanExecute {
+			return nil, fmt.Errorf(
+				"agent %q: WithPlan requires StrategyPlanExecute, got %q", agent.Name, agent.Strategy)
+		}
+		if err := o.plan.Validate(); err != nil {
+			return nil, fmt.Errorf("agent %q: %w", agent.Name, err)
+		}
+	}
 	if err := r.registerWorkers(agent); err != nil {
 		return nil, err
+	}
+
+	// A skill does not travel as agentConfig. The server's SkillNormalizer
+	// compiles the raw document, which /agent/start accepts under
+	// framework and rawConfig — the same request the Python SDK sends.
+	if agent.skill != nil {
+		return map[string]any{
+			"framework": skillFramework,
+			"rawConfig": agent.skill.rawConfig(),
+			"prompt":    prompt,
+			"sessionId": "",
+			"media":     []any{},
+			"context":   map[string]any{},
+		}, nil
 	}
 
 	payload := map[string]any{
@@ -123,6 +167,45 @@ func (r *Runtime) Run(ctx context.Context, agent *Agent, prompt string) (*AgentR
 		"prompt":      prompt,
 		"sessionId":   "",
 		"media":       []any{},
+	}
+	if o.plan != nil {
+		// The server reads workflow.input.static_plan ahead of the planner's
+		// output; the key matches AgentRequest in Java and runtime.run(plan=)
+		// in Python.
+		payload["static_plan"] = o.plan.toPayload()
+	}
+	return payload, nil
+}
+
+// Start begins a run and returns at once.
+//
+// Workers for the agent's tools are registered before the run starts, so a tool
+// call cannot arrive before something is polling for it.
+func (r *Runtime) Start(ctx context.Context, agent *Agent, prompt string, opts ...RunOption) (*AgentHandle, error) {
+	payload, err := r.startPayload(agent, prompt, opts)
+	if err != nil {
+		return nil, err
+	}
+	started, err := r.agents.Start(ctx, payload)
+	if err != nil {
+		return nil, fmt.Errorf("start agent %q: %w", agent.Name, err)
+	}
+	executionID, ok := started["executionId"].(string)
+	if !ok || executionID == "" {
+		return nil, fmt.Errorf("start agent %q: server returned no executionId", agent.Name)
+	}
+	return &AgentHandle{ExecutionID: executionID, rt: r}, nil
+}
+
+// Run starts an agent and blocks until the execution finishes.
+//
+// It validates the agent, registers a worker for every tool that has a Go
+// handler, starts the run, then polls until the server reports a terminal
+// state. Tool calls arrive as Conductor tasks while this is waiting.
+func (r *Runtime) Run(ctx context.Context, agent *Agent, prompt string, opts ...RunOption) (*AgentResult, error) {
+	payload, err := r.startPayload(agent, prompt, opts)
+	if err != nil {
+		return nil, err
 	}
 	started, err := r.agents.Start(ctx, payload)
 	if err != nil {
@@ -166,42 +249,134 @@ func (r *Runtime) awaitResult(ctx context.Context, executionID string) (*AgentRe
 }
 
 // registerWorkers starts a Conductor worker for every tool carrying a Go
-// handler. Tools the server dispatches itself, and external tools served
-// elsewhere, have no handler and are skipped.
+// handler, on this agent and on every agent nested under it. Tools the server
+// dispatches itself, and external tools served elsewhere, have no handler and
+// are skipped.
 //
 // Registration is idempotent per task name so repeated runs of the same agent
 // do not stack workers.
 func (r *Runtime) registerWorkers(agent *Agent) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	return r.walkWorkers(agent)
+}
 
-	var walk func(a *Agent) error
-	walk = func(a *Agent) error {
-		for _, t := range a.Tools {
-			if t.Handler == nil || r.started[t.Name] {
-				continue
-			}
-			fn, err := toolExecutor(t)
-			if err != nil {
-				return err
-			}
-			if err := r.runner.StartWorker(
-				t.Name, fn, r.config.batchSize(), r.config.workerPoll()); err != nil {
-				return fmt.Errorf("start worker %q: %w", t.Name, err)
-			}
-			r.started[t.Name] = true
+// walkWorkers registers one agent's workers, then those of the agents nested
+// under it.
+func (r *Runtime) walkWorkers(a *Agent) error {
+	if err := r.startWorkers(a.workerTools()); err != nil {
+		return err
+	}
+	for _, sub := range a.nestedAgents() {
+		if err := r.walkWorkers(sub); err != nil {
+			return err
 		}
-		for _, sub := range a.Agents {
-			if err := walk(sub); err != nil {
-				return err
-			}
+	}
+	return nil
+}
+
+// startWorkers starts a worker for each handler-backed tool not already
+// running.
+func (r *Runtime) startWorkers(tools []ToolDef) error {
+	for _, t := range tools {
+		if t.Handler == nil || r.started[t.Name] {
+			continue
 		}
-		if a.Router != nil {
-			return walk(a.Router)
+		fn, err := toolExecutor(t)
+		if err != nil {
+			return err
 		}
+		if err := r.runner.StartWorker(
+			t.Name, fn, r.config.batchSize(), r.config.workerPoll()); err != nil {
+			return fmt.Errorf("start worker %q: %w", t.Name, err)
+		}
+		r.started[t.Name] = true
+	}
+	return nil
+}
+
+// workerTools lists every tool of this agent the server dispatches to a
+// worker: the declared tools plus the derived ones. The derived execution
+// tools, on_condition handoffs, custom guardrails, and skill scripts are all
+// serialized as worker tools, so without a worker under each derived name the
+// server queues a task nothing polls for and the run stalls.
+func (a *Agent) workerTools() []ToolDef {
+	tools := slices.Clone(a.Tools)
+	if a.CodeExecution != nil && enabledOrDefault(a.CodeExecution.Enabled) {
+		t := a.CodeExecution.codeTool(a.Name)
+		t.Handler = a.CodeExecution.executeCode
+		tools = append(tools, t)
+	}
+	if a.CLI != nil && enabledOrDefault(a.CLI.Enabled) {
+		t := a.CLI.cliTool(a.Name)
+		t.Handler = a.CLI.runCommand
+		tools = append(tools, t)
+	}
+	tools = append(tools, a.handoffTools()...)
+	// The server compiles each custom guardrail into a SIMPLE task named after
+	// the guardrail, agent-level and tool-level alike.
+	for _, g := range a.customGuardrails() {
+		tools = append(tools, ToolDef{Name: g.Name, Handler: g.guardrailHandler()})
+	}
+	// A skill's scripts and its read_skill_file tool run here too; the server
+	// emits worker tools under these names when it normalizes the skill
+	// document.
+	if a.skill != nil {
+		tools = append(tools, a.skill.workers(a.Name)...)
+	}
+	return tools
+}
+
+// handoffTools returns a worker tool per on_condition handoff. The server
+// compiles each into a SIMPLE task named "<agent>_handoff_<target>".
+func (a *Agent) handoffTools() []ToolDef {
+	conds := a.onConditions()
+	if len(conds) == 0 {
 		return nil
 	}
-	return walk(agent)
+	// The server reports the active agent as an index into
+	// [parent, sub-agents...] — MultiAgentCompiler builds allSwarmAgents with
+	// the parent first — so index 0 is this agent, not its first child. The
+	// names go in that order so the handler resolves the index the same way.
+	names := make([]string, 0, 1+len(a.Agents))
+	names = append(names, a.Name)
+	for _, sub := range a.Agents {
+		if sub != nil {
+			names = append(names, sub.Name)
+		}
+	}
+	out := make([]ToolDef, 0, len(conds))
+	for _, c := range conds {
+		out = append(out, ToolDef{
+			Name:    handoffTaskName(a.Name, c.Target),
+			Handler: c.handoffHandler(names),
+		})
+	}
+	return out
+}
+
+// nestedAgents lists the agents whose workers a run of this agent also needs:
+// sub-agents, agents exposed as tools (each runs as its own workflow, which
+// is what lets a skill serve as a tool), and the router, planner, and
+// fallback slots.
+func (a *Agent) nestedAgents() []*Agent {
+	out := make([]*Agent, 0, len(a.Agents)+len(a.Tools)+3)
+	for _, sub := range a.Agents {
+		if sub != nil {
+			out = append(out, sub)
+		}
+	}
+	for _, t := range a.Tools {
+		if sub, ok := t.Config["agent"].(*Agent); ok {
+			out = append(out, sub)
+		}
+	}
+	for _, slot := range []*Agent{a.Router, a.Planner, a.Fallback} {
+		if slot != nil {
+			out = append(out, slot)
+		}
+	}
+	return out
 }
 
 // Shutdown stops every worker this runtime started.
