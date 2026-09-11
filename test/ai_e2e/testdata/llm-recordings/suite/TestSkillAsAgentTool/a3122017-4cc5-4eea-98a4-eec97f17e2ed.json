@@ -1,0 +1,100 @@
+{
+  "schemaVersion" : 3,
+  "request" : {
+    "messages" : [ {
+      "role" : "system",
+      "text" : "## Overview\nA test skill with a script tool.\n\n## Workflow\n1. If no prior tool result is available, call the go_e2e_skill__echo_args tool exactly once.\n2. Pass the original user's input as the argument.\n3. After a tool result containing ECHO_ARGS_RESULT: is available, return that exact line as the final answer.\n4. If asked to continue, do not call any tool. Return the most recent ECHO_ARGS_RESULT: line exactly.\n\n\n[Skill Parameters]\nmode: fast",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "user",
+      "text" : "proof42",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    } ],
+    "tools" : [ {
+      "name" : "go_e2e_skill__echo_args",
+      "description" : "Run echo_args script from go_e2e_skill skill",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "command" : {
+            "description" : "Arguments to pass to the echo_args script",
+            "type" : "string"
+          }
+        },
+        "required" : [ "command" ]
+      }
+    }, {
+      "name" : "go_e2e_skill__read_skill_file",
+      "description" : "Read a reference or resource file from the go_e2e_skill skill directory",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "path" : {
+            "description" : "Relative path within the skill directory, or skill_section:<name> for instruction sections",
+            "type" : "string",
+            "enum" : [ "references/guide.md" ]
+          }
+        },
+        "required" : [ "path" ]
+      }
+    } ],
+    "jsonOutput" : false,
+    "outputSchema" : null,
+    "generationOptions" : {
+      "temperature" : 0.0,
+      "maxTokens" : 16384,
+      "thinkingTokenLimit" : 0
+    }
+  },
+  "response" : {
+    "metadata" : {
+      "id" : "resp_000ca6c3104e89dd006aa34edcaf8487d0a17b16e0c357f3ed",
+      "model" : "gpt-4o-mini-2024-07-18",
+      "usage" : {
+        "promptTokens" : 229,
+        "completionTokens" : 22,
+        "totalTokens" : 251,
+        "nativeUsage" : null
+      },
+      "rateLimit" : {
+        "requestsLimit" : 0,
+        "requestsRemaining" : 0,
+        "requestsReset" : 0,
+        "tokensLimit" : 0,
+        "tokensRemaining" : 0,
+        "tokensReset" : 0
+      },
+      "promptMetadata" : [ ],
+      "properties" : {
+        "response_id" : "resp_000ca6c3104e89dd006aa34edcaf8487d0a17b16e0c357f3ed",
+        "reasoning_tokens" : 0
+      }
+    },
+    "results" : [ {
+      "output" : {
+        "text" : "",
+        "metadata" : {
+          "messageType" : "ASSISTANT"
+        },
+        "toolCalls" : [ {
+          "id" : "call_ijAKe88f7uKKjHom2I5CN3Kr",
+          "type" : "function",
+          "name" : "go_e2e_skill__echo_args",
+          "arguments" : "{\"command\":\"proof42\"}"
+        } ],
+        "media" : [ ]
+      },
+      "metadata" : {
+        "finishReason" : "TOOL_CALLS",
+        "contentFilters" : [ ],
+        "properties" : { }
+      }
+    } ]
+  },
+  "modelSettings" : {
+    "model" : "gpt-4o-mini",
+    "supportsAssistantPrefill" : true
+  }
+}

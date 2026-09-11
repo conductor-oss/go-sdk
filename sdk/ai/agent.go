@@ -133,6 +133,28 @@ type Agent struct {
 	// Conductor does not support, and the run deadlocks.
 	RequiredTools []string
 
+	// Planner and Fallback are the named slots StrategyPlanExecute uses. The
+	// planner emits a plan; the parent's Tools become the tools that plan may
+	// name. Fallback runs if the plan cannot be carried out.
+	Planner  *Agent
+	Fallback *Agent
+	// FallbackMaxTurns bounds the fallback agent. Omitted when zero, which
+	// leaves the limit to the server.
+	FallbackMaxTurns int
+	// EnablePlanning asks the model to plan before acting. It is unrelated to
+	// Planner: this is a preamble on a single agent, that is a sub-agent slot.
+	EnablePlanning bool
+
+	// Handoffs move control between sub-agents, usually with StrategySwarm.
+	Handoffs []HandoffCondition
+	// AllowedTransitions restricts which sub-agent may hand off to which, as
+	// from-name to permitted target names. Empty means no restriction.
+	AllowedTransitions map[string][]string
+
+	// Guardrails check this agent's input or output. Tools carry their own in
+	// ToolDef.Guardrails.
+	Guardrails []Guardrail
+
 	// OutputType constrains the final answer to a struct's shape. Pass a zero
 	// value of the type, as in OutputType: Ticket{}; the schema is derived from
 	// its json tags the same way a tool's input schema is.
@@ -213,6 +235,11 @@ type Agent struct {
 	// External marks the agent as served elsewhere; no workers are started
 	// for it locally.
 	External bool
+
+	// skill is set by LoadSkill. A skill agent is serialized as the raw skill
+	// document the server's SkillNormalizer compiles, not as agentConfig, so
+	// of the fields above only Name and Model apply to it.
+	skill *skillConfig
 }
 
 // Ptr returns a pointer to v, for setting optional fields inline:
@@ -241,6 +268,9 @@ func (a *Agent) Validate() error {
 		}
 	}
 	if err := a.validateRouting(); err != nil {
+		return err
+	}
+	if err := a.validateComposition(); err != nil {
 		return err
 	}
 	if a.Termination != nil {
@@ -327,6 +357,28 @@ func (a *Agent) validateRouting() error {
 	return nil
 }
 
+// validateComposition checks the multi-agent slots: guardrails, handoffs,
+// and the planner and fallback agents.
+func (a *Agent) validateComposition() error {
+	if err := validateGuardrails("agent "+a.Name, a.Guardrails); err != nil {
+		return err
+	}
+	if err := a.validateHandoffs(); err != nil {
+		return err
+	}
+	if a.Planner != nil {
+		if err := a.Planner.Validate(); err != nil {
+			return fmt.Errorf("agent %q planner: %w", a.Name, err)
+		}
+	}
+	if a.Fallback != nil {
+		if err := a.Fallback.Validate(); err != nil {
+			return fmt.Errorf("agent %q fallback: %w", a.Name, err)
+		}
+	}
+	return nil
+}
+
 // maxTurnsOrDefault reports the value actually sent on the wire.
 func (a *Agent) maxTurnsOrDefault() int {
 	if a.MaxTurns == 0 {
@@ -346,5 +398,7 @@ func (a *Agent) strategyOrDefault() Strategy {
 // hasSubAgents reports whether the agent declares sub-agents in any slot.
 // Strategy is only emitted when this is true, matching the Python serializer.
 func (a *Agent) hasSubAgents() bool {
-	return len(a.Agents) > 0
+	// The plan-execute slots count: they are sub-agents held in named fields
+	// rather than in the list, and a strategy without them would be dropped.
+	return len(a.Agents) > 0 || a.Planner != nil || a.Fallback != nil
 }

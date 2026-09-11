@@ -221,6 +221,200 @@ func TestNoBaseUrlWhenOmitted(t *testing.T) {
 	assertMatchesPython(t, "e2e_no_base_url", plan)
 }
 
+// suite1MCPURL is the MCP test server the Python suite's kitchen sink points
+// at. The URL is part of the compiled workflow, so it is the same literal as
+// in generate_compiled.py rather than the mcp_test.go default.
+const suite1MCPURL = "http://localhost:3001"
+
+func passingGuardrail(name string, position ai.Position) *ai.CustomGuardrail {
+	g := ai.NewCustomGuardrail(name, func(ctx context.Context, in ai.GuardrailInput) (ai.GuardrailResult, error) {
+		return ai.GuardrailResult{Passed: true}, nil
+	})
+	g.Position = position
+	g.OnFail = ai.OnFailRetry
+	return g
+}
+
+func regexGuardrail(name, pattern, message string) *ai.RegexGuardrail {
+	g := &ai.RegexGuardrail{Patterns: []string{pattern}, Message: message}
+	g.Name = name
+	g.OnFail = ai.OnFailRetry
+	return g
+}
+
+func TestPlanReflectsGuardrails(t *testing.T) {
+	rt := newRuntime(t)
+	agent := &ai.Agent{
+		Name: "e2e_guardrails", Model: suite1Model, Instructions: "Answer questions.",
+		Tools: []ai.ToolDef{greetTool},
+		Guardrails: []ai.Guardrail{
+			passingGuardrail("check_input", ai.PositionInput),
+			passingGuardrail("no_pii", ai.PositionOutput),
+			regexGuardrail("no_ssn", `\b\d{3}-\d{2}-\d{4}\b`, "No SSNs allowed."),
+		},
+	}
+	plan := planAgent(t, rt, agent)
+	ad := agentDef(t, plan)
+	guardrails := asList(ad["guardrails"])
+	if len(guardrails) != 3 {
+		t.Fatalf("agentDef.guardrails has %d entries, want 3", len(guardrails))
+	}
+	byName := map[string]map[string]any{}
+	for _, raw := range guardrails {
+		g, _ := raw.(map[string]any)
+		byName[fmt.Sprint(g["name"])] = g
+		if g["onFail"] != "retry" {
+			t.Errorf("guardrail %v onFail = %v, want retry", g["name"], g["onFail"])
+		}
+	}
+	for _, name := range []string{"check_input", "no_pii", "no_ssn"} {
+		if _, ok := byName[name]; !ok {
+			t.Errorf("guardrail %s missing; have %v", name, keys(toAny(byName)))
+		}
+	}
+	if byName["check_input"]["position"] != "input" || byName["no_pii"]["position"] != "output" {
+		t.Errorf("positions: check_input=%v no_pii=%v", byName["check_input"]["position"], byName["no_pii"]["position"])
+	}
+	if byName["no_ssn"]["guardrailType"] != "regex" {
+		t.Errorf("no_ssn guardrailType = %v, want regex", byName["no_ssn"]["guardrailType"])
+	}
+	if patterns := asList(byName["no_ssn"]["patterns"]); len(patterns) != 1 || patterns[0] != `\b\d{3}-\d{2}-\d{4}\b` {
+		t.Errorf("no_ssn patterns = %v; the pattern must survive verbatim", patterns)
+	}
+	assertMatchesPython(t, "e2e_guardrails", plan)
+}
+
+// kitchenSink is the suite's _make_kitchen_sink_agent: every tool type,
+// three guardrails, a credential, and all eight sub-agent strategies.
+func kitchenSink() *ai.Agent {
+	leaf := func(name, instructions string) *ai.Agent {
+		return &ai.Agent{Name: name, Model: suite1Model, Instructions: instructions}
+	}
+	team := func(name string, strategy ai.Strategy, a, b *ai.Agent) *ai.Agent {
+		return &ai.Agent{Name: name, Model: suite1Model, Strategy: strategy, Agents: []*ai.Agent{a, b}}
+	}
+	handoff := team("ks_handoff", ai.StrategyHandoff, leaf("ks_h1", "H1."), leaf("ks_h2", "H2."))
+	handoff.Instructions = "Route tasks."
+	router := team("ks_router", ai.StrategyRouter, leaf("ks_r1", "R1."), leaf("ks_r2", "R2."))
+	router.Router = leaf("ks_router_lead", "Route to correct agent.")
+	swarm := team("ks_swarm", ai.StrategySwarm, leaf("ks_sw1", "SW1."), leaf("ks_sw2", "SW2."))
+	swarm.Handoffs = []ai.HandoffCondition{
+		&ai.OnTextMention{Text: "GOTO_SW2", Target: "ks_sw2"},
+		&ai.OnTextMention{Text: "GOTO_SW1", Target: "ks_sw1"},
+	}
+
+	return &ai.Agent{
+		Name: "e2e_kitchen_sink", Model: suite1Model, Instructions: "You are the kitchen sink agent.",
+		Tools: []ai.ToolDef{
+			tool.Func("local_tool", "A local worker tool.",
+				func(ctx context.Context, in xIn) (string, error) { return in.X, nil }),
+			tool.Func("cred_local_tool", "Worker tool with credentials.",
+				func(ctx context.Context, in xIn) (string, error) { return in.X, nil },
+				tool.WithCredentials("KS_SECRET")),
+			tool.HTTP("ks_http", "HTTP endpoint", suite1MCPURL+"/echo", tool.WithMethod("POST")),
+			tool.MCP("ks_mcp", "MCP tools", suite1MCPURL),
+			tool.Image("ks_image", "Generate image", "openai", "dall-e-3"),
+			tool.Audio("ks_audio", "Generate audio", "openai", "tts-1"),
+			tool.Video("ks_video", "Generate video", "openai", "sora"),
+			tool.PDF("ks_pdf", "Generate PDF"),
+		},
+		Guardrails: []ai.Guardrail{
+			passingGuardrail("check_input", ai.PositionInput),
+			passingGuardrail("no_pii", ai.PositionOutput),
+			regexGuardrail("no_password", "password", "No passwords in output."),
+		},
+		Strategy: ai.StrategyHandoff,
+		Agents: []*ai.Agent{
+			handoff,
+			team("ks_sequential", ai.StrategySequential, leaf("ks_seq1", "Seq1."), leaf("ks_seq2", "Seq2.")),
+			team("ks_parallel", ai.StrategyParallel, leaf("ks_p1", "P1."), leaf("ks_p2", "P2.")),
+			router,
+			team("ks_round_robin", ai.StrategyRoundRobin, leaf("ks_rr1", "RR1."), leaf("ks_rr2", "RR2.")),
+			team("ks_random", ai.StrategyRandom, leaf("ks_rand1", "Rand1."), leaf("ks_rand2", "Rand2.")),
+			swarm,
+			team("ks_manual", ai.StrategyManual, leaf("ks_m1", "M1."), leaf("ks_m2", "M2.")),
+		},
+	}
+}
+
+type xIn struct {
+	X string `json:"x"`
+}
+
+func TestKitchenSinkCompiles(t *testing.T) {
+	rt := newRuntime(t)
+	plan := planAgent(t, rt, kitchenSink())
+	wf := workflowDef(t, plan)
+	assertPlanStructure(t, plan, "e2e_kitchen_sink")
+	ad := agentDef(t, plan)
+
+	for name, want := range map[string]string{
+		"local_tool": "worker", "cred_local_tool": "worker", "ks_http": "http", "ks_mcp": "mcp",
+		"ks_image": "generate_image", "ks_audio": "generate_audio", "ks_video": "generate_video", "ks_pdf": "generate_pdf",
+	} {
+		assertToolType(t, ad, name, want)
+	}
+	if creds := toolCredentials(ad); !reflect.DeepEqual(creds["cred_local_tool"], []string{"KS_SECRET"}) {
+		t.Errorf("cred_local_tool credentials = %v, want [KS_SECRET]", creds["cred_local_tool"])
+	}
+
+	guardrails := asList(ad["guardrails"])
+	if len(guardrails) != 3 {
+		t.Errorf("agentDef.guardrails has %d entries, want 3", len(guardrails))
+	}
+	for _, raw := range guardrails {
+		g, _ := raw.(map[string]any)
+		if g["name"] == "no_password" {
+			if g["guardrailType"] != "regex" || !contains(toStrings(asList(g["patterns"])), "password") {
+				t.Errorf("no_password = %v", g)
+			}
+		}
+	}
+
+	wantStrategies := map[string]string{
+		"ks_handoff": "handoff", "ks_sequential": "sequential", "ks_parallel": "parallel", "ks_router": "router",
+		"ks_round_robin": "round_robin", "ks_random": "random", "ks_swarm": "swarm", "ks_manual": "manual",
+	}
+	subs := map[string]map[string]any{}
+	for _, raw := range asList(ad["agents"]) {
+		a, _ := raw.(map[string]any)
+		subs[fmt.Sprint(a["name"])] = a
+	}
+	for name, want := range wantStrategies {
+		sub, ok := subs[name]
+		if !ok {
+			t.Errorf("sub-agent %s missing; have %v", name, keys(toAny(subs)))
+			continue
+		}
+		if sub["strategy"] != want {
+			t.Errorf("sub-agent %s strategy = %v, want %s", name, sub["strategy"], want)
+		}
+	}
+	if ad["strategy"] != "handoff" {
+		t.Errorf("parent strategy = %v, want handoff", ad["strategy"])
+	}
+	if types := taskTypes(allTasks(wf)); !types["SUB_WORKFLOW"] {
+		t.Errorf("no SUB_WORKFLOW task; types = %v", types)
+	}
+	assertMatchesPython(t, "e2e_kitchen_sink", plan)
+}
+
+func toAny[V any](m map[string]V) map[string]any {
+	out := make(map[string]any, len(m))
+	for k, v := range m {
+		out[k] = v
+	}
+	return out
+}
+
+func toStrings(list []any) []string {
+	out := make([]string, 0, len(list))
+	for _, v := range list {
+		out = append(out, fmt.Sprint(v))
+	}
+	return out
+}
+
 // ── helpers ─────────────────────────────────────────────────────────
 
 func planAgent(t *testing.T, rt *ai.Runtime, agent *ai.Agent) map[string]any {
@@ -388,6 +582,8 @@ func assertMatchesPython(t *testing.T, name string, plan map[string]any) {
 	if err := json.Unmarshal(buf, &got); err != nil {
 		t.Fatal(err)
 	}
+	canonicalScripts(got)
+	canonicalScripts(want)
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("compiled workflow differs from the Python SDK's for %s\n--- go ---\n%s\n--- python ---\n%s",
 			name, indent(got), indent(want))
@@ -416,6 +612,41 @@ func assertSameLLMCalls(t *testing.T, name string, got, want map[string]any) {
 	params, _ := gotLLM[0]["inputParameters"].(map[string]any)
 	t.Logf("%s: %d LLM_CHAT_COMPLETE task(s) identical to Python's; inputs carry %v",
 		name, len(gotLLM), keys(params))
+}
+
+// canonicalScripts rewrites every "expression" string, the JavaScript the
+// compiler generates for INLINE tasks, into a form that ignores the order of
+// keys in the JSON it embeds. The compiler writes our tool and agent configs
+// into those scripts as JSON text, and Python emits object keys in declaration
+// order while Go's encoder sorts them, so the scripts differ in order and in
+// nothing else. The agentDef those scripts were built from is compared exactly
+// above, so nothing about the SDKs' output is lost by comparing scripts as a
+// sorted multiset of their JSON tokens.
+func canonicalScripts(v any) {
+	switch node := v.(type) {
+	case map[string]any:
+		for k, child := range node {
+			if k == "expression" {
+				if s, ok := child.(string); ok {
+					node[k] = sortedTokens(s)
+					continue
+				}
+			}
+			canonicalScripts(child)
+		}
+	case []any:
+		for _, child := range node {
+			canonicalScripts(child)
+		}
+	}
+}
+
+func sortedTokens(script string) string {
+	tokens := strings.FieldsFunc(script, func(r rune) bool {
+		return strings.ContainsRune("{}[],: \n\t", r)
+	})
+	sort.Strings(tokens)
+	return strings.Join(tokens, " ")
 }
 
 // llmTasks returns the LLM_CHAT_COMPLETE tasks of a plan result, in workflow order.

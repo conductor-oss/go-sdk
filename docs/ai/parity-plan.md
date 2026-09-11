@@ -20,6 +20,7 @@ server.
 | `output_type` | `OutputType any` (struct → JSON Schema) | |
 | `code_execution`, `cli` | `CodeExecutionConfig`, `CLIConfig` | derived execution tools |
 | `Plan` (static plans) | `ai.Plan`, `Step`, `Op`, `Ref`, `Generate`; `ai.WithPlan` | |
+| `skill()`, `load_skills()` | `ai.LoadSkill`, `ai.LoadSkills` + `SkillOption`s | raw document normalized server-side; scripts and `read_skill_file` served as workers |
 
 ### Runtime + transport
 

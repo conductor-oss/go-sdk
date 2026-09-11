@@ -63,8 +63,36 @@ func toolExecutor(t ToolDef) (model.ExecuteTaskFunction, error) {
 		if err, ok := out[1].Interface().(error); ok && err != nil {
 			return nil, err
 		}
-		return out[0].Interface(), nil
+		return toolOutput(out[0].Interface()), nil
 	}, nil
+}
+
+// toolOutput shapes a handler's return value as task output. A map or a
+// struct is already an object and travels as is. Anything else, a string, a
+// number, a bool, a slice, becomes {"result": value}, which is what the Python
+// worker does with a non-dict return. Without this the worker's JSON
+// round-trip into a map drops a scalar silently and the model sees an empty
+// result.
+func toolOutput(v any) any {
+	if v == nil {
+		return map[string]any{"result": nil}
+	}
+	rv := reflect.ValueOf(v)
+	for rv.Kind() == reflect.Ptr {
+		if rv.IsNil() {
+			return map[string]any{"result": nil}
+		}
+		rv = rv.Elem()
+	}
+	switch rv.Kind() {
+	case reflect.Struct:
+		return v
+	case reflect.Map:
+		if rv.Type().Key().Kind() == reflect.String {
+			return v
+		}
+	}
+	return map[string]any{"result": v}
 }
 
 type taskContextKey struct{}
