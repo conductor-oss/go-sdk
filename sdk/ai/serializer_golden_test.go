@@ -68,6 +68,36 @@ var goldenFixtures = map[string]func() *Agent{
 			Agents:   []*Agent{billing(), refunds(), tech()},
 		}
 	},
+	"23_gate": func() *Agent {
+		return &Agent{
+			Name: "gated_pipeline", Model: testModel, Strategy: StrategySequential,
+			Agents: []*Agent{
+				{Name: "triage", Model: testModel, Instructions: "Triage.",
+					Gate: TextGate{Text: "ESCALATE", IgnoreCase: true}},
+				{Name: "review", Model: testModel, Instructions: "Review.",
+					Gate: GateFunc(func(context.Context, GateState) (bool, error) { return true, nil })},
+				{Name: "finish", Model: testModel, Instructions: "Finish."},
+			},
+		}
+	},
+	"24_planning_fields": func() *Agent {
+		weather := mkTool("get_weather", "Get the current weather for a city.", weatherIn{}, map[string]any{})
+		return &Agent{
+			Name: "planned", Model: testModel, Instructions: "Plan with context.",
+			Strategy: StrategyPlanExecute,
+			Tools:    []ToolDef{weather},
+			Planner:  &Agent{Name: "ctx_planner", Model: testModel, Instructions: "Emit JSON plan."},
+			PlannerContext: []PlanContext{
+				{Text: "Prefer metric units."},
+				{URL: "https://docs.example.test/policy.md", Headers: map[string]string{"X-Team": "ops"},
+					Optional: true, MaxBytes: 4096},
+				{Text: "Plain string context."},
+			},
+			PlanSource:   map[string]any{"type": "inline", "plan": map[string]any{"steps": []any{}}},
+			Synthesize:   Ptr(false),
+			PrefillTools: []PrefillToolCall{Prefill(weather, map[string]any{"city": "Paris", "days": 2})},
+		}
+	},
 	"21_base_url": func() *Agent {
 		return &Agent{
 			Name: "proxied", Model: testModel, Instructions: "Say hello.",

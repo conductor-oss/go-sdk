@@ -1,0 +1,181 @@
+[
+  {
+    "config": {
+      "max_tools": 64,
+      "url": "https://api.example.test/openapi.json"
+    },
+    "description": "API tools from https://api.example.test/openapi.json",
+    "inputSchema": {},
+    "name": "api_tools",
+    "toolType": "api"
+  },
+  {
+    "config": {
+      "credentials": [
+        "STRIPE_KEY"
+      ],
+      "headers": {
+        "Authorization": "Bearer ${STRIPE_KEY}"
+      },
+      "max_tools": 20,
+      "tool_names": [
+        "GetCharge",
+        "ListCharges"
+      ],
+      "url": "https://api.stripe.test/openapi.json"
+    },
+    "description": "Stripe API.",
+    "inputSchema": {},
+    "name": "stripe",
+    "toolType": "api"
+  },
+  {
+    "config": {
+      "embeddingModel": "text-embedding-3-small",
+      "embeddingModelProvider": "openai",
+      "index": "product_docs",
+      "namespace": "default_ns",
+      "taskType": "LLM_INDEX_TEXT",
+      "vectorDB": "pgvectordb"
+    },
+    "description": "Add a document to the knowledge base.",
+    "inputSchema": {
+      "properties": {
+        "docId": {
+          "description": "Unique document identifier.",
+          "type": "string"
+        },
+        "metadata": {
+          "description": "Optional metadata to store with the document.",
+          "type": "object"
+        },
+        "text": {
+          "description": "The text content to index.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text",
+        "docId"
+      ],
+      "type": "object"
+    },
+    "name": "index_document",
+    "toolType": "rag_index"
+  },
+  {
+    "config": {
+      "chunkOverlap": 64,
+      "chunkSize": 512,
+      "dimensions": 3072,
+      "embeddingModel": "text-embedding-3-large",
+      "embeddingModelProvider": "openai",
+      "index": "notes",
+      "namespace": "team_a",
+      "taskType": "LLM_INDEX_TEXT",
+      "vectorDB": "pineconedb"
+    },
+    "description": "Index with chunking.",
+    "inputSchema": {
+      "properties": {
+        "docId": {
+          "description": "Unique document identifier.",
+          "type": "string"
+        },
+        "metadata": {
+          "description": "Optional metadata to store with the document.",
+          "type": "object"
+        },
+        "text": {
+          "description": "The text content to index.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text",
+        "docId"
+      ],
+      "type": "object"
+    },
+    "name": "index_chunked",
+    "toolType": "rag_index"
+  },
+  {
+    "config": {
+      "embeddingModel": "text-embedding-3-small",
+      "embeddingModelProvider": "openai",
+      "index": "product_docs",
+      "maxResults": 5,
+      "namespace": "default_ns",
+      "taskType": "LLM_SEARCH_INDEX",
+      "vectorDB": "pgvectordb"
+    },
+    "description": "Search the product documentation.",
+    "inputSchema": {
+      "properties": {
+        "query": {
+          "description": "The search query.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "query"
+      ],
+      "type": "object"
+    },
+    "name": "search_knowledge_base",
+    "toolType": "rag_search"
+  },
+  {
+    "config": {
+      "dimensions": 3072,
+      "embeddingModel": "text-embedding-3-large",
+      "embeddingModelProvider": "openai",
+      "index": "notes",
+      "maxResults": 3,
+      "namespace": "team_a",
+      "taskType": "LLM_SEARCH_INDEX",
+      "vectorDB": "pineconedb"
+    },
+    "description": "Search notes.",
+    "inputSchema": {
+      "properties": {
+        "query": {
+          "description": "The search query.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "query"
+      ],
+      "type": "object"
+    },
+    "name": "search_notes",
+    "toolType": "rag_search"
+  },
+  {
+    "config": {
+      "batchSize": 1
+    },
+    "description": "Wait until a message is sent to this agent.",
+    "inputSchema": {
+      "properties": {},
+      "type": "object"
+    },
+    "name": "wait_for_message",
+    "toolType": "pull_workflow_messages"
+  },
+  {
+    "config": {
+      "batchSize": 5,
+      "blocking": false
+    },
+    "description": "Take up to five queued messages without waiting.",
+    "inputSchema": {
+      "properties": {},
+      "type": "object"
+    },
+    "name": "poll_messages",
+    "toolType": "pull_workflow_messages"
+  }
+]

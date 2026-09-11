@@ -144,6 +144,24 @@ type Agent struct {
 	// EnablePlanning asks the model to plan before acting. It is unrelated to
 	// Planner: this is a preamble on a single agent, that is a sub-agent slot.
 	EnablePlanning bool
+	// PlannerContext is extra material for the Planner, as text or as URLs
+	// the server fetches. StrategyPlanExecute only.
+	PlannerContext []PlanContext
+	// PlanSource supplies the plan from an expression the server evaluates,
+	// instead of the Planner writing one. Sent as written; see the server's
+	// plan-source documentation for the shape. Python's plan_source.
+	PlanSource map[string]any
+	// Synthesize controls the final LLM step that combines the specialists'
+	// results into one answer. Nil keeps the server's default of true;
+	// Ptr(false) skips the step.
+	Synthesize *bool
+	// PrefillTools run before the first LLM turn, with fixed arguments, and
+	// their results open the conversation. Build them with Prefill.
+	PrefillTools []PrefillToolCall
+	// Gate decides, after this agent finishes inside a sequential pipeline,
+	// whether the pipeline continues to the next agent. See TextGate and
+	// GateFunc.
+	Gate GateCondition
 
 	// Handoffs move control between sub-agents, usually with StrategySwarm.
 	Handoffs []HandoffCondition
@@ -267,6 +285,11 @@ func (a *Agent) Validate() error {
 			return fmt.Errorf("agent %q: %w", a.Name, err)
 		}
 	}
+	for _, p := range a.PrefillTools {
+		if err := p.Tool.Validate(); err != nil {
+			return fmt.Errorf("agent %q prefill: %w", a.Name, err)
+		}
+	}
 	if err := a.validateRouting(); err != nil {
 		return err
 	}
@@ -374,6 +397,21 @@ func (a *Agent) validateComposition() error {
 	if a.Fallback != nil {
 		if err := a.Fallback.Validate(); err != nil {
 			return fmt.Errorf("agent %q fallback: %w", a.Name, err)
+		}
+	}
+	// Planner context is appended to the planner's prompt, which only exists
+	// under plan-execute; Python rejects it elsewhere and so does this.
+	if len(a.PlannerContext) > 0 && a.Strategy != StrategyPlanExecute {
+		return fmt.Errorf("agent %q: PlannerContext requires StrategyPlanExecute", a.Name)
+	}
+	for i, c := range a.PlannerContext {
+		if err := c.validate(); err != nil {
+			return fmt.Errorf("agent %q: PlannerContext[%d]: %w", a.Name, i, err)
+		}
+	}
+	if a.Gate != nil {
+		if err := a.Gate.validateGate(); err != nil {
+			return fmt.Errorf("agent %q: %w", a.Name, err)
 		}
 	}
 	return nil

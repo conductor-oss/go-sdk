@@ -12,6 +12,12 @@ server.
 | `Agent` | `ai.Agent` struct + `Validate()` | defaults substituted at serialization |
 | `@tool` | `tool.Func(name, desc, fn)` | input **and output** schema by reflection |
 | HTTP / human / agent / MCP tools | `tool.HTTP`, `tool.Human`, `tool.Agent`, `tool.MCP` | settings in `ToolDef.Config` |
+| `api_tool`, `index_tool`, `search_tool`, `wait_for_message_tool` | `tool.API`, `tool.Index`, `tool.Search`, `tool.WaitForMessage` | pinned against Python in `sdk/ai/tool/testdata` |
+| `image_tool`, `audio_tool`, `video_tool`, `pdf_tool` | `tool.Image`, `tool.Audio`, `tool.Video`, `tool.PDF` | Python's default schemas, pinned |
+| `@tool(retry_count, retry_delay_seconds, retry_policy)` | `tool.WithRetry`, `RetryPolicy` | on the task definition the runtime registers, not in agentConfig |
+| `gate` (TextGate or callable) | `Agent.Gate`: `TextGate`, `GateFunc` | `{agent}_gate` worker for the func |
+| `prefill_tools`, `plan_source`, `planner_context`, `synthesize` | `PrefillTools` + `Prefill`, `PlanSource`, `PlannerContext`, `Synthesize` | |
+| `dependencies` | not ported | never on the wire; Go tools take what they need through closures |
 | `Strategy` | `ai.Strategy` (9 constants) | emitted only with sub-agents |
 | `OnToolResult`, `OnTextMention`, `OnCondition` | same names; `OnCondition.Condition` is `HandoffFunc(ctx, HandoffState)` | one `OnCondition` per target |
 | regex / llm / custom guardrail | `RegexGuardrail`, `LLMGuardrail`, `CustomGuardrail` + `NewCustomGuardrail` | `GuardrailFunc(ctx, GuardrailInput)` |

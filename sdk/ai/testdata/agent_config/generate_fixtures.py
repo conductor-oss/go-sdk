@@ -42,17 +42,23 @@ from conductor.ai.agents import (
     TextMentionTermination,
     TokenUsageTermination,
     agent_tool,
-    guardrail,
+    api_tool,
     audio_tool,
+    guardrail,
     http_tool,
     human_tool,
     image_tool,
+    index_tool,
     mcp_tool,
     pdf_tool,
+    search_tool,
     skill,
-    video_tool,
     tool,
+    video_tool,
+    wait_for_message_tool,
 )
+from conductor.ai.agents.gate import TextGate
+from conductor.ai.agents.plans import Context
 from conductor.ai.agents.config_serializer import AgentConfigSerializer
 
 MODEL = "openai/gpt-4o"
@@ -113,6 +119,11 @@ def pick_specialist(prompt: str) -> str:
 
 def needs_escalation(state: Dict[str, Any]) -> bool:
     return True
+
+
+def keep_going(result: str) -> bool:
+    """Serializes to {"taskName": "<agent>_gate"}."""
+    return "STOP" not in result
 
 
 @guardrail
@@ -314,6 +325,36 @@ def fixtures() -> Dict[str, Agent]:
         base_url="https://my-custom-proxy.example.com/v1",
     )
 
+    out["23_gate"] = Agent(
+        name="gated_pipeline",
+        model=MODEL,
+        strategy=Strategy.SEQUENTIAL,
+        agents=[
+            Agent(name="triage", model=MODEL, instructions="Triage.",
+                  gate=TextGate(text="ESCALATE", case_sensitive=False)),
+            Agent(name="review", model=MODEL, instructions="Review.", gate=keep_going),
+            Agent(name="finish", model=MODEL, instructions="Finish."),
+        ],
+    )
+
+    out["24_planning_fields"] = Agent(
+        name="planned",
+        model=MODEL,
+        instructions="Plan with context.",
+        strategy=Strategy.PLAN_EXECUTE,
+        tools=[get_weather],
+        planner=Agent(name="ctx_planner", model=MODEL, instructions="Emit JSON plan."),
+        planner_context=[
+            Context(text="Prefer metric units."),
+            Context(url="https://docs.example.test/policy.md", headers={"X-Team": "ops"},
+                    required=False, max_bytes=4096),
+            "Plain string context.",
+        ],
+        plan_source={"type": "inline", "plan": {"steps": []}},
+        synthesize=False,
+        prefill_tools=[get_weather.call(city="Paris", days=2)],
+    )
+
     out["16_nested_tree"] = Agent(
         name="root",
         model=MODEL,
@@ -383,6 +424,35 @@ def main() -> int:
         json.dumps([serializer._serialize_tool(t) for t in media], indent=2, sort_keys=True) + "\n"
     )
     print(f"wrote {tool_dir / 'tools_media.json'}")
+
+    # The other server-side tools, for the same reason.
+    serverside = [
+        api_tool(url="https://api.example.test/openapi.json"),
+        api_tool(url="https://api.stripe.test/openapi.json", name="stripe", description="Stripe API.",
+                 headers={"Authorization": "Bearer ${STRIPE_KEY}"}, tool_names=["GetCharge", "ListCharges"],
+                 max_tools=20, credentials=["STRIPE_KEY"]),
+        index_tool(name="index_document", description="Add a document to the knowledge base.",
+                   vector_db="pgvectordb", index="product_docs",
+                   embedding_model_provider="openai", embedding_model="text-embedding-3-small"),
+        index_tool(name="index_chunked", description="Index with chunking.",
+                   vector_db="pineconedb", index="notes",
+                   embedding_model_provider="openai", embedding_model="text-embedding-3-large",
+                   namespace="team_a", chunk_size=512, chunk_overlap=64, dimensions=3072),
+        search_tool(name="search_knowledge_base", description="Search the product documentation.",
+                    vector_db="pgvectordb", index="product_docs",
+                    embedding_model_provider="openai", embedding_model="text-embedding-3-small"),
+        search_tool(name="search_notes", description="Search notes.",
+                    vector_db="pineconedb", index="notes",
+                    embedding_model_provider="openai", embedding_model="text-embedding-3-large",
+                    namespace="team_a", max_results=3, dimensions=3072),
+        wait_for_message_tool(name="wait_for_message", description="Wait until a message is sent to this agent."),
+        wait_for_message_tool(name="poll_messages", description="Take up to five queued messages without waiting.",
+                              batch_size=5, blocking=False),
+    ]
+    (tool_dir / "tools_serverside.json").write_text(
+        json.dumps([serializer._serialize_tool(t) for t in serverside], indent=2, sort_keys=True) + "\n"
+    )
+    print(f"wrote {tool_dir / 'tools_serverside.json'}")
 
     written = 0
     for name, agent in sorted(fixtures().items()):
