@@ -37,6 +37,7 @@ server.
 | `AgentRuntime.deploy` (single agent) | `Runtime.Deploy` -> registered name |
 | `AgentRuntime.serve` | `Runtime.Serve(ctx, agents...)`, blocks until ctx done |
 | `AgentRuntime.signal`, `send_message` | `Runtime.Signal` / `Runtime.SendMessage`, also on `AgentHandle` |
+| `AgentRuntime.pause`, handle `resume` (un-pause) | `Runtime.Pause` / `Runtime.Resume`, also on `AgentHandle` |
 | `run(..., media=)`, `run_settings=` | `WithMedia`, `WithRunSettings` (`RunSettings`) |
 | `AgentHandle` | `AgentHandle`: `Events`, `Status`, `Waiting`, `Respond`, `Approve`, `Reject`, `Stop`, `Result` |
 | `AgentClient` | `client.AgentClient` + `APIClient.StreamSSE` |

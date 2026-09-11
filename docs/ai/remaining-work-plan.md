@@ -66,11 +66,26 @@ In this order; the first three are wiring over calls the client already has.
 Proof: suites 24 (agent client, 5 tests) and 25 (media input, 2 tests), plus
 a Go-only e2e for Serve that deploys, then starts the run from `AgentClient`.
 
-## Step 3: pause, resume, and resume from an instance
+## Step 3: pause and resume — DONE 2026-09-11 (re-attach deferred)
 
-`Runtime.Pause`, `Resume`, and `Resume(ctx, executionID)` for an existing
-execution, with the handle able to reattach. Unlocks suite 23 (from instance
-and event human-in-the-loop, 23 tests), the largest Python suite.
+Done on `feat/agent-golden-fixtures` (uncommitted at time of writing).
+`Runtime.Pause` and `Runtime.Resume` suspend and un-pause an execution
+(PUT `/workflow/{id}/pause` and `/resume`), and are also on `AgentHandle`.
+Wire behavior is covered by fake-server unit tests; live pause/resume is
+timing-dependent (the replay model returns before a pause could land), so it
+is not e2e-recorded.
+
+**Resume from an instance (re-attach) is deferred**, not implemented. In
+Python `runtime.resume(id, agent)` re-registers a run's tool workers in the
+process, keyed to the execution's per-execution worker domain. In Go two
+things make it low-value today: workers are in-process goroutines, so the
+only case they vanish is a process restart, which a standing `Serve(agent)`
+already covers for the whole fleet; and the Go runtime does not yet route
+stateful agents to per-execution domains, so re-attach's one advantage over
+`Serve` — reconnecting to a specific execution's domain — cannot be
+exercised or tested. Add it together with stateful-domain routing, when it
+can be verified end to end, rather than ship a method whose main use is
+untestable. Suite 23's event HITL flows still remain to port.
 
 ## Step 4: callbacks
 

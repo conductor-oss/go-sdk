@@ -185,6 +185,16 @@ func (h *AgentHandle) SendMessage(ctx context.Context, message any) error {
 	return h.rt.SendMessage(ctx, h.ExecutionID, message)
 }
 
+// Pause suspends this run; see Runtime.Pause.
+func (h *AgentHandle) Pause(ctx context.Context) error {
+	return h.rt.Pause(ctx, h.ExecutionID)
+}
+
+// Resume continues this run after Pause; see Runtime.Resume.
+func (h *AgentHandle) Resume(ctx context.Context) error {
+	return h.rt.Resume(ctx, h.ExecutionID)
+}
+
 // decodeEvent normalizes one SSE frame.
 //
 // The event name may arrive as the SSE "event:" field or inside the JSON
