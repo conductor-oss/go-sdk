@@ -2,13 +2,23 @@
 # Conductor. Shared by scripts/run-integration-oss.sh and the
 # integration-tests-oss job in .github/workflows/integration-tests-sm.yml.
 #
-# OSS_CONDUCTOR_VERSION defaults to `latest` for local runs. CI resolves it from
-# the E2E_TEST_OSS_CONDUCTOR_VERSION org variable (or a workflow_dispatch
-# input); that variable is currently set to `latest` too, so CI tracks whatever
-# `latest` resolves to at run time rather than a fixed version. Set the org
-# variable to a real tag if the job needs to be deterministic -- note that the
-# suite has no version gating on OSS (see testdata.RequireAtLeast), so pinning
-# an older tag surfaces as test failures rather than skips.
+# The `image:` default below is the SINGLE place the Conductor OSS image tag is
+# written. Everything that does not override OSS_CONDUCTOR_VERSION lands on it:
+# a plain scripts/run-integration-oss.sh run, and the integration-tests-oss job
+# on a fork PR (where GitHub withholds org variables). Overrides are the
+# script's --version flag and, in CI, the E2E_TEST_OSS_CONDUCTOR_VERSION org
+# variable or a workflow_dispatch input. Bump the tag here and both follow.
+#
+# The org variable is currently set to `latest`, so a normal CI run still tracks
+# whatever `latest` resolves to at run time; this default is what actually pins
+# fork PRs and local runs until someone sets it to a real tag.
+#
+# Mind the tag you pick: this suite has no version gating on OSS (see
+# testdata.RequireAtLeast, which returns early when IsOSS() because Orkes
+# Enterprise version numbers are unrelated to OSS's). OSS gaps are gated
+# per-test via SkipIfOSS/OSSGapSkipped on empirical evidence, not on a version
+# threshold -- so an image older than something the suite exercises surfaces as
+# a test failure, never as a skip.
 #
 # httpbin: a handful of integration tests exercise the HTTP task type against
 # a fixed "http://httpbin:8081/..." URL (hardcoded in test fixtures/JSON
@@ -17,7 +27,7 @@
 # tag python-sdk uses, so the two suites exercise identical behavior.
 services:
   conductor-server:
-    image: conductoross/conductor:${OSS_CONDUCTOR_VERSION:-latest}
+    image: conductoross/conductor:${OSS_CONDUCTOR_VERSION:-3.32.3}
     environment:
       - CONFIG_PROP=config-postgres.properties
       # Dummy, non-sensitive value so OSS's bundled env-backed SecretsDAO has
