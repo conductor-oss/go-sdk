@@ -224,6 +224,32 @@ func (a *Agent) addComposition(cfg map[string]any) {
 	if a.FallbackMaxTurns > 0 {
 		cfg["fallbackMaxTurns"] = a.FallbackMaxTurns
 	}
+	if len(a.PrefillTools) > 0 {
+		calls := make([]any, 0, len(a.PrefillTools))
+		for _, p := range a.PrefillTools {
+			calls = append(calls, p.config())
+		}
+		cfg["prefillTools"] = calls
+	}
+	// Python emits planSource whenever it is not None, an empty map included,
+	// so nil-ness rather than emptiness decides here.
+	if a.PlanSource != nil {
+		cfg["planSource"] = a.PlanSource
+	}
+	if len(a.PlannerContext) > 0 {
+		entries := make([]any, 0, len(a.PlannerContext))
+		for _, c := range a.PlannerContext {
+			entries = append(entries, c.config())
+		}
+		cfg["plannerContext"] = entries
+	}
+	// Synthesis is on by default; only the opt-out travels.
+	if a.Synthesize != nil && !*a.Synthesize {
+		cfg["synthesize"] = false
+	}
+	if a.Gate != nil {
+		cfg["gate"] = a.Gate.gateConfig(a.Name)
+	}
 
 }
 

@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/conductor-sdk/conductor-go/sdk/client"
+	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/sdk/worker"
 )
 
@@ -58,12 +59,17 @@ func (c Config) statusPoll() time.Duration {
 // It owns a TaskRunner, so one Runtime can serve many agents; workers are
 // registered once per task name and reused across runs.
 type Runtime struct {
-	api     *client.APIClient
-	agents  client.AgentClient
-	runner  *worker.TaskRunner
-	config  Config
-	mu      sync.Mutex
-	started map[string]bool // task names already registered
+	api      *client.APIClient
+	agents   client.AgentClient
+	metadata client.MetadataClient
+	runner   *worker.TaskRunner
+	config   Config
+	mu       sync.Mutex
+	started  map[string]bool // task names already registered
+	// defs are the task definitions for started workers, registered after a
+	// run starts; registered records which ones have been sent.
+	defs       map[string]model.TaskDef
+	registered map[string]bool
 }
 
 // NewRuntime builds a Runtime from CONDUCTOR_SERVER_URL and, on a secured
@@ -77,11 +83,14 @@ func NewRuntime(cfg Config) *Runtime {
 // share auth and connection settings with the rest of an application.
 func NewRuntimeWithClient(apiClient *client.APIClient, cfg Config) *Runtime {
 	return &Runtime{
-		api:     apiClient,
-		agents:  client.NewAgentClient(apiClient),
-		runner:  worker.NewTaskRunnerWithApiClient(apiClient),
-		config:  cfg,
-		started: map[string]bool{},
+		api:        apiClient,
+		agents:     client.NewAgentClient(apiClient),
+		metadata:   client.NewMetadataClient(apiClient),
+		runner:     worker.NewTaskRunnerWithApiClient(apiClient),
+		config:     cfg,
+		started:    map[string]bool{},
+		defs:       map[string]model.TaskDef{},
+		registered: map[string]bool{},
 	}
 }
 
@@ -194,6 +203,9 @@ func (r *Runtime) Start(ctx context.Context, agent *Agent, prompt string, opts .
 	if !ok || executionID == "" {
 		return nil, fmt.Errorf("start agent %q: server returned no executionId", agent.Name)
 	}
+	if err := r.registerTaskDefs(ctx); err != nil {
+		return nil, err
+	}
 	return &AgentHandle{ExecutionID: executionID, rt: r}, nil
 }
 
@@ -214,6 +226,9 @@ func (r *Runtime) Run(ctx context.Context, agent *Agent, prompt string, opts ...
 	executionID, ok := started["executionId"].(string)
 	if !ok || executionID == "" {
 		return nil, fmt.Errorf("start agent %q: server returned no executionId", agent.Name)
+	}
+	if err := r.registerTaskDefs(ctx); err != nil {
+		return nil, err
 	}
 
 	return r.awaitResult(ctx, executionID)
@@ -286,6 +301,7 @@ func (r *Runtime) startWorkers(tools []ToolDef) error {
 		if err != nil {
 			return err
 		}
+		r.defs[t.Name] = t.taskDef()
 		if err := r.runner.StartWorker(
 			t.Name, fn, r.config.batchSize(), r.config.workerPoll()); err != nil {
 			return fmt.Errorf("start worker %q: %w", t.Name, err)
@@ -323,6 +339,18 @@ func (a *Agent) workerTools() []ToolDef {
 	// document.
 	if a.skill != nil {
 		tools = append(tools, a.skill.workers(a.Name)...)
+	}
+	// A Go gate is a worker under "<agent>_gate", the name the serializer put
+	// in the gate document.
+	if g, ok := a.Gate.(GateFunc); ok {
+		tools = append(tools, ToolDef{Name: a.workerTaskName(gateSuffix), Handler: g.gateHandler()})
+	}
+	// Prefill tools are scheduled by the server before the first turn whether
+	// or not they are also in Tools, so their workers start too.
+	for _, p := range a.PrefillTools {
+		if p.Tool.Handler != nil {
+			tools = append(tools, p.Tool)
+		}
 	}
 	return tools
 }
@@ -377,6 +405,32 @@ func (a *Agent) nestedAgents() []*Agent {
 		}
 	}
 	return out
+}
+
+// registerTaskDefs registers a task definition for every worker this runtime
+// has started, as the Python SDK does for every worker it hosts. It runs after
+// a run starts, because compiling the agent makes the server write its own
+// definition for each tool, with its own retry and timeout settings; a
+// registration before that would be overwritten, and a tool's RetryCount,
+// RetryDelaySeconds and RetryPolicy would never take effect. Each definition
+// carries the tool's credential names as runtimeMetadata, so it does not wipe
+// what the server compiled there. An existing definition is updated in place;
+// a missing one is created. Each name is registered once per runtime.
+func (r *Runtime) registerTaskDefs(ctx context.Context) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for name, def := range r.defs {
+		if r.registered[name] {
+			continue
+		}
+		if _, err := r.metadata.UpdateTaskDef(ctx, def); err != nil {
+			if _, err := r.metadata.RegisterTaskDef(ctx, []model.TaskDef{def}); err != nil {
+				return fmt.Errorf("register task definition %q: %w", name, err)
+			}
+		}
+		r.registered[name] = true
+	}
+	return nil
 }
 
 // Shutdown stops every worker this runtime started.

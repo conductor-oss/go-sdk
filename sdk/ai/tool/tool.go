@@ -83,6 +83,18 @@ func WithTimeout(seconds int) Option {
 	return func(t *ai.ToolDef) { t.TimeoutSeconds = &seconds }
 }
 
+// WithRetry sets how the worker's task is retried when a call fails: count
+// retries, delaySeconds apart, per policy. It configures the task definition
+// the runtime registers, not the agent document. Without it a tool gets the
+// Python SDK's defaults: 2 retries, 2 seconds apart, linear backoff.
+func WithRetry(count, delaySeconds int, policy ai.RetryPolicy) Option {
+	return func(t *ai.ToolDef) {
+		t.RetryCount = ai.Ptr(count)
+		t.RetryDelaySeconds = ai.Ptr(delaySeconds)
+		t.RetryPolicy = policy
+	}
+}
+
 // WithMaxCalls caps how many times the agent may call this tool in a run.
 func WithMaxCalls(n int) Option {
 	return func(t *ai.ToolDef) { t.MaxCalls = &n }

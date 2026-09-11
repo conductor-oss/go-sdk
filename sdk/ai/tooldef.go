@@ -13,6 +13,8 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
+
+	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
 // ToolType selects how the server dispatches a tool call.
@@ -51,6 +53,34 @@ var validToolTypes = map[ToolType]struct{}{
 	ToolTypePullWorkflowMessages: {},
 }
 
+// RetryPolicy is how a failed worker call is retried. It lives on the task
+// definition the runtime registers for the tool, not in agentConfig. The names
+// are the Python SDK's retry_policy values.
+type RetryPolicy string
+
+const (
+	RetryFixed              RetryPolicy = "fixed"
+	RetryLinearBackoff      RetryPolicy = "linear_backoff"
+	RetryExponentialBackoff RetryPolicy = "exponential_backoff"
+)
+
+// retryLogic maps a policy to Conductor's TaskDef.retryLogic constant.
+var retryLogic = map[RetryPolicy]string{
+	RetryFixed:              "FIXED",
+	RetryLinearBackoff:      "LINEAR_BACKOFF",
+	RetryExponentialBackoff: "EXPONENTIAL_BACKOFF",
+}
+
+// Task definition defaults, from the Python SDK's _default_task_def. Timeout
+// is 0 because the agent controls execution duration; the short response
+// timeout detects a dead worker quickly, with lease extension keeping live
+// ones alive.
+const (
+	defaultRetryCount             = 2
+	defaultRetryDelaySeconds      = 2
+	defaultResponseTimeoutSeconds = 10
+)
+
 // ToolDef is a tool as the server sees it. Build one with the constructors in
 // the tool package rather than by hand: they derive InputSchema and
 // OutputSchema by reflection, which is what keeps the wire format identical to
@@ -83,6 +113,14 @@ type ToolDef struct {
 	TimeoutSeconds *int
 	MaxCalls       *int
 
+	// RetryCount, RetryDelaySeconds and RetryPolicy configure the task
+	// definition the runtime registers for a worker tool. They are not part
+	// of agentConfig. Nil and empty take the Python SDK's defaults: 2 retries,
+	// 2 seconds apart, linear backoff. Set them with tool.WithRetry.
+	RetryCount        *int
+	RetryDelaySeconds *int
+	RetryPolicy       RetryPolicy
+
 	// Guardrails run against this tool's input or output.
 	Guardrails []Guardrail
 
@@ -111,21 +149,61 @@ func (t ToolDef) Validate() error {
 			return fmt.Errorf("invalid toolType %q for tool %q", t.ToolType, t.Name)
 		}
 	}
-	if t.ToolType == ToolTypeMCP {
+	if t.RetryPolicy != "" {
+		if _, ok := retryLogic[t.RetryPolicy]; !ok {
+			return fmt.Errorf("tool %q: invalid retry policy %q", t.Name, t.RetryPolicy)
+		}
+	}
+	switch t.ToolType {
+	case ToolTypeMCP:
 		if u, ok := t.Config["server_url"].(string); !ok || u == "" {
 			return fmt.Errorf("mcp tool %q has no server_url", t.Name)
 		}
-		// A ${NAME} in a header is resolved by the server from the credentials
-		// the tool declares, so an undeclared one would reach the MCP server
-		// as literal text. Python refuses the same way.
-		for _, ref := range credentialRefs(t.Config["headers"]) {
-			if !slices.Contains(t.Credentials, ref) {
-				return fmt.Errorf("mcp tool %q: header placeholder ${%s} is not declared "+
-					"in credentials %v", t.Name, ref, t.Credentials)
-			}
+	case ToolTypeAPI:
+		if u, ok := t.Config["url"].(string); !ok || u == "" {
+			return fmt.Errorf("api tool %q has no url", t.Name)
+		}
+	default:
+		return nil
+	}
+	// A ${NAME} in a header is resolved by the server from the credentials
+	// the tool declares, so an undeclared one would reach the remote server
+	// as literal text. Python refuses the same way for both tool types.
+	for _, ref := range credentialRefs(t.Config["headers"]) {
+		if !slices.Contains(t.Credentials, ref) {
+			return fmt.Errorf("%s tool %q: header placeholder ${%s} is not declared "+
+				"in credentials %v", t.ToolType, t.Name, ref, t.Credentials)
 		}
 	}
 	return nil
+}
+
+// taskDef is the task definition the runtime registers for this worker,
+// matching the Python SDK's _default_task_def field for field. The tool's
+// credential names ride as runtimeMetadata so the registration does not wipe
+// what the server compiled there.
+func (t ToolDef) taskDef() model.TaskDef {
+	retries, delay := defaultRetryCount, defaultRetryDelaySeconds
+	if t.RetryCount != nil {
+		retries = *t.RetryCount
+	}
+	if t.RetryDelaySeconds != nil {
+		delay = *t.RetryDelaySeconds
+	}
+	policy := t.RetryPolicy
+	if policy == "" {
+		policy = RetryLinearBackoff
+	}
+	return model.TaskDef{
+		Name:                   t.Name,
+		RetryCount:             int32(retries),
+		RetryLogic:             retryLogic[policy],
+		RetryDelaySeconds:      int32(delay),
+		TimeoutSeconds:         0,
+		ResponseTimeoutSeconds: defaultResponseTimeoutSeconds,
+		TimeoutPolicy:          "RETRY",
+		RuntimeMetadata:        t.Credentials,
+	}
 }
 
 var credentialRef = regexp.MustCompile(`\$\{(\w+)\}`)
