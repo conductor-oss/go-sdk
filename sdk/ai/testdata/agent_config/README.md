@@ -44,3 +44,5 @@ subtly wrong:
 - derived worker task names such as `terminating_stop_when` and `router_fn_router_fn`
 - nested `and` / `or` termination trees
 - `credentials` landing under a tool's `config`, not at the tool's top level
+- the raw skill document (`18_skill`, `19_skill_as_tool`), which embeds the
+  files under `skills/` verbatim — editing a fixture skill is a wire change

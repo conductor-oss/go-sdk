@@ -92,8 +92,7 @@ type ToolDef struct {
 	Handler any
 }
 
-// Guardrail is a placeholder until guardrails land; it keeps ToolDef's shape
-// stable so adding them is not a breaking change.
+// Guardrail is one of RegexGuardrail, LLMGuardrail or CustomGuardrail.
 type Guardrail interface {
 	guardrailConfig() map[string]any
 }

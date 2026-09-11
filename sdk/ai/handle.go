@@ -59,34 +59,6 @@ type AgentHandle struct {
 	rt *Runtime
 }
 
-// Start begins a run and returns at once.
-//
-// Workers for the agent's tools are registered before the run starts, so a tool
-// call cannot arrive before something is polling for it.
-func (r *Runtime) Start(ctx context.Context, agent *Agent, prompt string) (*AgentHandle, error) {
-	if err := agent.Validate(); err != nil {
-		return nil, err
-	}
-	if err := r.registerWorkers(agent); err != nil {
-		return nil, err
-	}
-
-	started, err := r.agents.Start(ctx, map[string]any{
-		"agentConfig": agent.toConfig(),
-		"prompt":      prompt,
-		"sessionId":   "",
-		"media":       []any{},
-	})
-	if err != nil {
-		return nil, fmt.Errorf("start agent %q: %w", agent.Name, err)
-	}
-	executionID, ok := started["executionId"].(string)
-	if !ok || executionID == "" {
-		return nil, fmt.Errorf("start agent %q: server returned no executionId", agent.Name)
-	}
-	return &AgentHandle{ExecutionID: executionID, rt: r}, nil
-}
-
 // Events streams updates until the run ends or ctx is cancelled.
 //
 // The channel closes when the stream does. A run that is already finished

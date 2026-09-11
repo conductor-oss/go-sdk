@@ -30,6 +30,12 @@ import (
 // The golden-file tests in serializer_golden_test.go hold this honest against
 // documents captured from the Python SDK.
 func (a *Agent) toConfig() map[string]any {
+	// A skill is not described by the fields below: its document is the raw
+	// skill directory, marked with _framework so the server normalizes it.
+	// See skill.go; golden fixture 18_skill pins the shape.
+	if a.skill != nil {
+		return a.skill.wireConfig(a.Name)
+	}
 	cfg := map[string]any{
 		"name":           a.Name,
 		"maxTurns":       a.maxTurnsOrDefault(),
@@ -50,6 +56,7 @@ func (a *Agent) toConfig() map[string]any {
 	a.addTools(cfg)
 	a.addDefinition(cfg)
 	a.addComposition(cfg)
+	a.addSubAgents(cfg)
 	return cfg
 }
 
@@ -175,7 +182,8 @@ func (a *Agent) addDefinition(cfg map[string]any) {
 	}
 }
 
-// addComposition emits the router, loop control, and the sub-agent tree.
+// addComposition emits the router, loop control, guardrails, and the planner
+// and fallback slots.
 func (a *Agent) addComposition(cfg map[string]any) {
 	// A router is either a nested agent the server runs, or a reference to a
 	// worker. Both land on the same "router" key, so the two forms are
@@ -195,10 +203,48 @@ func (a *Agent) addComposition(cfg map[string]any) {
 	if a.StopWhen != nil {
 		cfg["stopWhen"] = workerRef(a.workerTaskName(stopWhenSuffix))
 	}
+	if len(a.Guardrails) > 0 {
+		gs := make([]any, 0, len(a.Guardrails))
+		for _, g := range a.Guardrails {
+			gs = append(gs, g.guardrailConfig())
+		}
+		cfg["guardrails"] = gs
+	}
+	if a.EnablePlanning {
+		cfg["enablePlanning"] = true
+	}
+	// Both slots serialize as nested agent documents, built by this same
+	// serializer so a planner may itself have tools or sub-agents.
+	if a.Planner != nil {
+		cfg["planner"] = a.Planner.toConfig()
+	}
+	if a.Fallback != nil {
+		cfg["fallback"] = a.Fallback.toConfig()
+	}
+	if a.FallbackMaxTurns > 0 {
+		cfg["fallbackMaxTurns"] = a.FallbackMaxTurns
+	}
+
+}
+
+// addSubAgents emits handoffs, transitions, strategy, and the sub-agent tree.
+func (a *Agent) addSubAgents(cfg map[string]any) {
+	if len(a.Handoffs) > 0 {
+		hs := make([]any, 0, len(a.Handoffs))
+		for _, h := range a.Handoffs {
+			hs = append(hs, h.handoffConfig(a.Name))
+		}
+		cfg["handoffs"] = hs
+	}
+	if len(a.AllowedTransitions) > 0 {
+		cfg["allowedTransitions"] = a.AllowedTransitions
+	}
 	// Strategy rides on the presence of sub-agents, not on the field itself:
 	// a leaf agent sends no strategy even though Strategy defaults to handoff.
 	if a.hasSubAgents() {
 		cfg["strategy"] = string(a.strategyOrDefault())
+	}
+	if len(a.Agents) > 0 {
 		subs := make([]any, 0, len(a.Agents))
 		for _, sub := range a.Agents {
 			subs = append(subs, sub.toConfig())
