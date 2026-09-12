@@ -210,6 +210,9 @@ func (a *Agent) addComposition(cfg map[string]any) {
 		}
 		cfg["guardrails"] = gs
 	}
+	if cbs := a.callbackConfigs(); len(cbs) > 0 {
+		cfg["callbacks"] = cbs
+	}
 	if a.EnablePlanning {
 		cfg["enablePlanning"] = true
 	}
