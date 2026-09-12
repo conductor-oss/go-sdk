@@ -26,8 +26,9 @@ import (
 // capturing fake server: records the path and body of every request so the
 // operational-surface tests can assert on the exact wire calls.
 type capture struct {
-	mu   sync.Mutex
-	hits []hit
+	mu         sync.Mutex
+	hits       []hit
+	methodHits []methodHit
 }
 
 type hit struct {
@@ -62,6 +63,9 @@ func captureServer(t *testing.T, rec *capture, handlers map[string]func() map[st
 		var body map[string]any
 		json.NewDecoder(r.Body).Decode(&body)
 		rec.add(r.URL.Path, body)
+		rec.mu.Lock()
+		rec.methodHits = append(rec.methodHits, methodHit{r.Method, r.URL.Path})
+		rec.mu.Unlock()
 		if h, ok := handlers[r.URL.Path]; ok {
 			json.NewEncoder(w).Encode(h())
 			return
@@ -310,4 +314,69 @@ func TestPauseResumeAndHandleDelegation(t *testing.T) {
 	if !seen("PUT", "/api/workflow/e2/pause") || !seen("PUT", "/api/workflow/e2/resume") {
 		t.Errorf("handle pause/resume did not reach the workflow endpoints; hits=%v", hits)
 	}
+}
+
+// sawDelete reports whether a DELETE reached path.
+func (c *capture) sawDelete(path string) bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	for _, h := range c.methodHits {
+		if h.method == "DELETE" && h.path == path {
+			return true
+		}
+	}
+	return false
+}
+
+// countPost counts POSTs to path.
+func (c *capture) countPost(path string) int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	n := 0
+	for _, h := range c.methodHits {
+		if h.method == "POST" && h.path == path {
+			n++
+		}
+	}
+	return n
+}
+
+// schedulerListServer serves GET /scheduler/schedules as a list of the given
+// wire names (so ReconcileSchedules can read the existing set), records every
+// request's method and path, and answers save/delete/pause/resume with {}.
+func schedulerListServer(t *testing.T, rec *capture, names []string) *Runtime {
+	t.Helper()
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/token", func(w http.ResponseWriter, r *http.Request) {
+		json.NewEncoder(w).Encode(map[string]string{"token": "fake-token"})
+	})
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]any
+		json.NewDecoder(r.Body).Decode(&body)
+		rec.add(r.URL.Path, body)
+		rec.mu.Lock()
+		rec.methodHits = append(rec.methodHits, methodHit{r.Method, r.URL.Path})
+		rec.mu.Unlock()
+		if r.Method == "GET" && r.URL.Path == "/api/scheduler/schedules" {
+			list := make([]map[string]any, 0, len(names))
+			for _, n := range names {
+				list = append(list, map[string]any{"name": n})
+			}
+			json.NewEncoder(w).Encode(list)
+			return
+		}
+		w.Write([]byte("{}"))
+	})
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		mux.ServeHTTP(w, r)
+	}))
+	t.Cleanup(srv.Close)
+	api := client.NewAPIClient(
+		settings.NewAuthenticationSettings("key", "secret"),
+		settings.NewHttpSettings(srv.URL+"/api"),
+	)
+	rt := NewRuntimeWithClient(api, Config{})
+	t.Cleanup(rt.Shutdown)
+	return rt
 }
