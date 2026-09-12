@@ -1,0 +1,85 @@
+{
+  "schemaVersion" : 3,
+  "request" : {
+    "messages" : [ {
+      "role" : "system",
+      "text" : "You are a helpful assistant. You MUST call the echo_tool with text='hello' to answer the user. Always use the tool.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "user",
+      "text" : "Say hello using the echo tool.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    } ],
+    "tools" : [ {
+      "name" : "echo_tool",
+      "description" : "Echo the input text back.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "text" ]
+      }
+    } ],
+    "jsonOutput" : false,
+    "outputSchema" : null,
+    "generationOptions" : {
+      "temperature" : 0.0,
+      "maxTokens" : 16384,
+      "thinkingTokenLimit" : 0
+    }
+  },
+  "response" : {
+    "metadata" : {
+      "id" : "resp_03756684156b3328006aa4867d3a9087d0833b456babcd8e69",
+      "model" : "gpt-4o-mini-2024-07-18",
+      "usage" : {
+        "promptTokens" : 75,
+        "completionTokens" : 15,
+        "totalTokens" : 90,
+        "nativeUsage" : null
+      },
+      "rateLimit" : {
+        "requestsLimit" : 0,
+        "requestsRemaining" : 0,
+        "requestsReset" : 0,
+        "tokensLimit" : 0,
+        "tokensRemaining" : 0,
+        "tokensReset" : 0
+      },
+      "promptMetadata" : [ ],
+      "properties" : {
+        "response_id" : "resp_03756684156b3328006aa4867d3a9087d0833b456babcd8e69",
+        "reasoning_tokens" : 0
+      }
+    },
+    "results" : [ {
+      "output" : {
+        "text" : "",
+        "metadata" : {
+          "messageType" : "ASSISTANT"
+        },
+        "toolCalls" : [ {
+          "id" : "call_GK3ApPjoTZEsdTZ51qFwQFEI",
+          "type" : "function",
+          "name" : "echo_tool",
+          "arguments" : "{\"text\":\"hello\"}"
+        } ],
+        "media" : [ ]
+      },
+      "metadata" : {
+        "finishReason" : "TOOL_CALLS",
+        "contentFilters" : [ ],
+        "properties" : { }
+      }
+    } ]
+  },
+  "modelSettings" : {
+    "model" : "gpt-4o-mini",
+    "supportsAssistantPrefill" : true
+  }
+}

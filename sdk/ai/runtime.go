@@ -403,6 +403,8 @@ func (a *Agent) workerTools() []ToolDef {
 	for _, g := range a.customGuardrails() {
 		tools = append(tools, ToolDef{Name: g.Name, Handler: g.guardrailHandler()})
 	}
+	// Each set lifecycle callback is a worker named "<agent>_<position>".
+	tools = append(tools, a.callbackTools()...)
 	// A skill's scripts and its read_skill_file tool run here too; the server
 	// emits worker tools under these names when it normalizes the skill
 	// document.

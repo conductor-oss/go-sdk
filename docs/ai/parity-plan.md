@@ -21,6 +21,7 @@ server.
 | `Strategy` | `ai.Strategy` (9 constants) | emitted only with sub-agents |
 | `OnToolResult`, `OnTextMention`, `OnCondition` | same names; `OnCondition.Condition` is `HandoffFunc(ctx, HandoffState)` | one `OnCondition` per target |
 | regex / llm / custom guardrail | `RegexGuardrail`, `LLMGuardrail`, `CustomGuardrail` + `NewCustomGuardrail` | `GuardrailFunc(ctx, GuardrailInput)` |
+| `CallbackHandler` (6 hooks) | `Callbacks` struct of `CallbackFunc` fields | one `{agent}_{position}` worker per set hook |
 | termination conditions, `and`/`or` | same names; `AndTermination`, `OrTermination` | sealed interface |
 | `stop_when`, router fn | `StopWhenFunc`, `RouterFunc` | `{agent}_stop_when`, `{agent}_router_fn` |
 | `output_type` | `OutputType any` (struct → JSON Schema) | |

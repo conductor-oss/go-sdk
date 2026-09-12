@@ -68,6 +68,17 @@ var goldenFixtures = map[string]func() *Agent{
 			Agents:   []*Agent{billing(), refunds(), tech()},
 		}
 	},
+	"25_callbacks": func() *Agent {
+		noop := func(context.Context, CallbackInput) (map[string]any, error) { return nil, nil }
+		return &Agent{
+			Name: "observed", Model: testModel, Instructions: "Watched at every step.",
+			Callbacks: &Callbacks{
+				OnAgentStart: noop, OnAgentEnd: noop,
+				OnModelStart: noop, OnModelEnd: noop,
+				OnToolStart: noop, OnToolEnd: noop,
+			},
+		}
+	},
 	"23_gate": func() *Agent {
 		return &Agent{
 			Name: "gated_pipeline", Model: testModel, Strategy: StrategySequential,

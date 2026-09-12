@@ -87,11 +87,23 @@ exercised or tested. Add it together with stateful-domain routing, when it
 can be verified end to end, rather than ship a method whose main use is
 untestable. Suite 23's event HITL flows still remain to port.
 
-## Step 4: callbacks
+## Step 4: callbacks — DONE 2026-09-11
 
-`before_agent`, `after_agent`, `before_model`, `after_model` and the
-`CallbackHandler` form. They run as workers, the pattern guardrails and
-handoffs already use in `runtime.go`. Proof: suite 13 (callbacks, 5 tests).
+Done on `feat/agent-golden-fixtures` (uncommitted at time of writing).
+`Agent.Callbacks` is a struct of six optional `CallbackFunc` fields, the
+counterpart of the Python SDK's `CallbackHandler` and its six overridable
+methods (before/after agent, model, tool). Each set hook serializes as
+`{position, taskName}` and runs as a `<agent>_<position>` worker, the same
+worker pattern guardrails and gates use. A hook returns a non-empty map to
+override what the run does next, or nil to continue; an error is treated as
+nil so a broken hook never blocks the run.
+
+The worker input matches the server's `buildCallbackTask`, not the Python
+worker's older signature: `callback_position`, `agent_name`, `llm_result`
+(the model output, shape varies by turn) and `tool_calls`, surfaced on
+`CallbackInput` with the varying fields typed `any`. Golden fixture
+`25_callbacks` matches Python; suite 13's three executable tests are ported
+under their names and replay green, each proving its hook fired in-process.
 
 ## Step 5: schedules
 

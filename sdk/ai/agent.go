@@ -173,6 +173,10 @@ type Agent struct {
 	// ToolDef.Guardrails.
 	Guardrails []Guardrail
 
+	// Callbacks are lifecycle hooks the server calls before and after the
+	// agent, each LLM call, and each tool call. Each set hook runs as a worker.
+	Callbacks *Callbacks
+
 	// OutputType constrains the final answer to a struct's shape. Pass a zero
 	// value of the type, as in OutputType: Ticket{}; the schema is derived from
 	// its json tags the same way a tool's input schema is.

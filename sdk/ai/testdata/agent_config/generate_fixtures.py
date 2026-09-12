@@ -57,6 +57,7 @@ from conductor.ai.agents import (
     video_tool,
     wait_for_message_tool,
 )
+from conductor.ai.agents import CallbackHandler
 from conductor.ai.agents.gate import TextGate
 from conductor.ai.agents.plans import Context
 from conductor.ai.agents.config_serializer import AgentConfigSerializer
@@ -323,6 +324,21 @@ def fixtures() -> Dict[str, Agent]:
         model=MODEL,
         instructions="Say hello.",
         base_url="https://my-custom-proxy.example.com/v1",
+    )
+
+    class _AllHooks(CallbackHandler):
+        def on_agent_start(self, **k): return None
+        def on_agent_end(self, **k): return None
+        def on_model_start(self, **k): return None
+        def on_model_end(self, **k): return None
+        def on_tool_start(self, **k): return None
+        def on_tool_end(self, **k): return None
+
+    out["25_callbacks"] = Agent(
+        name="observed",
+        model=MODEL,
+        instructions="Watched at every step.",
+        callbacks=[_AllHooks()],
     )
 
     out["23_gate"] = Agent(
