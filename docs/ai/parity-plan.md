@@ -39,6 +39,7 @@ server.
 | `AgentRuntime.serve` | `Runtime.Serve(ctx, agents...)`, blocks until ctx done |
 | `AgentRuntime.signal`, `send_message` | `Runtime.Signal` / `Runtime.SendMessage`, also on `AgentHandle` |
 | `AgentRuntime.pause`, handle `resume` (un-pause) | `Runtime.Pause` / `Runtime.Resume`, also on `AgentHandle` |
+| `Schedule`, `SchedulerClient` (save/get/list/delete/pause/resume/reconcile) | `Schedule` + agent-scoped `Runtime.SaveSchedule`/`GetSchedule`/`ListSchedules`/`DeleteSchedule`/`PauseSchedule`/`ResumeSchedule`/`ReconcileSchedules` |
 | `run(..., media=)`, `run_settings=` | `WithMedia`, `WithRunSettings` (`RunSettings`) |
 | `AgentHandle` | `AgentHandle`: `Events`, `Status`, `Waiting`, `Respond`, `Approve`, `Reject`, `Stop`, `Result` |
 | `AgentClient` | `client.AgentClient` + `APIClient.StreamSSE` |

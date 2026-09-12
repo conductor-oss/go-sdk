@@ -105,11 +105,21 @@ worker's older signature: `callback_position`, `agent_name`, `llm_result`
 `25_callbacks` matches Python; suite 13's three executable tests are ported
 under their names and replay green, each proving its hook fired in-process.
 
-## Step 5: schedules
+## Step 5: schedules — DONE 2026-09-11
 
-A `Schedule` type and a schedules client: create, update, list, pause,
-resume, delete, run once. Mostly control plane. Proof: suite 21 (scheduling,
-11 tests).
+Done on `feat/agent-golden-fixtures` (uncommitted at time of writing).
+`Schedule` runs an agent on a cron cadence; it is agent-scoped, so its
+short Name is stored on the wire as `<agent>-<Name>`, matching the Python
+SDK. The runtime carries the agent scope: `SaveSchedule`, `GetSchedule`,
+`ListSchedules`, `DeleteSchedule`, `PauseSchedule`, `ResumeSchedule`, and
+`ReconcileSchedules(agent, desired)` which upserts desired and prunes the
+agent's other schedules (nil is a no-op, empty deletes all), the
+counterpart of the Python scheduler reconcile. It builds on the Go
+client's existing scheduler resource; the `SaveScheduleRequest` model
+gained the `zoneId` and `description` fields Python sends. Wire behavior
+is covered by fake-server unit tests, and suite 24's schedule flow is
+ported as a live e2e (control-plane only, no LLM, so no recording) that
+skips when the server has no scheduler.
 
 ## Step 6: when a user asks
 

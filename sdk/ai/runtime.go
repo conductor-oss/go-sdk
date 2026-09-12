@@ -59,14 +59,15 @@ func (c Config) statusPoll() time.Duration {
 // It owns a TaskRunner, so one Runtime can serve many agents; workers are
 // registered once per task name and reused across runs.
 type Runtime struct {
-	api      *client.APIClient
-	agents   client.AgentClient
-	metadata client.MetadataClient
-	workflow client.WorkflowClient
-	runner   *worker.TaskRunner
-	config   Config
-	mu       sync.Mutex
-	started  map[string]bool // task names already registered
+	api       *client.APIClient
+	agents    client.AgentClient
+	metadata  client.MetadataClient
+	workflow  client.WorkflowClient
+	scheduler client.SchedulerClient
+	runner    *worker.TaskRunner
+	config    Config
+	mu        sync.Mutex
+	started   map[string]bool // task names already registered
 	// defs are the task definitions for started workers, registered after a
 	// run starts; registered records which ones have been sent.
 	defs       map[string]model.TaskDef
@@ -88,6 +89,7 @@ func NewRuntimeWithClient(apiClient *client.APIClient, cfg Config) *Runtime {
 		agents:     client.NewAgentClient(apiClient),
 		metadata:   client.NewMetadataClient(apiClient),
 		workflow:   client.NewWorkflowClient(apiClient),
+		scheduler:  client.NewSchedulerClient(apiClient),
 		runner:     worker.NewTaskRunnerWithApiClient(apiClient),
 		config:     cfg,
 		started:    map[string]bool{},
