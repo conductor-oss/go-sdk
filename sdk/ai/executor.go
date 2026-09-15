@@ -200,7 +200,10 @@ func (e ServerlessExecutor) Execute(ctx context.Context, code string) ExecutionR
 	if language == "" {
 		language = defaultLanguage
 	}
-	body, _ := json.Marshal(map[string]any{"code": code, "language": language, "timeout": timeout})
+	body, err := json.Marshal(map[string]any{"code": code, "language": language, "timeout": timeout})
+	if err != nil {
+		return ExecutionResult{Error: "Request failed: " + err.Error(), ExitCode: 1}
+	}
 	reqCtx, cancel := context.WithTimeout(ctx, time.Duration(timeout+5)*time.Second)
 	defer cancel()
 	req, err := http.NewRequestWithContext(reqCtx, http.MethodPost, e.Endpoint, bytes.NewReader(body))
@@ -222,8 +225,13 @@ func (e ServerlessExecutor) Execute(ctx context.Context, code string) ExecutionR
 	if err != nil {
 		return ExecutionResult{Error: "Request failed: " + err.Error(), ExitCode: 1}
 	}
-	defer resp.Body.Close()
-	raw, _ := io.ReadAll(resp.Body)
+	raw, readErr := io.ReadAll(resp.Body)
+	if closeErr := resp.Body.Close(); readErr == nil {
+		readErr = closeErr
+	}
+	if readErr != nil {
+		return ExecutionResult{Error: "Request failed: " + readErr.Error(), ExitCode: 1}
+	}
 	if resp.StatusCode >= 400 {
 		return ExecutionResult{Error: fmt.Sprintf("Request failed: HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(raw))), ExitCode: 1}
 	}

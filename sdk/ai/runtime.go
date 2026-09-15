@@ -525,8 +525,8 @@ func (r *Runtime) Deploy(ctx context.Context, agent *Agent) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("deploy agent %q: %w", agent.Name, err)
 	}
-	name, _ := out["agentName"].(string)
-	if name == "" {
+	name, ok := out["agentName"].(string)
+	if !ok || name == "" {
 		name = agent.Name
 	}
 	return name, nil

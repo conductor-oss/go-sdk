@@ -80,7 +80,7 @@ type gateOut struct {
 
 func (f GateFunc) gateHandler() func(context.Context, gateIn) (gateOut, error) {
 	return func(ctx context.Context, in gateIn) (gateOut, error) {
-		cont, err := f(ctx, GateState{Result: in.Result})
+		cont, err := f(ctx, GateState(in))
 		if err != nil || cont {
 			return gateOut{Decision: "continue"}, nil
 		}

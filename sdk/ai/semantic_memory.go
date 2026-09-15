@@ -95,13 +95,13 @@ func (s *InMemoryStore) Search(query string, topK int) ([]MemoryEntry, error) {
 		score float64
 		entry MemoryEntry
 	}
-	var ranked []scored
+	ranked := make([]scored, 0, len(s.order))
 	for _, id := range s.order {
 		entry := s.entries[id]
 		ranked = append(ranked, scored{jaccard(queryWords, wordSet(entry.Content)), entry})
 	}
 	sort.SliceStable(ranked, func(i, j int) bool { return ranked[i].score > ranked[j].score })
-	var out []MemoryEntry
+	out := make([]MemoryEntry, 0, min(topK, len(ranked)))
 	for _, r := range ranked {
 		if r.score <= 0 || len(out) >= topK {
 			break
