@@ -14,17 +14,21 @@ export CONDUCTOR_AUTH_SECRET="your_auth_secret" # Optional, if authentication is
 
 ## Examples
 
-### 🤖 **Basic Agent** (`agents/01_basic_agent.go`)
-**The smallest possible AI agent**
+### 🤖 **Agent examples** (`agents/`)
 
-Define an agent, run it, print the answer.
+Ports of the Python SDK's `examples/agents`, one standalone file each. They
+need a Conductor server with LLM support and `CONDUCTOR_SERVER_URL`;
+`CONDUCTOR_AGENT_LLM_MODEL` picks the model (default `openai/gpt-4o`). Each
+has a matching integration test under `test/integration_tests/ai` that
+replays the Python SDK's recording of the same example.
 
-**Features:**
-- Agent definition (`ai.Agent`) and `Runtime.Run`
-- Reads `CONDUCTOR_AGENT_LLM_MODEL` from the environment (defaults to `openai/gpt-4o`)
-- Comments show the production split: `Deploy` once, `Serve` in a worker process
-
-**Requires** a Conductor server with LLM support.
+| Example | Shows |
+|---|---|
+| `01_basic_agent.go` | Define an agent, run it, print the answer. |
+| `02a_simple_tools.go` | Two worker tools; the model picks the right one. |
+| `02c_tool_retry_config.go` | Per-tool retry policy, count and delay (`tool.WithRetry`). |
+| `04_http_and_mcp_tools.go` | Server-side HTTP and MCP tools mixed with a worker tool; needs `mcp-testkit` on port 3001 and two credentials on the server. |
+| `05_handoffs.go` | A support agent hands off to billing, technical or sales sub-agents. |
 
 **Run:**
 ```bash
