@@ -16,6 +16,8 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -45,7 +47,9 @@ func recordedAnswers(t *testing.T, name string) []string {
 	if err != nil || len(files) == 0 {
 		t.Fatalf("no recordings for %s under %s", name, root)
 	}
-	sort.Strings(files)
+	// Files are named "<n>_<uuid>.json" in call order; sort by n, not as
+	// strings, or the tenth call sorts before the second.
+	sort.Slice(files, func(i, j int) bool { return recordingSeq(files[i]) < recordingSeq(files[j]) })
 	var answers []string
 	for _, f := range files {
 		raw, err := os.ReadFile(f)
@@ -69,4 +73,16 @@ func recordedAnswers(t *testing.T, name string) []string {
 		}
 	}
 	return answers
+}
+
+// recordingSeq is the numeric prefix of a recording file name, or a large
+// number for a file without one so it sorts last.
+func recordingSeq(path string) int {
+	base := filepath.Base(path)
+	if i := strings.IndexByte(base, '_'); i > 0 {
+		if n, err := strconv.Atoi(base[:i]); err == nil {
+			return n
+		}
+	}
+	return 1 << 30
 }
