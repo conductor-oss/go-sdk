@@ -113,12 +113,7 @@ type callbackIn struct {
 
 func callbackHandler(fn CallbackFunc) func(context.Context, callbackIn) (map[string]any, error) {
 	return func(ctx context.Context, in callbackIn) (map[string]any, error) {
-		out, err := fn(ctx, CallbackInput{
-			Position:  in.Position,
-			AgentName: in.AgentName,
-			LLMResult: in.LLMResult,
-			ToolCalls: in.ToolCalls,
-		})
+		out, err := fn(ctx, CallbackInput(in))
 		if err != nil || out == nil {
 			return map[string]any{}, nil
 		}

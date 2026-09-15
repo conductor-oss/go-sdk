@@ -123,7 +123,7 @@ func (r *Runtime) ListSchedules(ctx context.Context, agentName string) ([]Schedu
 		return nil, fmt.Errorf("list schedules for %q: %w", agentName, err)
 	}
 	prefix := schedulePrefix(agentName)
-	var out []Schedule
+	out := make([]Schedule, 0, len(all))
 	for _, ws := range all {
 		if !strings.HasPrefix(ws.Name, prefix) {
 			continue

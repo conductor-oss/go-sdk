@@ -13,6 +13,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os/exec"
@@ -117,21 +118,24 @@ func (e *JupyterExecutor) start() error {
 		return err
 	}
 	cmd.Stderr = nil
-	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("start jupyter helper: %w", err)
+	if startErr := cmd.Start(); startErr != nil {
+		return fmt.Errorf("start jupyter helper: %w", startErr)
 	}
 	e.cmd, e.stdin, e.stdout = cmd, stdin, bufio.NewReader(stdout)
-	cfg, _ := json.Marshal(map[string]any{
+	cfg, err := json.Marshal(map[string]any{
 		"kernel":  orDefault(e.KernelName, "python3"),
 		"startup": e.StartupCode,
 		"timeout": timeoutOrDefault(e.TimeoutSeconds),
 	})
-	if _, err := e.stdin.Write(append(cfg, '\n')); err != nil {
+	if err != nil {
 		return err
+	}
+	if _, werr := e.stdin.Write(append(cfg, '\n')); werr != nil {
+		return werr
 	}
 	reply, err := e.read(60 * time.Second)
 	if err != nil {
-		return fmt.Errorf("Kernel startup failed: %w", err)
+		return fmt.Errorf("kernel startup failed: %w", err)
 	}
 	if reply.Fatal != "" {
 		return fmt.Errorf("%s", reply.Fatal)
@@ -175,9 +179,12 @@ func (e *JupyterExecutor) Execute(ctx context.Context, code string) ExecutionRes
 		return ExecutionResult{Error: e.err.Error(), ExitCode: 1}
 	}
 	timeout := timeoutOrDefault(e.TimeoutSeconds)
-	req, _ := json.Marshal(map[string]any{"code": code, "timeout": timeout})
-	if _, err := e.stdin.Write(append(req, '\n')); err != nil {
+	req, err := json.Marshal(map[string]any{"code": code, "timeout": timeout})
+	if err != nil {
 		return ExecutionResult{Error: "kernel helper: " + err.Error(), ExitCode: 1}
+	}
+	if _, werr := e.stdin.Write(append(req, '\n')); werr != nil {
+		return ExecutionResult{Error: "kernel helper: " + werr.Error(), ExitCode: 1}
 	}
 	reply, err := e.read(time.Duration(timeout+30) * time.Second)
 	if err != nil {
@@ -193,22 +200,24 @@ func (e *JupyterExecutor) Execute(ctx context.Context, code string) ExecutionRes
 	return res
 }
 
-// Close shuts the kernel and its helper down. The executor can be used again
-// afterwards; the next Execute starts a fresh kernel.
+// Close shuts the kernel and its helper down and reports any trouble doing
+// so. The executor can be used again afterwards; the next Execute starts a
+// fresh kernel.
 func (e *JupyterExecutor) Close() error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	if e.cmd == nil {
 		return nil
 	}
-	_ = e.stdin.Close()
+	// Closing stdin ends the helper's loop, which shuts the kernel down.
+	err := e.stdin.Close()
 	done := make(chan error, 1)
 	go func() { done <- e.cmd.Wait() }()
 	select {
 	case <-done:
 	case <-time.After(10 * time.Second):
-		_ = e.cmd.Process.Kill()
+		err = errors.Join(err, e.cmd.Process.Kill())
 	}
 	e.cmd, e.stdin, e.stdout, e.err = nil, nil, nil, nil
-	return nil
+	return err
 }

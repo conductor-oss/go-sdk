@@ -11,6 +11,7 @@ package ai
 
 import (
 	"fmt"
+	"math"
 	"regexp"
 	"slices"
 
@@ -196,9 +197,9 @@ func (t ToolDef) taskDef() model.TaskDef {
 	}
 	return model.TaskDef{
 		Name:                   t.Name,
-		RetryCount:             int32(retries),
+		RetryCount:             toInt32(retries),
 		RetryLogic:             retryLogic[policy],
-		RetryDelaySeconds:      int32(delay),
+		RetryDelaySeconds:      toInt32(delay),
 		TimeoutSeconds:         0,
 		ResponseTimeoutSeconds: defaultResponseTimeoutSeconds,
 		TimeoutPolicy:          "RETRY",
@@ -306,4 +307,16 @@ func (t ToolDef) configMap() map[string]any {
 		conf["credentials"] = t.Credentials
 	}
 	return conf
+}
+
+// toInt32 narrows a retry setting to the task definition's int32, clamping
+// rather than wrapping: these are small operator-chosen counts and seconds.
+func toInt32(v int) int32 {
+	switch {
+	case v < 0:
+		return 0
+	case v > math.MaxInt32:
+		return math.MaxInt32
+	}
+	return int32(v)
 }
