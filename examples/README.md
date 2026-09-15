@@ -14,6 +14,25 @@ export CONDUCTOR_AUTH_SECRET="your_auth_secret" # Optional, if authentication is
 
 ## Examples
 
+### 🤖 **Basic Agent** (`agents/01_basic_agent.go`)
+**The smallest possible AI agent**
+
+Define an agent, run it, print the answer.
+
+**Features:**
+- Agent definition (`ai.Agent`) and `Runtime.Run`
+- Reads `CONDUCTOR_AGENT_LLM_MODEL` from the environment (defaults to `openai/gpt-4o`)
+- Comments show the production split: `Deploy` once, `Serve` in a worker process
+
+**Requires** a Conductor server with LLM support.
+
+**Run:**
+```bash
+CONDUCTOR_AGENT_LLM_MODEL=openai/gpt-4o go run agents/01_basic_agent.go
+```
+
+---
+
 ### 🌟 **Hello World** (`hello_world/`)
 **Basic introduction to Conductor workflows**
 
