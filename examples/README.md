@@ -29,6 +29,16 @@ replays the Python SDK's recording of the same example.
 | `02c_tool_retry_config.go` | Per-tool retry policy, count and delay (`tool.WithRetry`). |
 | `04_http_and_mcp_tools.go` | Server-side HTTP and MCP tools mixed with a worker tool; needs `mcp-testkit` on port 3001 and two credentials on the server. |
 | `05_handoffs.go` | A support agent hands off to billing, technical or sales sub-agents. |
+| `06_sequential_pipeline.go` | Researcher, writer and editor run in order, each seeing the previous output. |
+| `07_parallel_agents.go` | Three analysts examine the same topic at once. |
+| `09_human_in_the_loop.go` | A transfer tool that pauses the run for approval at the terminal, with streamed events. |
+| `09c_hitl_streaming.go` | Several tools, one needing approval, with streamed events. |
+| `103_plan_and_compile.go` | A planner writes a plan over three tools; the server compiles and runs it. |
+| `10_guardrails.go` | A custom output guardrail makes the model redact PII and revise. |
+| `13_hierarchical_agents.go` | CEO routes to department leads, who route to specialists. |
+| `17_swarm_orchestration.go` | Front-line support transfers the conversation to a specialist and back. |
+| `21_regex_guardrails.go` | Server-side regex guardrails block emails and SSNs. |
+| `22_llm_guardrails.go` | A second model judges the answer against a policy; retries run out. |
 
 **Run:**
 ```bash

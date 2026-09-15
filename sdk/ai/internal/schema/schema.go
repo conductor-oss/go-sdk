@@ -17,6 +17,8 @@
 package schema
 
 import (
+	"bytes"
+	"encoding/json"
 	"reflect"
 	"strings"
 )
@@ -80,8 +82,66 @@ func isAny(t reflect.Type) bool {
 	return t.Kind() == reflect.Interface && t.NumMethod() == 0
 }
 
+// Properties is an object schema's property set in declaration order. A Go
+// map would do for the content, but encoding/json writes map keys sorted,
+// while the Python SDK writes a tool's parameters in the order they were
+// declared — and the server copies that order into text the model reads,
+// such as a planner's tool catalog. Keeping the order is what makes the two
+// SDKs produce the same prompt.
+type Properties struct {
+	keys   []string
+	values map[string]any
+}
+
+// Set adds or replaces a property, keeping first-insertion order.
+func (p *Properties) Set(name string, schema any) {
+	if p.values == nil {
+		p.values = map[string]any{}
+	}
+	if _, exists := p.values[name]; !exists {
+		p.keys = append(p.keys, name)
+	}
+	p.values[name] = schema
+}
+
+// Get returns a property's schema.
+func (p *Properties) Get(name string) (any, bool) {
+	v, ok := p.values[name]
+	return v, ok
+}
+
+// Keys lists the property names in declaration order.
+func (p *Properties) Keys() []string { return append([]string(nil), p.keys...) }
+
+// Len is the number of properties.
+func (p *Properties) Len() int { return len(p.keys) }
+
+// MarshalJSON writes the properties as a JSON object in declaration order.
+func (p *Properties) MarshalJSON() ([]byte, error) {
+	var b bytes.Buffer
+	b.WriteByte('{')
+	for i, k := range p.keys {
+		if i > 0 {
+			b.WriteByte(',')
+		}
+		name, err := json.Marshal(k)
+		if err != nil {
+			return nil, err
+		}
+		val, err := json.Marshal(p.values[k])
+		if err != nil {
+			return nil, err
+		}
+		b.Write(name)
+		b.WriteByte(':')
+		b.Write(val)
+	}
+	b.WriteByte('}')
+	return b.Bytes(), nil
+}
+
 func structSchema(t reflect.Type) map[string]any {
-	props := map[string]any{}
+	props := &Properties{}
 	var required []string
 
 	for i := 0; i < t.NumField(); i++ {
@@ -95,9 +155,10 @@ func structSchema(t reflect.Type) map[string]any {
 		}
 		if f.Anonymous && name == "" {
 			// Embedded struct: lift its properties, as encoding/json does.
-			if sub, ok := structSchema(deref(f.Type))["properties"].(map[string]any); ok {
-				for k, v := range sub {
-					props[k] = v
+			if sub, ok := structSchema(deref(f.Type))["properties"].(*Properties); ok {
+				for _, k := range sub.Keys() {
+					v, _ := sub.Get(k)
+					props.Set(k, v)
 				}
 			}
 			if sub, ok := structSchema(deref(f.Type))["required"].([]string); ok {
@@ -108,7 +169,7 @@ func structSchema(t reflect.Type) map[string]any {
 		if name == "" {
 			name = f.Name
 		}
-		props[name] = Of(f.Type)
+		props.Set(name, Of(f.Type))
 		if f.Type.Kind() != reflect.Pointer && !opts.omitempty {
 			required = append(required, name)
 		}
