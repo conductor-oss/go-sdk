@@ -51,4 +51,5 @@ type Task struct {
 	QueueWaitTime                    int64                  `json:"queueWaitTime,omitempty"`
 	TaskDefinition                   *TaskDef               `json:"taskDefinition,omitempty"`
 	LoopOverTask                     bool                   `json:"loopOverTask,omitempty"`
+	RuntimeMetadata                  map[string]string      `json:"runtimeMetadata,omitempty"`
 }

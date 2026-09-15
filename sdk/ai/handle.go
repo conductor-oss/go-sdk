@@ -11,9 +11,46 @@ package ai
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 )
+
+// EventType classifies a streamed event.
+//
+// The server's event names vary by build, so Event keeps the raw name too:
+// Type is a direct conversion of the wire name, so a name not listed here
+// still arrives intact.
+//
+// The set mirrors the Java and Python SDKs' EventType, in their declaration
+// order, so the three can be diffed against each other.
+type EventType string
+
+const (
+	EventThinking      EventType = "thinking"
+	EventToolCall      EventType = "tool_call"
+	EventToolResult    EventType = "tool_result"
+	EventHandoff       EventType = "handoff"
+	EventWaiting       EventType = "waiting"
+	EventMessage       EventType = "message"
+	EventError         EventType = "error"
+	EventDone          EventType = "done"
+	EventGuardrailPass EventType = "guardrail_pass"
+	EventGuardrailFail EventType = "guardrail_fail"
+)
+
+// Event is one update from a running agent.
+type Event struct {
+	// Type is the normalized event kind.
+	Type EventType
+	// Name is the server's raw event name, kept because the taxonomy is still
+	// settling and an unmapped name would otherwise be lost.
+	Name string
+	// Text carries streamed output or a message, when the event has one.
+	Text string
+	// Data is the decoded payload, for fields Type and Text do not cover.
+	Data map[string]any
+}
 
 // AgentHandle controls a run that was started without blocking.
 type AgentHandle struct {
@@ -48,6 +85,34 @@ func (r *Runtime) Start(ctx context.Context, agent *Agent, prompt string) (*Agen
 		return nil, fmt.Errorf("start agent %q: server returned no executionId", agent.Name)
 	}
 	return &AgentHandle{ExecutionID: executionID, rt: r}, nil
+}
+
+// Events streams updates until the run ends or ctx is cancelled.
+//
+// The channel closes when the stream does. A run that is already finished
+// yields no events, so callers that need the outcome should use Result rather
+// than inferring it from the stream ending.
+func (h *AgentHandle) Events(ctx context.Context) (<-chan Event, error) {
+	raw, stream, err := h.rt.api.StreamSSE(ctx, "/agent/stream/"+h.ExecutionID, "")
+	if err != nil {
+		return nil, err
+	}
+
+	out := make(chan Event)
+	go func() {
+		defer close(out)
+		// Closing unblocks the reader on early return. Its error has no consumer
+		// here: the read loop records body errors in stream.Err() itself.
+		defer stream.Close() //nolint:errcheck // see above
+		for ev := range raw {
+			select {
+			case out <- decodeEvent(ev.Event, ev.Data):
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+	return out, nil
 }
 
 // Status reports the current state without waiting.
@@ -134,4 +199,26 @@ func (h *AgentHandle) Stop(ctx context.Context) error {
 // Result blocks until the run reaches a terminal state.
 func (h *AgentHandle) Result(ctx context.Context) (*AgentResult, error) {
 	return h.rt.awaitResult(ctx, h.ExecutionID)
+}
+
+// decodeEvent normalizes one SSE frame.
+//
+// The event name may arrive as the SSE "event:" field or inside the JSON
+// payload, depending on the server build, so both are consulted.
+func decodeEvent(name, data string) Event {
+	ev := Event{Name: name, Type: EventType(name)}
+
+	var payload map[string]any
+	if data != "" && json.Unmarshal([]byte(data), &payload) == nil {
+		ev.Data = payload
+		if ev.Name == "" {
+			if t, ok := payload["type"].(string); ok {
+				ev.Name, ev.Type = t, EventType(t)
+			}
+		}
+		ev.Text = firstString(payload, "text", "content", "message", "result", "delta")
+	} else if data != "" {
+		ev.Text = data
+	}
+	return ev
 }
