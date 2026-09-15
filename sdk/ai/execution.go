@@ -40,6 +40,13 @@ type CodeExecutionConfig struct {
 	AllowedCommands []string
 	// TimeoutSeconds defaults to 30 when zero.
 	TimeoutSeconds int
+	// Executor runs the code. Nil means a LocalExecutor, a subprocess on the
+	// worker host with the language the model asked for. A DockerExecutor,
+	// JupyterExecutor or ServerlessExecutor runs it elsewhere; those ignore
+	// the requested language and run what they were built for, as in the
+	// Python SDK. The executor never travels to the server: it is worker-side
+	// configuration, so agentConfig is the same whichever is set.
+	Executor CodeExecutor
 }
 
 // CLIConfig lets the agent run shell commands directly.

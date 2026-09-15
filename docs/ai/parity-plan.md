@@ -22,6 +22,9 @@ server.
 | `OnToolResult`, `OnTextMention`, `OnCondition` | same names; `OnCondition.Condition` is `HandoffFunc(ctx, HandoffState)` | one `OnCondition` per target |
 | regex / llm / custom guardrail | `RegexGuardrail`, `LLMGuardrail`, `CustomGuardrail` + `NewCustomGuardrail` | `GuardrailFunc(ctx, GuardrailInput)` |
 | `CallbackHandler` (6 hooks) | `Callbacks` struct of `CallbackFunc` fields | one `{agent}_{position}` worker per set hook |
+| `LocalCodeExecutor`, `DockerCodeExecutor`, `JupyterCodeExecutor`, `ServerlessCodeExecutor` | `CodeExecutor` interface: `LocalExecutor`, `DockerExecutor`, `JupyterExecutor`, `ServerlessExecutor` | worker-side only; `CodeExecutionConfig.Executor` selects one |
+| `executor.as_tool()` | `ExecutorTool(exec, name, description)` | |
+| `SemanticMemory`, `MemoryStore`, `InMemoryStore`, `MemoryEntry` | same names | standalone in both SDKs; not wired into the runtime |
 | termination conditions, `and`/`or` | same names; `AndTermination`, `OrTermination` | sealed interface |
 | `stop_when`, router fn | `StopWhenFunc`, `RouterFunc` | `{agent}_stop_when`, `{agent}_router_fn` |
 | `output_type` | `OutputType any` (struct → JSON Schema) | |

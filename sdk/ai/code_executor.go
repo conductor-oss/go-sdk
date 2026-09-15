@@ -96,25 +96,32 @@ func (c *CodeExecutionConfig) executeCode(ctx context.Context, in codeExecIn) (c
 		return codeExecOut{Status: "error", Stderr: msg}, nil
 	}
 
-	interpreter, ok := interpreters[language]
-	if !ok {
-		return codeExecOut{
-			Status: "error",
-			Stderr: fmt.Sprintf("Unsupported language: %s", language),
-		}, nil
+	timeout := timeoutOrDefault(c.TimeoutSeconds)
+	// A local executor is language-specific, so one is built per call with
+	// the language the model asked for; any other executor runs the code as
+	// it was configured, whatever the language argument says.
+	executor := c.Executor
+	switch l := executor.(type) {
+	case nil:
+		executor = LocalExecutor{Language: language, TimeoutSeconds: timeout}
+	case LocalExecutor:
+		l.Language = language
+		if l.TimeoutSeconds == 0 {
+			l.TimeoutSeconds = timeout
+		}
+		executor = l
 	}
-
-	return runInterpreter(ctx, interpreter, in.Code,
-		fileExtensions[language], timeoutOrDefault(c.TimeoutSeconds))
+	return executor.Execute(ctx, in.Code).toolOutput(timeout), nil
 }
 
-// runInterpreter writes the code to a temporary file and runs it.
+// runInterpreter writes the code to a temporary file and runs it. It is the
+// LocalExecutor's engine; workingDir empty means the file's own directory.
 func runInterpreter(ctx context.Context, interpreter []string, code, ext string,
-	timeoutSeconds int) (codeExecOut, error) {
+	timeoutSeconds int, workingDir string) ExecutionResult {
 
 	f, err := os.CreateTemp("", "conductor_code_*"+ext)
 	if err != nil {
-		return codeExecOut{Status: "error", Stderr: err.Error()}, nil
+		return ExecutionResult{Error: err.Error(), ExitCode: 1}
 	}
 	path := f.Name()
 	// Removed however this returns: a failed write still leaves a file behind.
@@ -123,10 +130,10 @@ func runInterpreter(ctx context.Context, interpreter []string, code, ext string,
 	defer os.Remove(path) //nolint:errcheck // see above
 
 	if _, werr := f.WriteString(code); werr != nil {
-		return codeExecOut{Status: "error", Stderr: errors.Join(werr, f.Close()).Error()}, nil
+		return ExecutionResult{Error: errors.Join(werr, f.Close()).Error(), ExitCode: 1}
 	}
 	if cerr := f.Close(); cerr != nil {
-		return codeExecOut{Status: "error", Stderr: cerr.Error()}, nil
+		return ExecutionResult{Error: cerr.Error(), ExitCode: 1}
 	}
 
 	// The timeout is the config's, but the task's context still wins if it
@@ -139,46 +146,41 @@ func runInterpreter(ctx context.Context, interpreter []string, code, ext string,
 	// as a file path, never as arguments.
 	cmd := exec.CommandContext(runCtx, interpreter[0], args...) //nolint:gosec // see above
 	cmd.Dir = filepath.Dir(path)
+	if workingDir != "" {
+		cmd.Dir = workingDir
+	}
 
 	var stdout, stderr strings.Builder
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
 	err = cmd.Run()
-	out := codeExecOut{Status: "success", Stdout: stdout.String(), Stderr: stderr.String()}
+	res := ExecutionResult{Output: stdout.String(), Error: stderr.String()}
 
 	switch {
 	case err == nil:
-		return out, nil
+		return res
 	case runCtx.Err() != nil:
 		// Distinguished from an ordinary failure because the model can act on
 		// it: shorter code, or a smaller problem.
-		out.Status = "error"
-		out.Stderr = strings.TrimRight(out.Stderr, "\n")
-		if out.Stderr != "" {
-			out.Stderr += "\n"
-		}
-		out.Stderr += fmt.Sprintf("TIMED OUT after %ds", timeoutSeconds)
-		return out, nil
+		res.ExitCode, res.TimedOut = -1, true
+		return res
 	default:
-		out.Status = "error"
-		parts := []string{}
-		if s := strings.TrimRight(out.Stderr, "\n"); s != "" {
-			parts = append(parts, s)
-		}
 		// 127 is the shell's "command not found": interpreter missing,
 		// permission denied, and so on. Then the error itself is the only
 		// useful detail.
-		exitCode := 127
 		var ee *exec.ExitError
 		if errors.As(err, &ee) {
-			exitCode = ee.ExitCode()
+			res.ExitCode = ee.ExitCode()
 		} else {
-			parts = append(parts, err.Error())
+			res.ExitCode = 127
+			res.Error = strings.TrimRight(res.Error, "\n")
+			if res.Error != "" {
+				res.Error += "\n"
+			}
+			res.Error += err.Error()
 		}
-		parts = append(parts, fmt.Sprintf("Exit code: %d", exitCode))
-		out.Stderr = strings.Join(parts, "\n")
-		return out, nil
+		return res
 	}
 }
 
