@@ -10,7 +10,7 @@ server.
 | Python | Go | Notes |
 |---|---|---|
 | `Agent` | `ai.Agent` struct + `Validate()` | defaults substituted at serialization |
-| `@tool` | `tool.Func(name, desc, fn)` | input **and output** schema by reflection |
+| `@tool` | `tool.Func(name, desc, fn)` | input **and output** schema by reflection; properties in struct declaration order, as Python's |
 | HTTP / human / agent / MCP tools | `tool.HTTP`, `tool.Human`, `tool.Agent`, `tool.MCP` | settings in `ToolDef.Config` |
 | `api_tool`, `index_tool`, `search_tool`, `wait_for_message_tool` | `tool.API`, `tool.Index`, `tool.Search`, `tool.WaitForMessage` | pinned against Python in `sdk/ai/tool/testdata` |
 | `image_tool`, `audio_tool`, `video_tool`, `pdf_tool` | `tool.Image`, `tool.Audio`, `tool.Video`, `tool.PDF` | Python's default schemas, pinned |

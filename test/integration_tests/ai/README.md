@@ -146,6 +146,16 @@ generation options. So between the recording run and a replay:
   `JavaScriptBuilder`). The `suite/` recordings were made with those fixes, so
   `TestMCPToolResultReachesTheAnswer` fails in replay against a server
   without them. Ordinary worker tools replay on the branch as is.
+- Numbers in tool results must serialize the same way. Python writes an
+  integral float as `15000.0`; Go's `encoding/json` writes the same `float64`
+  as `15000`. The recorder compares tool results as JSON nodes, so the two do
+  not match. `TestExample09HumanInTheLoop` skips for this reason until the
+  recorder compares numbers by value; a tool returning integral floats should
+  avoid the issue by returning an int where the Python tool does.
+- A tool's parameters must be in the same order as the Python tool declares
+  them. The server copies the order into text the model reads, such as a
+  planner's tool catalog, so the SDK's schema builder keeps struct field
+  order rather than the sorted order `encoding/json` gives a map.
 - Paths in prompts must be stable. `TestCLICommand` lists a fixed relative
   directory rather than `t.TempDir()`, whose random name would make every
   run's prompt unique.
