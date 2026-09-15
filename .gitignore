@@ -16,3 +16,7 @@
 pkg/
 go.sum
 !examples/go.sum
+
+# Python bytecode from test/testdata/agent_config/generate_fixtures.py
+__pycache__/
+*.pyc

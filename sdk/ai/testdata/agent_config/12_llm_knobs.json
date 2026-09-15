@@ -1,0 +1,27 @@
+{
+  "contextWindowBudget": 100000,
+  "external": false,
+  "includeContents": "none",
+  "instructions": {
+    "name": "support_prompt",
+    "type": "prompt_template",
+    "variables": {
+      "tier": "${workflow.input.tier}"
+    },
+    "version": 2
+  },
+  "maxTokens": 4096,
+  "maxTurns": 7,
+  "memory": {
+    "maxMessages": 25
+  },
+  "model": "openai/gpt-4o",
+  "name": "knobs",
+  "reasoningEffort": "high",
+  "temperature": 0.2,
+  "thinkingConfig": {
+    "budgetTokens": 2048,
+    "enabled": true
+  },
+  "timeoutSeconds": 600
+}
