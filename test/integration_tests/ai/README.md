@@ -73,15 +73,34 @@ feature lives on the server's `feature/llm_mock_impl` branch (see its
     export CONDUCTOR_SERVER_JAR=/path/to/conductor/server/build/libs/conductor-server-*-boot.jar
 
 Recordings live under `testdata/llm-recordings/<TestName>/`, one directory
-per test, and are checked in.
+per test, and are checked in. The whole package was recorded in one pass with
+`openai/gpt-4o-mini`; the server loads the directory recursively, so one
+replay run covers every test. The credential tests were recorded with the
+secret provisioned, so the server needs it in both modes and the tests need
+to be told it is there:
+
+    CONDUCTOR_SECRET_GH_TOKEN=ghp_fake_e2e_token_value_12345 \
+        test/integration_tests/ai/scripts/conductor-server.sh replay test/integration_tests/ai/testdata/llm-recordings
+    CONDUCTOR_SERVER_URL=http://localhost:8080/api CONDUCTOR_AGENT_LLM_MODEL=mock/mockLLM \
+        CONDUCTOR_E2E_SECRET_PROVISIONED=1 go test -tags integration -count=1 -v ./test/integration_tests/ai/
+
+Without the secret those two tests skip, and their recordings go unused.
 
 **Record.** The server calls the real model and writes one JSON file per
-response into the directory. Run only the tests you mean to record: every
-agent run against the server is saved, related or not.
+response. The recorder names files by UUID and knows nothing about tests, so
+record with `scripts/record-suite.sh`: it runs each test on its own and files
+that test's recordings under `<dir>/<TestName>/`, then writes `<dir>/INDEX.md`
+listing every recording with its test, the agent's tools and the first user
+message. Run only the tests you mean to record; every agent run against the
+server is saved, related or not.
 
     OPENAI_API_KEY=sk-... test/integration_tests/ai/scripts/conductor-server.sh record test/integration_tests/ai/testdata/llm-recordings
-    CONDUCTOR_SERVER_URL=http://localhost:8080/api go test -tags integration -count=1 -v -run <TestName> ./test/integration_tests/ai/
+    CONDUCTOR_SERVER_URL=http://localhost:8080/api test/integration_tests/ai/scripts/record-suite.sh test/integration_tests/ai/testdata/llm-recordings
     test/integration_tests/ai/scripts/conductor-server.sh stop
+
+Pass a Go test regex as the second argument to re-record a subset, for
+example `'^TestSkill'`; delete that test's directory first so stale files do
+not linger.
 
 **Replay.** The same directory, the `mock` provider, and no key. The model
 name tells the server to look up each request in the recordings; a request
@@ -118,6 +137,23 @@ generation options. So between the recording run and a replay:
   and the recorder does not normalize it away. A test that uses `tool.Agent`
   should skip when `model(t) == mockModel`; fixing it needs a server change
   in `RecordedRequestNormalizer`.
+- MCP tool loops need three server fixes that are not yet on
+  `feature/llm_mock_impl`: name a tool result
+  after the call it answers rather than the task type (`LLMHelper`), treat a
+  history the recorder cannot describe as a miss rather than an error
+  (`MockLLM`), and render tool results under the dispatched tool's name rather
+  than a reference built from the model's call ID (`ToolCompiler` and
+  `JavaScriptBuilder`). The `suite/` recordings were made with those fixes, so
+  `TestMCPToolResultReachesTheAnswer` fails in replay against a server
+  without them. Ordinary worker tools replay on the branch as is.
+- Paths in prompts must be stable. `TestCLICommand` lists a fixed relative
+  directory rather than `t.TempDir()`, whose random name would make every
+  run's prompt unique.
+- Tests recorded together must not send identical requests. The model may
+  answer the same prompt two ways, and playback refuses to start when one
+  request has two answers ("Conflicting recorded responses for the same
+  request"). Give each test its own prompt; the two guardrail tests ask
+  different questions for this reason.
 
 ## Suite 1 compile tests
 
