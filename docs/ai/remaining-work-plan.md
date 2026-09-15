@@ -121,10 +121,25 @@ is covered by fake-server unit tests, and suite 24's schedule flow is
 ported as a live e2e (control-plane only, no LLM, so no recording) that
 skips when the server has no scheduler.
 
-## Step 6: when a user asks
+## Step 6: when a user asks — DONE 2026-09-15
 
-- Code executors beyond the local one: Docker, Jupyter, serverless.
-- Memory stores and semantic memory; the server side is still moving.
+Done on `feat/agent-golden-fixtures` (uncommitted at time of writing).
+
+- Code executors: a `CodeExecutor` interface with `LocalExecutor` (the
+  existing subprocess runner, refactored behind it), `DockerExecutor`,
+  `ServerlessExecutor` and `JupyterExecutor`, plus `ExecutorTool` as the
+  counterpart of `executor.as_tool()`. `CodeExecutionConfig.Executor` selects
+  one for the agent's derived tool; nil keeps the local per-language
+  behaviour. Executors are worker-side configuration and never reach the
+  wire, so no golden fixture changes. The Jupyter executor drives a kernel
+  through `jupyter_client` in a helper Python process, as the Python SDK
+  itself depends on that package; a Go-native kernel client would need a
+  websocket dependency and a Jupyter server. Live tests for Docker and
+  Jupyter skip when the daemon or the package is absent.
+- Semantic memory: `MemoryEntry`, `MemoryStore`, `InMemoryStore` (Jaccard
+  keyword overlap, as Python's) and `SemanticMemory` with `Context`. As in
+  the Python SDK it is standalone: neither runtime injects it into prompts
+  yet, because the server side of memory is still moving.
 
 ## Not planned
 
