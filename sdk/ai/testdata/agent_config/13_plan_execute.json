@@ -1,0 +1,81 @@
+{
+  "external": false,
+  "fallback": {
+    "external": false,
+    "instructions": "Best effort.",
+    "maxTurns": 25,
+    "model": "openai/gpt-4o",
+    "name": "the_fallback",
+    "timeoutSeconds": 0
+  },
+  "fallbackMaxTurns": 4,
+  "instructions": "Plan then execute.",
+  "maxTurns": 25,
+  "model": "openai/gpt-4o",
+  "name": "planner_root",
+  "planner": {
+    "external": false,
+    "instructions": "Emit JSON plan.",
+    "maxTurns": 25,
+    "model": "openai/gpt-4o",
+    "name": "the_planner",
+    "timeoutSeconds": 0
+  },
+  "strategy": "plan_execute",
+  "timeoutSeconds": 0,
+  "tools": [
+    {
+      "description": "Get the current weather for a city.",
+      "inputSchema": {
+        "properties": {
+          "city": {
+            "type": "string"
+          },
+          "days": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "city"
+        ],
+        "type": "object"
+      },
+      "name": "get_weather",
+      "outputSchema": {
+        "additionalProperties": {},
+        "type": "object"
+      },
+      "toolType": "worker"
+    },
+    {
+      "description": "List and dict parameters, to pin items/additionalProperties.",
+      "inputSchema": {
+        "properties": {
+          "meta": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object"
+          },
+          "names": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "names",
+          "meta"
+        ],
+        "type": "object"
+      },
+      "name": "container_kinds",
+      "outputSchema": {
+        "additionalProperties": {},
+        "type": "object"
+      },
+      "toolType": "worker"
+    }
+  ]
+}

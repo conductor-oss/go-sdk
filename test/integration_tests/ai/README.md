@@ -1,0 +1,186 @@
+# AI integration tests
+
+End-to-end tests for `sdk/ai`. Each test describes an agent, sends it to a
+real Conductor server, hosts the agent's tool workers in the test process, and
+checks the outcome. They need a server with an LLM provider configured, so they
+are behind the `integration` build tag and are not part of `go test ./...`.
+
+## Running
+
+Start a Conductor server with an OpenAI key in its environment. The tests use
+`openai/gpt-4o-mini` unless `CONDUCTOR_AGENT_LLM_MODEL` says otherwise.
+
+    OPENAI_API_KEY=sk-... java -jar conductor-server.jar --server.port=8080
+
+Then point the tests at it:
+
+    export CONDUCTOR_SERVER_URL=http://localhost:8080/api
+    go test -tags integration -count=1 -v ./test/integration_tests/ai/
+
+Without `CONDUCTOR_SERVER_URL` every test skips. A test whose optional
+dependency is missing skips too and says what to start, so a run is never
+silently green.
+
+| Variable | Purpose |
+|---|---|
+| `CONDUCTOR_SERVER_URL` | Server API base URL. Required. |
+| `CONDUCTOR_AUTH_KEY`, `CONDUCTOR_AUTH_SECRET` | Credentials for a server that needs them. Not needed for OSS. |
+| `CONDUCTOR_AGENT_LLM_MODEL` | Model for every agent, as `provider/model`. |
+| `CONDUCTOR_E2E_MCP_URL` | An MCP server the Conductor server can reach. Default `http://localhost:3001/mcp`, for example `mcp-testkit --transport http --port 3001`. |
+| `CONDUCTOR_SECRET_<NAME>` | Set on the **server**, not the test. The OSS secret store is read-only and reads secrets from the server's environment at start. Credential tests skip when the secret they declare is not provisioned. |
+| `CONDUCTOR_E2E_SECRET_PROVISIONED` | Set to any value to turn a missing secret from a skip into a failure. |
+
+Run one test with `-run`:
+
+    go test -tags integration -count=1 -v -run TestToolCall ./test/integration_tests/ai/
+
+## What travels where
+
+A run touches three network hops. Knowing them matters when you want to
+capture traffic or replace a side with a mock.
+
+1. **Test process to Conductor server.** Plain HTTP JSON under
+   `CONDUCTOR_SERVER_URL`. The agent definition goes to `POST /agent/start`
+   as the `agentConfig` document, the same document the golden files under
+   `sdk/ai/testdata/agent_config` pin down. Status polls hit
+   `GET /agent/{id}/status`, and the tool workers poll `GET /tasks/poll/...`
+   and report with `POST /tasks`. Event streaming is a long-lived
+   `GET /agent/stream/{id}` server-sent-events response.
+2. **Conductor server to the LLM provider.** The server runs the agent loop
+   and calls the provider itself. The SDK never talks to the LLM.
+3. **Conductor server to an MCP server**, for tests that use MCP tools. The
+   server discovers and calls MCP tools itself, so the test process only needs
+   to reach the MCP server for its own readiness check.
+
+Tool workers, guardrail checks, and handoff predicates run inside the test
+process as goroutines. The server dispatches them as Conductor tasks named
+after the tool or agent, which is why each test registers its workers before
+starting the run.
+
+## Recording and replaying with the server's LLM recorder
+
+The Conductor server can record every LLM response it receives and later
+serve those responses instead of calling a provider. That makes a run
+deterministic and free, and it is the only way to run these tests in CI. The
+feature lives on the server's `feature/llm_mock_impl` branch (see its
+`RECORD_MOCKS.md`); it is not in a released server yet.
+
+`scripts/conductor-server.sh` starts a local server in either mode. It needs
+`CONDUCTOR_SERVER_JAR` pointing at a boot jar built from that branch:
+
+    git -C /path/to/conductor checkout feature/llm_mock_impl
+    (cd /path/to/conductor && ./gradlew :conductor-server:bootJar -x test -x spotlessCheck)
+    export CONDUCTOR_SERVER_JAR=/path/to/conductor/server/build/libs/conductor-server-*-boot.jar
+
+Recordings live under `testdata/llm-recordings/<TestName>/`, one directory
+per test, and are checked in.
+
+**Record.** The server calls the real model and writes one JSON file per
+response into the directory. Run only the tests you mean to record: every
+agent run against the server is saved, related or not.
+
+    OPENAI_API_KEY=sk-... test/integration_tests/ai/scripts/conductor-server.sh record test/integration_tests/ai/testdata/llm-recordings
+    CONDUCTOR_SERVER_URL=http://localhost:8080/api go test -tags integration -count=1 -v -run <TestName> ./test/integration_tests/ai/
+    test/integration_tests/ai/scripts/conductor-server.sh stop
+
+**Replay.** The same directory, the `mock` provider, and no key. The model
+name tells the server to look up each request in the recordings; a request
+with no recording fails the run rather than reaching a provider.
+
+    test/integration_tests/ai/scripts/conductor-server.sh replay test/integration_tests/ai/testdata/llm-recordings
+    CONDUCTOR_SERVER_URL=http://localhost:8080/api CONDUCTOR_AGENT_LLM_MODEL=mock/mockLLM \
+        go test -tags integration -count=1 -v -run <TestName> ./test/integration_tests/ai/
+    test/integration_tests/ai/scripts/conductor-server.sh stop
+
+The script passes these server properties; set them yourself if you start the
+server another way:
+
+| Property | Record | Replay |
+|---|---|---|
+| `conductor.integrations.ai.enabled` | `true` | `true` |
+| `conductor.ai.record-mode` | `true` | `false` |
+| `conductor.ai.enable-llm-mocks` | `false` | `true` |
+| `conductor.ai.recordings-directory` | the directory, absolute | the same directory |
+
+**What has to match.** A replayed request is looked up by its full normalized
+content: every message's role and text, tool calls and tool results, the tool
+definitions (name, description, input schema), the output schema, and the
+generation options. So between the recording run and a replay:
+
+- The test must send the same prompt, instructions, and tools. A change to
+  any of them, or to how the SDK serializes them, needs a re-record.
+- Tool workers still run, and their outputs are part of the next request.
+  Keep them deterministic: no timestamps, IDs, or temp paths in what a tool
+  returns to the model. If a test needs proof that a worker ran, write it
+  somewhere the model never sees, such as a file in the test's temp dir.
+- Agent tools cannot be replayed yet. The server hands the parent model the
+  sub-agent's result together with its `subWorkflowId`, a fresh UUID each run,
+  and the recorder does not normalize it away. A test that uses `tool.Agent`
+  should skip when `model(t) == mockModel`; fixing it needs a server change
+  in `RecordedRequestNormalizer`.
+
+## Suite 1 compile tests
+
+`suite1_basic_validation_test.go` is the Python SDK's
+`e2e/test_suite1_basic_validation.py`, test for test and under the same
+names, `test_x` as `TestX`. Those tests never run an agent: each compiles one
+with `Runtime.Plan`, the counterpart of Python's `runtime.plan()`, and asserts
+on the returned workflow the way the Python test does. No model is called and
+no recording is involved, so they run live in every mode.
+
+Nine of the suite's ten tests are ported. The tenth, the LLM-judge test,
+grades the compiled JSON by calling a provider directly from pytest rather
+than through Conductor, so it is not an SDK behaviour to port.
+
+## Example tests
+
+The Go ports of the Python SDK's `examples/agents`, run as tests against the
+Python SDK's own recordings, so the two SDKs are checked against the same
+model traffic and the model is deterministic.
+
+The recordings live in the conductor repository under
+`llm-recordings/<example>/`, one folder per example, recorded from the Python
+examples with the server's LLM recorder (see the README there). Each
+test here runs the agent from one example with the mock model and asserts on
+the result the way the other tests here do: the run completes and the final message
+is the recorded one. The mock only answers a request that matches a
+recording, so completing with the recorded answer also shows the Go example
+sent the same request the Python one did.
+
+### Running the example tests
+
+Build the server from the conductor branch that carries the recordings and
+start it in playback on the `llm-recordings` directory:
+
+    CONDUCTOR_SERVER_JAR=/path/to/conductor-server-*-boot.jar \
+      test/integration_tests/ai/scripts/conductor-server.sh replay \
+      /path/to/conductor/llm-recordings
+
+Then run the tests with the same directory in `CONDUCTOR_RECORDINGS_DIR`:
+
+    CONDUCTOR_SERVER_URL=http://localhost:8080/api \
+    CONDUCTOR_RECORDINGS_DIR=/path/to/conductor/llm-recordings \
+      go test -tags integration -count=1 -v ./test/integration_tests/ai/
+
+The tests skip when either variable is unset.
+
+### Adding an example
+
+Copy the flow of `examples/agents/<name>.py` into `example_<name>_test.go`
+here — the same agent, instructions and prompt, character for character — and
+replace its printing with assertions, using `recordedAnswers(t, "<name>")`
+for what the Python example printed. The recordings only match an identical
+request, so any drift from the Python example shows up as a failed run. The
+test stands on its own; it does not read `examples/agents/<name>.go`.
+
+## Adding a test
+
+- Build the runtime with `newRuntime(t)` and models with `model(t)` from
+  `agent_test.go` so the environment variables above keep working.
+- Assert on what the test controls: that a worker ran, with what input, and
+  the run's final status. Match model prose loosely or not at all.
+- Skip, with a message saying what to start, when an optional dependency is
+  missing. Never fail for a missing dependency.
+- Keep each run under two minutes with `context.WithTimeout`. A run that times
+  out usually means a worker was never registered for a task the server
+  scheduled.

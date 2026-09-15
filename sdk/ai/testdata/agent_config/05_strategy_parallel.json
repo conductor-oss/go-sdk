@@ -1,0 +1,34 @@
+{
+  "agents": [
+    {
+      "external": false,
+      "instructions": "Handle billing.",
+      "maxTurns": 25,
+      "model": "openai/gpt-4o",
+      "name": "billing",
+      "timeoutSeconds": 0
+    },
+    {
+      "external": false,
+      "instructions": "Handle refunds.",
+      "maxTurns": 25,
+      "model": "openai/gpt-4o",
+      "name": "refunds",
+      "timeoutSeconds": 0
+    },
+    {
+      "external": false,
+      "instructions": "Handle tech support.",
+      "maxTurns": 25,
+      "model": "openai/gpt-4o",
+      "name": "tech",
+      "timeoutSeconds": 0
+    }
+  ],
+  "external": false,
+  "maxTurns": 25,
+  "model": "openai/gpt-4o",
+  "name": "fanout",
+  "strategy": "parallel",
+  "timeoutSeconds": 0
+}
