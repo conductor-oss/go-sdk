@@ -49,6 +49,27 @@ func TestFuncMatchesPythonSchema(t *testing.T) {
 	}
 }
 
+// An external tool carries the same schema as a local one and no handler, so
+// the runtime starts no worker for it and leaves the calls to whoever polls.
+func TestExternalHasSchemaButNoHandler(t *testing.T) {
+	td := tool.External[WeatherIn, map[string]any]("get_weather", "Get the current weather for a city.",
+		tool.RequiresApproval())
+	local := tool.Func("get_weather", "Get the current weather for a city.", getWeather)
+
+	if td.Handler != nil {
+		t.Error("External must not carry a handler; the worker runs elsewhere")
+	}
+	if td.ToolType != ai.ToolTypeWorker || !td.ApprovalRequired {
+		t.Errorf("unexpected tool: %+v", td)
+	}
+	if got, want := roundTrip(t, td.InputSchema), roundTrip(t, local.InputSchema); !reflect.DeepEqual(got, want) {
+		t.Errorf("inputSchema = %v\nwant the same as Func: %v", got, want)
+	}
+	if got, want := roundTrip(t, td.OutputSchema), roundTrip(t, local.OutputSchema); !reflect.DeepEqual(got, want) {
+		t.Errorf("outputSchema = %v\nwant the same as Func: %v", got, want)
+	}
+}
+
 func TestOptions(t *testing.T) {
 	td := tool.Func("open_pr", "Open a pull request", getWeather,
 		tool.WithCredentials("GH_TOKEN"),

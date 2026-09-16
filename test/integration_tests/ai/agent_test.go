@@ -50,21 +50,28 @@ const mockModel = "mock/mockLLM"
 // usable without a server; a wrong URL still fails loudly on first use.
 func newRuntime(t *testing.T) *ai.Runtime {
 	t.Helper()
-	url := os.Getenv("CONDUCTOR_SERVER_URL")
-	if url == "" {
-		t.Skip("CONDUCTOR_SERVER_URL is not set")
-	}
-	api := client.NewAPIClient(
-		settings.NewAuthenticationSettings(
-			os.Getenv("CONDUCTOR_AUTH_KEY"), os.Getenv("CONDUCTOR_AUTH_SECRET")),
-		settings.NewHttpSettings(url),
-	)
-	rt := ai.NewRuntimeWithClient(api, ai.Config{
+	rt := ai.NewRuntimeWithClient(newAPIClient(t), ai.Config{
 		WorkerPollInterval: 100 * time.Millisecond,
 		StatusPollInterval: 500 * time.Millisecond,
 	})
 	t.Cleanup(rt.Shutdown)
 	return rt
+}
+
+// newAPIClient builds a client for the server under test, or skips. Tests
+// that run plain Conductor workers next to the agent runtime, standing in for
+// another service, build theirs from it too.
+func newAPIClient(t *testing.T) *client.APIClient {
+	t.Helper()
+	url := os.Getenv("CONDUCTOR_SERVER_URL")
+	if url == "" {
+		t.Skip("CONDUCTOR_SERVER_URL is not set")
+	}
+	return client.NewAPIClient(
+		settings.NewAuthenticationSettings(
+			os.Getenv("CONDUCTOR_AUTH_KEY"), os.Getenv("CONDUCTOR_AUTH_SECRET")),
+		settings.NewHttpSettings(url),
+	)
 }
 
 func model(t *testing.T) string {

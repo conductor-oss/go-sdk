@@ -63,6 +63,29 @@ func Func[In, Out any](name, description string,
 	return td
 }
 
+// External declares a worker tool whose worker runs in another process, the
+// counterpart of the Python SDK's @tool(external=True).
+//
+// In and Out describe the task's input and output the way a Func handler's
+// types do, so the model sees the same schema; no worker is started here.
+// Conductor dispatches each call to whatever is polling for name: a worker in
+// another service, another language, or an existing task definition.
+func External[In, Out any](name, description string, opts ...Option) ai.ToolDef {
+	var in In
+	var out Out
+	td := ai.ToolDef{
+		Name:         name,
+		Description:  description,
+		InputSchema:  schema.Of(reflect.TypeOf(&in).Elem()),
+		OutputSchema: schema.Of(reflect.TypeOf(&out).Elem()),
+		ToolType:     ai.ToolTypeWorker,
+	}
+	for _, o := range opts {
+		o(&td)
+	}
+	return td
+}
+
 // WithCredentials declares the secret names this tool may read.
 //
 // The names reach the server in the tool's task definition; the server resolves

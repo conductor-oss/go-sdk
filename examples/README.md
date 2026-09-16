@@ -36,9 +36,13 @@ replays the Python SDK's recording of the same example.
 | `103_plan_and_compile.go` | A planner writes a plan over three tools; the server compiles and runs it. |
 | `10_guardrails.go` | A custom output guardrail makes the model redact PII and revise. |
 | `13_hierarchical_agents.go` | CEO routes to department leads, who route to specialists. |
+| `16e_credentials_http_tool.go` | An HTTP tool whose `Authorization` header names a credential the server resolves; no worker runs. |
 | `17_swarm_orchestration.go` | Front-line support transfers the conversation to a specialist and back. |
 | `21_regex_guardrails.go` | Server-side regex guardrails block emails and SSNs. |
 | `22_llm_guardrails.go` | A second model judges the answer against a policy; retries run out. |
+| `33_external_workers.go` | Tools whose workers run in another service (`tool.External`), mixed with a local one. |
+| `64_swarm_with_tools.go` | Swarm specialists that each carry their own domain tool. |
+| `66_handoff_to_parallel.go` | A coordinator hands off to a single agent or to a parallel group. |
 
 **Run:**
 ```bash
