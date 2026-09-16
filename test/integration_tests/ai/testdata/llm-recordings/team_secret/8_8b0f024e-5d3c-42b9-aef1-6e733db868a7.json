@@ -1,0 +1,108 @@
+{
+  "schemaVersion" : 3,
+  "request" : {
+    "messages" : [ {
+      "role" : "system",
+      "text" : "You have one tool: open_pr. Call it exactly once with the title 'x'.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "user",
+      "text" : "[TOOL RESULTS]\n[{\"name\":\"call_0\",\"output\":{\"url\":\"https://github.com/example/repo/pull/1\"}}]\n[/TOOL RESULTS]\n\nCall open_pr_taskdef with the title 'x'.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "assistant",
+      "text" : "{}",
+      "toolCalls" : [ {
+        "reference" : "call_0",
+        "name" : "open_pr_taskdef",
+        "arguments" : {
+          "method" : "open_pr_taskdef",
+          "title" : "x"
+        }
+      } ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "tool",
+      "text" : "",
+      "toolCalls" : [ ],
+      "toolResults" : [ {
+        "reference" : "call_0",
+        "name" : "open_pr_taskdef",
+        "value" : {
+          "url" : "https://github.com/example/repo/pull/1"
+        }
+      } ]
+    }, {
+      "role" : "user",
+      "text" : "Please continue where you left off.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    } ],
+    "tools" : [ {
+      "name" : "open_pr_taskdef",
+      "description" : "Open a pull request",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "title" ]
+      }
+    } ],
+    "jsonOutput" : false,
+    "outputSchema" : null,
+    "generationOptions" : {
+      "temperature" : 0.0,
+      "maxTokens" : 16384,
+      "thinkingTokenLimit" : 0
+    }
+  },
+  "response" : {
+    "metadata" : {
+      "id" : "resp_0f4604f5511cbb94006aab032d944887d0b2f083f804aa6ea4",
+      "model" : "gpt-4o-mini-2024-07-18",
+      "usage" : {
+        "promptTokens" : 165,
+        "completionTokens" : 46,
+        "totalTokens" : 211,
+        "nativeUsage" : null
+      },
+      "rateLimit" : {
+        "requestsLimit" : 0,
+        "requestsRemaining" : 0,
+        "requestsReset" : 0,
+        "tokensLimit" : 0,
+        "tokensRemaining" : 0,
+        "tokensReset" : 0
+      },
+      "promptMetadata" : [ ],
+      "properties" : {
+        "response_id" : "resp_0f4604f5511cbb94006aab032d944887d0b2f083f804aa6ea4",
+        "reasoning_tokens" : 0
+      }
+    },
+    "results" : [ {
+      "output" : {
+        "text" : "I’ve successfully created a pull request with the title 'x'. You can view it [here](https://github.com/example/repo/pull/1). If you need further assistance or modifications, let me know!",
+        "metadata" : {
+          "messageType" : "ASSISTANT"
+        },
+        "toolCalls" : [ ],
+        "media" : [ ]
+      },
+      "metadata" : {
+        "finishReason" : "STOP",
+        "contentFilters" : [ ],
+        "properties" : { }
+      }
+    } ]
+  },
+  "modelSettings" : {
+    "model" : "gpt-4o-mini",
+    "supportsAssistantPrefill" : true
+  }
+}

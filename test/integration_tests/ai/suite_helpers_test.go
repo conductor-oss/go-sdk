@@ -171,9 +171,10 @@ func assertTerminal(t *testing.T, res *ai.AgentResult, step string) {
 // runTolerant runs the agent and returns whatever result there is. A FAILED
 // run makes Run return an error alongside the result; the Python suites look
 // only at the result, so callers here do too.
-func runTolerant(t *testing.T, rt *ai.Runtime, ctx context.Context, agent *ai.Agent, prompt string) *ai.AgentResult {
+func runTolerant(t *testing.T, rt *ai.Runtime, ctx context.Context, agent *ai.Agent, prompt string,
+	opts ...ai.RunOption) *ai.AgentResult {
 	t.Helper()
-	res, err := rt.Run(ctx, agent, prompt)
+	res, err := rt.Run(ctx, agent, prompt, opts...)
 	if res == nil {
 		t.Fatalf("run of %s returned no result: %v", agent.Name, err)
 	}

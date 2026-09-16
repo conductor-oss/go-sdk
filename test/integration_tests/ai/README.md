@@ -221,11 +221,11 @@ Nine of the suite's ten tests are ported. The tenth, the LLM-judge test,
 grades the compiled JSON by calling a provider directly from pytest rather
 than through Conductor, so it is not an SDK behaviour to port.
 
-## Suite 2–15 tests
+## Suite 2–26 tests
 
-`suite2_…` through `suite15_…_test.go` are the Python SDK's
-`e2e/test_suite2_tool_calling.py` through `test_suite15_skills.py`, test for
-test and under the same names. Unlike suite 1 these run agents, so each test
+`suite2_…` through `suite26_…_test.go` are the Python SDK's
+`e2e/test_suite2_tool_calling.py` through `test_suite26_worker_credentials.py`,
+test for test and under the same names. Unlike suite 1 these run agents, so each test
 that can replay has its recordings under `testdata/llm-recordings/<test file>/`,
 and the rest run live only and skip in playback with the reason in the skip
 message. `suite_helpers_test.go` holds what the Python suites repeat at module
@@ -248,6 +248,13 @@ starting mcp-testkit, and the checks on a result.
 | 13 callbacks | `suite13_callbacks_test.go` | 5 | 2 plan-only, 3 replay | — |
 | 14 stateful domain | `suite14_stateful_domain_test.go` | 6 | live only | — |
 | 15 skills | `suite15_skills_test.go` | 4 | 3 plan-only, 1 live only | `bash` |
+| 20 plan and execute | `suite20_plan_execute_test.go` | 9 | replay | — |
+| 21 scheduling | `suite21_scheduling_test.go` | 8 of 11 | no model | the server's scheduler |
+| 22 OCG | not ported | — | — | Needs an OCG package the Go SDK does not have: six HTTP tools and a system prompt. Porting the tests means porting that first. |
+| 23 events and from-instance | `sdk/ai/event_target_test.go` | 8 of 23 | unit | The event half ported as unit tests. The rest builds agents by reflecting over a Python class, which Go cannot express. |
+| 24 agent client | `suite24_agent_client_test.go`, `suite24_schedules_test.go` | 3 of 5 | replay | The other two assert Python types and object identity, which Go's compiler already settles. |
+| 25 media input | `suite25_media_input_test.go` | 2 | live only | `OPENAI_API_KEY`; a media directory the server can read |
+| 26 worker credentials | `team_secret_test.go`, and see below | 1 of 4 | replay | The other three are already covered by `suite2_tool_calling_test.go` and `cli_test.go`, more strictly. |
 
 The server needs two more secrets for suites 4 and 5, with the values the
 Python suites use, since the tests start mcp-testkit in auth mode with the
@@ -290,6 +297,17 @@ Where Go differs from Python and how the port handles it:
   by hand.
 - Python detects which callback hooks a handler overrides; Go sets them as
   fields on `ai.Callbacks`, which the compile tests read back out of the plan.
+- Suite 21 leaves out two Python tests, previewing a cron's next fire times and
+  running a schedule at once. The Go SDK has neither call; adding them is a
+  public API decision, not a test port.
+- Suite 26's credential test asserts the value through `ai.Secret` rather than
+  the process environment. Python injects a credential into the worker's
+  environment for the call; this SDK deliberately does not, and
+  `TestSecretsEnvForSubprocess` pins that difference.
+- Suite 20's tests of a plan naming an undeclared tool are the security ones.
+  Go validates a plan before sending it, but only for its own shape, so a plan
+  naming a tool the agent never declared still reaches the server and is
+  refused there, which is what those tests check.
 - Python marks `test_image_openai` xfail; `TestImageOpenai` skips on the
   known failure and passes if it ever works.
 - A tool's own guardrails run in the Go worker around the handler, as the

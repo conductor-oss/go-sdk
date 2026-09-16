@@ -132,6 +132,7 @@ func (r *Runtime) ListSchedules(ctx context.Context, agentName string) ([]Schedu
 			Name:        strings.TrimPrefix(ws.Name, prefix),
 			Cron:        ws.CronExpression,
 			Timezone:    ws.ZoneId,
+			Input:       requestInput(ws.StartWorkflowRequest),
 			Catchup:     ws.RunCatchupScheduleInstances,
 			Paused:      ws.Paused,
 			StartAt:     ws.ScheduleStartTime,
@@ -204,10 +205,24 @@ func (r *Runtime) ReconcileSchedules(ctx context.Context, agentName string, desi
 	return nil
 }
 
+// requestInput is the input a schedule fires its agent with. It travels
+// inside the start request, so reading a schedule back has to reach in there
+// or the input is lost.
+func requestInput(req *model.StartWorkflowRequest) map[string]any {
+	if req == nil {
+		return nil
+	}
+	if input, ok := req.Input.(map[string]any); ok {
+		return input
+	}
+	return nil
+}
+
 func scheduleFromWire(agentName string, ws model.WorkflowSchedule) Schedule {
 	return Schedule{
 		Name:        strings.TrimPrefix(ws.Name, schedulePrefix(agentName)),
 		Cron:        ws.CronExpression,
+		Input:       requestInput(ws.StartWorkflowRequest),
 		Timezone:    ws.ZoneId,
 		Catchup:     ws.RunCatchupScheduleInstances,
 		Paused:      ws.Paused,

@@ -50,6 +50,10 @@ type Event struct {
 	Text string
 	// Data is the decoded payload, for fields Type and Text do not cover.
 	Data map[string]any
+	// ExecutionID is the execution the event came from. A nested agent's
+	// events carry its own sub-execution, not the run this handle started, so
+	// answering one means answering that execution; see AgentHandle.For.
+	ExecutionID string
 }
 
 // AgentHandle controls a run that was started without blocking.
@@ -78,7 +82,7 @@ func (h *AgentHandle) Events(ctx context.Context) (<-chan Event, error) {
 		defer stream.Close() //nolint:errcheck // see above
 		for ev := range raw {
 			select {
-			case out <- decodeEvent(ev.Event, ev.Data):
+			case out <- decodeEvent(ev.Event, ev.Data, h.ExecutionID):
 			case <-ctx.Done():
 				return
 			}
@@ -120,6 +124,28 @@ func (h *AgentHandle) Waiting(ctx context.Context) (bool, error) {
 //
 // A run that never reaches a waiting state returns an error rather than
 // blocking forever.
+// For returns a handle to the execution an event came from, so a nested
+// agent's request for human input is answered on its own execution rather
+// than on the run this handle started.
+//
+//	sub, err := handle.For(ev)
+//	if err != nil { ... }
+//	err = sub.Approve(ctx)
+//
+// An event that names no execution is an error: responding to the wrong one
+// silently approves something the person never saw.
+func (h *AgentHandle) For(ev Event) (*AgentHandle, error) {
+	if ev.ExecutionID == "" {
+		return nil, fmt.Errorf(
+			"cannot answer this %s event: it names no execution. Use an event from Events, "+
+				"which carries the execution that is waiting", ev.Name)
+	}
+	if ev.ExecutionID == h.ExecutionID {
+		return h, nil
+	}
+	return &AgentHandle{ExecutionID: ev.ExecutionID, rt: h.rt}, nil
+}
+
 func (h *AgentHandle) Respond(ctx context.Context, output map[string]any) error {
 	if err := h.awaitWaiting(ctx); err != nil {
 		return err
@@ -199,8 +225,8 @@ func (h *AgentHandle) Resume(ctx context.Context) error {
 //
 // The event name may arrive as the SSE "event:" field or inside the JSON
 // payload, depending on the server build, so both are consulted.
-func decodeEvent(name, data string) Event {
-	ev := Event{Name: name, Type: EventType(name)}
+func decodeEvent(name, data, streamExecutionID string) Event {
+	ev := Event{Name: name, Type: EventType(name), ExecutionID: streamExecutionID}
 
 	var payload map[string]any
 	if data != "" && json.Unmarshal([]byte(data), &payload) == nil {
@@ -211,6 +237,11 @@ func decodeEvent(name, data string) Event {
 			}
 		}
 		ev.Text = firstString(payload, "text", "content", "message", "result", "delta")
+		// A nested agent's event names its own execution; without one the
+		// event belongs to the execution being streamed.
+		if id, ok := payload["executionId"].(string); ok && id != "" {
+			ev.ExecutionID = id
+		}
 	} else if data != "" {
 		ev.Text = data
 	}

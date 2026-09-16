@@ -14,6 +14,7 @@ package integration
 import (
 	"context"
 	"errors"
+	"net/http"
 	"os"
 	"os/exec"
 	"strings"
@@ -146,6 +147,63 @@ func TestTeamWithSecret(t *testing.T) {
 
 // A tool that declares nothing must not receive credentials, and Secret must
 // say so clearly rather than returning an empty string.
+// The Python SDK's e2e/test_suite26_worker_credentials.py
+// test_taskdef_declares_runtime_metadata: the names a tool declares are
+// stamped onto its task definition on the server, which is what lets the
+// server resolve them and hand the values over at poll time. The rest of that
+// suite is covered here and in suite2_tool_calling_test.go and cli_test.go.
+func TestTaskdefDeclaresRuntimeMetadata(t *testing.T) {
+	requireRuntimeMetadata(t)
+	rt := newRuntime(t)
+
+	agent := &ai.Agent{
+		Name:         "e2e_worker_creds_taskdef",
+		Model:        model(t),
+		Instructions: "You have one tool: open_pr. Call it exactly once with the title 'x'.",
+		Tools: []ai.ToolDef{
+			tool.Func("open_pr_taskdef", "Open a pull request",
+				func(ctx context.Context, in prIn) (prResult, error) {
+					return prResult{URL: "https://github.com/example/repo/pull/1"}, nil
+				}, tool.WithCredentials(credentialName)),
+		},
+	}
+
+	// The run is only a way to make the runtime register its workers; what is
+	// under test is what the registration left on the server.
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+	runTolerant(t, rt, ctx, agent, "Call open_pr_taskdef with the title 'x'.")
+
+	def := taskDefinition(t, "open_pr_taskdef")
+	if def == nil {
+		t.Fatal("the tool's task definition was never registered")
+	}
+	names := asList(def["runtimeMetadata"])
+	if len(names) != 1 || names[0] != credentialName {
+		t.Errorf("runtimeMetadata = %v, want [%s]: the server cannot resolve a credential it was not told about",
+			def["runtimeMetadata"], credentialName)
+	}
+}
+
+// taskDefinition reads one task definition from the server, or nil.
+func taskDefinition(t *testing.T, name string) map[string]any {
+	t.Helper()
+	base := strings.TrimRight(os.Getenv("CONDUCTOR_SERVER_URL"), "/")
+	resp, err := (&http.Client{Timeout: 10 * time.Second}).Get(base + "/metadata/taskdefs/" + name)
+	if err != nil {
+		t.Fatalf("read task definition %s: %v", name, err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil
+	}
+	var def map[string]any
+	if err := decodeJSON(resp, &def); err != nil {
+		t.Fatalf("decode task definition %s: %v", name, err)
+	}
+	return def
+}
+
 func TestSecretRequiresDeclaration(t *testing.T) {
 	rt := newRuntime(t)
 

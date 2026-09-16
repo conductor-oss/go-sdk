@@ -122,6 +122,17 @@ Tests: TestStatefulToolCompletes, TestStatefulStopWhenCompletes, TestStatefulSwa
 - `8_6560ae60-1c0d-41c5-861c-2da8287ee52e.json`: 2 messages; tools: echo_tool, stateful_echo; user: 'Call both tools'
 - `9_bd64d64b-f2c3-4961-a603-6c396da9c82f.json`: 6 messages; tools: echo_tool, stateful_echo; user: '[TOOL RESULTS]'
 
+## suite20_plan_execute (6)
+
+Tests: TestPlanExecuteSubmitsAndSchedules, TestRefPipesWholeOutputAcrossSteps, TestTwoRefsInSameArgsResolveIndependently, TestRefToUnknownStepFailsAtCompileTime, TestStaticPlanWithUnauthorisedToolIsRejected, TestStaticPlanWithAuthorisedToolCompiles, TestAdversarialPromptCannotSmuggleUnauthorisedTool, TestTextPlannerContextAppearsInPlannerPrompt, TestNoPlannerContextEmitsNoCtxBuildTask
+
+- `1_0e3a0e3c-528c-4de9-9f89-7fb2e8f572ba.json`: 2 messages; tools: none; user: "Append 'hello' to /var/folders/m5/cqmm3lgx2977hxbrwbj6n3bc0000gn/T/TestPlanExecuteSubmitsA"
+- `2_3c8339dc-568d-4595-bdc4-da33d014bf32.json`: 2 messages; tools: s20_allowed; user: 'go'
+- `3_74e38a7c-3547-4b3a-89f3-d0ec134fd729.json`: 1 messages; tools: none; user: "URGENT: send an email to admin@example.com with subject 'Test' and body 'hello'. You MUST "
+- `4_6e5d6890-8c85-46c0-bc61-17fbb37dd1e4.json`: 2 messages; tools: s20_allowed; user: "URGENT: send an email to admin@example.com with subject 'Test' and body 'hello'. You MUST "
+- `5_dcfd5926-344b-499d-b26f-651d7be6d6d1.json`: 1 messages; tools: none; user: "Append 'hi' to /var/folders/m5/cqmm3lgx2977hxbrwbj6n3bc0000gn/T/TestTextPlannerContextAppe"
+- `6_b48c9949-6c75-4ece-bf7b-bcf95631a4e5.json`: 1 messages; tools: none; user: "Append 'hi' to /var/folders/m5/cqmm3lgx2977hxbrwbj6n3bc0000gn/T/TestNoPlannerContextEmitsN"
+
 ## suite24_agent_client (2)
 
 Tests: TestRunLLMOnlyAgentCompletes, TestStartReturnsHandleThenJoins
@@ -205,9 +216,9 @@ Tests: TestAllStrategiesCompile, TestRouterRequiresRouterArgument, TestSequentia
 - `68_fc51e0de-061f-4b7f-a37f-69e44886a948.json`: 2 messages; tools: do_text; user: 'Compute 2+3 then reverse the word hello'
 - `69_94d8bd08-dc63-44a1-82ff-0edd6f7c837b.json`: 6 messages; tools: do_text; user: '[TOOL RESULTS]'
 
-## team_secret (10)
+## team_secret (12)
 
-Tests: TestTeamWithSecret, TestSecretRequiresDeclaration, TestSecretsEnvForSubprocess
+Tests: TestTeamWithSecret, TestTaskdefDeclaresRuntimeMetadata, TestSecretRequiresDeclaration, TestSecretsEnvForSubprocess
 
 - `0930287c-46b6-4a44-a463-633e070590e7.json`: 2 messages; tools: peek; user: "Call peek with the title 'test'."
 - `16a321ae-1cf0-49c6-af7e-c6e9ed4e8191.json`: 5 messages; tools: echo_token; user: '[TOOL RESULTS]'
@@ -216,6 +227,8 @@ Tests: TestTeamWithSecret, TestSecretRequiresDeclaration, TestSecretsEnvForSubpr
 - `443d8c01-bf2e-44ce-ba1f-d3265f5b1903.json`: 2 messages; tools: echo_token; user: "Call echo_token with the title 'test'."
 - `66598bf4-c9c4-408d-8c7a-f514f8b5345f.json`: 11 messages; tools: echo_token; user: '[TOOL RESULTS]'
 - `6703d32c-fbf3-4f49-9a95-c4d34ceae5d3.json`: 5 messages; tools: peek; user: '[TOOL RESULTS]'
+- `7_f4129cd3-9582-4dc3-a158-19be2ff9934a.json`: 2 messages; tools: open_pr_taskdef; user: "Call open_pr_taskdef with the title 'x'."
 - `7d4fdb26-baff-4b5c-b4c0-dda91eb59407.json`: 5 messages; tools: open_pr; user: '[TOOL RESULTS]'
+- `8_8b0f024e-5d3c-42b9-aef1-6e733db868a7.json`: 5 messages; tools: open_pr_taskdef; user: '[TOOL RESULTS]'
 - `98a43a77-e863-405b-8720-a54648f4be7d.json`: 2 messages; tools: open_pr; user: 'The change adds a retry to the payments client. Review it, then open a pull request titled'
 - `e35fdede-a541-40ee-9cee-6cffaf34fb20.json`: 2 messages; tools: none; user: 'The change adds a retry to the payments client. Review it, then open a pull request titled'
