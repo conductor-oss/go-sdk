@@ -83,9 +83,17 @@ Tests: TestCodeExecutionCompiles, TestToolNamingMultiAgent, TestLocalPythonExecu
 - `8_9a9a8368-ca38-4948-84ca-03e87d96bbe1.json`: 5 messages; tools: e2e_ce_docker_py_execute_code; user: '[TOOL RESULTS]'
 - `9_28ef5052-f9a8-433d-9243-7d03617a487d.json`: 2 messages; tools: e2e_ce_docker_nonet_execute_code; user: 'Run this exact Python code using execute_code: import urllib.request; r = urllib.request.u'
 
+## suite12_termination_gates (3)
+
+Tests: TestTextMentionTerminatesEarly, TestMaxMessageTerminatesAtLimit, TestTextGateStopsPipeline, TestTextGateSwitchHasContinueAndStop, TestInvalidModelFails
+
+- `1_9509fa4f-bf95-4faf-b8d8-3c4614f3b1ee.json`: 2 messages; tools: echo_tool; user: 'Say hello.'
+- `2_4029718b-9ac7-4910-8e2e-737cd183ae92.json`: 5 messages; tools: echo_tool; user: '[TOOL RESULTS]'
+- `3_8944b4b9-1c39-47e6-8925-7e0266009d26.json`: 2 messages; tools: echo_tool; user: 'Say hello.'
+
 ## suite13_callbacks (9)
 
-Tests: TestBeforeToolCallbackExecutes, TestAfterToolCallbackExecutes, TestAllCallbacksDontBlockExecution
+Tests: TestToolCallbacksCompile, TestModelCallbacksCompile, TestBeforeToolCallbackExecutes, TestAfterToolCallbackExecutes, TestAllCallbacksDontBlockExecution
 
 - `0b3bcb97-f974-475c-b0a2-b5db9bd97438.json`: 2 messages; tools: echo_tool; user: 'Say hello using the echo tool.'
 - `306e3f7a-38f2-4562-acd0-d46abb14c502.json`: 5 messages; tools: echo_tool; user: '[TOOL RESULTS]'
@@ -96,6 +104,23 @@ Tests: TestBeforeToolCallbackExecutes, TestAfterToolCallbackExecutes, TestAllCal
 - `b6b64033-f7f5-420a-b69b-5c10abb4ca7e.json`: 5 messages; tools: echo_tool; user: '[TOOL RESULTS]'
 - `bea1aecf-84ba-4e4e-9695-66cf780a2f01.json`: 7 messages; tools: echo_tool; user: '[TOOL RESULTS]'
 - `c86c5e47-5223-489f-9054-e3fe8397b0fe.json`: 2 messages; tools: echo_tool; user: 'Say hello using the echo tool.'
+
+## suite14_stateful_domain (12)
+
+Tests: TestStatefulToolCompletes, TestStatefulStopWhenCompletes, TestStatefulSwarmHandoffCompletes, TestStatefulMixedTools, TestConcurrentStatefulIsolation, TestNonStatefulNoDomain
+
+- `10_3e26293a-78e2-4661-8e33-a287b8a45d3f.json`: 2 messages; tools: echo_tool; user: 'Run 1: call echo_tool'
+- `11_474c7d6a-1d43-4c48-9327-2024725f945c.json`: 5 messages; tools: echo_tool; user: '[TOOL RESULTS]'
+- `12_b9655ed6-9a4f-44ee-b745-7b128d8396b5.json`: 2 messages; tools: echo_tool; user: 'Run 2: call echo_tool'
+- `13_f8e74310-23f4-4f85-833a-09d35945d679.json`: 5 messages; tools: echo_tool; user: '[TOOL RESULTS]'
+- `14_81bed8f7-0c80-4191-acb6-ccffb99e5943.json`: 2 messages; tools: echo_tool; user: 'Call echo_tool'
+- `15_af996bf1-963a-4dc3-8697-7477a6213083.json`: 5 messages; tools: echo_tool; user: '[TOOL RESULTS]'
+- `4_bafc9e76-9264-4653-944d-e56018f49f26.json`: 2 messages; tools: echo_tool; user: 'Call the echo tool with hello'
+- `5_75aabfb8-7875-4ab4-bed1-b02fa238209e.json`: 5 messages; tools: echo_tool; user: '[TOOL RESULTS]'
+- `6_5043be29-a103-4973-b2b2-161180350324.json`: 2 messages; tools: echo_tool; user: 'Call echo_tool with stop_test'
+- `7_9e221845-c5fb-4c15-b5f3-14f42f65bc6f.json`: 5 messages; tools: echo_tool; user: '[TOOL RESULTS]'
+- `8_6560ae60-1c0d-41c5-861c-2da8287ee52e.json`: 2 messages; tools: echo_tool, stateful_echo; user: 'Call both tools'
+- `9_bd64d64b-f2c3-4961-a603-6c396da9c82f.json`: 6 messages; tools: echo_tool, stateful_echo; user: '[TOOL RESULTS]'
 
 ## suite24_agent_client (2)
 
@@ -134,14 +159,14 @@ Tests: TestHttpLifecycle, TestExternalOpenapiSpec
 
 Tests: TestPlanReflectsAllGuardrails, TestCleanAgentCompiles, TestToolInputRaise, TestToolOutputFixCompiles, TestToolOutputRegexRetry, TestAgentOutputSecretsBlocked, TestMaxRetriesEscalation
 
-- `1_a25011bc-4ed2-4db6-ab49-5decaa5ae61a.json`: 2 messages; tools: redact_tool; user: 'Call redact_tool with text="contact test@example.com for help"'
-- `2_c55552e1-6357-41b6-9960-d0ad799cca67.json`: 5 messages; tools: redact_tool; user: '[TOOL RESULTS]'
+- `1_b72af02f-2906-4c99-af1f-9019400946e5.json`: 2 messages; tools: redact_tool; user: 'Call redact_tool with text="contact test@example.com for help"'
+- `2_a73fdcb6-f50a-4ad7-ad8c-28fbd9c7311c.json`: 5 messages; tools: redact_tool; user: '[TOOL RESULTS]'
 - `33_b6fcc9c4-1590-4a57-aa87-a8ebd18e7420.json`: 2 messages; tools: safe_query; user: 'Call safe_query with query="DROP TABLE users"'
 - `34_725df0f2-1d45-4f37-8815-aca646b4bb30.json`: 2 messages; tools: none; user: 'Include the word "password" in your response.'
 - `35_a524532e-89d0-4725-b519-0640c04a0991.json`: 4 messages; tools: none; user: 'Include the word "password" in your response.'
 - `36_e858b787-9d00-4d08-9ed1-1b3398a1884b.json`: 6 messages; tools: none; user: 'Include the word "password" in your response.'
 - `37_c18cb30b-cb2c-4d90-acd3-b875c61e1453.json`: 2 messages; tools: strict_tool; user: 'Call strict_tool with text="test"'
-- `3_e1ee1279-74d2-4986-a0b6-64b848e69d07.json`: 8 messages; tools: redact_tool; user: '[TOOL RESULTS]'
+- `3_ad8d4ba8-f792-4722-b874-d32efad6ffc3.json`: 8 messages; tools: redact_tool; user: '[TOOL RESULTS]'
 
 ## suite9_handoffs (32)
 

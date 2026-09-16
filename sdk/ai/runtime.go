@@ -67,7 +67,9 @@ type Runtime struct {
 	runner    *worker.TaskRunner
 	config    Config
 	mu        sync.Mutex
-	started   map[string]bool // task names already registered
+	// started records which (task name, domain) pairs already have a worker.
+	// A stateful run polls its own domain, so one task name can have several.
+	started map[workerKey]bool
 	// defs are the task definitions for started workers, registered after a
 	// run starts; registered records which ones have been sent.
 	defs       map[string]model.TaskDef
@@ -92,7 +94,7 @@ func NewRuntimeWithClient(apiClient *client.APIClient, cfg Config) *Runtime {
 		scheduler:  client.NewSchedulerClient(apiClient),
 		runner:     worker.NewTaskRunnerWithApiClient(apiClient),
 		config:     cfg,
-		started:    map[string]bool{},
+		started:    map[workerKey]bool{},
 		defs:       map[string]model.TaskDef{},
 		registered: map[string]bool{},
 	}
@@ -112,7 +114,14 @@ func (r *Runtime) Plan(ctx context.Context, agent *Agent) (map[string]any, error
 	if err := agent.Validate(); err != nil {
 		return nil, err
 	}
-	plan, err := r.agents.Compile(ctx, map[string]any{"agentConfig": agent.toConfig()})
+	// A skill is compiled from its raw document, the same shape a run sends;
+	// as agentConfig the server would see an ordinary agent and none of the
+	// skill's scripts, resources or sub-agents.
+	payload := map[string]any{"agentConfig": agent.toConfig()}
+	if agent.skill != nil {
+		payload = map[string]any{"framework": skillFramework, "rawConfig": agent.skill.rawConfig()}
+	}
+	plan, err := r.agents.Compile(ctx, payload)
 	if err != nil {
 		return nil, fmt.Errorf("compile agent %q: %w", agent.Name, err)
 	}
@@ -189,7 +198,7 @@ func WithRunSettings(rs RunSettings) RunOption {
 // startPayload validates the agent and any options, registers the agent's
 // workers, and builds the body of the /agent/start request. Run and Start
 // share it so a plan reaches the server the same way from either.
-func (r *Runtime) startPayload(agent *Agent, prompt string, opts []RunOption) (map[string]any, error) {
+func (r *Runtime) startPayload(agent *Agent, prompt string, opts []RunOption, runID string) (map[string]any, error) {
 	if err := agent.Validate(); err != nil {
 		return nil, err
 	}
@@ -206,22 +215,32 @@ func (r *Runtime) startPayload(agent *Agent, prompt string, opts []RunOption) (m
 			return nil, fmt.Errorf("agent %q: %w", agent.Name, err)
 		}
 	}
-	if err := r.registerWorkers(agent); err != nil {
-		return nil, err
+	// A stateful agent's workers poll a per-run domain, which only exists
+	// once the run has started, so those are registered afterwards by the
+	// caller. Everything else starts polling before the run does, so a tool
+	// call cannot arrive before something is listening.
+	if runID == "" {
+		if err := r.registerWorkers(agent, nil); err != nil {
+			return nil, err
+		}
 	}
 
 	// A skill does not travel as agentConfig. The server's SkillNormalizer
 	// compiles the raw document, which /agent/start accepts under
 	// framework and rawConfig — the same request the Python SDK sends.
 	if agent.skill != nil {
-		return map[string]any{
+		payload := map[string]any{
 			"framework": skillFramework,
 			"rawConfig": agent.skill.rawConfig(),
 			"prompt":    prompt,
 			"sessionId": "",
 			"media":     mediaWire(o.media),
 			"context":   map[string]any{},
-		}, nil
+		}
+		if runID != "" {
+			payload["runId"] = runID
+		}
+		return payload, nil
 	}
 
 	// Per-run settings mutate a copy of the agentConfig before it is sent, so
@@ -237,6 +256,11 @@ func (r *Runtime) startPayload(agent *Agent, prompt string, opts []RunOption) (m
 		"prompt":      prompt,
 		"sessionId":   "",
 		"media":       mediaWire(o.media),
+	}
+	if runID != "" {
+		// The server builds the run's task-to-domain map from this, which is
+		// how a stateful run's tasks reach this process's own workers.
+		payload["runId"] = runID
 	}
 	if o.plan != nil {
 		// The server reads workflow.input.static_plan ahead of the planner's
@@ -262,7 +286,8 @@ func mediaWire(media []string) []any {
 // Workers for the agent's tools are registered before the run starts, so a tool
 // call cannot arrive before something is polling for it.
 func (r *Runtime) Start(ctx context.Context, agent *Agent, prompt string, opts ...RunOption) (*AgentHandle, error) {
-	payload, err := r.startPayload(agent, prompt, opts)
+	runID := newRunID(agent)
+	payload, err := r.startPayload(agent, prompt, opts, runID)
 	if err != nil {
 		return nil, err
 	}
@@ -273,6 +298,9 @@ func (r *Runtime) Start(ctx context.Context, agent *Agent, prompt string, opts .
 	executionID, ok := started["executionId"].(string)
 	if !ok || executionID == "" {
 		return nil, fmt.Errorf("start agent %q: server returned no executionId", agent.Name)
+	}
+	if err := r.startStatefulWorkers(ctx, agent, executionID, runID); err != nil {
+		return nil, err
 	}
 	if err := r.registerTaskDefs(ctx); err != nil {
 		return nil, err
@@ -286,7 +314,8 @@ func (r *Runtime) Start(ctx context.Context, agent *Agent, prompt string, opts .
 // handler, starts the run, then polls until the server reports a terminal
 // state. Tool calls arrive as Conductor tasks while this is waiting.
 func (r *Runtime) Run(ctx context.Context, agent *Agent, prompt string, opts ...RunOption) (*AgentResult, error) {
-	payload, err := r.startPayload(agent, prompt, opts)
+	runID := newRunID(agent)
+	payload, err := r.startPayload(agent, prompt, opts, runID)
 	if err != nil {
 		return nil, err
 	}
@@ -297,6 +326,9 @@ func (r *Runtime) Run(ctx context.Context, agent *Agent, prompt string, opts ...
 	executionID, ok := started["executionId"].(string)
 	if !ok || executionID == "" {
 		return nil, fmt.Errorf("start agent %q: server returned no executionId", agent.Name)
+	}
+	if err := r.startStatefulWorkers(ctx, agent, executionID, runID); err != nil {
+		return nil, err
 	}
 	if err := r.registerTaskDefs(ctx); err != nil {
 		return nil, err
@@ -341,20 +373,29 @@ func (r *Runtime) awaitResult(ctx context.Context, executionID string) (*AgentRe
 //
 // Registration is idempotent per task name so repeated runs of the same agent
 // do not stack workers.
-func (r *Runtime) registerWorkers(agent *Agent) error {
+func (r *Runtime) registerWorkers(agent *Agent, domains map[string]string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	return r.walkWorkers(agent)
+	return r.walkWorkers(agent, domains)
+}
+
+// workerKey identifies a poller: a task name in one domain. The same tool in
+// two stateful runs is two pollers, as in the Python SDK.
+type workerKey struct {
+	name   string
+	domain string
 }
 
 // walkWorkers registers one agent's workers, then those of the agents nested
 // under it.
-func (r *Runtime) walkWorkers(a *Agent) error {
-	if err := r.startWorkers(a.workerTools()); err != nil {
+func (r *Runtime) walkWorkers(a *Agent, domains map[string]string) error {
+	if err := r.startWorkers(a.workerTools(), domains); err != nil {
 		return err
 	}
+	// Everything nested under the agent is part of the same run, so it reads
+	// the same routing.
 	for _, sub := range a.nestedAgents() {
-		if err := r.walkWorkers(sub); err != nil {
+		if err := r.walkWorkers(sub, domains); err != nil {
 			return err
 		}
 	}
@@ -363,9 +404,12 @@ func (r *Runtime) walkWorkers(a *Agent) error {
 
 // startWorkers starts a worker for each handler-backed tool not already
 // running.
-func (r *Runtime) startWorkers(tools []ToolDef) error {
+func (r *Runtime) startWorkers(tools []ToolDef, domains map[string]string) error {
 	for _, t := range tools {
-		if t.Handler == nil || r.started[t.Name] {
+		// Each worker polls the queue the server routes its own task to.
+		domain := domains[t.Name]
+		key := workerKey{name: t.Name, domain: domain}
+		if t.Handler == nil || r.started[key] {
 			continue
 		}
 		fn, err := toolExecutor(t)
@@ -373,11 +417,17 @@ func (r *Runtime) startWorkers(tools []ToolDef) error {
 			return err
 		}
 		r.defs[t.Name] = t.taskDef()
-		if err := r.runner.StartWorker(
-			t.Name, fn, r.config.batchSize(), r.config.workerPoll()); err != nil {
+		// A task definition carries no domain; only the poller does.
+		if domain == "" {
+			err = r.runner.StartWorker(t.Name, fn, r.config.batchSize(), r.config.workerPoll())
+		} else {
+			err = r.runner.StartWorkerWithDomain(
+				t.Name, fn, r.config.batchSize(), r.config.workerPoll(), domain)
+		}
+		if err != nil {
 			return fmt.Errorf("start worker %q: %w", t.Name, err)
 		}
-		r.started[t.Name] = true
+		r.started[key] = true
 	}
 	return nil
 }
@@ -418,6 +468,9 @@ func (a *Agent) workerTools() []ToolDef {
 	if g, ok := a.Gate.(GateFunc); ok {
 		tools = append(tools, ToolDef{Name: a.workerTaskName(gateSuffix), Handler: g.gateHandler()})
 	}
+	// A termination condition, a stop-when predicate and a router function
+	// each become a task of their own; see system_workers.go.
+	tools = append(tools, a.systemWorkers()...)
 	// Prefill tools are scheduled by the server before the first turn whether
 	// or not they are also in Tools, so their workers start too.
 	for _, p := range a.PrefillTools {
@@ -552,7 +605,10 @@ func (r *Runtime) Serve(ctx context.Context, agents ...*Agent) error {
 		if _, err := r.Deploy(ctx, agent); err != nil {
 			return err
 		}
-		if err := r.registerWorkers(agent); err != nil {
+		// A standing Serve has no run of its own, so it polls the
+		// domainless queue; a stateful run's own workers are started by
+		// whoever starts that run.
+		if err := r.registerWorkers(agent, nil); err != nil {
 			return err
 		}
 		if err := r.registerTaskDefs(ctx); err != nil {
@@ -611,8 +667,8 @@ func (r *Runtime) Resume(ctx context.Context, executionID string) error {
 func (r *Runtime) Shutdown() {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	for name := range r.started {
-		r.runner.Shutdown(name)
-		delete(r.started, name)
+	for key := range r.started {
+		r.runner.Shutdown(key.name)
+		delete(r.started, key)
 	}
 }

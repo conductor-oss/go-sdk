@@ -1,0 +1,102 @@
+{
+  "schemaVersion" : 3,
+  "request" : {
+    "messages" : [ {
+      "role" : "system",
+      "text" : "You have two tools. First call echo_tool with message='regular'. Then call stateful_echo with message='stateful'. Report both results.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "user",
+      "text" : "Call both tools",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    } ],
+    "tools" : [ {
+      "name" : "echo_tool",
+      "description" : "Return the message with a deterministic prefix.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "message" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "message" ]
+      }
+    }, {
+      "name" : "stateful_echo",
+      "description" : "A stateful tool that echoes with a prefix.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "message" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "message" ]
+      }
+    } ],
+    "jsonOutput" : false,
+    "outputSchema" : null,
+    "generationOptions" : {
+      "temperature" : 0.0,
+      "maxTokens" : 16384,
+      "thinkingTokenLimit" : 0
+    }
+  },
+  "response" : {
+    "metadata" : {
+      "id" : "resp_0da8364e52630481006aaaf45d7a9887d0a08cc5088365adee",
+      "model" : "gpt-4o-mini-2024-07-18",
+      "usage" : {
+        "promptTokens" : 100,
+        "completionTokens" : 47,
+        "totalTokens" : 147,
+        "nativeUsage" : null
+      },
+      "rateLimit" : {
+        "requestsLimit" : 0,
+        "requestsRemaining" : 0,
+        "requestsReset" : 0,
+        "tokensLimit" : 0,
+        "tokensRemaining" : 0,
+        "tokensReset" : 0
+      },
+      "promptMetadata" : [ ],
+      "properties" : {
+        "response_id" : "resp_0da8364e52630481006aaaf45d7a9887d0a08cc5088365adee",
+        "reasoning_tokens" : 0
+      }
+    },
+    "results" : [ {
+      "output" : {
+        "text" : "",
+        "metadata" : {
+          "messageType" : "ASSISTANT"
+        },
+        "toolCalls" : [ {
+          "id" : "call_3mb2ERGgAZTkd6sEPg3KskXm",
+          "type" : "function",
+          "name" : "echo_tool",
+          "arguments" : "{\"message\":\"regular\"}"
+        }, {
+          "id" : "call_FqyogEGWTsAp0iqyVWml2Pcg",
+          "type" : "function",
+          "name" : "stateful_echo",
+          "arguments" : "{\"message\":\"stateful\"}"
+        } ],
+        "media" : [ ]
+      },
+      "metadata" : {
+        "finishReason" : "TOOL_CALLS",
+        "contentFilters" : [ ],
+        "properties" : { }
+      }
+    } ]
+  },
+  "modelSettings" : {
+    "model" : "gpt-4o-mini",
+    "supportsAssistantPrefill" : true
+  }
+}

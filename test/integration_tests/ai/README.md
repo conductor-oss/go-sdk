@@ -205,10 +205,8 @@ playback run of the whole package these are the skips, and why:
 | `TestImageGemini` | Live only; needs `GOOGLE_AI_API_KEY`. |
 | `TestAudioOpenai` | Live only, same reason as the PDF test; needs `OPENAI_API_KEY`. Passes live. |
 | `TestJupyterStateful` | Asked to run `print(x * 73)` exactly as provided, the model defined its own `x` in 12 of 13 live attempts. Live only rather than a recording of the one lucky run. |
-
-Known failure, not a skip: `TestToolOutputRegexRetry` fails in both modes
-because the Go SDK does not enforce a tool-level output guardrail worker-side;
-see "Suite 2–10 tests".
+| `TestStatefulSwarmHandoffCompletes` | Disabled in the Python suite too: a stateful swarm handoff does not reliably complete in its domain. |
+| The rest of suite 14, and `TestAgentToolSkillWorkersWithDomain` | A stateful run's domain, and a nested agent tool's sub-workflow id, are new on every run, so nothing about them can be replayed. Live only. |
 
 ## Suite 1 compile tests
 
@@ -223,11 +221,11 @@ Nine of the suite's ten tests are ported. The tenth, the LLM-judge test,
 grades the compiled JSON by calling a provider directly from pytest rather
 than through Conductor, so it is not an SDK behaviour to port.
 
-## Suite 2–10 tests
+## Suite 2–15 tests
 
-`suite2_…` through `suite10_…_test.go` are the Python SDK's
-`e2e/test_suite2_tool_calling.py` through `test_suite10_code_execution.py`, test
-for test and under the same names. Unlike suite 1 these run agents, so each test
+`suite2_…` through `suite15_…_test.go` are the Python SDK's
+`e2e/test_suite2_tool_calling.py` through `test_suite15_skills.py`, test for
+test and under the same names. Unlike suite 1 these run agents, so each test
 that can replay has its recordings under `testdata/llm-recordings/<test file>/`,
 and the rest run live only and skip in playback with the reason in the skip
 message. `suite_helpers_test.go` holds what the Python suites repeat at module
@@ -245,17 +243,32 @@ starting mcp-testkit, and the checks on a result.
 | 8 guardrails | `suite8_guardrails_test.go` | 7 | 3 plan-only, 4 replay | — |
 | 9 handoffs | `suite9_handoffs_test.go` | 8 | 2 plan-only, 6 replay | — |
 | 10 code execution | `suite10_code_execution_test.go` | 9 | 3 plan-only, 5 replay, Jupyter live only | Docker; `python3` with `jupyter_client` and `ipykernel` |
+| 11 langgraph | not ported | — | — | Exercises the Python LangGraph adapter (`langgraph`, `langchain`). The Go SDK has no framework adapter, so there is nothing to port. |
+| 12 termination and gates | `suite12_termination_gates_test.go` | 5 | 2 plan-only, 3 replay | — |
+| 13 callbacks | `suite13_callbacks_test.go` | 5 | 2 plan-only, 3 replay | — |
+| 14 stateful domain | `suite14_stateful_domain_test.go` | 6 | live only | — |
+| 15 skills | `suite15_skills_test.go` | 4 | 3 plan-only, 1 live only | `bash` |
 
 The server needs two more secrets for suites 4 and 5, with the values the
 Python suites use, since the tests start mcp-testkit in auth mode with the
 value the store holds: `CONDUCTOR_SECRET_MCP_AUTH_KEY=e2e-test-secret-key-12345`
 and `CONDUCTOR_SECRET_HTTP_AUTH_KEY=e2e-http-test-secret-key-67890`.
 
+Suite 15's other tests load and serialize a skill without a server; those are
+unit tests of the SDK itself in `sdk/ai/skill_test.go`, and its two standalone
+run tests are `TestSkillScriptRunsAsWorker` and `TestSkillAsAgentTool` in
+`skill_test.go` here. Suite 13's three run tests were ported earlier; this
+round added its two compile-only ones.
+
 Why some run live only:
 
 - Suite 3's `cli_mktemp` returns a fresh temp path every run, which the model
   then reads, so no recording can match; and `cli_gh` needs a real token.
 - Suites 6 and 7 hand the model the URL of a freshly generated file.
+- Suite 14 reads the run's task-to-domain map, and a stateful run's domain is
+  new every time, so nothing about it can be replayed.
+- Suite 15's stateful skill test nests an agent tool, whose result carries a
+  per-run sub-workflow id.
 - pytest reruns every e2e test up to twice. Go does not, and
   `TestJupyterStateful` shows why that mattered: asked to run `print(x * 73)`
   exactly as provided, the model defined its own `x` first in 12 of 13 live
@@ -273,13 +286,17 @@ Where Go differs from Python and how the port handles it:
   skips the round trip without it. The OSS server reports the file as a
   `file://` path on its own disk, which the test reads directly.
 - Python's `math >> text` pipeline operator has no Go form;
-  `TestPipeOperatorSequential` builds the same parent by hand.
+  `TestPipeOperatorSequential` and suite 12's gate tests build the same parent
+  by hand.
+- Python detects which callback hooks a handler overrides; Go sets them as
+  fields on `ai.Callbacks`, which the compile tests read back out of the plan.
 - Python marks `test_image_openai` xfail; `TestImageOpenai` skips on the
   known failure and passes if it ever works.
-- `TestToolOutputRegexRetry` fails: the Go SDK serializes a tool-level
-  guardrail but, unlike the Python worker, does not enforce an output
-  guardrail on the tool's result. The server enforces only the input gate.
-  This is an SDK gap the test documents.
+- A tool's own guardrails run in the Go worker around the handler, as the
+  Python worker's `run_tool_task` does: input guardrails over the arguments,
+  output guardrails over the result, with fix, raise and the blocked marker.
+  The server gates only a tool's input, so without this a tool-level output
+  guardrail did nothing; `TestToolOutputRegexRetry` is what showed it.
 - The unauthenticated and authenticated phases of suites 4 and 5, and steps 2
   and 3 of suite 2, send identical model requests. The recorder refuses two
   different answers for one request, so only the first phase's recordings are

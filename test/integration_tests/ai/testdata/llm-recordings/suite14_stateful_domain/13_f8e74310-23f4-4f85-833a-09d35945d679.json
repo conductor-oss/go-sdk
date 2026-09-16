@@ -1,0 +1,108 @@
+{
+  "schemaVersion" : 3,
+  "request" : {
+    "messages" : [ {
+      "role" : "system",
+      "text" : "Call echo_tool with message='concurrent_test'. Respond with the tool result.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "user",
+      "text" : "[TOOL RESULTS]\n[{\"name\":\"call_0\",\"output\":{\"result\":\"ECHO:concurrent_test\"}}]\n[/TOOL RESULTS]\n\nRun 2: call echo_tool",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "assistant",
+      "text" : "{}",
+      "toolCalls" : [ {
+        "reference" : "call_0",
+        "name" : "echo_tool",
+        "arguments" : {
+          "method" : "echo_tool",
+          "message" : "concurrent_test"
+        }
+      } ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "tool",
+      "text" : "",
+      "toolCalls" : [ ],
+      "toolResults" : [ {
+        "reference" : "call_0",
+        "name" : "echo_tool",
+        "value" : {
+          "result" : "ECHO:concurrent_test"
+        }
+      } ]
+    }, {
+      "role" : "user",
+      "text" : "Please continue where you left off.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    } ],
+    "tools" : [ {
+      "name" : "echo_tool",
+      "description" : "Return the message with a deterministic prefix.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "message" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "message" ]
+      }
+    } ],
+    "jsonOutput" : false,
+    "outputSchema" : null,
+    "generationOptions" : {
+      "temperature" : 0.0,
+      "maxTokens" : 16384,
+      "thinkingTokenLimit" : 0
+    }
+  },
+  "response" : {
+    "metadata" : {
+      "id" : "resp_07200405ef6f30f4006aaaf469333487d0af9bf177eb933010",
+      "model" : "gpt-4o-mini-2024-07-18",
+      "usage" : {
+        "promptTokens" : 144,
+        "completionTokens" : 34,
+        "totalTokens" : 178,
+        "nativeUsage" : null
+      },
+      "rateLimit" : {
+        "requestsLimit" : 0,
+        "requestsRemaining" : 0,
+        "requestsReset" : 0,
+        "tokensLimit" : 0,
+        "tokensRemaining" : 0,
+        "tokensReset" : 0
+      },
+      "promptMetadata" : [ ],
+      "properties" : {
+        "response_id" : "resp_07200405ef6f30f4006aaaf469333487d0af9bf177eb933010",
+        "reasoning_tokens" : 0
+      }
+    },
+    "results" : [ {
+      "output" : {
+        "text" : "It looks like I reached a point where I performed the echo function successfully. If there's anything specific you'd like to discuss or continue with, please let me know!",
+        "metadata" : {
+          "messageType" : "ASSISTANT"
+        },
+        "toolCalls" : [ ],
+        "media" : [ ]
+      },
+      "metadata" : {
+        "finishReason" : "STOP",
+        "contentFilters" : [ ],
+        "properties" : { }
+      }
+    } ]
+  },
+  "modelSettings" : {
+    "model" : "gpt-4o-mini",
+    "supportsAssistantPrefill" : true
+  }
+}

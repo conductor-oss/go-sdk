@@ -8,7 +8,7 @@
       "toolResults" : [ ]
     }, {
       "role" : "user",
-      "text" : "[TOOL RESULTS]\n[{\"name\":\"call_0\",\"output\":{\"result\":\"contact test@example.com for help\"}},{\"name\":\"call_1\",\"output\":{\"result\":\"contact test@example.com for help\"}}]\n[/TOOL RESULTS]\n\nCall redact_tool with text=\"contact test@example.com for help\"",
+      "text" : "[TOOL RESULTS]\n[{\"name\":\"call_0\",\"output\":{\"blocked\":true,\"error\":\"Output blocked by guardrail 'no_email': Do not include email addresses.\"}}]\n[/TOOL RESULTS]\n\nCall redact_tool with text=\"contact test@example.com for help\"",
       "toolCalls" : [ ],
       "toolResults" : [ ]
     }, {
@@ -31,35 +31,8 @@
         "reference" : "call_0",
         "name" : "redact_tool",
         "value" : {
-          "result" : "contact test@example.com for help"
-        }
-      } ]
-    }, {
-      "role" : "user",
-      "text" : "{result=[Output validation failed: Do not include email addresses.. Please revise your response.]}",
-      "toolCalls" : [ ],
-      "toolResults" : [ ]
-    }, {
-      "role" : "assistant",
-      "text" : "{}",
-      "toolCalls" : [ {
-        "reference" : "call_1",
-        "name" : "redact_tool",
-        "arguments" : {
-          "method" : "redact_tool",
-          "text" : "contact test@example.com for help"
-        }
-      } ],
-      "toolResults" : [ ]
-    }, {
-      "role" : "tool",
-      "text" : "",
-      "toolCalls" : [ ],
-      "toolResults" : [ {
-        "reference" : "call_1",
-        "name" : "redact_tool",
-        "value" : {
-          "result" : "contact test@example.com for help"
+          "blocked" : true,
+          "error" : "Output blocked by guardrail 'no_email': Do not include email addresses."
         }
       } ]
     }, {
@@ -91,12 +64,12 @@
   },
   "response" : {
     "metadata" : {
-      "id" : "resp_0f55422b3e6e6531006aaac957eb6487d0aaf1b354d1edb4e3",
+      "id" : "resp_01e328530dc5dc4f006aaae6d400a487d0b0fac315513b2326",
       "model" : "gpt-4o-mini-2024-07-18",
       "usage" : {
-        "promptTokens" : 254,
-        "completionTokens" : 24,
-        "totalTokens" : 278,
+        "promptTokens" : 195,
+        "completionTokens" : 21,
+        "totalTokens" : 216,
         "nativeUsage" : null
       },
       "rateLimit" : {
@@ -109,7 +82,7 @@
       },
       "promptMetadata" : [ ],
       "properties" : {
-        "response_id" : "resp_0f55422b3e6e6531006aaac957eb6487d0aaf1b354d1edb4e3",
+        "response_id" : "resp_01e328530dc5dc4f006aaae6d400a487d0b0fac315513b2326",
         "reasoning_tokens" : 0
       }
     },
@@ -120,10 +93,10 @@
           "messageType" : "ASSISTANT"
         },
         "toolCalls" : [ {
-          "id" : "call_VKTEbmr7qeY4oqoq1Ge0HyeX",
+          "id" : "call_JXba21db16EYmDKxlJUnx37I",
           "type" : "function",
           "name" : "redact_tool",
-          "arguments" : "{\"text\":\"contact [REDACTED] for help\"}"
+          "arguments" : "{\"text\":\"contact test@example.com for help\"}"
         } ],
         "media" : [ ]
       },

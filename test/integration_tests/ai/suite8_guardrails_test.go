@@ -173,7 +173,7 @@ func TestPlanReflectsAllGuardrails(t *testing.T) {
 	agentGuards := guardrailList(ad["guardrails"])
 	for _, want := range []string{"block_profanity", "no_secrets"} {
 		if guardrailByName(agentGuards, want) == nil {
-			t.Errorf("agent guardrails lack %q: %v", want, keys(map[string]any{}))
+			t.Errorf("agent guardrails lack %q: %v", want, agentGuards)
 		}
 	}
 	if g1 := guardrailByName(agentGuards, "block_profanity"); g1 != nil {

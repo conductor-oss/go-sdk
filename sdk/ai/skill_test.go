@@ -588,9 +588,9 @@ func TestSkillStartPayload(t *testing.T) {
 	// startPayload can be exercised without a server.
 	agent := fixtureSkill(t, "cleanup-skill", WithSkillModel(testModel))
 	for _, w := range agent.skill.workers(agent.Name) {
-		rt.started[w.Name] = true
+		rt.started[workerKey{name: w.Name}] = true
 	}
-	payload, err := rt.startPayload(agent, "tidy up", nil)
+	payload, err := rt.startPayload(agent, "tidy up", nil, "")
 	if err != nil {
 		t.Fatal(err)
 	}

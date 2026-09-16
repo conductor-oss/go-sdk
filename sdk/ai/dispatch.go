@@ -59,11 +59,23 @@ func toolExecutor(t ToolDef) (model.ExecuteTaskFunction, error) {
 		// so a handler can read it without a second call.
 		ctx := withTaskContext(context.Background(), task)
 
+		// The tool's own guardrails run here, around the handler, as in the
+		// Python worker; see tool_guardrails.go.
+		if blocked, err := checkToolInput(ctx, t, task.InputData); err != nil {
+			return nil, err
+		} else if blocked != nil {
+			return blocked, nil
+		}
+
 		out := fn.Call([]reflect.Value{reflect.ValueOf(ctx), in.Elem()})
 		if err, ok := out[1].Interface().(error); ok && err != nil {
 			return nil, err
 		}
-		return toolOutput(out[0].Interface()), nil
+		value, err := checkToolOutput(ctx, t, out[0].Interface())
+		if err != nil {
+			return nil, err
+		}
+		return toolOutput(value), nil
 	}, nil
 }
 

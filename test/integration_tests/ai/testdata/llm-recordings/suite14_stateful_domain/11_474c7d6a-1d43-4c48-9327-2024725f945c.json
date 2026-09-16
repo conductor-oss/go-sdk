@@ -3,12 +3,12 @@
   "request" : {
     "messages" : [ {
       "role" : "system",
-      "text" : "You have redact_tool. Call it with the text provided. Report the result.",
+      "text" : "Call echo_tool with message='concurrent_test'. Respond with the tool result.",
       "toolCalls" : [ ],
       "toolResults" : [ ]
     }, {
       "role" : "user",
-      "text" : "[TOOL RESULTS]\n[{\"name\":\"call_0\",\"output\":{\"result\":\"contact test@example.com for help\"}}]\n[/TOOL RESULTS]\n\nCall redact_tool with text=\"contact test@example.com for help\"",
+      "text" : "[TOOL RESULTS]\n[{\"name\":\"call_0\",\"output\":{\"result\":\"ECHO:concurrent_test\"}}]\n[/TOOL RESULTS]\n\nRun 1: call echo_tool",
       "toolCalls" : [ ],
       "toolResults" : [ ]
     }, {
@@ -16,10 +16,10 @@
       "text" : "{}",
       "toolCalls" : [ {
         "reference" : "call_0",
-        "name" : "redact_tool",
+        "name" : "echo_tool",
         "arguments" : {
-          "method" : "redact_tool",
-          "text" : "contact test@example.com for help"
+          "method" : "echo_tool",
+          "message" : "concurrent_test"
         }
       } ],
       "toolResults" : [ ]
@@ -29,28 +29,28 @@
       "toolCalls" : [ ],
       "toolResults" : [ {
         "reference" : "call_0",
-        "name" : "redact_tool",
+        "name" : "echo_tool",
         "value" : {
-          "result" : "contact test@example.com for help"
+          "result" : "ECHO:concurrent_test"
         }
       } ]
     }, {
       "role" : "user",
-      "text" : "{result=[Output validation failed: Do not include email addresses.. Please revise your response.]}",
+      "text" : "Please continue where you left off.",
       "toolCalls" : [ ],
       "toolResults" : [ ]
     } ],
     "tools" : [ {
-      "name" : "redact_tool",
-      "description" : "Echo text. Output guardrail blocks emails.",
+      "name" : "echo_tool",
+      "description" : "Return the message with a deterministic prefix.",
       "inputSchema" : {
         "type" : "object",
         "properties" : {
-          "text" : {
+          "message" : {
             "type" : "string"
           }
         },
-        "required" : [ "text" ]
+        "required" : [ "message" ]
       }
     } ],
     "jsonOutput" : false,
@@ -63,12 +63,12 @@
   },
   "response" : {
     "metadata" : {
-      "id" : "resp_0a2ea5bbf85e6874006aaac95692ac87d0bd4828c08c814985",
+      "id" : "resp_0cda6793debab186006aaaf462ba7c87d0a381cd5543f537ac",
       "model" : "gpt-4o-mini-2024-07-18",
       "usage" : {
-        "promptTokens" : 170,
-        "completionTokens" : 21,
-        "totalTokens" : 191,
+        "promptTokens" : 144,
+        "completionTokens" : 46,
+        "totalTokens" : 190,
         "nativeUsage" : null
       },
       "rateLimit" : {
@@ -81,26 +81,21 @@
       },
       "promptMetadata" : [ ],
       "properties" : {
-        "response_id" : "resp_0a2ea5bbf85e6874006aaac95692ac87d0bd4828c08c814985",
+        "response_id" : "resp_0cda6793debab186006aaaf462ba7c87d0a381cd5543f537ac",
         "reasoning_tokens" : 0
       }
     },
     "results" : [ {
       "output" : {
-        "text" : "",
+        "text" : "It seems the last response was about a test with the echo tool, which returned \"ECHO:concurrent_test.\" How would you like to proceed from here? Are there specific topics or tasks you'd like to explore?",
         "metadata" : {
           "messageType" : "ASSISTANT"
         },
-        "toolCalls" : [ {
-          "id" : "call_T0tiJ3d5endd0iOmjqRVGmt0",
-          "type" : "function",
-          "name" : "redact_tool",
-          "arguments" : "{\"text\":\"contact test@example.com for help\"}"
-        } ],
+        "toolCalls" : [ ],
         "media" : [ ]
       },
       "metadata" : {
-        "finishReason" : "TOOL_CALLS",
+        "finishReason" : "STOP",
         "contentFilters" : [ ],
         "properties" : { }
       }

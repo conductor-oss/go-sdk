@@ -216,7 +216,7 @@ func TestServeDeploysRegistersAndBlocksUntilCancel(t *testing.T) {
 	// Serve blocks; wait for it to have deployed and registered before cancelling.
 	deadline := time.After(2 * time.Second)
 	for {
-		if _, ok := rec.find("/api/agent/deploy"); ok && rt.started["ping"] {
+		if _, ok := rec.find("/api/agent/deploy"); ok && rt.started[workerKey{name: "ping"}] {
 			break
 		}
 		select {

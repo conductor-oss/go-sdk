@@ -167,7 +167,7 @@ func TestRegisterWorkersRegistersTaskDefsGateAndPrefill(t *testing.T) {
 		PrefillTools: []PrefillToolCall{Prefill(prefill, map[string]any{"city": "x"})},
 		Gate:         GateFunc(func(context.Context, GateState) (bool, error) { return true, nil }),
 	}
-	if err := rt.registerWorkers(agent); err != nil {
+	if err := rt.registerWorkers(agent, nil); err != nil {
 		t.Fatalf("registerWorkers: %v", err)
 	}
 	if len(registered) != 0 {
@@ -178,7 +178,7 @@ func TestRegisterWorkersRegistersTaskDefsGateAndPrefill(t *testing.T) {
 	}
 
 	for _, name := range []string{"ping", "warm_up", "gated_gate"} {
-		if !rt.started[name] {
+		if !rt.started[workerKey{name: name}] {
 			t.Errorf("no worker started for %s; started = %v", name, rt.started)
 		}
 	}

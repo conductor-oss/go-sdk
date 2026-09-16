@@ -22,8 +22,9 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/ai/tool"
 )
 
-// The executable callback tests of the Python SDK's
-// e2e/test_suite13_callbacks.py, under the same names. Each runs an agent that
+// The Python SDK's e2e/test_suite13_callbacks.py, test for test and under the
+// same names: two that compile an agent and read its callbacks out of the
+// plan, and three that run one. Each runs an agent that
 // must call a tool, with lifecycle callbacks attached, and proves the
 // callbacks fired without blocking the run. Rather than inspect the workflow's
 // tasks, each callback increments an in-process counter, which directly shows
@@ -41,6 +42,71 @@ func echoTool() ai.ToolDef {
 
 const echoInstructions = "You are a helpful assistant. You MUST call the echo_tool " +
 	"with text='hello' to answer the user. Always use the tool."
+
+// callbackEntries reads an agent's compiled callbacks: one {position,
+// taskName} per hook the agent set.
+func callbackEntries(t *testing.T, rt *ai.Runtime, agent *ai.Agent) []map[string]any {
+	t.Helper()
+	var out []map[string]any
+	for _, raw := range asList(agentDef(t, planAgent(t, rt, agent))["callbacks"]) {
+		if cb, ok := raw.(map[string]any); ok {
+			out = append(out, cb)
+		}
+	}
+	return out
+}
+
+// assertCallbackTask fails unless the compiled callbacks hold the position
+// with the task name the server will dispatch for it.
+func assertCallbackTask(t *testing.T, entries []map[string]any, position, taskName string) {
+	t.Helper()
+	for _, cb := range entries {
+		if cb["position"] == position && cb["taskName"] == taskName {
+			return
+		}
+	}
+	t.Errorf("no callback at %q named %q; compiled: %v", position, taskName, entries)
+}
+
+// An agent that sets only the two tool hooks compiles to exactly those two
+// callbacks, each named "<agent>_<position>".
+func TestToolCallbacksCompile(t *testing.T) {
+	rt := newRuntime(t)
+	agent := &ai.Agent{
+		Name: "e2e_s13_tool_cb", Model: model(t), MaxTurns: 3,
+		Instructions: "You are a helpful assistant. Use the echo tool.",
+		Tools:        []ai.ToolDef{echoTool()},
+		Callbacks: &ai.Callbacks{
+			OnToolStart: func(context.Context, ai.CallbackInput) (map[string]any, error) { return nil, nil },
+			OnToolEnd:   func(context.Context, ai.CallbackInput) (map[string]any, error) { return nil, nil },
+		},
+	}
+	entries := callbackEntries(t, rt, agent)
+	if len(entries) < 2 {
+		t.Fatalf("compiled %d callbacks, want at least 2: %v", len(entries), entries)
+	}
+	assertCallbackTask(t, entries, "before_tool", "e2e_s13_tool_cb_before_tool")
+	assertCallbackTask(t, entries, "after_tool", "e2e_s13_tool_cb_after_tool")
+}
+
+// The same for the two model hooks, on an agent with no tools at all.
+func TestModelCallbacksCompile(t *testing.T) {
+	rt := newRuntime(t)
+	agent := &ai.Agent{
+		Name: "e2e_s13_model_cb", Model: model(t), MaxTurns: 3,
+		Instructions: "You are a helpful assistant.",
+		Callbacks: &ai.Callbacks{
+			OnModelStart: func(context.Context, ai.CallbackInput) (map[string]any, error) { return nil, nil },
+			OnModelEnd:   func(context.Context, ai.CallbackInput) (map[string]any, error) { return nil, nil },
+		},
+	}
+	entries := callbackEntries(t, rt, agent)
+	if len(entries) < 2 {
+		t.Fatalf("compiled %d callbacks, want at least 2: %v", len(entries), entries)
+	}
+	assertCallbackTask(t, entries, "before_model", "e2e_s13_model_cb_before_model")
+	assertCallbackTask(t, entries, "after_model", "e2e_s13_model_cb_after_model")
+}
 
 func TestBeforeToolCallbackExecutes(t *testing.T) {
 	rt := newRuntime(t)
