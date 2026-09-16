@@ -1,0 +1,162 @@
+{
+  "schemaVersion" : 3,
+  "request" : {
+    "messages" : [ {
+      "role" : "system",
+      "text" : "You are a math agent. When asked to compute something, call do_math with the expression. For example, for \"3+4\" call do_math with expr=\"3+4\". Only handle math operations — ignore non-math requests. If there is nothing to compute, just respond with a summary.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "user",
+      "text" : "[TOOL RESULTS]\n[{\"output\":{\"result\":\"math_result:2+3=5\"},\"name\":\"do_math\"}]\n[/TOOL RESULTS]\n\nCompute 2+3 then reverse the word hello",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "assistant",
+      "text" : "{}",
+      "toolCalls" : [ {
+        "reference" : "call_0",
+        "name" : "do_math",
+        "arguments" : {
+          "method" : "do_math",
+          "expr" : "2+3"
+        }
+      }, {
+        "reference" : "call_1",
+        "name" : "do_math",
+        "arguments" : {
+          "method" : "do_math",
+          "expr" : "reverse('hello')"
+        }
+      }, {
+        "reference" : "call_2",
+        "name" : "do_math",
+        "arguments" : {
+          "method" : "do_math",
+          "expr" : "reverse('hello')"
+        }
+      }, {
+        "reference" : "call_3",
+        "name" : "do_math",
+        "arguments" : {
+          "method" : "do_math",
+          "expr" : "reverse('hello')"
+        }
+      } ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "tool",
+      "text" : "",
+      "toolCalls" : [ ],
+      "toolResults" : [ {
+        "reference" : "call_0",
+        "name" : "do_math",
+        "value" : {
+          "result" : "math_result:2+3=5"
+        }
+      } ]
+    }, {
+      "role" : "tool",
+      "text" : "",
+      "toolCalls" : [ ],
+      "toolResults" : [ {
+        "reference" : "call_1",
+        "name" : "do_math",
+        "value" : {
+          "status" : "FAILED",
+          "error" : "cannot evaluate \"reverse('hello')\""
+        }
+      } ]
+    }, {
+      "role" : "tool",
+      "text" : "",
+      "toolCalls" : [ ],
+      "toolResults" : [ {
+        "reference" : "call_2",
+        "name" : "do_math",
+        "value" : {
+          "status" : "FAILED",
+          "error" : "cannot evaluate \"reverse('hello')\""
+        }
+      } ]
+    }, {
+      "role" : "tool",
+      "text" : "",
+      "toolCalls" : [ ],
+      "toolResults" : [ {
+        "reference" : "call_3",
+        "name" : "do_math",
+        "value" : { }
+      } ]
+    }, {
+      "role" : "user",
+      "text" : "Please continue where you left off.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    } ],
+    "tools" : [ {
+      "name" : "do_math",
+      "description" : "Evaluate a math expression.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "expr" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "expr" ]
+      }
+    } ],
+    "jsonOutput" : false,
+    "outputSchema" : null,
+    "generationOptions" : {
+      "temperature" : 0.0,
+      "maxTokens" : 16384,
+      "thinkingTokenLimit" : 0
+    }
+  },
+  "response" : {
+    "metadata" : {
+      "id" : "resp_06aa081145421682006aaac74fb12c87d0a17dfe662870a7d1",
+      "model" : "gpt-4o-mini-2024-07-18",
+      "usage" : {
+        "promptTokens" : 311,
+        "completionTokens" : 41,
+        "totalTokens" : 352,
+        "nativeUsage" : null
+      },
+      "rateLimit" : {
+        "requestsLimit" : 0,
+        "requestsRemaining" : 0,
+        "requestsReset" : 0,
+        "tokensLimit" : 0,
+        "tokensRemaining" : 0,
+        "tokensReset" : 0
+      },
+      "promptMetadata" : [ ],
+      "properties" : {
+        "response_id" : "resp_06aa081145421682006aaac74fb12c87d0a17dfe662870a7d1",
+        "reasoning_tokens" : 0
+      }
+    },
+    "results" : [ {
+      "output" : {
+        "text" : "The computation for \\(2 + 3\\) resulted in \\(5\\). However, I can't process the reverse operation on words. If you have more math to compute, let me know!",
+        "metadata" : {
+          "messageType" : "ASSISTANT"
+        },
+        "toolCalls" : [ ],
+        "media" : [ ]
+      },
+      "metadata" : {
+        "finishReason" : "STOP",
+        "contentFilters" : [ ],
+        "properties" : { }
+      }
+    } ]
+  },
+  "modelSettings" : {
+    "model" : "gpt-4o-mini",
+    "supportsAssistantPrefill" : true
+  }
+}

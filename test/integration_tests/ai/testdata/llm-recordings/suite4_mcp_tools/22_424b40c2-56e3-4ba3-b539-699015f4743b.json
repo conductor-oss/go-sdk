@@ -1,0 +1,125 @@
+{
+  "schemaVersion" : 3,
+  "request" : {
+    "messages" : [ {
+      "role" : "system",
+      "text" : "You have access to MCP tools. Call exactly the tools specified in each prompt.\nReport each tool's result verbatim. Do not skip any tool.\n",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "user",
+      "text" : "Call exactly these three tools with these exact arguments:\n1. math_add with a=3 and b=4\n2. string_reverse with text=\"hello\"\n3. encoding_base64_encode with text=\"test\"\nReport each result.\n",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    } ],
+    "tools" : [ {
+      "name" : "math_add",
+      "description" : "Add two numbers and return the sum.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "a" : {
+            "title" : "A",
+            "type" : "number"
+          },
+          "b" : {
+            "title" : "B",
+            "type" : "number"
+          }
+        },
+        "required" : [ "a", "b" ]
+      }
+    }, {
+      "name" : "string_reverse",
+      "description" : "Reverse a string.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "text" : {
+            "title" : "Text",
+            "type" : "string"
+          }
+        },
+        "required" : [ "text" ]
+      }
+    }, {
+      "name" : "encoding_base64_encode",
+      "description" : "Base64-encode a string.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "text" : {
+            "title" : "Text",
+            "type" : "string"
+          }
+        },
+        "required" : [ "text" ]
+      }
+    } ],
+    "jsonOutput" : false,
+    "outputSchema" : null,
+    "generationOptions" : {
+      "maxTokens" : 16384,
+      "thinkingTokenLimit" : 0
+    }
+  },
+  "response" : {
+    "metadata" : {
+      "id" : "resp_05a182d3a5b9d29a006aaac6fceae487d0b8b2059bd95b2a88",
+      "model" : "gpt-4o-mini-2024-07-18",
+      "usage" : {
+        "promptTokens" : 176,
+        "completionTokens" : 65,
+        "totalTokens" : 241,
+        "nativeUsage" : null
+      },
+      "rateLimit" : {
+        "requestsLimit" : 0,
+        "requestsRemaining" : 0,
+        "requestsReset" : 0,
+        "tokensLimit" : 0,
+        "tokensRemaining" : 0,
+        "tokensReset" : 0
+      },
+      "promptMetadata" : [ ],
+      "properties" : {
+        "response_id" : "resp_05a182d3a5b9d29a006aaac6fceae487d0b8b2059bd95b2a88",
+        "reasoning_tokens" : 0
+      }
+    },
+    "results" : [ {
+      "output" : {
+        "text" : "",
+        "metadata" : {
+          "messageType" : "ASSISTANT"
+        },
+        "toolCalls" : [ {
+          "id" : "call_dsMg63Cxa9eqf2PXef9xMFU1",
+          "type" : "function",
+          "name" : "math_add",
+          "arguments" : "{\"a\":3,\"b\":4}"
+        }, {
+          "id" : "call_yi6pYHP4GKpfrAjWuJgOuKHn",
+          "type" : "function",
+          "name" : "string_reverse",
+          "arguments" : "{\"text\":\"hello\"}"
+        }, {
+          "id" : "call_7mjq6xnsa6BJUY479S89tyxD",
+          "type" : "function",
+          "name" : "encoding_base64_encode",
+          "arguments" : "{\"text\":\"test\"}"
+        } ],
+        "media" : [ ]
+      },
+      "metadata" : {
+        "finishReason" : "TOOL_CALLS",
+        "contentFilters" : [ ],
+        "properties" : { }
+      }
+    } ]
+  },
+  "modelSettings" : {
+    "model" : "gpt-4o-mini",
+    "supportsAssistantPrefill" : true
+  }
+}

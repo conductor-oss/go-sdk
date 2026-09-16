@@ -1,0 +1,196 @@
+{
+  "schemaVersion" : 3,
+  "request" : {
+    "messages" : [ {
+      "role" : "system",
+      "text" : "You have access to MCP tools. Call exactly the tools specified in each prompt.\nReport each tool's result verbatim. Do not skip any tool.\n",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "user",
+      "text" : "[TOOL RESULTS]\n[{\"name\":\"call_0\",\"output\":{\"content\":[{\"parsed\":{\"result\":7},\"text\":\"{\\\"result\\\": 7.0}\",\"type\":\"text\"}],\"isError\":false}},{\"name\":\"call_1\",\"output\":{\"content\":[{\"parsed\":{\"result\":\"olleh\"},\"text\":\"{\\\"result\\\": \\\"olleh\\\"}\",\"type\":\"text\"}],\"isError\":false}},{\"name\":\"call_2\",\"output\":{\"content\":[{\"parsed\":{\"result\":\"dGVzdA==\"},\"text\":\"{\\\"result\\\": \\\"dGVzdA==\\\"}\",\"type\":\"text\"}],\"isError\":false}}]\n[/TOOL RESULTS]\n\nCall exactly these three tools with these exact arguments:\n1. math_add with a=3 and b=4\n2. string_reverse with text=\"hello\"\n3. encoding_base64_encode with text=\"test\"\nReport each result.\n",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "assistant",
+      "text" : "{}",
+      "toolCalls" : [ {
+        "reference" : "call_0",
+        "name" : "math_add",
+        "arguments" : {
+          "a" : 3,
+          "b" : 4,
+          "method" : "math_add"
+        }
+      }, {
+        "reference" : "call_1",
+        "name" : "string_reverse",
+        "arguments" : {
+          "method" : "string_reverse",
+          "text" : "hello"
+        }
+      }, {
+        "reference" : "call_2",
+        "name" : "encoding_base64_encode",
+        "arguments" : {
+          "method" : "encoding_base64_encode",
+          "text" : "test"
+        }
+      } ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "tool",
+      "text" : "",
+      "toolCalls" : [ ],
+      "toolResults" : [ {
+        "reference" : "call_0",
+        "name" : "math_add",
+        "value" : {
+          "content" : [ {
+            "type" : "text",
+            "text" : "{\"result\": 7.0}",
+            "parsed" : {
+              "result" : 7
+            }
+          } ],
+          "isError" : false
+        }
+      } ]
+    }, {
+      "role" : "tool",
+      "text" : "",
+      "toolCalls" : [ ],
+      "toolResults" : [ {
+        "reference" : "call_1",
+        "name" : "string_reverse",
+        "value" : {
+          "content" : [ {
+            "type" : "text",
+            "text" : "{\"result\": \"olleh\"}",
+            "parsed" : {
+              "result" : "olleh"
+            }
+          } ],
+          "isError" : false
+        }
+      } ]
+    }, {
+      "role" : "tool",
+      "text" : "",
+      "toolCalls" : [ ],
+      "toolResults" : [ {
+        "reference" : "call_2",
+        "name" : "encoding_base64_encode",
+        "value" : {
+          "content" : [ {
+            "type" : "text",
+            "text" : "{\"result\": \"dGVzdA==\"}",
+            "parsed" : {
+              "result" : "dGVzdA=="
+            }
+          } ],
+          "isError" : false
+        }
+      } ]
+    }, {
+      "role" : "user",
+      "text" : "Please continue where you left off.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    } ],
+    "tools" : [ {
+      "name" : "math_add",
+      "description" : "Add two numbers and return the sum.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "a" : {
+            "title" : "A",
+            "type" : "number"
+          },
+          "b" : {
+            "title" : "B",
+            "type" : "number"
+          }
+        },
+        "required" : [ "a", "b" ]
+      }
+    }, {
+      "name" : "string_reverse",
+      "description" : "Reverse a string.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "text" : {
+            "title" : "Text",
+            "type" : "string"
+          }
+        },
+        "required" : [ "text" ]
+      }
+    }, {
+      "name" : "encoding_base64_encode",
+      "description" : "Base64-encode a string.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "text" : {
+            "title" : "Text",
+            "type" : "string"
+          }
+        },
+        "required" : [ "text" ]
+      }
+    } ],
+    "jsonOutput" : false,
+    "outputSchema" : null,
+    "generationOptions" : {
+      "maxTokens" : 16384,
+      "thinkingTokenLimit" : 0
+    }
+  },
+  "response" : {
+    "metadata" : {
+      "id" : "resp_090bdf1bd4e458ab006aaac6fea81c87d087c0206b7fa99169",
+      "model" : "gpt-4o-mini-2024-07-18",
+      "usage" : {
+        "promptTokens" : 562,
+        "completionTokens" : 138,
+        "totalTokens" : 700,
+        "nativeUsage" : null
+      },
+      "rateLimit" : {
+        "requestsLimit" : 0,
+        "requestsRemaining" : 0,
+        "requestsReset" : 0,
+        "tokensLimit" : 0,
+        "tokensRemaining" : 0,
+        "tokensReset" : 0
+      },
+      "promptMetadata" : [ ],
+      "properties" : {
+        "response_id" : "resp_090bdf1bd4e458ab006aaac6fea81c87d087c0206b7fa99169",
+        "reasoning_tokens" : 0
+      }
+    },
+    "results" : [ {
+      "output" : {
+        "text" : "Here are the results from the tools:\n\n1. **math_add**: The sum of 3 and 4 is **7**.\n   ```json\n   {\n     \"result\": 7.0\n   }\n   ```\n\n2. **string_reverse**: The reverse of \"hello\" is **\"olleh\"**.\n   ```json\n   {\n     \"result\": \"olleh\"\n   }\n   ```\n\n3. **encoding_base64_encode**: The Base64 encoding of \"test\" is **\"dGVzdA==\"**.\n   ```json\n   {\n     \"result\": \"dGVzdA==\"\n   }\n   ```",
+        "metadata" : {
+          "messageType" : "ASSISTANT"
+        },
+        "toolCalls" : [ ],
+        "media" : [ ]
+      },
+      "metadata" : {
+        "finishReason" : "STOP",
+        "contentFilters" : [ ],
+        "properties" : { }
+      }
+    } ]
+  },
+  "modelSettings" : {
+    "model" : "gpt-4o-mini",
+    "supportsAssistantPrefill" : true
+  }
+}

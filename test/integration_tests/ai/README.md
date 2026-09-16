@@ -72,24 +72,27 @@ feature lives on the server's `feature/llm_mock_impl` branch (see its
     (cd /path/to/conductor && ./gradlew :conductor-server:bootJar -x test -x spotlessCheck)
     export CONDUCTOR_SERVER_JAR=/path/to/conductor/server/build/libs/conductor-server-*-boot.jar
 
-Recordings live under `testdata/llm-recordings/<TestName>/`, one directory
-per test, and are checked in. The whole package was recorded in one pass with
+Recordings live under `testdata/llm-recordings/<test file>/`, one directory
+per test file named after it without `_test.go`, the layout the shared
+recordings in the conductor repository use, and are checked in. The whole package was recorded in one pass with
 `openai/gpt-4o-mini`; the server loads the directory recursively, so one
 replay run covers every test. The credential tests were recorded with the
 secret provisioned, so the server needs it in both modes and the tests need
 to be told it is there:
 
     CONDUCTOR_SECRET_GH_TOKEN=ghp_fake_e2e_token_value_12345 \
+    CONDUCTOR_SECRET_MCP_AUTH_KEY=e2e-test-secret-key-12345 \
+    CONDUCTOR_SECRET_HTTP_AUTH_KEY=e2e-http-test-secret-key-67890 \
         test/integration_tests/ai/scripts/conductor-server.sh replay test/integration_tests/ai/testdata/llm-recordings
     CONDUCTOR_SERVER_URL=http://localhost:8080/api CONDUCTOR_AGENT_LLM_MODEL=mock/mockLLM \
         CONDUCTOR_E2E_SECRET_PROVISIONED=1 go test -tags integration -count=1 -v ./test/integration_tests/ai/
 
-Without the secret those two tests skip, and their recordings go unused.
+Without the secrets those tests skip, and their recordings go unused.
 
 **Record.** The server calls the real model and writes one JSON file per
 response. The recorder names files by UUID and knows nothing about tests, so
 record with `scripts/record-suite.sh`: it runs each test on its own and files
-that test's recordings under `<dir>/<TestName>/`, then writes `<dir>/INDEX.md`
+that test's recordings under `<dir>/<test file>/`, then writes `<dir>/INDEX.md`
 listing every recording with its test, the agent's tools and the first user
 message. Run only the tests you mean to record; every agent run against the
 server is saved, related or not.
@@ -184,6 +187,29 @@ generation options. So between the recording run and a replay:
   request"). Give each test its own prompt; the two guardrail tests ask
   different questions for this reason.
 
+## Tests that skip in playback
+
+Every skip is a deliberate `t.Skip` with its reason in the message. In a
+playback run of the whole package these are the skips, and why:
+
+| Test | Reason |
+|---|---|
+| `TestExample09HumanInTheLoop` | The Python recording holds `15000.0` where Go sends `15000`; the recorder compared numbers by type. Fixed by the first commit of conductor PR #1633; skips until it lands. |
+| `TestSkillAsAgentTool` | An agent used as a tool puts the sub-workflow's fresh id into the next request, so no recording matches. Fixed by the second commit of PR #1633; skips until it lands. |
+| `TestExample16eCredentialsHTTPTool` | Calls GitHub with a personal token; the response differs per token and over time. Live only. |
+| `TestExample33ExternalWorkers` | Its tool renders a dict into text whose key order a Go map cannot keep, so the last request never matches. Live only until the Python example sorts the keys and is re-recorded. |
+| `TestCredentialLifecycle` | Replays steps 1–3, then skips at the first secret write: the OSS store is read-only (HTTP 501). The Python test skips at the same point. |
+| `TestCliCredentialLifecycle` | `cli_mktemp` returns a fresh temp path the model reads, and `cli_gh` needs a real `GITHUB_TOKEN`. Live only; on OSS it also skips at the store write. |
+| `TestPdfGenerationAndRoundtrip` | The tool hands the model the URL of a freshly generated file. Live only; the text round trip also needs `pdftotext`. |
+| `TestImageOpenai` | Live only, same reason as the PDF test. Live, it skips on the failure Python marks xfail: the server sends a `style` parameter the image API rejects. |
+| `TestImageGemini` | Live only; needs `GOOGLE_AI_API_KEY`. |
+| `TestAudioOpenai` | Live only, same reason as the PDF test; needs `OPENAI_API_KEY`. Passes live. |
+| `TestJupyterStateful` | Asked to run `print(x * 73)` exactly as provided, the model defined its own `x` in 12 of 13 live attempts. Live only rather than a recording of the one lucky run. |
+
+Known failure, not a skip: `TestToolOutputRegexRetry` fails in both modes
+because the Go SDK does not enforce a tool-level output guardrail worker-side;
+see "Suite 2–10 tests".
+
 ## Suite 1 compile tests
 
 `suite1_basic_validation_test.go` is the Python SDK's
@@ -196,6 +222,69 @@ no recording is involved, so they run live in every mode.
 Nine of the suite's ten tests are ported. The tenth, the LLM-judge test,
 grades the compiled JSON by calling a provider directly from pytest rather
 than through Conductor, so it is not an SDK behaviour to port.
+
+## Suite 2–10 tests
+
+`suite2_…` through `suite10_…_test.go` are the Python SDK's
+`e2e/test_suite2_tool_calling.py` through `test_suite10_code_execution.py`, test
+for test and under the same names. Unlike suite 1 these run agents, so each test
+that can replay has its recordings under `testdata/llm-recordings/<test file>/`,
+and the rest run live only and skip in playback with the reason in the skip
+message. `suite_helpers_test.go` holds what the Python suites repeat at module
+level: fetching the workflow, finding a tool's task, the secret store calls,
+starting mcp-testkit, and the checks on a result.
+
+| Python suite | Go file | Tests | Mode | Needs |
+|---|---|---|---|---|
+| 2 tool calling | `suite2_tool_calling_test.go` | 1 | replays steps 1–3, then skips | a writable secret store for steps 4–5; the OSS store is read-only, so it skips there as the Python test does |
+| 3 CLI tools | `suite3_cli_tools_test.go` | 1 | live only | `GITHUB_TOKEN` in the environment and `gh`; skips at the store write on OSS |
+| 4 MCP tools | `suite4_mcp_tools_test.go` | 1 of 2 | replays | `mcp-testkit` on PATH; the test starts it on port 3002. `test_mcp_result_reaches_the_answer` is `TestMCPToolResultReachesTheAnswer` in `mcp_test.go` |
+| 5 HTTP tools | `suite5_http_tools_test.go` | 2 | replays | `mcp-testkit` on port 3003; `developer.orkescloud.com` reachable |
+| 6 PDF tools | `suite6_pdf_tools_test.go` | 1 | live only | `pdftotext` for the round trip, else it skips after checking the file |
+| 7 media tools | `suite7_media_tools_test.go` | 3 | live only | `OPENAI_API_KEY`; `GOOGLE_AI_API_KEY` for Gemini |
+| 8 guardrails | `suite8_guardrails_test.go` | 7 | 3 plan-only, 4 replay | — |
+| 9 handoffs | `suite9_handoffs_test.go` | 8 | 2 plan-only, 6 replay | — |
+| 10 code execution | `suite10_code_execution_test.go` | 9 | 3 plan-only, 5 replay, Jupyter live only | Docker; `python3` with `jupyter_client` and `ipykernel` |
+
+The server needs two more secrets for suites 4 and 5, with the values the
+Python suites use, since the tests start mcp-testkit in auth mode with the
+value the store holds: `CONDUCTOR_SECRET_MCP_AUTH_KEY=e2e-test-secret-key-12345`
+and `CONDUCTOR_SECRET_HTTP_AUTH_KEY=e2e-http-test-secret-key-67890`.
+
+Why some run live only:
+
+- Suite 3's `cli_mktemp` returns a fresh temp path every run, which the model
+  then reads, so no recording can match; and `cli_gh` needs a real token.
+- Suites 6 and 7 hand the model the URL of a freshly generated file.
+- pytest reruns every e2e test up to twice. Go does not, and
+  `TestJupyterStateful` shows why that mattered: asked to run `print(x * 73)`
+  exactly as provided, the model defined its own `x` first in 12 of 13 live
+  attempts. It runs live only rather than replay a recording of the one run
+  where it did not.
+- Suite 5's `TestExternalOpenapiSpec` does replay, but the public Orkes
+  document is part of the request; if it changes, the run fails, which the
+  test tolerates the way the Python one does.
+
+Where Go differs from Python and how the port handles it:
+
+- Python checks its CLI allow-list validator directly in suite 3; the Go
+  validator is covered by the SDK's own `cli_runner_test.go`.
+- Python's `markitdown` reads the PDF back; the Go test uses `pdftotext` and
+  skips the round trip without it. The OSS server reports the file as a
+  `file://` path on its own disk, which the test reads directly.
+- Python's `math >> text` pipeline operator has no Go form;
+  `TestPipeOperatorSequential` builds the same parent by hand.
+- Python marks `test_image_openai` xfail; `TestImageOpenai` skips on the
+  known failure and passes if it ever works.
+- `TestToolOutputRegexRetry` fails: the Go SDK serializes a tool-level
+  guardrail but, unlike the Python worker, does not enforce an output
+  guardrail on the tool's result. The server enforces only the input gate.
+  This is an SDK gap the test documents.
+- The unauthenticated and authenticated phases of suites 4 and 5, and steps 2
+  and 3 of suite 2, send identical model requests. The recorder refuses two
+  different answers for one request, so only the first phase's recordings are
+  kept; the second phase replays the same answers and follows the same tool
+  path.
 
 ## Example tests
 

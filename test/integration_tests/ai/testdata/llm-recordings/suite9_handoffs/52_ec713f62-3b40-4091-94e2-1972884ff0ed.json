@@ -1,0 +1,85 @@
+{
+  "schemaVersion" : 3,
+  "request" : {
+    "messages" : [ {
+      "role" : "system",
+      "text" : "You are a math agent. When asked to compute something, call do_math with the expression. For example, for \"3+4\" call do_math with expr=\"3+4\". Only handle math operations — ignore non-math requests. If there is nothing to compute, just respond with a summary.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "user",
+      "text" : "Compute 7 times 8\n\n[coordinator -> math_agent]",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    } ],
+    "tools" : [ {
+      "name" : "do_math",
+      "description" : "Evaluate a math expression.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "expr" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "expr" ]
+      }
+    } ],
+    "jsonOutput" : false,
+    "outputSchema" : null,
+    "generationOptions" : {
+      "temperature" : 0.0,
+      "maxTokens" : 16384,
+      "thinkingTokenLimit" : 0
+    }
+  },
+  "response" : {
+    "metadata" : {
+      "id" : "resp_07a31d2e2f1967b1006aaac7302bc087d0904d30125666bcf9",
+      "model" : "gpt-4o-mini-2024-07-18",
+      "usage" : {
+        "promptTokens" : 116,
+        "completionTokens" : 17,
+        "totalTokens" : 133,
+        "nativeUsage" : null
+      },
+      "rateLimit" : {
+        "requestsLimit" : 0,
+        "requestsRemaining" : 0,
+        "requestsReset" : 0,
+        "tokensLimit" : 0,
+        "tokensRemaining" : 0,
+        "tokensReset" : 0
+      },
+      "promptMetadata" : [ ],
+      "properties" : {
+        "response_id" : "resp_07a31d2e2f1967b1006aaac7302bc087d0904d30125666bcf9",
+        "reasoning_tokens" : 0
+      }
+    },
+    "results" : [ {
+      "output" : {
+        "text" : "",
+        "metadata" : {
+          "messageType" : "ASSISTANT"
+        },
+        "toolCalls" : [ {
+          "id" : "call_4MlSIXQBYj5Yhqh43wnkt3RV",
+          "type" : "function",
+          "name" : "do_math",
+          "arguments" : "{\"expr\":\"7*8\"}"
+        } ],
+        "media" : [ ]
+      },
+      "metadata" : {
+        "finishReason" : "TOOL_CALLS",
+        "contentFilters" : [ ],
+        "properties" : { }
+      }
+    } ]
+  },
+  "modelSettings" : {
+    "model" : "gpt-4o-mini",
+    "supportsAssistantPrefill" : true
+  }
+}

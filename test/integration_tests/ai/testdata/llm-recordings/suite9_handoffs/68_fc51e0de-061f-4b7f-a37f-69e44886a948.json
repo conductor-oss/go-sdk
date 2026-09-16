@@ -1,0 +1,90 @@
+{
+  "schemaVersion" : 3,
+  "request" : {
+    "messages" : [ {
+      "role" : "system",
+      "text" : "You are a text agent. When asked to reverse text, call do_text with the text. For example, for \"hello\" call do_text with text=\"hello\". If there is nothing to reverse, just respond with a summary of what you received.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "user",
+      "text" : "Compute 2+3 then reverse the word hello\n\nPrevious agent output:\nThe computation for \\(2 + 3\\) resulted in \\(5\\). However, I can't process the reverse operation on words. If you have more math to compute, let me know!",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    } ],
+    "tools" : [ {
+      "name" : "do_text",
+      "description" : "Reverse a string.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "text" ]
+      }
+    } ],
+    "jsonOutput" : false,
+    "outputSchema" : null,
+    "generationOptions" : {
+      "temperature" : 0.0,
+      "maxTokens" : 16384,
+      "thinkingTokenLimit" : 0
+    }
+  },
+  "response" : {
+    "metadata" : {
+      "id" : "resp_052999ca94092e17006aaac7518ae487d0b80af63aeb9ca8f2",
+      "model" : "gpt-4o-mini-2024-07-18",
+      "usage" : {
+        "promptTokens" : 144,
+        "completionTokens" : 45,
+        "totalTokens" : 189,
+        "nativeUsage" : null
+      },
+      "rateLimit" : {
+        "requestsLimit" : 0,
+        "requestsRemaining" : 0,
+        "requestsReset" : 0,
+        "tokensLimit" : 0,
+        "tokensRemaining" : 0,
+        "tokensReset" : 0
+      },
+      "promptMetadata" : [ ],
+      "properties" : {
+        "response_id" : "resp_052999ca94092e17006aaac7518ae487d0b80af63aeb9ca8f2",
+        "reasoning_tokens" : 0
+      }
+    },
+    "results" : [ {
+      "output" : {
+        "text" : "",
+        "metadata" : {
+          "messageType" : "ASSISTANT"
+        },
+        "toolCalls" : [ {
+          "id" : "call_70LeKGhCAVdJnz2dpc3yJ206",
+          "type" : "function",
+          "name" : "do_text",
+          "arguments" : "{\"text\":\"hello\"}"
+        }, {
+          "id" : "call_6plG4b56NQu66bUfiq4sqgHw",
+          "type" : "function",
+          "name" : "do_text",
+          "arguments" : "{\"text\":\"5\"}"
+        } ],
+        "media" : [ ]
+      },
+      "metadata" : {
+        "finishReason" : "TOOL_CALLS",
+        "contentFilters" : [ ],
+        "properties" : { }
+      }
+    } ]
+  },
+  "modelSettings" : {
+    "model" : "gpt-4o-mini",
+    "supportsAssistantPrefill" : true
+  }
+}
