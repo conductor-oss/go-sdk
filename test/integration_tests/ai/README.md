@@ -152,6 +152,25 @@ generation options. So between the recording run and a replay:
   not match. `TestExample09HumanInTheLoop` skips for this reason until the
   recorder compares numbers by value; a tool returning integral floats should
   avoid the issue by returning an int where the Python tool does.
+- A tool that renders a JSON object must not depend on key order. Python's
+  `format_response` in example 33 prints a dict in the order the task input
+  arrived, and that order is what the recording holds; a Go `map` has no
+  order, so the Go port sorts the keys and its result never matches. The
+  matcher itself is order-free for JSON objects; by the time it sees this
+  value the dict has become one string, and the order is inside the string.
+  `TestExample33ExternalWorkers` runs live only and skips in playback.
+  Proposed fix: have the Python example iterate `sorted(data.items())`, a
+  one-line change to the example, then re-record 33. The Go port already
+  sorts, so the recording would then match and the skip can go.
+- An example that calls a live third-party API is not a replay fixture.
+  Server-side HTTP tools call the real endpoint even in playback, and the
+  whole response is part of the next model request. Example 16e calls GitHub
+  with a personal token: the response carries headers tied to that token
+  (`X-OAuth-Scopes`, `x-oauth-client-id`), and its body is live data. Everyone
+  has a different token, so only the recording author can replay it, and only
+  until the data changes. `TestExample16eCredentialsHTTPTool` therefore runs
+  live only, with `CONDUCTOR_SECRET_GITHUB_TOKEN` set on the server, and
+  skips in playback.
 - A tool's parameters must be in the same order as the Python tool declares
   them. The server copies the order into text the model reads, such as a
   planner's tool catalog, so the SDK's schema builder keeps struct field
