@@ -1,0 +1,126 @@
+{
+  "schemaVersion" : 3,
+  "request" : {
+    "messages" : [ {
+      "role" : "system",
+      "text" : "You have access to HTTP API tools. Call exactly the tools specified in each prompt.\nReport each tool's result verbatim. Do not skip any tool.\n",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "user",
+      "text" : "Call exactly these three tools with these exact arguments:\n1. math_add with a=3 and b=4\n2. string_reverse with text=\"hello\"\n3. encoding_base64_encode with text=\"test\"\nReport each result.\n",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    } ],
+    "tools" : [ {
+      "name" : "math_add",
+      "description" : "Add two numbers (a + b)",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "a" : {
+            "description" : "First number",
+            "type" : "number"
+          },
+          "b" : {
+            "description" : "Second number",
+            "type" : "number"
+          }
+        },
+        "required" : [ "a", "b" ]
+      }
+    }, {
+      "name" : "string_reverse",
+      "description" : "Reverse a string",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "text" : {
+            "description" : "Text to reverse",
+            "type" : "string"
+          }
+        },
+        "required" : [ "text" ]
+      }
+    }, {
+      "name" : "encoding_base64_encode",
+      "description" : "Base64-encode a string",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "text" : {
+            "description" : "Text to encode",
+            "type" : "string"
+          }
+        },
+        "required" : [ "text" ]
+      }
+    } ],
+    "jsonOutput" : false,
+    "outputSchema" : null,
+    "generationOptions" : {
+      "temperature" : 0.0,
+      "maxTokens" : 16384,
+      "thinkingTokenLimit" : 0
+    }
+  },
+  "response" : {
+    "metadata" : {
+      "id" : "resp_080177dec93a392f006aaac70899e487d0beda6df2805516a2",
+      "model" : "gpt-4o-mini-2024-07-18",
+      "usage" : {
+        "promptTokens" : 183,
+        "completionTokens" : 65,
+        "totalTokens" : 248,
+        "nativeUsage" : null
+      },
+      "rateLimit" : {
+        "requestsLimit" : 0,
+        "requestsRemaining" : 0,
+        "requestsReset" : 0,
+        "tokensLimit" : 0,
+        "tokensRemaining" : 0,
+        "tokensReset" : 0
+      },
+      "promptMetadata" : [ ],
+      "properties" : {
+        "response_id" : "resp_080177dec93a392f006aaac70899e487d0beda6df2805516a2",
+        "reasoning_tokens" : 0
+      }
+    },
+    "results" : [ {
+      "output" : {
+        "text" : "",
+        "metadata" : {
+          "messageType" : "ASSISTANT"
+        },
+        "toolCalls" : [ {
+          "id" : "call_6O1dfcYG6aJe9lLBm8VHGvVx",
+          "type" : "function",
+          "name" : "math_add",
+          "arguments" : "{\"a\":3,\"b\":4}"
+        }, {
+          "id" : "call_EL7hj9MmjlKR1EOKoBz2uYN2",
+          "type" : "function",
+          "name" : "string_reverse",
+          "arguments" : "{\"text\":\"hello\"}"
+        }, {
+          "id" : "call_etccGy2zcBmdYe87sl5BTd81",
+          "type" : "function",
+          "name" : "encoding_base64_encode",
+          "arguments" : "{\"text\":\"test\"}"
+        } ],
+        "media" : [ ]
+      },
+      "metadata" : {
+        "finishReason" : "TOOL_CALLS",
+        "contentFilters" : [ ],
+        "properties" : { }
+      }
+    } ]
+  },
+  "modelSettings" : {
+    "model" : "gpt-4o-mini",
+    "supportsAssistantPrefill" : true
+  }
+}

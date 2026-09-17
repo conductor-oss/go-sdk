@@ -1,0 +1,74 @@
+{
+  "external": false,
+  "instructions": "Pin the JSON Schema mapping.",
+  "maxTurns": 25,
+  "model": "openai/gpt-4o",
+  "name": "tools_schema_types",
+  "timeoutSeconds": 0,
+  "tools": [
+    {
+      "description": "Every scalar type the schema generator maps.",
+      "inputSchema": {
+        "properties": {
+          "b": {
+            "type": "boolean"
+          },
+          "f": {
+            "type": "number"
+          },
+          "i": {
+            "type": "integer"
+          },
+          "opt": {
+            "type": "string"
+          },
+          "s": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "s",
+          "i",
+          "f",
+          "b"
+        ],
+        "type": "object"
+      },
+      "name": "scalar_kinds",
+      "outputSchema": {
+        "type": "string"
+      },
+      "toolType": "worker"
+    },
+    {
+      "description": "List and dict parameters, to pin items/additionalProperties.",
+      "inputSchema": {
+        "properties": {
+          "meta": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object"
+          },
+          "names": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "names",
+          "meta"
+        ],
+        "type": "object"
+      },
+      "name": "container_kinds",
+      "outputSchema": {
+        "additionalProperties": {},
+        "type": "object"
+      },
+      "toolType": "worker"
+    }
+  ]
+}

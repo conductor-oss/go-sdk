@@ -1,0 +1,99 @@
+{
+  "schemaVersion" : 3,
+  "request" : {
+    "messages" : [ {
+      "role" : "system",
+      "text" : "You are a swarm coordinator. Handle requests by delegating to the appropriate agent.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "user",
+      "text" : "Please reverse the word hello",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    } ],
+    "tools" : [ {
+      "name" : "e2e_s9_swarm_run_transfer_to_math_agent",
+      "description" : "Transfer the conversation to math_agent. You are a math agent. When asked to compute something, call do_math with the expression. For example, for \"3+4\" call do_math with expr=\"3+4\". Only handle math operations — ignore non-math requests. If there is nothing to compute, just respond with a summary. Call at most ONE transfer tool per turn.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "message" : {
+            "description" : "Hand-off note for math_agent: what they should do next and any context they need.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "message" ]
+      }
+    }, {
+      "name" : "e2e_s9_swarm_run_transfer_to_text_agent",
+      "description" : "Transfer the conversation to text_agent. You are a text agent. When asked to reverse text, call do_text with the text. For example, for \"hello\" call do_text with text=\"hello\". If there is nothing to reverse, just respond with a summary of what you received. Call at most ONE transfer tool per turn.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "message" : {
+            "description" : "Hand-off note for text_agent: what they should do next and any context they need.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "message" ]
+      }
+    } ],
+    "jsonOutput" : false,
+    "outputSchema" : null,
+    "generationOptions" : {
+      "temperature" : 0.0,
+      "maxTokens" : 16384,
+      "thinkingTokenLimit" : 0
+    }
+  },
+  "response" : {
+    "metadata" : {
+      "id" : "resp_0efa55f253336a69006aaac73715a887d0a8ee277e2b1c8c20",
+      "model" : "gpt-4o-mini-2024-07-18",
+      "usage" : {
+        "promptTokens" : 273,
+        "completionTokens" : 31,
+        "totalTokens" : 304,
+        "nativeUsage" : null
+      },
+      "rateLimit" : {
+        "requestsLimit" : 0,
+        "requestsRemaining" : 0,
+        "requestsReset" : 0,
+        "tokensLimit" : 0,
+        "tokensRemaining" : 0,
+        "tokensReset" : 0
+      },
+      "promptMetadata" : [ ],
+      "properties" : {
+        "response_id" : "resp_0efa55f253336a69006aaac73715a887d0a8ee277e2b1c8c20",
+        "reasoning_tokens" : 0
+      }
+    },
+    "results" : [ {
+      "output" : {
+        "text" : "",
+        "metadata" : {
+          "messageType" : "ASSISTANT"
+        },
+        "toolCalls" : [ {
+          "id" : "call_gU3qWeYJoNiLTclMDjwFcr5W",
+          "type" : "function",
+          "name" : "e2e_s9_swarm_run_transfer_to_text_agent",
+          "arguments" : "{\"message\":\"Reverse the word 'hello'.\"}"
+        } ],
+        "media" : [ ]
+      },
+      "metadata" : {
+        "finishReason" : "TOOL_CALLS",
+        "contentFilters" : [ ],
+        "properties" : { }
+      }
+    } ]
+  },
+  "modelSettings" : {
+    "model" : "gpt-4o-mini",
+    "supportsAssistantPrefill" : true
+  }
+}

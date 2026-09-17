@@ -1,0 +1,88 @@
+{
+  "schemaVersion" : 3,
+  "request" : {
+    "messages" : [ {
+      "role" : "system",
+      "text" : "You can execute Python code. When asked to run code, execute it using your execute_code tool exactly as provided. Do not modify the code.\n\nYou have code execution capabilities. Use the execute_code tool to write and run code. Supported languages: python. Each execution runs in an isolated environment — no state, variables, or imports persist between calls. Always include all necessary imports at the top of every code block (e.g. import subprocess, import os, import json).",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "user",
+      "text" : "Run this exact Python code using execute_code, preserving the line breaks exactly:\n```python\nimport time\ntime.sleep(30)\nprint(\"done\")\n```",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    } ],
+    "tools" : [ {
+      "name" : "e2e_ce_local_execute_code",
+      "description" : "Execute code in a sandboxed environment. Supported languages: python. Timeout: 3s.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "language" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "code" ]
+      }
+    } ],
+    "jsonOutput" : false,
+    "outputSchema" : null,
+    "generationOptions" : {
+      "temperature" : 0.0,
+      "maxTokens" : 16384,
+      "thinkingTokenLimit" : 0
+    }
+  },
+  "response" : {
+    "metadata" : {
+      "id" : "resp_040d479089020ff7006aaac6d83e4887d0b7dc7258d72b103a",
+      "model" : "gpt-4o-mini-2024-07-18",
+      "usage" : {
+        "promptTokens" : 189,
+        "completionTokens" : 36,
+        "totalTokens" : 225,
+        "nativeUsage" : null
+      },
+      "rateLimit" : {
+        "requestsLimit" : 0,
+        "requestsRemaining" : 0,
+        "requestsReset" : 0,
+        "tokensLimit" : 0,
+        "tokensRemaining" : 0,
+        "tokensReset" : 0
+      },
+      "promptMetadata" : [ ],
+      "properties" : {
+        "response_id" : "resp_040d479089020ff7006aaac6d83e4887d0b7dc7258d72b103a",
+        "reasoning_tokens" : 0
+      }
+    },
+    "results" : [ {
+      "output" : {
+        "text" : "",
+        "metadata" : {
+          "messageType" : "ASSISTANT"
+        },
+        "toolCalls" : [ {
+          "id" : "call_kjbdlZkgYeBjWkhFW36Bjdag",
+          "type" : "function",
+          "name" : "e2e_ce_local_execute_code",
+          "arguments" : "{\"code\":\"import time\\ntime.sleep(30)\\nprint(\\\"done\\\")\",\"language\":\"python\"}"
+        } ],
+        "media" : [ ]
+      },
+      "metadata" : {
+        "finishReason" : "TOOL_CALLS",
+        "contentFilters" : [ ],
+        "properties" : { }
+      }
+    } ]
+  },
+  "modelSettings" : {
+    "model" : "gpt-4o-mini",
+    "supportsAssistantPrefill" : true
+  }
+}

@@ -10,4 +10,6 @@ type SaveScheduleRequest struct {
 	ScheduleStartTime           int64                 `json:"scheduleStartTime,omitempty"`
 	StartWorkflowRequest        *StartWorkflowRequest `json:"startWorkflowRequest"`
 	UpdatedBy                   string                `json:"updatedBy,omitempty"`
+	ZoneId                      string                `json:"zoneId,omitempty"`
+	Description                 string                `json:"description,omitempty"`
 }

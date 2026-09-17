@@ -1,0 +1,67 @@
+{
+  "schemaVersion" : 3,
+  "request" : {
+    "messages" : [ {
+      "role" : "system",
+      "text" : "Produce a JSON plan inside a ```json fence describing exactly one step that calls the ``append_line`` tool with path='/var/folders/m5/cqmm3lgx2977hxbrwbj6n3bc0000gn/T/TestPlanExecuteSubmitsAndSchedules522585817/001/s20.txt' and line='hello'.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "user",
+      "text" : "Append 'hello' to /var/folders/m5/cqmm3lgx2977hxbrwbj6n3bc0000gn/T/TestPlanExecuteSubmitsAndSchedules522585817/001/s20.txt\n\n## Available tools\n\nYour plan's ``operations[].tool`` field MUST use a tool name from the list below. Any other name will fail plan validation and route to the fallback agent.\n\n- **`append_line`** — Append a single line to a file at path; returns 'ok'.\n    args: {\"path\": <string>, \"line\": <string>}\n\n\n## Plan schema\n\nYour final response MUST end with a ```json fenced block containing a single JSON object with this shape:\n\n```json\n{\n  \"steps\": [\n    {\n      \"id\": \"<unique step id>\",\n      \"depends_on\": [\"<other step id>\"],   // optional; defaults to previous step\n      \"parallel\": false,                      // run operations[] in parallel\n      \"operations\": [\n        // EITHER a static call:\n        {\"tool\": \"<tool>\", \"args\": {<literal arg map>}},\n        // OR an LLM-generated call:\n        {\"tool\": \"<tool>\", \"generate\": {\n          \"instructions\": \"<what the LLM should produce>\",\n          \"output_schema\": \"<JSON shape that becomes the tool's args>\",\n          \"max_tokens\": 4096                  // optional\n        }}\n      ]\n    }\n  ],\n  \"validation\": [                              // optional\n    {\"tool\": \"<validator tool>\", \"args\": {...},\n     \"success_condition\": \"$.passed === true\"} // optional JS, $ = tool output\n  ],\n  \"on_success\": [{\"tool\": \"<tool>\", \"args\": {...}}],   // optional\n  \"on_failure\": [{\"tool\": \"<tool>\", \"args\": {...}}]    // optional\n}\n```\n\nRules:\n- Every ``operations[].tool`` and ``validation[].tool`` MUST be from the Available tools list above. Other names fail plan validation and route to fallback.\n- Use ``args`` when arg values are literals you decide now. Use ``generate`` when an LLM should produce them at run time (e.g., the body of a write_file).\n- ``parallel: true`` runs that step's operations concurrently (FORK_JOIN). Cross-step concurrency is via ``depends_on`` — a step starts when all listed deps complete.\n- The JSON must parse cleanly. Match brackets and escape strings.\n",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    } ],
+    "tools" : [ ],
+    "jsonOutput" : false,
+    "outputSchema" : null,
+    "generationOptions" : {
+      "maxTokens" : 16384,
+      "thinkingTokenLimit" : 0
+    }
+  },
+  "response" : {
+    "metadata" : {
+      "id" : "resp_011e50acec9ebadd006aab0319577487d0aa85b51d0d1ae27d",
+      "model" : "gpt-4o-mini-2024-07-18",
+      "usage" : {
+        "promptTokens" : 591,
+        "completionTokens" : 106,
+        "totalTokens" : 697,
+        "nativeUsage" : null
+      },
+      "rateLimit" : {
+        "requestsLimit" : 0,
+        "requestsRemaining" : 0,
+        "requestsReset" : 0,
+        "tokensLimit" : 0,
+        "tokensRemaining" : 0,
+        "tokensReset" : 0
+      },
+      "promptMetadata" : [ ],
+      "properties" : {
+        "response_id" : "resp_011e50acec9ebadd006aab0319577487d0aa85b51d0d1ae27d",
+        "reasoning_tokens" : 0
+      }
+    },
+    "results" : [ {
+      "output" : {
+        "text" : "```json\n{\n  \"steps\": [\n    {\n      \"id\": \"step_1\",\n      \"operations\": [\n        {\n          \"tool\": \"append_line\",\n          \"args\": {\n            \"path\": \"/var/folders/m5/cqmm3lgx2977hxbrwbj6n3bc0000gn/T/TestPlanExecuteSubmitsAndSchedules522585817/001/s20.txt\",\n            \"line\": \"hello\"\n          }\n        }\n      ]\n    }\n  ]\n}\n```",
+        "metadata" : {
+          "messageType" : "ASSISTANT"
+        },
+        "toolCalls" : [ ],
+        "media" : [ ]
+      },
+      "metadata" : {
+        "finishReason" : "STOP",
+        "contentFilters" : [ ],
+        "properties" : { }
+      }
+    } ]
+  },
+  "modelSettings" : {
+    "model" : "gpt-4o-mini",
+    "supportsAssistantPrefill" : true
+  }
+}

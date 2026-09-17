@@ -36,4 +36,8 @@ type TaskDef struct {
 	BackoffScaleFactor          int32                  `json:"backoffScaleFactor,omitempty"`
 	Tags                        []TagObject            `json:"tags,omitempty"`
 	OverwriteTags               bool                   `json:"overwriteTags"`
+	// RuntimeMetadata names the credentials a worker for this task may read.
+	// The server compiles it from an agent tool's credentials and delivers the
+	// values on the task; a registration that omits it would wipe them.
+	RuntimeMetadata []string `json:"runtimeMetadata,omitempty"`
 }

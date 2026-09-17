@@ -1,0 +1,114 @@
+{
+  "schemaVersion" : 3,
+  "request" : {
+    "messages" : [ {
+      "role" : "system",
+      "text" : "You can execute Python code in a Jupyter kernel. State persists across calls. When asked to run code, execute it using your execute_code tool exactly as provided.\n\nYou have code execution capabilities. Use the execute_code tool to write and run code. Supported languages: python. Each execution runs in an isolated environment — no state, variables, or imports persist between calls. Always include all necessary imports at the top of every code block (e.g. import subprocess, import os, import json).",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "user",
+      "text" : "[TOOL RESULTS]\n[{\"name\":\"call_0\",\"output\":{\"status\":\"success\",\"stderr\":\"\",\"stdout\":\"3066\\n\"}}]\n[/TOOL RESULTS]\n\nRun this exact Python code using execute_code: print(x * 73)",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "assistant",
+      "text" : "{}",
+      "toolCalls" : [ {
+        "reference" : "call_0",
+        "name" : "e2e_ce_jupyter_execute_code",
+        "arguments" : {
+          "code" : "# Let's attempt to run the provided code.\n\n# Attempting to print 'x * 73' where 'x' is not defined.\n\nprint(x * 73)",
+          "method" : "e2e_ce_jupyter_execute_code",
+          "language" : "python"
+        }
+      } ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "tool",
+      "text" : "",
+      "toolCalls" : [ ],
+      "toolResults" : [ {
+        "reference" : "call_0",
+        "name" : "e2e_ce_jupyter_execute_code",
+        "value" : {
+          "status" : "success",
+          "stderr" : "",
+          "stdout" : "3066\n"
+        }
+      } ]
+    }, {
+      "role" : "user",
+      "text" : "Please continue where you left off.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    } ],
+    "tools" : [ {
+      "name" : "e2e_ce_jupyter_execute_code",
+      "description" : "Execute code in a sandboxed environment. Supported languages: python. Timeout: 30s.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "language" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "code" ]
+      }
+    } ],
+    "jsonOutput" : false,
+    "outputSchema" : null,
+    "generationOptions" : {
+      "temperature" : 0.0,
+      "maxTokens" : 16384,
+      "thinkingTokenLimit" : 0
+    }
+  },
+  "response" : {
+    "metadata" : {
+      "id" : "resp_0188cbdc84df396c006aac599f931487d0a179ee5ea0b7d2ab",
+      "model" : "gpt-4o-mini-2024-07-18",
+      "usage" : {
+        "promptTokens" : 325,
+        "completionTokens" : 115,
+        "totalTokens" : 440,
+        "nativeUsage" : null
+      },
+      "rateLimit" : {
+        "requestsLimit" : 0,
+        "requestsRemaining" : 0,
+        "requestsReset" : 0,
+        "tokensLimit" : 0,
+        "tokensRemaining" : 0,
+        "tokensReset" : 0
+      },
+      "promptMetadata" : [ ],
+      "properties" : {
+        "response_id" : "resp_0188cbdc84df396c006aac599f931487d0a179ee5ea0b7d2ab",
+        "reasoning_tokens" : 0
+      }
+    },
+    "results" : [ {
+      "output" : {
+        "text" : "It appears that the code previously executed was `print(x * 73)` where `x` was not defined, yet it produced an output of `3066`. This outcome suggests that `x` is being treated as a variable that has a value resulting in that specific output, likely due to a previous state in the environment.\n\nTo proceed, could you clarify what you'd like me to do next? For instance, do you want to assign a specific value to `x` and perform further calculations, or would you like to modify or expand on this code snippet?",
+        "metadata" : {
+          "messageType" : "ASSISTANT"
+        },
+        "toolCalls" : [ ],
+        "media" : [ ]
+      },
+      "metadata" : {
+        "finishReason" : "STOP",
+        "contentFilters" : [ ],
+        "properties" : { }
+      }
+    } ]
+  },
+  "modelSettings" : {
+    "model" : "gpt-4o-mini",
+    "supportsAssistantPrefill" : true
+  }
+}

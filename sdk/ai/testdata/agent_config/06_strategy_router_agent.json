@@ -1,0 +1,34 @@
+{
+  "agents": [
+    {
+      "external": false,
+      "instructions": "Handle billing.",
+      "maxTurns": 25,
+      "model": "openai/gpt-4o",
+      "name": "billing",
+      "timeoutSeconds": 0
+    },
+    {
+      "external": false,
+      "instructions": "Handle tech support.",
+      "maxTurns": 25,
+      "model": "openai/gpt-4o",
+      "name": "tech",
+      "timeoutSeconds": 0
+    }
+  ],
+  "external": false,
+  "maxTurns": 25,
+  "model": "openai/gpt-4o",
+  "name": "router_agent",
+  "router": {
+    "external": false,
+    "instructions": "Classify.",
+    "maxTurns": 25,
+    "model": "openai/gpt-4o",
+    "name": "classifier",
+    "timeoutSeconds": 0
+  },
+  "strategy": "router",
+  "timeoutSeconds": 0
+}

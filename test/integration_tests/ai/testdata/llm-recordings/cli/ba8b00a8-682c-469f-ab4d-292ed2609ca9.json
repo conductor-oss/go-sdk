@@ -1,0 +1,98 @@
+{
+  "schemaVersion" : 3,
+  "request" : {
+    "messages" : [ {
+      "role" : "system",
+      "text" : "You can run shell commands with the run_command tool. Use it rather than guessing, and report the tool's exact output.\n\nYou have CLI command execution capabilities. Use the run_command tool to execute shell commands directly. By default commands run without a shell interpreter (safer). Set shell=True only when you need pipes, redirects, or glob expansion. Allowed commands: ls. Do not use other commands. Shell mode is disabled — do not set shell=True.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "user",
+      "text" : "List the files in the directory testdata/cli_listing using run_command with command=\"ls\" and args=[\"testdata/cli_listing\"]. Report the file names you see.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    } ],
+    "tools" : [ {
+      "name" : "go_e2e_cli_run_command",
+      "description" : "Run a CLI command directly. Timeout: 30s. Allowed commands: ls. Shell mode is disabled — do not set shell=True. If you need to save a command's output for later pipeline steps, set context_key. Well-known keys: repo, branch, working_dir, issue_number, pr_url, commit_sha.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "args" : {
+            "type" : "array",
+            "items" : { }
+          },
+          "cwd" : {
+            "type" : "string"
+          },
+          "shell" : {
+            "type" : "boolean"
+          },
+          "context_key" : {
+            "type" : "string"
+          },
+          "command" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "command" ]
+      }
+    } ],
+    "jsonOutput" : false,
+    "outputSchema" : null,
+    "generationOptions" : {
+      "temperature" : 0.0,
+      "maxTokens" : 16384,
+      "thinkingTokenLimit" : 0
+    }
+  },
+  "response" : {
+    "metadata" : {
+      "id" : "resp_06f9124ec41a4867006aa34e1082b487d09781404e37db6ea7",
+      "model" : "gpt-4o-mini-2024-07-18",
+      "usage" : {
+        "promptTokens" : 250,
+        "completionTokens" : 29,
+        "totalTokens" : 279,
+        "nativeUsage" : null
+      },
+      "rateLimit" : {
+        "requestsLimit" : 0,
+        "requestsRemaining" : 0,
+        "requestsReset" : 0,
+        "tokensLimit" : 0,
+        "tokensRemaining" : 0,
+        "tokensReset" : 0
+      },
+      "promptMetadata" : [ ],
+      "properties" : {
+        "response_id" : "resp_06f9124ec41a4867006aa34e1082b487d09781404e37db6ea7",
+        "reasoning_tokens" : 0
+      }
+    },
+    "results" : [ {
+      "output" : {
+        "text" : "",
+        "metadata" : {
+          "messageType" : "ASSISTANT"
+        },
+        "toolCalls" : [ {
+          "id" : "call_ZxVK43HMfDaYb0q3TQTbCxdq",
+          "type" : "function",
+          "name" : "go_e2e_cli_run_command",
+          "arguments" : "{\"command\":\"ls\",\"args\":[\"testdata/cli_listing\"]}"
+        } ],
+        "media" : [ ]
+      },
+      "metadata" : {
+        "finishReason" : "TOOL_CALLS",
+        "contentFilters" : [ ],
+        "properties" : { }
+      }
+    } ]
+  },
+  "modelSettings" : {
+    "model" : "gpt-4o-mini",
+    "supportsAssistantPrefill" : true
+  }
+}
