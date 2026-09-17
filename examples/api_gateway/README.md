@@ -14,14 +14,18 @@ The API Gateway functionality allows you to:
 ## Prerequisites
 
 - A running Conductor server with API Gateway enabled
-- Authentication credentials (Key/Secret)
+- On Orkes Conductor, an application access key (key ID and secret). Open-source
+  Conductor has no authentication and needs none.
 
 ##  Setup and Run
 
 ```bash
 export CONDUCTOR_SERVER_URL="http://localhost:8080/api"
-export CONDUCTOR_AUTH_KEY="your-key"
-export CONDUCTOR_AUTH_SECRET="your-secret"
+
+# Orkes Conductor only. Leave both unset for open-source Conductor: a set pair
+# makes the client call a token endpoint the open-source server does not have.
+export CONDUCTOR_AUTH_KEY="<application key id>"
+export CONDUCTOR_AUTH_SECRET="<application key secret>"
 ```
 
 ```bash

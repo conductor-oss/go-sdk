@@ -130,13 +130,15 @@ go mod download
 
 ### 2. Set Environment Variables
 ```bash
-# Required
-export CONDUCTOR_SERVER_URL="http://localhost:8080/api"
-
-# Optional (for authenticated environments)
-export CONDUCTOR_AUTH_KEY="your_auth_key"
-export CONDUCTOR_AUTH_SECRET="your_auth_secret"
+export CONDUCTOR_SERVER_URL=http://localhost:8080/api
+export CONDUCTOR_AUTH_KEY=your_key        # Orkes Conductor only
+export CONDUCTOR_AUTH_SECRET=your_secret  # Orkes Conductor only
 ```
+
+On Orkes Conductor, the key and secret come from an application access key
+(Access Control > Applications in the Orkes UI). On open-source Conductor,
+leave both unset: a set pair makes the client call a token endpoint the
+server does not have, and every request fails.
 
 ### 3. Run Examples
 Navigate to any example directory and run:
@@ -169,4 +171,7 @@ When running examples successfully, you'll see structured logs showing:
    - Ensure Conductor server is running on the specified URL
 
 4. **Authentication errors**
-   - Verify CONDUCTOR_AUTH_KEY and CONDUCTOR_AUTH_SECRET if using authenticated setup
+   - On Orkes Conductor, check that CONDUCTOR_AUTH_KEY and CONDUCTOR_AUTH_SECRET
+     hold the key ID and secret of an application access key
+   - On open-source Conductor, make sure both variables are unset; a set pair
+     makes the client call a token endpoint the server does not have

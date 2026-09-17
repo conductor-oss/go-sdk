@@ -76,8 +76,20 @@ type Runtime struct {
 	registered map[string]bool
 }
 
-// NewRuntime builds a Runtime from CONDUCTOR_SERVER_URL and, on a secured
-// server, CONDUCTOR_AUTH_KEY and CONDUCTOR_AUTH_SECRET.
+// NewRuntime builds a Runtime from the environment.
+//
+// CONDUCTOR_SERVER_URL is the server's API base URL, such as
+// http://localhost:8080/api. For open-source Conductor, which has no
+// authentication, it is the only variable needed.
+//
+// CONDUCTOR_AUTH_KEY and CONDUCTOR_AUTH_SECRET are the key ID and secret of
+// an Orkes Conductor application access key. When both are set the client
+// exchanges them for a token and sends it with every request. Leave them
+// unset for an open-source server: it has no token endpoint, so the exchange
+// fails and so does every request after it.
+//
+// To use credentials from somewhere other than the environment, build an
+// APIClient yourself and pass it to NewRuntimeWithClient.
 func NewRuntime(cfg Config) *Runtime {
 	apiClient := client.NewAPIClientFromEnv()
 	return NewRuntimeWithClient(apiClient, cfg)

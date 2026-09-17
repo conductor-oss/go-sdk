@@ -36,10 +36,17 @@ func main() {
 		Instructions: "You are a friendly assistant. Keep responses brief.",
 	}
 
-	prompt := "Say hello and tell me a fun fact about Python."
+	prompt := "Say hello and tell me a fun fact about Go."
 
-	// NewRuntime reads CONDUCTOR_SERVER_URL (and the auth key/secret, if set)
-	// from the environment.
+	// NewRuntime connects to the server named by CONDUCTOR_SERVER_URL.
+	//
+	// Open-source Conductor has no authentication, so that one variable is
+	// all it needs.
+	//
+	// Orkes Conductor requires authentication. In the Orkes UI, create an
+	// application and generate an access key for it; the key ID goes in
+	// CONDUCTOR_AUTH_KEY and the key secret in CONDUCTOR_AUTH_SECRET. The
+	// client then fetches a token and sends it with every request.
 	runtime := ai.NewRuntime(ai.Config{})
 	defer runtime.Shutdown()
 
