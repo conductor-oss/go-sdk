@@ -1,0 +1,211 @@
+{
+  "schemaVersion" : 3,
+  "request" : {
+    "messages" : [ {
+      "role" : "system",
+      "text" : "You have three tools: free_tool, paid_tool_a, and paid_tool_b.\nYou MUST call all three tools exactly once each, with the argument \"test\".\nAfter calling all three, report each tool's output verbatim in this format:\n  free_tool: <output>\n  paid_tool_a: <output>\n  paid_tool_b: <output>\nDo not skip any tool. Do not add commentary.\n",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "user",
+      "text" : "[TOOL RESULTS]\n[{\"output\":{\"result\":\"free:ok\"},\"name\":\"free_tool\"}]\n[/TOOL RESULTS]\n\nCall all three tools.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "assistant",
+      "text" : "{}",
+      "toolCalls" : [ {
+        "reference" : "call_0",
+        "name" : "free_tool",
+        "arguments" : {
+          "method" : "free_tool",
+          "x" : "test"
+        }
+      }, {
+        "reference" : "call_1",
+        "name" : "paid_tool_a",
+        "arguments" : {
+          "method" : "paid_tool_a",
+          "x" : "test"
+        }
+      }, {
+        "reference" : "call_2",
+        "name" : "paid_tool_b",
+        "arguments" : {
+          "method" : "paid_tool_b",
+          "x" : "test"
+        }
+      } ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "tool",
+      "text" : "",
+      "toolCalls" : [ ],
+      "toolResults" : [ {
+        "reference" : "call_0",
+        "name" : "free_tool",
+        "value" : {
+          "result" : "free:ok"
+        }
+      } ]
+    }, {
+      "role" : "tool",
+      "text" : "",
+      "toolCalls" : [ ],
+      "toolResults" : [ {
+        "reference" : "call_1",
+        "name" : "paid_tool_a",
+        "value" : { }
+      } ]
+    }, {
+      "role" : "tool",
+      "text" : "",
+      "toolCalls" : [ ],
+      "toolResults" : [ {
+        "reference" : "call_2",
+        "name" : "paid_tool_b",
+        "value" : { }
+      } ]
+    }, {
+      "role" : "assistant",
+      "text" : "{}",
+      "toolCalls" : [ {
+        "reference" : "call_3",
+        "name" : "paid_tool_a",
+        "arguments" : {
+          "method" : "paid_tool_a",
+          "x" : "test"
+        }
+      }, {
+        "reference" : "call_4",
+        "name" : "paid_tool_b",
+        "arguments" : {
+          "method" : "paid_tool_b",
+          "x" : "test"
+        }
+      } ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "tool",
+      "text" : "",
+      "toolCalls" : [ ],
+      "toolResults" : [ {
+        "reference" : "call_3",
+        "name" : "paid_tool_a",
+        "value" : { }
+      } ]
+    }, {
+      "role" : "tool",
+      "text" : "",
+      "toolCalls" : [ ],
+      "toolResults" : [ {
+        "reference" : "call_4",
+        "name" : "paid_tool_b",
+        "value" : { }
+      } ]
+    }, {
+      "role" : "user",
+      "text" : "Please continue where you left off.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    } ],
+    "tools" : [ {
+      "name" : "free_tool",
+      "description" : "A tool that needs no credentials. Always succeeds.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "x" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "x" ]
+      }
+    }, {
+      "name" : "paid_tool_a",
+      "description" : "A tool that needs E2E_CRED_A. Returns first 3 chars of credential.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "x" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "x" ]
+      }
+    }, {
+      "name" : "paid_tool_b",
+      "description" : "A tool that needs E2E_CRED_B. Returns first 3 chars of credential.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "x" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "x" ]
+      }
+    } ],
+    "jsonOutput" : false,
+    "outputSchema" : null,
+    "generationOptions" : {
+      "temperature" : 0.0,
+      "maxTokens" : 16384,
+      "thinkingTokenLimit" : 0
+    }
+  },
+  "response" : {
+    "metadata" : {
+      "id" : "resp_0c095d316ca1dae4006aaac6f2617487d0bd26e849aaaa1967",
+      "model" : "gpt-4o-mini-2024-07-18",
+      "usage" : {
+        "promptTokens" : 395,
+        "completionTokens" : 49,
+        "totalTokens" : 444,
+        "nativeUsage" : null
+      },
+      "rateLimit" : {
+        "requestsLimit" : 0,
+        "requestsRemaining" : 0,
+        "requestsReset" : 0,
+        "tokensLimit" : 0,
+        "tokensRemaining" : 0,
+        "tokensReset" : 0
+      },
+      "promptMetadata" : [ ],
+      "properties" : {
+        "response_id" : "resp_0c095d316ca1dae4006aaac6f2617487d0bd26e849aaaa1967",
+        "reasoning_tokens" : 0
+      }
+    },
+    "results" : [ {
+      "output" : {
+        "text" : "",
+        "metadata" : {
+          "messageType" : "ASSISTANT"
+        },
+        "toolCalls" : [ {
+          "id" : "call_e26060eCqnaeefqrVT9WIgUt",
+          "type" : "function",
+          "name" : "paid_tool_a",
+          "arguments" : "{\"x\":\"test\"}"
+        }, {
+          "id" : "call_aHQuetKpujRjpmjjTMYgOND0",
+          "type" : "function",
+          "name" : "paid_tool_b",
+          "arguments" : "{\"x\":\"test\"}"
+        } ],
+        "media" : [ ]
+      },
+      "metadata" : {
+        "finishReason" : "TOOL_CALLS",
+        "contentFilters" : [ ],
+        "properties" : { }
+      }
+    } ]
+  },
+  "modelSettings" : {
+    "model" : "gpt-4o-mini",
+    "supportsAssistantPrefill" : true
+  }
+}

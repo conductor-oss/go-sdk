@@ -1,0 +1,85 @@
+{
+  "schemaVersion" : 3,
+  "request" : {
+    "messages" : [ {
+      "role" : "system",
+      "text" : "You are a text agent. When asked to reverse text, call do_text with the text. For example, for \"hello\" call do_text with text=\"hello\". If there is nothing to reverse, just respond with a summary of what you received.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "user",
+      "text" : "I need to reverse the word hello\n\n[coordinator -> text_agent]",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    } ],
+    "tools" : [ {
+      "name" : "do_text",
+      "description" : "Reverse a string.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "text" ]
+      }
+    } ],
+    "jsonOutput" : false,
+    "outputSchema" : null,
+    "generationOptions" : {
+      "temperature" : 0.0,
+      "maxTokens" : 16384,
+      "thinkingTokenLimit" : 0
+    }
+  },
+  "response" : {
+    "metadata" : {
+      "id" : "resp_0a75e91fe2817741006aaac729317087d0a0001f4a3866ae1b",
+      "model" : "gpt-4o-mini-2024-07-18",
+      "usage" : {
+        "promptTokens" : 105,
+        "completionTokens" : 15,
+        "totalTokens" : 120,
+        "nativeUsage" : null
+      },
+      "rateLimit" : {
+        "requestsLimit" : 0,
+        "requestsRemaining" : 0,
+        "requestsReset" : 0,
+        "tokensLimit" : 0,
+        "tokensRemaining" : 0,
+        "tokensReset" : 0
+      },
+      "promptMetadata" : [ ],
+      "properties" : {
+        "response_id" : "resp_0a75e91fe2817741006aaac729317087d0a0001f4a3866ae1b",
+        "reasoning_tokens" : 0
+      }
+    },
+    "results" : [ {
+      "output" : {
+        "text" : "",
+        "metadata" : {
+          "messageType" : "ASSISTANT"
+        },
+        "toolCalls" : [ {
+          "id" : "call_Fu2uCqKDd43XkHw7ZVJqLNFM",
+          "type" : "function",
+          "name" : "do_text",
+          "arguments" : "{\"text\":\"hello\"}"
+        } ],
+        "media" : [ ]
+      },
+      "metadata" : {
+        "finishReason" : "TOOL_CALLS",
+        "contentFilters" : [ ],
+        "properties" : { }
+      }
+    } ]
+  },
+  "modelSettings" : {
+    "model" : "gpt-4o-mini",
+    "supportsAssistantPrefill" : true
+  }
+}

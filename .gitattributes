@@ -1,0 +1,5 @@
+# Recorded LLM traffic. These are machine-generated fixtures, written by
+# scripts/record-suite.sh and read only by the playback server, so they are
+# not reviewed line by line. Marking them collapses them in a pull request's
+# file list, leaving the code visible. Use git diff --text to read one.
+test/integration_tests/ai/testdata/llm-recordings/**/*.json -diff linguist-generated=true

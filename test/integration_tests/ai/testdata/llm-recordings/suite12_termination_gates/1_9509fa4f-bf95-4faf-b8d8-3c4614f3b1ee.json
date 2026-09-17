@@ -1,0 +1,85 @@
+{
+  "schemaVersion" : 3,
+  "request" : {
+    "messages" : [ {
+      "role" : "system",
+      "text" : "You MUST include the exact text TASK_COMPLETE in every response. Answer the user's question and always end with TASK_COMPLETE.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "user",
+      "text" : "Say hello.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    } ],
+    "tools" : [ {
+      "name" : "echo_tool",
+      "description" : "Echo the input text back.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "text" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "text" ]
+      }
+    } ],
+    "jsonOutput" : false,
+    "outputSchema" : null,
+    "generationOptions" : {
+      "temperature" : 0.0,
+      "maxTokens" : 16384,
+      "thinkingTokenLimit" : 0
+    }
+  },
+  "response" : {
+    "metadata" : {
+      "id" : "resp_0304868163f8019b006aaaf450245c87d09c5e7873a447096e",
+      "model" : "gpt-4o-mini-2024-07-18",
+      "usage" : {
+        "promptTokens" : 67,
+        "completionTokens" : 16,
+        "totalTokens" : 83,
+        "nativeUsage" : null
+      },
+      "rateLimit" : {
+        "requestsLimit" : 0,
+        "requestsRemaining" : 0,
+        "requestsReset" : 0,
+        "tokensLimit" : 0,
+        "tokensRemaining" : 0,
+        "tokensReset" : 0
+      },
+      "promptMetadata" : [ ],
+      "properties" : {
+        "response_id" : "resp_0304868163f8019b006aaaf450245c87d09c5e7873a447096e",
+        "reasoning_tokens" : 0
+      }
+    },
+    "results" : [ {
+      "output" : {
+        "text" : "",
+        "metadata" : {
+          "messageType" : "ASSISTANT"
+        },
+        "toolCalls" : [ {
+          "id" : "call_BEqiVmSvIicINd0bHacsPShK",
+          "type" : "function",
+          "name" : "echo_tool",
+          "arguments" : "{\"text\":\"Hello!\"}"
+        } ],
+        "media" : [ ]
+      },
+      "metadata" : {
+        "finishReason" : "TOOL_CALLS",
+        "contentFilters" : [ ],
+        "properties" : { }
+      }
+    } ]
+  },
+  "modelSettings" : {
+    "model" : "gpt-4o-mini",
+    "supportsAssistantPrefill" : true
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "schemaVersion" : 3,
+  "request" : {
+    "messages" : [ {
+      "role" : "system",
+      "text" : "Call echo_tool with message='stop_test'. Then report the tool's response.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "user",
+      "text" : "[TOOL RESULTS]\n[{\"name\":\"call_0\",\"output\":{\"result\":\"ECHO:stop_test\"}}]\n[/TOOL RESULTS]\n\nCall echo_tool with stop_test",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "assistant",
+      "text" : "{}",
+      "toolCalls" : [ {
+        "reference" : "call_0",
+        "name" : "echo_tool",
+        "arguments" : {
+          "method" : "echo_tool",
+          "message" : "stop_test"
+        }
+      } ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "tool",
+      "text" : "",
+      "toolCalls" : [ ],
+      "toolResults" : [ {
+        "reference" : "call_0",
+        "name" : "echo_tool",
+        "value" : {
+          "result" : "ECHO:stop_test"
+        }
+      } ]
+    }, {
+      "role" : "user",
+      "text" : "Please continue where you left off.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    } ],
+    "tools" : [ {
+      "name" : "echo_tool",
+      "description" : "Return the message with a deterministic prefix.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "message" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "message" ]
+      }
+    } ],
+    "jsonOutput" : false,
+    "outputSchema" : null,
+    "generationOptions" : {
+      "temperature" : 0.0,
+      "maxTokens" : 16384,
+      "thinkingTokenLimit" : 0
+    }
+  },
+  "response" : {
+    "metadata" : {
+      "id" : "resp_0a749ac508fe8ebf006aaaf45b512887d0889a6b02e38a5480",
+      "model" : "gpt-4o-mini-2024-07-18",
+      "usage" : {
+        "promptTokens" : 140,
+        "completionTokens" : 31,
+        "totalTokens" : 171,
+        "nativeUsage" : null
+      },
+      "rateLimit" : {
+        "requestsLimit" : 0,
+        "requestsRemaining" : 0,
+        "requestsReset" : 0,
+        "tokensLimit" : 0,
+        "tokensRemaining" : 0,
+        "tokensReset" : 0
+      },
+      "promptMetadata" : [ ],
+      "properties" : {
+        "response_id" : "resp_0a749ac508fe8ebf006aaaf45b512887d0889a6b02e38a5480",
+        "reasoning_tokens" : 0
+      }
+    },
+    "results" : [ {
+      "output" : {
+        "text" : "It seems there was no specific context to continue from. Could you please provide more details or clarify what topic or information you'd like to continue discussing?",
+        "metadata" : {
+          "messageType" : "ASSISTANT"
+        },
+        "toolCalls" : [ ],
+        "media" : [ ]
+      },
+      "metadata" : {
+        "finishReason" : "STOP",
+        "contentFilters" : [ ],
+        "properties" : { }
+      }
+    } ]
+  },
+  "modelSettings" : {
+    "model" : "gpt-4o-mini",
+    "supportsAssistantPrefill" : true
+  }
+}

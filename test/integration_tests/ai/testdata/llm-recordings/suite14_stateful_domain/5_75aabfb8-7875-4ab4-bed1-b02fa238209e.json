@@ -1,0 +1,108 @@
+{
+  "schemaVersion" : 3,
+  "request" : {
+    "messages" : [ {
+      "role" : "system",
+      "text" : "You have an echo_tool. Call echo_tool with message='hello'. Then respond with what the tool returned.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "user",
+      "text" : "[TOOL RESULTS]\n[{\"name\":\"call_0\",\"output\":{\"result\":\"ECHO:hello\"}}]\n[/TOOL RESULTS]\n\nCall the echo tool with hello",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "assistant",
+      "text" : "{}",
+      "toolCalls" : [ {
+        "reference" : "call_0",
+        "name" : "echo_tool",
+        "arguments" : {
+          "method" : "echo_tool",
+          "message" : "hello"
+        }
+      } ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "tool",
+      "text" : "",
+      "toolCalls" : [ ],
+      "toolResults" : [ {
+        "reference" : "call_0",
+        "name" : "echo_tool",
+        "value" : {
+          "result" : "ECHO:hello"
+        }
+      } ]
+    }, {
+      "role" : "user",
+      "text" : "Please continue where you left off.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    } ],
+    "tools" : [ {
+      "name" : "echo_tool",
+      "description" : "Return the message with a deterministic prefix.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "message" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "message" ]
+      }
+    } ],
+    "jsonOutput" : false,
+    "outputSchema" : null,
+    "generationOptions" : {
+      "temperature" : 0.0,
+      "maxTokens" : 16384,
+      "thinkingTokenLimit" : 0
+    }
+  },
+  "response" : {
+    "metadata" : {
+      "id" : "resp_04eeb071963d1ed8006aaaf457586887d087e3971172b896b7",
+      "model" : "gpt-4o-mini-2024-07-18",
+      "usage" : {
+        "promptTokens" : 143,
+        "completionTokens" : 55,
+        "totalTokens" : 198,
+        "nativeUsage" : null
+      },
+      "rateLimit" : {
+        "requestsLimit" : 0,
+        "requestsRemaining" : 0,
+        "requestsReset" : 0,
+        "tokensLimit" : 0,
+        "tokensRemaining" : 0,
+        "tokensReset" : 0
+      },
+      "promptMetadata" : [ ],
+      "properties" : {
+        "response_id" : "resp_04eeb071963d1ed8006aaaf457586887d087e3971172b896b7",
+        "reasoning_tokens" : 0
+      }
+    },
+    "results" : [ {
+      "output" : {
+        "text" : "It seems like the previous interaction was limited to calling an echo tool with the message \"hello,\" which resulted in \"ECHO:hello.\" How would you like to proceed from there? If you have a specific topic or question in mind, feel free to share!",
+        "metadata" : {
+          "messageType" : "ASSISTANT"
+        },
+        "toolCalls" : [ ],
+        "media" : [ ]
+      },
+      "metadata" : {
+        "finishReason" : "STOP",
+        "contentFilters" : [ ],
+        "properties" : { }
+      }
+    } ]
+  },
+  "modelSettings" : {
+    "model" : "gpt-4o-mini",
+    "supportsAssistantPrefill" : true
+  }
+}

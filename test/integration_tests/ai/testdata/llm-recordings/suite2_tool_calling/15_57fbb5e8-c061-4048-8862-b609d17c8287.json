@@ -1,0 +1,119 @@
+{
+  "schemaVersion" : 3,
+  "request" : {
+    "messages" : [ {
+      "role" : "system",
+      "text" : "You have three tools: free_tool, paid_tool_a, and paid_tool_b.\nYou MUST call all three tools exactly once each, with the argument \"test\".\nAfter calling all three, report each tool's output verbatim in this format:\n  free_tool: <output>\n  paid_tool_a: <output>\n  paid_tool_b: <output>\nDo not skip any tool. Do not add commentary.\n",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "user",
+      "text" : "Call all three tools.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    } ],
+    "tools" : [ {
+      "name" : "free_tool",
+      "description" : "A tool that needs no credentials. Always succeeds.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "x" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "x" ]
+      }
+    }, {
+      "name" : "paid_tool_a",
+      "description" : "A tool that needs E2E_CRED_A. Returns first 3 chars of credential.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "x" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "x" ]
+      }
+    }, {
+      "name" : "paid_tool_b",
+      "description" : "A tool that needs E2E_CRED_B. Returns first 3 chars of credential.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "x" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "x" ]
+      }
+    } ],
+    "jsonOutput" : false,
+    "outputSchema" : null,
+    "generationOptions" : {
+      "temperature" : 0.0,
+      "maxTokens" : 16384,
+      "thinkingTokenLimit" : 0
+    }
+  },
+  "response" : {
+    "metadata" : {
+      "id" : "resp_0542d2b6aa287cc3006aaac6eedf0c87d0a86ddd1550afec85",
+      "model" : "gpt-4o-mini-2024-07-18",
+      "usage" : {
+        "promptTokens" : 201,
+        "completionTokens" : 63,
+        "totalTokens" : 264,
+        "nativeUsage" : null
+      },
+      "rateLimit" : {
+        "requestsLimit" : 0,
+        "requestsRemaining" : 0,
+        "requestsReset" : 0,
+        "tokensLimit" : 0,
+        "tokensRemaining" : 0,
+        "tokensReset" : 0
+      },
+      "promptMetadata" : [ ],
+      "properties" : {
+        "response_id" : "resp_0542d2b6aa287cc3006aaac6eedf0c87d0a86ddd1550afec85",
+        "reasoning_tokens" : 0
+      }
+    },
+    "results" : [ {
+      "output" : {
+        "text" : "",
+        "metadata" : {
+          "messageType" : "ASSISTANT"
+        },
+        "toolCalls" : [ {
+          "id" : "call_HBaBVpZe0GYssbxP93AkOgDT",
+          "type" : "function",
+          "name" : "free_tool",
+          "arguments" : "{\"x\":\"test\"}"
+        }, {
+          "id" : "call_h2P4AxFD6Wf5ZzNuhJRowkZ0",
+          "type" : "function",
+          "name" : "paid_tool_a",
+          "arguments" : "{\"x\":\"test\"}"
+        }, {
+          "id" : "call_iaCbnHrwVMPzdhjbnhLYw20m",
+          "type" : "function",
+          "name" : "paid_tool_b",
+          "arguments" : "{\"x\":\"test\"}"
+        } ],
+        "media" : [ ]
+      },
+      "metadata" : {
+        "finishReason" : "TOOL_CALLS",
+        "contentFilters" : [ ],
+        "properties" : { }
+      }
+    } ]
+  },
+  "modelSettings" : {
+    "model" : "gpt-4o-mini",
+    "supportsAssistantPrefill" : true
+  }
+}

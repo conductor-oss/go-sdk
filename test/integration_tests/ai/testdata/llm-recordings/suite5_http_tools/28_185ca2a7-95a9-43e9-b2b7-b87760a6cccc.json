@@ -1,0 +1,209 @@
+{
+  "schemaVersion" : 3,
+  "request" : {
+    "messages" : [ {
+      "role" : "system",
+      "text" : "You have access to HTTP API tools. Call exactly the tools specified in each prompt.\nReport each tool's result verbatim. Do not skip any tool.\n",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "user",
+      "text" : "[TOOL RESULTS]\n[{\"name\":\"call_0\",\"output\":{\"response\":{\"body\":{\"result\":7},\"headers\":{\"content-length\":[\"14\"],\"content-type\":[\"application/json\"],\"server\":[\"uvicorn\"]},\"reasonPhrase\":\"OK\",\"statusCode\":200}}},{\"name\":\"call_1\",\"output\":{\"response\":{\"body\":{\"result\":\"olleh\"},\"headers\":{\"content-length\":[\"18\"],\"content-type\":[\"application/json\"],\"server\":[\"uvicorn\"]},\"reasonPhrase\":\"OK\",\"statusCode\":200}}},{\"name\":\"call_2\",\"output\":{\"response\":{\"body\":{\"result\":\"dGVzdA==\"},\"headers\":{\"content-length\":[\"21\"],\"content-type\":[\"application/json\"],\"server\":[\"uvicorn\"]},\"reasonPhrase\":\"OK\",\"statusCode\":200}}}]\n[/TOOL RESULTS]\n\nCall exactly these three tools with these exact arguments:\n1. math_add with a=3 and b=4\n2. string_reverse with text=\"hello\"\n3. encoding_base64_encode with text=\"test\"\nReport each result.\n",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "assistant",
+      "text" : "{}",
+      "toolCalls" : [ {
+        "reference" : "call_0",
+        "name" : "math_add",
+        "arguments" : {
+          "a" : 3,
+          "b" : 4,
+          "method" : "math_add"
+        }
+      }, {
+        "reference" : "call_1",
+        "name" : "string_reverse",
+        "arguments" : {
+          "method" : "string_reverse",
+          "text" : "hello"
+        }
+      }, {
+        "reference" : "call_2",
+        "name" : "encoding_base64_encode",
+        "arguments" : {
+          "method" : "encoding_base64_encode",
+          "text" : "test"
+        }
+      } ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "tool",
+      "text" : "",
+      "toolCalls" : [ ],
+      "toolResults" : [ {
+        "reference" : "call_0",
+        "name" : "math_add",
+        "value" : {
+          "response" : {
+            "headers" : {
+              "server" : [ "uvicorn" ],
+              "content-length" : [ "14" ],
+              "content-type" : [ "application/json" ]
+            },
+            "reasonPhrase" : "OK",
+            "body" : {
+              "result" : 7
+            },
+            "statusCode" : 200
+          }
+        }
+      } ]
+    }, {
+      "role" : "tool",
+      "text" : "",
+      "toolCalls" : [ ],
+      "toolResults" : [ {
+        "reference" : "call_1",
+        "name" : "string_reverse",
+        "value" : {
+          "response" : {
+            "headers" : {
+              "server" : [ "uvicorn" ],
+              "content-length" : [ "18" ],
+              "content-type" : [ "application/json" ]
+            },
+            "reasonPhrase" : "OK",
+            "body" : {
+              "result" : "olleh"
+            },
+            "statusCode" : 200
+          }
+        }
+      } ]
+    }, {
+      "role" : "tool",
+      "text" : "",
+      "toolCalls" : [ ],
+      "toolResults" : [ {
+        "reference" : "call_2",
+        "name" : "encoding_base64_encode",
+        "value" : {
+          "response" : {
+            "headers" : {
+              "server" : [ "uvicorn" ],
+              "content-length" : [ "21" ],
+              "content-type" : [ "application/json" ]
+            },
+            "reasonPhrase" : "OK",
+            "body" : {
+              "result" : "dGVzdA=="
+            },
+            "statusCode" : 200
+          }
+        }
+      } ]
+    }, {
+      "role" : "user",
+      "text" : "Please continue where you left off.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    } ],
+    "tools" : [ {
+      "name" : "math_add",
+      "description" : "Add two numbers (a + b)",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "a" : {
+            "description" : "First number",
+            "type" : "number"
+          },
+          "b" : {
+            "description" : "Second number",
+            "type" : "number"
+          }
+        },
+        "required" : [ "a", "b" ]
+      }
+    }, {
+      "name" : "string_reverse",
+      "description" : "Reverse a string",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "text" : {
+            "description" : "Text to reverse",
+            "type" : "string"
+          }
+        },
+        "required" : [ "text" ]
+      }
+    }, {
+      "name" : "encoding_base64_encode",
+      "description" : "Base64-encode a string",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "text" : {
+            "description" : "Text to encode",
+            "type" : "string"
+          }
+        },
+        "required" : [ "text" ]
+      }
+    } ],
+    "jsonOutput" : false,
+    "outputSchema" : null,
+    "generationOptions" : {
+      "temperature" : 0.0,
+      "maxTokens" : 16384,
+      "thinkingTokenLimit" : 0
+    }
+  },
+  "response" : {
+    "metadata" : {
+      "id" : "resp_0b634193db2d567c006aaac70a06d887d0b8c4dc250aeda4e0",
+      "model" : "gpt-4o-mini-2024-07-18",
+      "usage" : {
+        "promptTokens" : 685,
+        "completionTokens" : 95,
+        "totalTokens" : 780,
+        "nativeUsage" : null
+      },
+      "rateLimit" : {
+        "requestsLimit" : 0,
+        "requestsRemaining" : 0,
+        "requestsReset" : 0,
+        "tokensLimit" : 0,
+        "tokensRemaining" : 0,
+        "tokensReset" : 0
+      },
+      "promptMetadata" : [ ],
+      "properties" : {
+        "response_id" : "resp_0b634193db2d567c006aaac70a06d887d0b8c4dc250aeda4e0",
+        "reasoning_tokens" : 0
+      }
+    },
+    "results" : [ {
+      "output" : {
+        "text" : "Here are the results from the tools called:\n\n1. **math_add**: The result of adding 3 and 4 is **7**.\n2. **string_reverse**: The reverse of the text \"hello\" is **\"olleh\"**.\n3. **encoding_base64_encode**: The Base64 encoding of the text \"test\" is **\"dGVzdA==\"**. \n\nIf you need anything else, let me know!",
+        "metadata" : {
+          "messageType" : "ASSISTANT"
+        },
+        "toolCalls" : [ ],
+        "media" : [ ]
+      },
+      "metadata" : {
+        "finishReason" : "STOP",
+        "contentFilters" : [ ],
+        "properties" : { }
+      }
+    } ]
+  },
+  "modelSettings" : {
+    "model" : "gpt-4o-mini",
+    "supportsAssistantPrefill" : true
+  }
+}

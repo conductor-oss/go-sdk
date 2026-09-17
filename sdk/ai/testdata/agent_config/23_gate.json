@@ -1,0 +1,42 @@
+{
+  "agents": [
+    {
+      "external": false,
+      "gate": {
+        "caseSensitive": false,
+        "text": "ESCALATE",
+        "type": "text_contains"
+      },
+      "instructions": "Triage.",
+      "maxTurns": 25,
+      "model": "openai/gpt-4o",
+      "name": "triage",
+      "timeoutSeconds": 0
+    },
+    {
+      "external": false,
+      "gate": {
+        "taskName": "review_gate"
+      },
+      "instructions": "Review.",
+      "maxTurns": 25,
+      "model": "openai/gpt-4o",
+      "name": "review",
+      "timeoutSeconds": 0
+    },
+    {
+      "external": false,
+      "instructions": "Finish.",
+      "maxTurns": 25,
+      "model": "openai/gpt-4o",
+      "name": "finish",
+      "timeoutSeconds": 0
+    }
+  ],
+  "external": false,
+  "maxTurns": 25,
+  "model": "openai/gpt-4o",
+  "name": "gated_pipeline",
+  "strategy": "sequential",
+  "timeoutSeconds": 0
+}

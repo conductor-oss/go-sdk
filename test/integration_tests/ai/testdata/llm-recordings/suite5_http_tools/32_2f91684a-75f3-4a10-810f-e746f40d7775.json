@@ -1,0 +1,84 @@
+{
+  "schemaVersion" : 3,
+  "request" : {
+    "messages" : [ {
+      "role" : "system",
+      "text" : "You have access to the Orkes Conductor API tools. Answer questions about available API operations.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "user",
+      "text" : "What is the API endpoint to start a new workflow? Give me the HTTP method, path, and operationId.",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    } ],
+    "tools" : [ {
+      "name" : "startWorkflow",
+      "description" : "Start a new workflow with StartWorkflowRequest, which allows task to be executed in a domain",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "body" : {
+            "in" : "body",
+            "type" : "object"
+          },
+          "consistency" : {
+            "in" : "query",
+            "type" : "string",
+            "enum" : [ "SYNCHRONOUS", "DURABLE", "REGION_DURABLE" ]
+          }
+        }
+      }
+    } ],
+    "jsonOutput" : false,
+    "outputSchema" : null,
+    "generationOptions" : {
+      "maxTokens" : 16384,
+      "thinkingTokenLimit" : 0
+    }
+  },
+  "response" : {
+    "metadata" : {
+      "id" : "resp_06b1da04cdf26453006aaac7137cc887d09bc823a2ada806f9",
+      "model" : "gpt-4o-mini-2024-07-18",
+      "usage" : {
+        "promptTokens" : 120,
+        "completionTokens" : 47,
+        "totalTokens" : 167,
+        "nativeUsage" : null
+      },
+      "rateLimit" : {
+        "requestsLimit" : 0,
+        "requestsRemaining" : 0,
+        "requestsReset" : 0,
+        "tokensLimit" : 0,
+        "tokensRemaining" : 0,
+        "tokensReset" : 0
+      },
+      "promptMetadata" : [ ],
+      "properties" : {
+        "response_id" : "resp_06b1da04cdf26453006aaac7137cc887d09bc823a2ada806f9",
+        "reasoning_tokens" : 0
+      }
+    },
+    "results" : [ {
+      "output" : {
+        "text" : "To start a new workflow using the Orkes Conductor API, you can use the following details:\n\n- **HTTP Method:** POST\n- **Path:** `/api/workflow`\n- **OperationId:** `startWorkflow`",
+        "metadata" : {
+          "messageType" : "ASSISTANT"
+        },
+        "toolCalls" : [ ],
+        "media" : [ ]
+      },
+      "metadata" : {
+        "finishReason" : "STOP",
+        "contentFilters" : [ ],
+        "properties" : { }
+      }
+    } ]
+  },
+  "modelSettings" : {
+    "model" : "gpt-4o-mini",
+    "supportsAssistantPrefill" : true
+  }
+}
