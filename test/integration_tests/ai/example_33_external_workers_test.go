@@ -14,6 +14,7 @@ package integration
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 	"sync/atomic"
@@ -61,9 +62,6 @@ type formatDataIn struct {
 // the last request never matches; see README, "What has to match".
 func TestExample33ExternalWorkers(t *testing.T) {
 	runtime := newRuntime(t)
-	if model(t) == mockModel {
-		t.Skip("format_response renders a map, and Go cannot keep the key order the recorded result has")
-	}
 
 	// The "other service": one classic worker per external task name.
 	external := worker.NewTaskRunnerWithApiClient(newAPIClient(t))
@@ -105,16 +103,31 @@ func TestExample33ExternalWorkers(t *testing.T) {
 		}
 	})
 
-	// The local tool, as in the example.
+	// The local tool, as in the example. Python renders the dict in the order
+	// the model's arguments arrived; a Go map has no order, and the order is
+	// lost before the handler sees it, because a polled task's input is
+	// already a map. So the order the recording holds is named here, with
+	// anything else sorted after it. Without this the rendered text differs
+	// from the recording and the next model call matches nothing.
+	recordedKeyOrder := []string{"product_id", "cancellation_status", "order_id",
+		"inventory_status", "customer", "quantity_available"}
 	formatResponse := func(ctx context.Context, in formatDataIn) (string, error) {
 		formatCalls.Add(1)
 		keys := make([]string, 0, len(in.Data))
-		for k := range in.Data {
-			keys = append(keys, k)
+		for _, k := range recordedKeyOrder {
+			if _, ok := in.Data[k]; ok {
+				keys = append(keys, k)
+			}
 		}
-		sort.Strings(keys)
-		lines := make([]string, 0, len(keys))
-		for _, k := range keys {
+		rest := make([]string, 0, len(in.Data))
+		for k := range in.Data {
+			if !slices.Contains(recordedKeyOrder, k) {
+				rest = append(rest, k)
+			}
+		}
+		sort.Strings(rest)
+		lines := make([]string, 0, len(in.Data))
+		for _, k := range append(keys, rest...) {
 			lines = append(lines, fmt.Sprintf("  %s: %v", k, in.Data[k]))
 		}
 		return strings.Join(lines, "\n"), nil

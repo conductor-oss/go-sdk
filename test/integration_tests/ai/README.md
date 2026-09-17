@@ -153,18 +153,21 @@ generation options. So between the recording run and a replay:
   integral float as `15000.0`; Go's `encoding/json` writes the same `float64`
   as `15000`. The recorder compares tool results as JSON nodes, so the two do
   not match. `TestExample09HumanInTheLoop` skips for this reason until the
-  recorder compares numbers by value; a tool returning integral floats should
-  avoid the issue by returning an int where the Python tool does.
+  recorder compares numbers by value. A test cannot work around it: a worker's
+  return value passes through `model.ConvertToMap`, which decodes into
+  `map[string]any` without `UseNumber`, so even a `json.Number("15000.0")`
+  reaches the server as `15000`. A tool avoids the issue only by returning an
+  int where the Python tool returns an integral float.
 - A tool that renders a JSON object must not depend on key order. Python's
   `format_response` in example 33 prints a dict in the order the task input
   arrived, and that order is what the recording holds; a Go `map` has no
-  order, so the Go port sorts the keys and its result never matches. The
-  matcher itself is order-free for JSON objects; by the time it sees this
-  value the dict has become one string, and the order is inside the string.
-  `TestExample33ExternalWorkers` runs live only and skips in playback.
-  Proposed fix: have the Python example iterate `sorted(data.items())`, a
-  one-line change to the example, then re-record 33. The Go port already
-  sorts, so the recording would then match and the skip can go.
+  order, and the order is already gone when the handler runs, because a
+  polled task's input is a map. The matcher cannot help: by the time it sees
+  this value the dict has become one string, and the order is inside the
+  string. `TestExample33ExternalWorkers` therefore names the recorded key
+  order and sorts anything else after it, which is what lets it replay. The
+  alternative is to have the Python example iterate `sorted(data.items())`
+  and re-record 33, after which the named order could go.
 - An example that calls a live third-party API is not a replay fixture.
   Server-side HTTP tools call the real endpoint even in playback, and the
   whole response is part of the next model request. Example 16e calls GitHub
@@ -174,6 +177,11 @@ generation options. So between the recording run and a replay:
   until the data changes. `TestExample16eCredentialsHTTPTool` therefore runs
   live only, with `CONDUCTOR_SECRET_GITHUB_TOKEN` set on the server, and
   skips in playback.
+- A request carrying media cannot be recorded at all. The recorder fails the
+  task with "Media is unsupported in LLM recordings", so a test that sends an
+  image, a PDF or audio is live only however stable its bytes are. Suite 25 is
+  the case in point: it sends the same picture every run and still cannot be
+  recorded.
 - A tool's parameters must be in the same order as the Python tool declares
   them. The server copies the order into text the model reads, such as a
   planner's tool catalog, so the SDK's schema builder keeps struct field
@@ -194,19 +202,17 @@ playback run of the whole package these are the skips, and why:
 
 | Test | Reason |
 |---|---|
-| `TestExample09HumanInTheLoop` | The Python recording holds `15000.0` where Go sends `15000`; the recorder compared numbers by type. Fixed by the first commit of conductor PR #1633; skips until it lands. |
-| `TestSkillAsAgentTool` | An agent used as a tool puts the sub-workflow's fresh id into the next request, so no recording matches. Fixed by the second commit of PR #1633; skips until it lands. |
+| `TestExample09HumanInTheLoop` | The Python recording holds `15000.0` where Go sends `15000`; the recorder compared numbers by type. Fixed by the first commit of conductor PR #1633; skips until it lands. No test-side workaround exists, see above. |
+| `TestSkillAsAgentTool`, `TestAgentToolSkillWorkersWithDomain` | An agent used as a tool puts the sub-workflow's fresh id into the next request, so no recording matches. Fixed by the second commit of PR #1633; skips until it lands. |
 | `TestExample16eCredentialsHTTPTool` | Calls GitHub with a personal token; the response differs per token and over time. Live only. |
-| `TestExample33ExternalWorkers` | Its tool renders a dict into text whose key order a Go map cannot keep, so the last request never matches. Live only until the Python example sorts the keys and is re-recorded. |
 | `TestCredentialLifecycle` | Replays steps 1–3, then skips at the first secret write: the OSS store is read-only (HTTP 501). The Python test skips at the same point. |
 | `TestCliCredentialLifecycle` | `cli_mktemp` returns a fresh temp path the model reads, and `cli_gh` needs a real `GITHUB_TOKEN`. Live only; on OSS it also skips at the store write. |
 | `TestPdfGenerationAndRoundtrip` | The tool hands the model the URL of a freshly generated file. Live only; the text round trip also needs `pdftotext`. |
 | `TestImageOpenai` | Live only, same reason as the PDF test. Live, it skips on the failure Python marks xfail: the server sends a `style` parameter the image API rejects. |
 | `TestImageGemini` | Live only; needs `GOOGLE_AI_API_KEY`. |
 | `TestAudioOpenai` | Live only, same reason as the PDF test; needs `OPENAI_API_KEY`. Passes live. |
-| `TestJupyterStateful` | Asked to run `print(x * 73)` exactly as provided, the model defined its own `x` in 12 of 13 live attempts. Live only rather than a recording of the one lucky run. |
+| `TestVisionReadsTextFromImage`, `TestWithoutMediaTokenIsAbsent` | The recorder refuses a request carrying media, so the picture test cannot be recorded, and its counterfactual would prove nothing against a recording. Live only; need `OPENAI_API_KEY`. |
 | `TestStatefulSwarmHandoffCompletes` | Disabled in the Python suite too: a stateful swarm handoff does not reliably complete in its domain. |
-| The rest of suite 14, and `TestAgentToolSkillWorkersWithDomain` | A stateful run's domain, and a nested agent tool's sub-workflow id, are new on every run, so nothing about them can be replayed. Live only. |
 
 ## Suite 1 compile tests
 
@@ -242,11 +248,11 @@ starting mcp-testkit, and the checks on a result.
 | 7 media tools | `suite7_media_tools_test.go` | 3 | live only | `OPENAI_API_KEY`; `GOOGLE_AI_API_KEY` for Gemini |
 | 8 guardrails | `suite8_guardrails_test.go` | 7 | 3 plan-only, 4 replay | — |
 | 9 handoffs | `suite9_handoffs_test.go` | 8 | 2 plan-only, 6 replay | — |
-| 10 code execution | `suite10_code_execution_test.go` | 9 | 3 plan-only, 5 replay, Jupyter live only | Docker; `python3` with `jupyter_client` and `ipykernel` |
+| 10 code execution | `suite10_code_execution_test.go` | 9 | 3 plan-only, 6 replay | Docker; `python3` with `jupyter_client` and `ipykernel` |
 | 11 langgraph | not ported | — | — | Exercises the Python LangGraph adapter (`langgraph`, `langchain`). The Go SDK has no framework adapter, so there is nothing to port. |
 | 12 termination and gates | `suite12_termination_gates_test.go` | 5 | 2 plan-only, 3 replay | — |
 | 13 callbacks | `suite13_callbacks_test.go` | 5 | 2 plan-only, 3 replay | — |
-| 14 stateful domain | `suite14_stateful_domain_test.go` | 6 | live only | — |
+| 14 stateful domain | `suite14_stateful_domain_test.go` | 6 | 5 replay, 1 disabled | — |
 | 15 skills | `suite15_skills_test.go` | 4 | 3 plan-only, 1 live only | `bash` |
 | 20 plan and execute | `suite20_plan_execute_test.go` | 9 | replay | — |
 | 21 scheduling | `suite21_scheduling_test.go` | 8 of 11 | no model | the server's scheduler |
@@ -272,15 +278,17 @@ Why some run live only:
 - Suite 3's `cli_mktemp` returns a fresh temp path every run, which the model
   then reads, so no recording can match; and `cli_gh` needs a real token.
 - Suites 6 and 7 hand the model the URL of a freshly generated file.
-- Suite 14 reads the run's task-to-domain map, and a stateful run's domain is
-  new every time, so nothing about it can be replayed.
+- Suite 14 replays. Its domains are read from the workflow rather than from
+  anything the model sees, so a domain being new every run does not stop a
+  recording from matching.
 - Suite 15's stateful skill test nests an agent tool, whose result carries a
   per-run sub-workflow id.
 - pytest reruns every e2e test up to twice. Go does not, and
   `TestJupyterStateful` shows why that mattered: asked to run `print(x * 73)`
-  exactly as provided, the model defined its own `x` first in 12 of 13 live
-  attempts. It runs live only rather than replay a recording of the one run
-  where it did not.
+  exactly as provided, the model often defines its own `x` first, so the test
+  is unreliable live. Its recording is from a run where the model followed the
+  instruction, which is what leaves the kernel's memory as the only thing the
+  test turns on in playback.
 - Suite 5's `TestExternalOpenapiSpec` does replay, but the public Orkes
   document is part of the request; if it changes, the run fails, which the
   test tolerates the way the Python one does.

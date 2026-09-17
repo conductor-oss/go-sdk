@@ -32,8 +32,9 @@ import (
 // and requires that the word does not appear, which is what stops the first
 // from passing on a lucky guess.
 //
-// Live only: the server reads the file itself, and a vision model's wording
-// varies, so there is nothing stable to replay.
+// Live only: the recorder refuses any request that carries media, answering
+// "Media is unsupported in LLM recordings", so neither test can be recorded
+// even though both send the same bytes every run.
 
 const (
 	s25Secret       = "MELON7391"
@@ -89,7 +90,7 @@ func s25Agent(t *testing.T, name string) *ai.Agent {
 
 // The model reads the word out of the picture it was given.
 func TestVisionReadsTextFromImage(t *testing.T) {
-	skipInPlayback(t, "a vision model's wording varies and the server reads the image from disk")
+	skipInPlayback(t, "the recorder refuses a request carrying media: Media is unsupported in LLM recordings")
 	if os.Getenv("OPENAI_API_KEY") == "" {
 		t.Skip("OPENAI_API_KEY not set — provider unavailable")
 	}
@@ -110,7 +111,7 @@ func TestVisionReadsTextFromImage(t *testing.T) {
 // Without the image the word does not appear, so the check above is really
 // reading the picture rather than guessing.
 func TestWithoutMediaTokenIsAbsent(t *testing.T) {
-	skipInPlayback(t, "the counterfactual of the vision test, which runs live only")
+	skipInPlayback(t, "the counterfactual of a test that cannot be recorded; against a recording it would prove nothing")
 	if os.Getenv("OPENAI_API_KEY") == "" {
 		t.Skip("OPENAI_API_KEY not set — provider unavailable")
 	}

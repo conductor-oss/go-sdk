@@ -1,0 +1,88 @@
+{
+  "schemaVersion" : 3,
+  "request" : {
+    "messages" : [ {
+      "role" : "system",
+      "text" : "You can execute Python code in a Jupyter kernel. State persists across calls. When asked to run code, execute it using your execute_code tool exactly as provided.\n\nYou have code execution capabilities. Use the execute_code tool to write and run code. Supported languages: python. Each execution runs in an isolated environment — no state, variables, or imports persist between calls. Always include all necessary imports at the top of every code block (e.g. import subprocess, import os, import json).",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    }, {
+      "role" : "user",
+      "text" : "Run this exact Python code using execute_code: print(x * 73)",
+      "toolCalls" : [ ],
+      "toolResults" : [ ]
+    } ],
+    "tools" : [ {
+      "name" : "e2e_ce_jupyter_execute_code",
+      "description" : "Execute code in a sandboxed environment. Supported languages: python. Timeout: 30s.",
+      "inputSchema" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "language" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "code" ]
+      }
+    } ],
+    "jsonOutput" : false,
+    "outputSchema" : null,
+    "generationOptions" : {
+      "temperature" : 0.0,
+      "maxTokens" : 16384,
+      "thinkingTokenLimit" : 0
+    }
+  },
+  "response" : {
+    "metadata" : {
+      "id" : "resp_04b13209772f7896006aac599dfb8c87d0a32b95ed3d4fc3f8",
+      "model" : "gpt-4o-mini-2024-07-18",
+      "usage" : {
+        "promptTokens" : 178,
+        "completionTokens" : 62,
+        "totalTokens" : 240,
+        "nativeUsage" : null
+      },
+      "rateLimit" : {
+        "requestsLimit" : 0,
+        "requestsRemaining" : 0,
+        "requestsReset" : 0,
+        "tokensLimit" : 0,
+        "tokensRemaining" : 0,
+        "tokensReset" : 0
+      },
+      "promptMetadata" : [ ],
+      "properties" : {
+        "response_id" : "resp_04b13209772f7896006aac599dfb8c87d0a32b95ed3d4fc3f8",
+        "reasoning_tokens" : 0
+      }
+    },
+    "results" : [ {
+      "output" : {
+        "text" : "",
+        "metadata" : {
+          "messageType" : "ASSISTANT"
+        },
+        "toolCalls" : [ {
+          "id" : "call_TjZ5wvBNAHYI6oDhFN9xHJ1K",
+          "type" : "function",
+          "name" : "e2e_ce_jupyter_execute_code",
+          "arguments" : "{\"code\":\"# Let's attempt to run the provided code.\\n\\n# Attempting to print 'x * 73' where 'x' is not defined.\\n\\nprint(x * 73)\",\"language\":\"python\"}"
+        } ],
+        "media" : [ ]
+      },
+      "metadata" : {
+        "finishReason" : "TOOL_CALLS",
+        "contentFilters" : [ ],
+        "properties" : { }
+      }
+    } ]
+  },
+  "modelSettings" : {
+    "model" : "gpt-4o-mini",
+    "supportsAssistantPrefill" : true
+  }
+}

@@ -68,11 +68,15 @@ Tests: TestStreamingWithApproval
 - `18993d40-79b1-4c96-8ed1-f4d8e9eccbd9.json`: 9 messages; tools: check_service, restart_service, delete_service_data; user: '[TOOL RESULTS]'
 - `ba0b0d06-3cfb-484b-ae8e-7ec3259a7da6.json`: 2 messages; tools: check_service, restart_service, delete_service_data; user: 'The payments service is down. Do all three of these, in order: check it, restart it, and t'
 
-## suite10_code_execution (10)
+## suite10_code_execution (14)
 
 Tests: TestCodeExecutionCompiles, TestToolNamingMultiAgent, TestLocalPythonExecution, TestLocalBashExecution, TestLanguageRestriction, TestLocalTimeout, TestDockerPythonExecution, TestDockerNetworkDisabled, TestJupyterStateful
 
 - `10_4ac1da04-2f15-4e42-b892-6322a9c6c03f.json`: 5 messages; tools: e2e_ce_docker_nonet_execute_code; user: '[TOOL RESULTS]'
+- `11_62cb181f-6123-4a91-b9d9-56bb169faef4.json`: 2 messages; tools: e2e_ce_jupyter_execute_code; user: 'Run this exact Python code using execute_code: x = 42'
+- `12_58bdd3fd-4ca5-4c8c-be24-9d395cca6b16.json`: 5 messages; tools: e2e_ce_jupyter_execute_code; user: '[TOOL RESULTS]'
+- `13_0b3301a1-5331-4de9-87f2-244c910952ce.json`: 2 messages; tools: e2e_ce_jupyter_execute_code; user: 'Run this exact Python code using execute_code: print(x * 73)'
+- `14_b3a90cdd-3b7c-4628-b919-956b96672a37.json`: 5 messages; tools: e2e_ce_jupyter_execute_code; user: '[TOOL RESULTS]'
 - `1_f904558f-c91a-4af2-9371-04cfcea24cb1.json`: 2 messages; tools: e2e_ce_local_execute_code; user: 'Run this exact Python code using execute_code: print(42 * 73)'
 - `2_4e3eb353-589f-4a8c-a8ff-510ed485ee8c.json`: 5 messages; tools: e2e_ce_local_execute_code; user: '[TOOL RESULTS]'
 - `3_0df16345-2dd7-4764-ab79-f5863dab4f38.json`: 2 messages; tools: e2e_ce_local_execute_code; user: 'Run a bash script that prints the result of: echo $((17 + 29))'

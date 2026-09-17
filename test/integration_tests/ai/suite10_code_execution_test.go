@@ -307,12 +307,12 @@ func TestDockerNetworkDisabled(t *testing.T) {
 // The Jupyter kernel lives in the worker for as long as the executor does,
 // so a value set in one run is there in the next.
 //
-// Live only: asked to run print(x * 73) "exactly as provided", gpt-4o-mini
-// usually defines its own x first, in 12 of 13 recording attempts, so a
-// recording from the one run where it did not would misrepresent the test.
-// pytest's automatic reruns are what let the Python suite live with this.
+// Live, the model often defines its own x rather than using the kernel's, so
+// this passes only some of the time; pytest's automatic reruns are what let
+// the Python suite live with that. The recording is from a run where the
+// model did follow the instruction, which is what makes the kernel's memory
+// the only thing this test turns on in playback.
 func TestJupyterStateful(t *testing.T) {
-	skipInPlayback(t, "the model usually defines its own x instead of using the kernel's; see the comment above")
 	requireJupyter(t)
 	rt := newRuntime(t)
 	agent := s10AgentJupyter(model(t))
