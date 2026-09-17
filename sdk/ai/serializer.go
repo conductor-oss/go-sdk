@@ -182,8 +182,7 @@ func (a *Agent) addDefinition(cfg map[string]any) {
 	}
 }
 
-// addComposition emits the router, loop control, guardrails, and the planner
-// and fallback slots.
+// addComposition emits the router, loop control, guardrails, and the gate.
 func (a *Agent) addComposition(cfg map[string]any) {
 	// A router is either a nested agent the server runs, or a reference to a
 	// worker. Both land on the same "router" key, so the two forms are
@@ -213,6 +212,15 @@ func (a *Agent) addComposition(cfg map[string]any) {
 	if cbs := a.callbackConfigs(); len(cbs) > 0 {
 		cfg["callbacks"] = cbs
 	}
+	if a.Gate != nil {
+		cfg["gate"] = a.Gate.gateConfig(a.Name)
+	}
+	a.addPlanning(cfg)
+}
+
+// addPlanning emits the planner and fallback slots and everything that
+// configures how a plan is drawn up and carried out.
+func (a *Agent) addPlanning(cfg map[string]any) {
 	if a.EnablePlanning {
 		cfg["enablePlanning"] = true
 	}
@@ -250,10 +258,6 @@ func (a *Agent) addComposition(cfg map[string]any) {
 	if a.Synthesize != nil && !*a.Synthesize {
 		cfg["synthesize"] = false
 	}
-	if a.Gate != nil {
-		cfg["gate"] = a.Gate.gateConfig(a.Name)
-	}
-
 }
 
 // addSubAgents emits handoffs, transitions, strategy, and the sub-agent tree.
