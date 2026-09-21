@@ -16,14 +16,9 @@ import (
 	"time"
 )
 
-// EventType classifies a streamed event.
-//
-// The server's event names vary by build, so Event keeps the raw name too:
-// Type is a direct conversion of the wire name, so a name not listed here
-// still arrives intact.
-//
-// The set mirrors the Java and Python SDKs' EventType, in their declaration
-// order, so the three can be diffed against each other.
+// EventType classifies a streamed event. Server event names vary by build, so Type is a
+// direct conversion of the wire name and an unlisted name still arrives intact. The set
+// mirrors the Java and Python SDKs' EventType, in declaration order, so the three diff.
 type EventType string
 
 const (
@@ -43,16 +38,13 @@ const (
 type Event struct {
 	// Type is the normalized event kind.
 	Type EventType
-	// Name is the server's raw event name, kept because the taxonomy is still
-	// settling and an unmapped name would otherwise be lost.
+	// Name is the server's raw event name, kept so an unmapped name is not lost.
 	Name string
 	// Text carries streamed output or a message, when the event has one.
 	Text string
 	// Data is the decoded payload, for fields Type and Text do not cover.
 	Data map[string]any
-	// ExecutionID is the execution the event came from. A nested agent's
-	// events carry its own sub-execution, not the run this handle started, so
-	// answering one means answering that execution; see AgentHandle.For.
+	// ExecutionID is the event's own execution: a nested agent's is a sub-execution; see For.
 	ExecutionID string
 }
 
@@ -63,11 +55,8 @@ type AgentHandle struct {
 	rt *Runtime
 }
 
-// Events streams updates until the run ends or ctx is cancelled.
-//
-// The channel closes when the stream does. A run that is already finished
-// yields no events, so callers that need the outcome should use Result rather
-// than inferring it from the stream ending.
+// Events streams updates until the run ends or ctx is cancelled, closing the channel with
+// the stream. An already finished run yields no events, so take the outcome from Result.
 func (h *AgentHandle) Events(ctx context.Context) (<-chan Event, error) {
 	raw, stream, err := h.rt.api.StreamSSE(ctx, "/agent/stream/"+h.ExecutionID, "")
 	if err != nil {
@@ -77,8 +66,7 @@ func (h *AgentHandle) Events(ctx context.Context) (<-chan Event, error) {
 	out := make(chan Event)
 	go func() {
 		defer close(out)
-		// Closing unblocks the reader on early return. Its error has no consumer
-		// here: the read loop records body errors in stream.Err() itself.
+		// Closing unblocks the reader on early return; body errors land in stream.Err().
 		defer stream.Close() //nolint:errcheck // see above
 		for ev := range raw {
 			select {
@@ -112,28 +100,9 @@ func (h *AgentHandle) Waiting(ctx context.Context) (bool, error) {
 	return resultFrom(h.ExecutionID, status).Status == StatusWaiting, nil
 }
 
-// Respond answers a run waiting on a human.
-//
-// It first waits for the server to report the run as waiting. The stream's
-// waiting event announces the pause slightly before the server will accept a
-// response, so posting on the event alone races it: an early response is
-// dropped and the run hangs, and retrying until one lands injects spurious
-// turns that re-run the pending tool. Confirming the state first makes
-// answering from the event stream safe, which is the way callers naturally
-// write it.
-//
-// A run that never reaches a waiting state returns an error rather than
-// blocking forever.
-// For returns a handle to the execution an event came from, so a nested
-// agent's request for human input is answered on its own execution rather
-// than on the run this handle started.
-//
-//	sub, err := handle.For(ev)
-//	if err != nil { ... }
-//	err = sub.Approve(ctx)
-//
-// An event that names no execution is an error: responding to the wrong one
-// silently approves something the person never saw.
+// For returns a handle to the execution an event came from, so a nested agent's request
+// for human input is answered on its own execution, not the run this handle started. An
+// event naming no execution is an error: answering the wrong one approves it unseen.
 func (h *AgentHandle) For(ev Event) (*AgentHandle, error) {
 	if ev.ExecutionID == "" {
 		return nil, fmt.Errorf(
@@ -146,6 +115,10 @@ func (h *AgentHandle) For(ev Event) (*AgentHandle, error) {
 	return &AgentHandle{ExecutionID: ev.ExecutionID, rt: h.rt}, nil
 }
 
+// Respond answers a run waiting on a human, first confirming the server reports it
+// waiting: the stream's waiting event announces the pause slightly before the server
+// accepts a response, so answering on the event alone is dropped and the run hangs, while
+// retrying injects spurious turns that re-run the pending tool. A run that never waits errors.
 func (h *AgentHandle) Respond(ctx context.Context, output map[string]any) error {
 	if err := h.awaitWaiting(ctx); err != nil {
 		return err
@@ -153,8 +126,7 @@ func (h *AgentHandle) Respond(ctx context.Context, output map[string]any) error 
 	return h.rt.agents.Respond(ctx, h.ExecutionID, output)
 }
 
-// awaitWaiting blocks until the server reports the run waiting on a human, the
-// run reaches a terminal state, or ctx ends.
+// awaitWaiting blocks until the server reports the run waiting, the run ends, or ctx does.
 func (h *AgentHandle) awaitWaiting(ctx context.Context) error {
 	t := time.NewTicker(100 * time.Millisecond)
 	defer t.Stop()
@@ -199,14 +171,12 @@ func (h *AgentHandle) Result(ctx context.Context) (*AgentResult, error) {
 	return h.rt.awaitResult(ctx, h.ExecutionID)
 }
 
-// Signal injects a persistent signal into this run's context; see
-// Runtime.Signal.
+// Signal injects a persistent signal into this run's context; see Runtime.Signal.
 func (h *AgentHandle) Signal(ctx context.Context, message string) error {
 	return h.rt.Signal(ctx, h.ExecutionID, message)
 }
 
-// SendMessage pushes a message into this run's workflow message queue; see
-// Runtime.SendMessage.
+// SendMessage pushes a message into this run's message queue; see Runtime.SendMessage.
 func (h *AgentHandle) SendMessage(ctx context.Context, message any) error {
 	return h.rt.SendMessage(ctx, h.ExecutionID, message)
 }
@@ -221,10 +191,8 @@ func (h *AgentHandle) Resume(ctx context.Context) error {
 	return h.rt.Resume(ctx, h.ExecutionID)
 }
 
-// decodeEvent normalizes one SSE frame.
-//
-// The event name may arrive as the SSE "event:" field or inside the JSON
-// payload, depending on the server build, so both are consulted.
+// decodeEvent normalizes one SSE frame. The event name may arrive as the SSE "event:"
+// field or inside the JSON payload, depending on the server build, so both are consulted.
 func decodeEvent(name, data, streamExecutionID string) Event {
 	ev := Event{Name: name, Type: EventType(name), ExecutionID: streamExecutionID}
 
@@ -237,8 +205,7 @@ func decodeEvent(name, data, streamExecutionID string) Event {
 			}
 		}
 		ev.Text = firstString(payload, "text", "content", "message", "result", "delta")
-		// A nested agent's event names its own execution; without one the
-		// event belongs to the execution being streamed.
+		// A nested agent's event names its own execution; without one it is the streamed one.
 		if id, ok := payload["executionId"].(string); ok && id != "" {
 			ev.ExecutionID = id
 		}

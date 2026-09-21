@@ -16,24 +16,14 @@ import (
 	"regexp"
 )
 
-// A tool's own guardrails run in the worker, around the handler, as the
-// Python worker's run_tool_task does. The server gates a tool's input before
-// it dispatches the call, but a guardrail on the tool's output has no other
-// place to run: the result goes from the worker straight back to the model.
-//
-// Input guardrails see the call's arguments as JSON; output guardrails see the
-// handler's return, as is for a string and as JSON otherwise. A failed input
-// guardrail with onFail raise fails the task, and any other failure returns a
-// blocked marker in place of running the tool. A failed output guardrail with
-// onFail fix substitutes the fixed output, raise fails the task, and any other
-// failure returns a blocked marker in place of the result.
+// A tool's own guardrails run in the worker, around the handler, as Python's
+// run_tool_task does: the server gates a tool's input before dispatch, but an
+// output guardrail has nowhere else to run — the result goes from the worker
+// straight back to the model.
 
-// evaluateLocally runs one guardrail in this process. Regex guardrails match
-// here with the block/allow semantics the server uses; custom guardrails call
-// their Check function. An LLM guardrail is not evaluated and evaluated is
-// false: the Python worker calls the model itself for one, and this SDK makes
-// no model calls of its own, so on a tool an LLM guardrail is enforced only
-// where the server enforces it.
+// evaluateLocally runs one guardrail in this process: regex matching with the
+// server's block/allow semantics, or a custom Check. An LLM guardrail reports
+// evaluated false — this SDK makes no model calls — so only the server enforces it.
 func evaluateLocally(ctx context.Context, g Guardrail, content string) (result GuardrailResult, evaluated bool, err error) {
 	switch g := g.(type) {
 	case *RegexGuardrail:
@@ -52,7 +42,7 @@ func evaluateLocally(ctx context.Context, g Guardrail, content string) (result G
 				break
 			}
 		}
-		// The same verdicts and default messages as the Python RegexGuardrail._check.
+		// The verdicts and default messages of Python's RegexGuardrail._check.
 		var failure string
 		switch {
 		case mode == "block" && matched:
@@ -77,8 +67,8 @@ func evaluateLocally(ctx context.Context, g Guardrail, content string) (result G
 	return GuardrailResult{}, false, nil
 }
 
-// guardrailName, guardrailPosition and guardrailOnFail read the effective
-// values a guardrail serializes, defaults applied.
+// guardrailName, guardrailPosition and guardrailOnFail read serialized values,
+// defaults applied.
 func guardrailName(g Guardrail) string { return fmt.Sprint(g.guardrailConfig()["name"]) }
 
 func guardrailPosition(g Guardrail) Position {
@@ -87,15 +77,13 @@ func guardrailPosition(g Guardrail) Position {
 
 func guardrailOnFail(g Guardrail) OnFail { return OnFail(fmt.Sprint(g.guardrailConfig()["onFail"])) }
 
-// blockedResult is what the model sees in place of a tool result a guardrail
-// refused, the shape the Python worker returns.
+// blockedResult is the shape the Python worker returns for a refused call.
 func blockedResult(message string) map[string]any {
 	return map[string]any{"error": message, "blocked": true}
 }
 
-// checkToolInput runs the tool's input guardrails over the call's arguments.
-// It returns a replacement result when a guardrail blocks the call, or an
-// error when the guardrail's onFail is raise.
+// checkToolInput runs the input guardrails over the call's arguments as JSON,
+// returning a replacement result when one blocks, or an error for onFail raise.
 func checkToolInput(ctx context.Context, t ToolDef, input map[string]any) (map[string]any, error) {
 	if len(t.Guardrails) == 0 {
 		return nil, nil
@@ -123,9 +111,8 @@ func checkToolInput(ctx context.Context, t ToolDef, input map[string]any) (map[s
 	return nil, nil
 }
 
-// checkToolOutput runs the tool's output guardrails over the handler's return
-// and gives back what the task should carry: the value itself, the fixed
-// output, or a blocked marker. onFail raise is an error.
+// checkToolOutput runs the output guardrails over the handler's return and
+// gives back the value, the fixed output, or a blocked marker; raise is an error.
 func checkToolOutput(ctx context.Context, t ToolDef, value any) (any, error) {
 	if len(t.Guardrails) == 0 {
 		return value, nil
@@ -157,8 +144,7 @@ func checkToolOutput(ctx context.Context, t ToolDef, value any) (any, error) {
 	return value, nil
 }
 
-// guardrailContent is the text a guardrail sees for a value: a string as is,
-// anything else as JSON, as the Python worker does.
+// guardrailContent is the text a guardrail sees: a string as is, else JSON.
 func guardrailContent(value any) (string, error) {
 	if s, ok := value.(string); ok {
 		return s, nil

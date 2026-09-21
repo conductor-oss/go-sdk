@@ -23,15 +23,11 @@ import (
 )
 
 // JupyterExecutor runs code in a Jupyter kernel that stays alive between
-// calls, so variables and imports persist from one snippet to the next, as in
-// a notebook. It is the counterpart of the Python SDK's JupyterCodeExecutor
-// and, like it, drives the kernel through the jupyter_client package: a small
-// helper written in Python is started once and holds the kernel; this
-// executor sends it code over a pipe and reads the outcome back. The worker
-// host therefore needs a python3 with jupyter_client and ipykernel installed.
-//
-// Close shuts the kernel down. Execute calls are serialized: a kernel runs one
-// cell at a time.
+// calls, so variables and imports persist, as in a notebook. Like the Python
+// SDK's JupyterCodeExecutor it drives the kernel through jupyter_client: a
+// Python helper holds the kernel and this executor talks to it over a pipe, so
+// the worker host needs a python3 with jupyter_client and ipykernel installed.
+// Execute calls are serialized: a kernel runs one cell at a time.
 type JupyterExecutor struct {
 	// KernelName is the Jupyter kernel to start; empty means python3.
 	KernelName string
@@ -39,8 +35,7 @@ type JupyterExecutor struct {
 	TimeoutSeconds int
 	// StartupCode runs once when the kernel starts.
 	StartupCode string
-	// Python is the interpreter that hosts the helper; empty means python3
-	// from PATH. Point it at an environment that has jupyter_client.
+	// Python hosts the helper; empty means python3 from PATH, and it needs jupyter_client.
 	Python string
 
 	mu     sync.Mutex
@@ -50,9 +45,7 @@ type JupyterExecutor struct {
 	err    error // a failed start, reported on every call
 }
 
-// jupyterBridge is the helper. It reads one JSON object per line from stdin,
-// {"code": ...}, runs it on the kernel the way JupyterCodeExecutor.execute
-// does, and writes one JSON object per line back: output, error, timed_out.
+// jupyterBridge is the helper: one JSON request per line in, one reply out.
 const jupyterBridge = `
 import json, sys
 try:
@@ -102,7 +95,6 @@ type jupyterReply struct {
 	Fatal    string `json:"fatal"`
 }
 
-// start launches the helper and waits for the kernel to be ready.
 func (e *JupyterExecutor) start() error {
 	python := e.Python
 	if python == "" {
@@ -143,7 +135,6 @@ func (e *JupyterExecutor) start() error {
 	return nil
 }
 
-// read waits for the helper's next line.
 func (e *JupyterExecutor) read(limit time.Duration) (jupyterReply, error) {
 	type result struct {
 		line string
@@ -200,9 +191,8 @@ func (e *JupyterExecutor) Execute(ctx context.Context, code string) ExecutionRes
 	return res
 }
 
-// Close shuts the kernel and its helper down and reports any trouble doing
-// so. The executor can be used again afterwards; the next Execute starts a
-// fresh kernel.
+// Close shuts the kernel and its helper down. The executor can be used again;
+// the next Execute starts a fresh kernel.
 func (e *JupyterExecutor) Close() error {
 	e.mu.Lock()
 	defer e.mu.Unlock()

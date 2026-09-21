@@ -11,28 +11,15 @@ package ai
 
 import "fmt"
 
-// TerminationCondition decides when an agent's loop should stop.
-//
-// Conditions compose into a tree with AndTermination and OrTermination, which
-// the server evaluates after each turn:
-//
-//	Termination: ai.AndTermination(
-//	    ai.OrTermination(
-//	        ai.TextMentionTermination{Text: "DONE", CaseSensitive: true},
-//	        ai.MaxMessageTermination{MaxMessages: 20},
-//	    ),
-//	    ai.TokenUsageTermination{MaxTotalTokens: ai.Ptr(8000)},
-//	)
-//
-// The interface is sealed by an unexported method: the server understands a
-// fixed set of condition types, so a caller-defined implementation could not
-// be serialized. Use StopWhen for arbitrary Go logic instead — that runs as a
-// worker rather than as a server-side condition.
+// TerminationCondition decides when an agent's loop should stop. Conditions
+// compose into a tree with AndTermination and OrTermination, which the server
+// evaluates after each turn. The interface is sealed: the server knows a fixed
+// set of condition types, so a caller-defined one could not be serialized. Use
+// StopWhen for arbitrary Go logic, which runs as a worker instead.
 type TerminationCondition interface {
 	terminationConfig() map[string]any
-	// validateTermination mirrors the constructor checks the Python SDK
-	// performs, which Go cannot do at construction time because a struct
-	// literal has no constructor to run. Agent.Validate walks the tree.
+	// validateTermination mirrors Python's constructor checks, which a Go struct
+	// literal cannot run; Agent.Validate walks the tree.
 	validateTermination() error
 }
 
@@ -52,13 +39,9 @@ func (t TextMentionTermination) terminationConfig() map[string]any {
 	}
 }
 
-// defaultStopMessage matches the Python SDK's StopMessageTermination default.
-//
-// As with maxTurns, Go cannot carry this as a parameter default: an empty
-// StopMessage is the zero value and so is indistinguishable from unset, and
-// an empty stop token would never match anything. It is substituted at
-// serialization instead, so StopMessageTermination{} behaves like Python's
-// StopMessageTermination().
+// defaultStopMessage matches the Python SDK's StopMessageTermination default. An
+// empty StopMessage is indistinguishable from unset, so it is substituted at
+// serialization instead.
 const defaultStopMessage = "TERMINATE"
 
 // StopMessageTermination stops when the model emits exactly this message.
@@ -80,15 +63,13 @@ func (t StopMessageTermination) terminationConfig() map[string]any {
 	}
 }
 
-// MaxMessageTermination stops after the conversation reaches this many
-// messages.
+// MaxMessageTermination stops after the conversation reaches this many messages.
 type MaxMessageTermination struct {
 	MaxMessages int
 }
 
-// validateTermination rejects a limit below 1, matching Python. Go needs the
-// check more than Python does: MaxMessageTermination{} is constructible and
-// leaves MaxMessages at 0, whereas Python's constructor requires the argument.
+// validateTermination rejects a limit below 1, matching Python; Go needs it
+// because MaxMessageTermination{} leaves MaxMessages at 0.
 func (t MaxMessageTermination) validateTermination() error {
 	if t.MaxMessages < 1 {
 		return fmt.Errorf("MaxMessageTermination: maxMessages must be >= 1, got %d", t.MaxMessages)
@@ -103,20 +84,17 @@ func (t MaxMessageTermination) terminationConfig() map[string]any {
 	}
 }
 
-// TokenUsageTermination stops once a token budget is exhausted.
-//
-// The three limits are independent and all optional, so they are pointers:
-// Python guards each with `is not None` and omits the ones left unset, rather
-// than sending a zero the server would read as "no tokens allowed".
+// TokenUsageTermination stops once a token budget is exhausted. The three limits
+// are independent and optional, hence pointers: an unset one is omitted, not
+// sent as a zero the server would read as "no tokens allowed".
 type TokenUsageTermination struct {
 	MaxTotalTokens      *int
 	MaxPromptTokens     *int
 	MaxCompletionTokens *int
 }
 
-// validateTermination rejects a condition with no limits at all, matching
-// Python. Without it the wire carries {"type": "token_usage"} and no budget,
-// which can never fire.
+// validateTermination rejects a condition with no limits, matching Python:
+// a token_usage with no budget can never fire.
 func (t TokenUsageTermination) validateTermination() error {
 	if t.MaxTotalTokens == nil && t.MaxPromptTokens == nil && t.MaxCompletionTokens == nil {
 		return fmt.Errorf("TokenUsageTermination: at least one token limit must be set")
@@ -138,9 +116,8 @@ func (t TokenUsageTermination) terminationConfig() map[string]any {
 	return cfg
 }
 
-// andTermination and orTermination are unexported so the only way to build a
-// composite is through the constructors below, which keeps a composite from
-// being created with a nil Conditions slice.
+// andTermination and orTermination are unexported so composites come only from
+// the constructors below, never with a nil conditions slice.
 type andTermination struct{ conditions []TerminationCondition }
 
 type orTermination struct{ conditions []TerminationCondition }
@@ -161,10 +138,8 @@ func (t orTermination) terminationConfig() map[string]any {
 	return map[string]any{"type": "or", "conditions": conditionConfigs(t.conditions)}
 }
 
-// AndTermination stops only when every condition holds.
-//
-// Python spells this with the & operator; Go has no operator overloading, so
-// composites are built with variadic constructors instead.
+// AndTermination stops only when every condition holds. Python spells this with
+// the & operator, which Go cannot overload, so composites take variadic args.
 func AndTermination(conditions ...TerminationCondition) TerminationCondition {
 	return andTermination{conditions: conditions}
 }
@@ -174,8 +149,7 @@ func OrTermination(conditions ...TerminationCondition) TerminationCondition {
 	return orTermination{conditions: conditions}
 }
 
-// validateConditions rejects an empty composite, which would serialize to a
-// condition that can never fire, and recurses into the children.
+// validateConditions rejects an empty composite, which could never fire.
 func validateConditions(kind string, conditions []TerminationCondition) error {
 	if len(conditions) == 0 {
 		return fmt.Errorf("%s: at least one condition is required", kind)
@@ -191,8 +165,7 @@ func validateConditions(kind string, conditions []TerminationCondition) error {
 	return nil
 }
 
-// conditionConfigs serializes a composite's children, skipping nils so a
-// stray nil in a literal cannot panic during serialization.
+// conditionConfigs serializes a composite's children, skipping nils that would otherwise panic.
 func conditionConfigs(conditions []TerminationCondition) []any {
 	out := make([]any, 0, len(conditions))
 	for _, c := range conditions {

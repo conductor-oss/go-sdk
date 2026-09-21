@@ -17,40 +17,27 @@ import (
 	"strings"
 )
 
-// HandoffCondition decides when one sub-agent passes control to another.
-//
-// Handoffs belong to a parent agent, usually with StrategySwarm: the parent
-// holds the sub-agents and the rules for moving between them. The interface is
-// sealed the same way TerminationCondition is — the server understands a fixed
-// set of types, so a caller-defined one could not be compiled.
+// HandoffCondition decides when one sub-agent passes control to another. It is
+// set on the parent agent, usually with StrategySwarm. The interface is sealed:
+// the server knows a fixed set of types, so a caller-defined one cannot compile.
 type HandoffCondition interface {
-	// handoffConfig needs the parent's name because an on_condition handoff
-	// references a worker whose task name is derived from both the parent and
-	// the target.
 	handoffConfig(agentName string) map[string]any
 	validateHandoff() error
-	// target is read by Agent.Validate to check the handoff points at a real
-	// sub-agent.
 	handoffTarget() string
 }
 
-// handoffSuffix builds the derived task name for an OnCondition handoff:
-// "<parent>_handoff_<target>". The runtime must register the predicate under
-// exactly this name.
+// handoffTaskName is the name an OnCondition predicate must be registered under.
 func handoffTaskName(agentName, target string) string {
 	return agentName + "_handoff_" + target
 }
 
 // OnToolResult hands off after a named tool returns.
-//
-// With ResultContains set, only a result containing that substring triggers
-// the handoff; without it, any successful call does.
 type OnToolResult struct {
 	// Target is the sub-agent to hand control to. Required.
 	Target string
 	// ToolName is the tool whose result is watched. Required.
 	ToolName string
-	// ResultContains narrows the trigger to results containing this text.
+	// ResultContains narrows the trigger to results containing this text; empty means any successful call.
 	ResultContains string
 }
 
@@ -106,11 +93,9 @@ func (h *OnTextMention) validateHandoff() error {
 	return nil
 }
 
-// OnCondition hands off when a Go predicate says so.
-//
-// The predicate runs as a worker, registered under "<parent>_handoff_<target>",
-// so one target may have only one condition per parent — the task name is
-// derived from the pair and a second would collide.
+// OnCondition hands off when a Go predicate says so. The predicate runs as a
+// worker named after the parent and target pair, so a parent may have only one
+// condition per target; a second would collide on the task name.
 type OnCondition struct {
 	// Target is the sub-agent to hand control to. Required.
 	Target string
@@ -118,20 +103,13 @@ type OnCondition struct {
 	Condition HandoffFunc
 }
 
-// HandoffFunc decides whether to hand off. Returning true moves control to
-// the handoff's Target.
+// HandoffFunc decides whether to hand off; true moves control to the Target.
 type HandoffFunc func(ctx context.Context, state HandoffState) (bool, error)
 
-// HandoffState is what the server hands the predicate, normalised so a check
-// can be written against plain values.
-//
-// The server's own inputs are looser than they look. result is the active
-// agent's last response: usually a string, but a list when that agent
-// produced no text — and every turn that ends in a transfer-tool call leaves
-// it empty. active_agent is an *index*, as a string, into the server's list of
-// [parent, sub-agents...], so 0 is the parent itself. Python resolves the index
-// to a name through an idx_to_name map; this does the same. Result is
-// flattened to text for either shape.
+// HandoffState is the server's input to the predicate, normalised. result is a
+// string, or a list when the agent produced no text, and is empty on any turn ending
+// in a transfer-tool call, so it is flattened to text; active_agent is a string index
+// into [parent, sub-agents...] resolved to a name, as Python's idx_to_name map does.
 type HandoffState struct {
 	// Result is the active agent's last response, as text.
 	Result string
@@ -139,17 +117,15 @@ type HandoffState struct {
 	Conversation string
 	// Context is the agent state shared across turns.
 	Context map[string]any
-	// ActiveAgent is the name of the agent currently holding control — the
-	// parent's own name when control has returned to it. Falls back to the raw
-	// value if the server sent an index that cannot be resolved.
+	// ActiveAgent is the name of the agent currently holding control, or the
+	// raw value if the index cannot be resolved.
 	ActiveAgent string
 	// ToolResults are the results of the last turn's tool calls.
 	ToolResults []any
 }
 
-// handoffIn is the task input, keyed as the server sends it. Result,
-// conversation and active_agent are bound loosely because their JSON type is
-// not fixed — see HandoffState.
+// handoffIn is the task input, keyed as the server sends it; the loosely typed
+// fields have no fixed JSON type (see HandoffState).
 type handoffIn struct {
 	Result       any            `json:"result"`
 	Conversation any            `json:"conversation"`
@@ -158,14 +134,13 @@ type handoffIn struct {
 	ToolResults  []any          `json:"tool_results"`
 }
 
-// handoffOut is the task output. The swarm resolver reads the handoff key
-// and throws unless it is a boolean, so it is never omitted.
+// handoffOut is the task output; the swarm resolver throws unless handoff is a boolean.
 type handoffOut struct {
 	Handoff bool `json:"handoff"`
 }
 
-// textOf flattens a value the server may send as a string, a list of strings,
-// or a list of content blocks with text or content fields, into one string.
+// textOf flattens a string, a list of strings, or content blocks with a text
+// or content field into one string.
 func textOf(v any) string {
 	switch x := v.(type) {
 	case nil:
@@ -197,9 +172,7 @@ func textOf(v any) string {
 	}
 }
 
-// resolveAgent turns the server's active_agent index into a name. Anything
-// that is not a valid index is returned as text, so a caller still sees what
-// the server sent.
+// resolveAgent turns the active_agent index into a name, or returns it as text.
 func resolveAgent(v any, agents []string) string {
 	raw := textOf(v)
 	if i, err := strconv.Atoi(strings.TrimSpace(raw)); err == nil && i >= 0 && i < len(agents) {
@@ -209,8 +182,7 @@ func resolveAgent(v any, agents []string) string {
 }
 
 // handoffHandler adapts a HandoffFunc to the worker contract. agents is the
-// server's index space — the parent first, then its sub-agents in declaration
-// order — used to resolve active_agent.
+// server's index space: the parent, then its sub-agents in declaration order.
 func (h *OnCondition) handoffHandler(agents []string) func(context.Context, handoffIn) (handoffOut, error) {
 	return func(ctx context.Context, in handoffIn) (handoffOut, error) {
 		hit, err := h.Condition(ctx, HandoffState{
@@ -221,16 +193,13 @@ func (h *OnCondition) handoffHandler(agents []string) func(context.Context, hand
 			ToolResults:  in.ToolResults,
 		})
 		if err != nil {
-			// A predicate that errors does not hand off, matching Python's
-			// should_handoff, which swallows exceptions and returns False.
+			// Python's should_handoff swallows exceptions and returns False.
 			return handoffOut{Handoff: false}, nil
 		}
 		return handoffOut{Handoff: hit}, nil
 	}
 }
 
-// onConditions returns the agent's worker-backed handoffs, so each can be
-// registered under its derived task name.
 func (a *Agent) onConditions() []*OnCondition {
 	var out []*OnCondition
 	for _, h := range a.Handoffs {
@@ -261,10 +230,8 @@ func (h *OnCondition) validateHandoff() error {
 	return nil
 }
 
-// validateHandoffs checks each handoff and that it points at a real sub-agent.
-//
-// A target that names nothing would compile server side and then fail at the
-// moment the handoff fires, which is the worst time to find out.
+// validateHandoffs checks each handoff points at a real sub-agent: a target
+// that names nothing compiles server side and fails only when it fires.
 func (a *Agent) validateHandoffs() error {
 	if len(a.Handoffs) == 0 {
 		return nil
@@ -288,8 +255,6 @@ func (a *Agent) validateHandoffs() error {
 				"agent %q hands off to %q, which is not one of its sub-agents",
 				a.Name, target)
 		}
-		// Two on_condition handoffs to the same target would derive the same
-		// worker task name, so the second would silently never run.
 		if _, isCond := h.(*OnCondition); isCond {
 			if _, dup := seen[target]; dup {
 				return fmt.Errorf(
@@ -301,8 +266,6 @@ func (a *Agent) validateHandoffs() error {
 		}
 	}
 
-	// AllowedTransitions restricts movement between sub-agents, so every name
-	// in it has to be one.
 	for from, tos := range a.AllowedTransitions {
 		if _, ok := known[from]; !ok {
 			return fmt.Errorf(

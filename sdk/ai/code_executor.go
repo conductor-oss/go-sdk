@@ -22,16 +22,12 @@ import (
 	"time"
 )
 
-// Code the model writes runs here, in a subprocess on the worker host. There
-// is no sandbox: AllowedLanguages and AllowedCommands are the only limits, and
-// AllowedCommands is a best-effort scan of the source rather than a guarantee.
-// Do not attach CodeExecutionConfig to an agent handling untrusted input
-// unless the worker itself is isolated.
-//
-// This mirrors Python's LocalCodeExecutor and CommandValidator so the same
-// agent behaves the same way in both SDKs.
+// Code the model writes runs here, in a subprocess on the worker host. There is
+// no sandbox: AllowedLanguages and AllowedCommands are the only limits, and
+// AllowedCommands is only a best-effort scan of the source. Do not attach
+// CodeExecutionConfig to an agent handling untrusted input unless the worker
+// itself is isolated. Mirrors Python's LocalCodeExecutor and CommandValidator.
 
-// interpreters maps a language to the command that runs it.
 var interpreters = map[string][]string{
 	"python":     {"python3"},
 	"python3":    {"python3"},
@@ -52,26 +48,24 @@ var fileExtensions = map[string]string{
 	"ruby":       ".rb",
 }
 
-// codeExecIn is what the model sends the derived execute_code tool. The field
-// names match the schema in CodeExecutionConfig.codeTool.
+// codeExecIn is what the model sends the derived execute_code tool; its fields
+// match the schema in CodeExecutionConfig.codeTool.
 type codeExecIn struct {
 	Code     string `json:"code"`
 	Language string `json:"language"`
 }
 
-// codeExecOut is what the tool returns. Errors in the executed code are
-// reported here rather than failing the task, so the model can read the
-// stderr and try again.
+// codeExecOut is what the tool returns; errors in the executed code are
+// reported here rather than failing the task, so the model can try again.
 type codeExecOut struct {
 	Status string `json:"status"`
 	Stdout string `json:"stdout"`
 	Stderr string `json:"stderr"`
 }
 
-// executeCode runs one snippet and reports the outcome.
 func (c *CodeExecutionConfig) executeCode(ctx context.Context, in codeExecIn) (codeExecOut, error) {
-	// The model sometimes omits arguments. Python answers with a success and
-	// an explanatory stdout rather than an error, so the run continues.
+	// Python answers a missing snippet with a success and an explanatory
+	// stdout rather than an error, so the run continues.
 	if in.Code == "" {
 		return codeExecOut{
 			Status: "success",
@@ -97,9 +91,8 @@ func (c *CodeExecutionConfig) executeCode(ctx context.Context, in codeExecIn) (c
 	}
 
 	timeout := timeoutOrDefault(c.TimeoutSeconds)
-	// A local executor is language-specific, so one is built per call with
-	// the language the model asked for; any other executor runs the code as
-	// it was configured, whatever the language argument says.
+	// A local executor is language-specific, so one is built per call; any
+	// other executor runs as configured, whatever the language argument says.
 	executor := c.Executor
 	switch l := executor.(type) {
 	case nil:
@@ -114,8 +107,8 @@ func (c *CodeExecutionConfig) executeCode(ctx context.Context, in codeExecIn) (c
 	return executor.Execute(ctx, in.Code).toolOutput(timeout), nil
 }
 
-// runInterpreter writes the code to a temporary file and runs it. It is the
-// LocalExecutor's engine; workingDir empty means the file's own directory.
+// runInterpreter is the LocalExecutor's engine. workingDir empty means the
+// temporary file's own directory.
 func runInterpreter(ctx context.Context, interpreter []string, code, ext string,
 	timeoutSeconds int, workingDir string) ExecutionResult {
 
@@ -124,9 +117,8 @@ func runInterpreter(ctx context.Context, interpreter []string, code, ext string,
 		return ExecutionResult{Error: err.Error(), ExitCode: 1}
 	}
 	path := f.Name()
-	// Removed however this returns: a failed write still leaves a file behind.
-	// A leftover temp file is not an execution failure, so its removal error
-	// has no consumer.
+	// Removed however this returns, since a failed write still leaves a file
+	// behind; a leftover temp file is not a failure, so the error has no consumer.
 	defer os.Remove(path) //nolint:errcheck // see above
 
 	if _, werr := f.WriteString(code); werr != nil {
@@ -136,14 +128,14 @@ func runInterpreter(ctx context.Context, interpreter []string, code, ext string,
 		return ExecutionResult{Error: cerr.Error(), ExitCode: 1}
 	}
 
-	// The timeout is the config's, but the task's context still wins if it
-	// expires first — a worker should not outlive the run it belongs to.
+	// The config's timeout applies, but the task's context wins if it expires
+	// first: a worker should not outlive the run it belongs to.
 	runCtx, cancel := context.WithTimeout(ctx, time.Duration(timeoutSeconds)*time.Second)
 	defer cancel()
 
 	args := append(append([]string{}, interpreter[1:]...), path)
-	// The interpreter is operator configuration; the model's code reaches it
-	// as a file path, never as arguments.
+	// The interpreter is operator configuration; the model's code reaches it as a
+	// file path, never as arguments.
 	cmd := exec.CommandContext(runCtx, interpreter[0], args...) //nolint:gosec // see above
 	cmd.Dir = filepath.Dir(path)
 	if workingDir != "" {
@@ -161,14 +153,11 @@ func runInterpreter(ctx context.Context, interpreter []string, code, ext string,
 	case err == nil:
 		return res
 	case runCtx.Err() != nil:
-		// Distinguished from an ordinary failure because the model can act on
-		// it: shorter code, or a smaller problem.
 		res.ExitCode, res.TimedOut = -1, true
 		return res
 	default:
-		// 127 is the shell's "command not found": interpreter missing,
-		// permission denied, and so on. Then the error itself is the only
-		// useful detail.
+		// 127 is the shell's "command not found" (interpreter missing, permission
+		// denied), where the error itself is the only useful detail.
 		var ee *exec.ExitError
 		if errors.As(err, &ee) {
 			res.ExitCode = ee.ExitCode()
@@ -184,16 +173,12 @@ func runInterpreter(ctx context.Context, interpreter []string, code, ext string,
 	}
 }
 
-// Command validation. A best-effort scan for commands the code shells out to,
-// ported from Python's CommandValidator. It reads source text, so it can be
-// evaded; it exists to catch mistakes, not to contain an adversary.
+// Command validation, ported from Python's CommandValidator.
 
+// Matched in order: subprocess.*, os.system/os.popen, and Jupyter's ! syntax.
 var pythonShellPatterns = []*regexp.Regexp{
-	// subprocess.run(["cmd", ...]) and friends
 	regexp.MustCompile(`subprocess\.\w+\(\s*\[?\s*["'](\S+?)["']`),
-	// os.system("cmd ...") / os.popen("cmd ...")
 	regexp.MustCompile(`os\.(?:system|popen)\(\s*["'](\S+)`),
-	// Jupyter ! syntax
 	regexp.MustCompile(`(?m)^\s*!(\S+)`),
 }
 
@@ -202,8 +187,7 @@ var (
 	heredocRe     = regexp.MustCompile(`<<-?\s*'?(\w+)'?`)
 )
 
-// bashBuiltins are shell keywords rather than commands, so they are never
-// checked against the allow-list.
+// bashBuiltins are shell keywords, never checked against the allow-list.
 var bashBuiltins = map[string]struct{}{}
 
 func init() {
@@ -255,8 +239,7 @@ func validatePython(code string, allowed map[string]struct{}, list []string) str
 }
 
 func validateBash(code string, allowed map[string]struct{}, list []string) string {
-	// A heredoc delimiter looks like a command to the scanner, so collect the
-	// delimiters first and skip them.
+	// A heredoc delimiter looks like a command to the scanner, so skip them.
 	delimiters := map[string]struct{}{}
 	for _, m := range heredocRe.FindAllStringSubmatch(code, -1) {
 		delimiters[m[1]] = struct{}{}
@@ -269,7 +252,7 @@ func validateBash(code string, allowed map[string]struct{}, list []string) strin
 			continue
 		}
 		// Naive inline-comment strip, as in Python: a # inside quotes is not
-		// handled, which can only make the scan stricter, never looser.
+		// handled, which can only make the scan stricter.
 		if i := strings.Index(line, " #"); i >= 0 {
 			line = line[:i]
 		}

@@ -21,12 +21,9 @@ import (
 type Position string
 
 const (
-	// PositionInput checks what goes in, before the model or tool sees it.
-	// Kept for wire parity with the other SDKs; current servers do not act on
-	// it. Agent-level guardrails are compiled at PositionOutput only, so an
-	// input guardrail on an agent is accepted and ignored. Tool guardrails
-	// always inspect the tool's arguments before the call, whichever position
-	// they declare — there is no check on a tool's result.
+	// PositionInput checks what goes in; kept for wire parity, as current servers
+	// ignore it: agent guardrails compile at output only, and a tool guardrail
+	// always inspects arguments before the call, never a result.
 	PositionInput Position = "input"
 	// PositionOutput checks what comes out. This is the default.
 	PositionOutput Position = "output"
@@ -38,8 +35,7 @@ type OnFail string
 const (
 	// OnFailRaise fails the run.
 	OnFailRaise OnFail = "raise"
-	// OnFailRetry sends the guardrail's message back to the model and lets it
-	// try again, up to MaxRetries.
+	// OnFailRetry sends the message back to the model to retry, up to MaxRetries.
 	OnFailRetry OnFail = "retry"
 	// OnFailFix substitutes the corrected output the guardrail returns.
 	OnFailFix OnFail = "fix"
@@ -108,9 +104,7 @@ func (g guardrailBase) maxRetriesOrDefault() int {
 	return g.MaxRetries
 }
 
-// validate checks the closed enums. Positions and failure modes are a fixed
-// set in the shared schema, so a typo is a bug worth catching here rather than
-// a server-side compile error.
+// validate checks the closed enums the shared schema fixes, so a typo fails here.
 func (g guardrailBase) validate(kind string) error {
 	if g.Position != "" {
 		if _, ok := validPositions[g.Position]; !ok {
@@ -128,14 +122,12 @@ func (g guardrailBase) validate(kind string) error {
 	return nil
 }
 
-// RegexGuardrail matches content against patterns, server side. No worker is
-// involved, so it costs nothing per call.
+// RegexGuardrail matches content against patterns server side, with no worker.
 type RegexGuardrail struct {
 	guardrailBase
 	// Patterns are regular expressions. Required.
 	Patterns []string
-	// Mode is "block" (default) to reject a match, or "allow" to reject
-	// anything that does not match.
+	// Mode is "block" (default) to reject a match, or "allow" to reject a non-match.
 	Mode string
 	// Message is the feedback the model sees on a retry.
 	Message string
@@ -166,8 +158,7 @@ func (g *RegexGuardrail) validateGuardrail() error {
 	return g.validate("regex")
 }
 
-// LLMGuardrail asks a model whether the content satisfies a policy. It costs a
-// model call per check, so prefer a small fast model.
+// LLMGuardrail asks a model whether the content satisfies a policy, one call each.
 type LLMGuardrail struct {
 	guardrailBase
 	// Model in "provider/model" form. Required.
@@ -199,48 +190,34 @@ func (g *LLMGuardrail) validateGuardrail() error {
 	return g.validate("llm")
 }
 
-// CustomGuardrail runs a Go function as a Conductor worker. Name is the task
-// name the server dispatches to, so it is required rather than defaulted: Go
-// cannot read a function's name at runtime the way Python can.
+// CustomGuardrail runs a Go function as a Conductor worker, dispatched by Name.
 type CustomGuardrail struct {
 	guardrailBase
-	// Check receives the content and reports whether it passes. Required
-	// unless External is set.
+	// Check reports whether the content passes. Required unless External is set.
 	Check GuardrailFunc
-	// External marks a guardrail whose worker runs elsewhere, so this process
-	// registers nothing for it.
+	// External marks a guardrail whose worker runs elsewhere, registering nothing.
 	External bool
 }
 
-// NewCustomGuardrail builds a custom guardrail with the two fields every one
-// needs. Position, OnFail and MaxRetries take their defaults and can be set on
-// the result.
+// NewCustomGuardrail builds a custom guardrail; the other fields take defaults.
 func NewCustomGuardrail(name string, check GuardrailFunc) *CustomGuardrail {
 	return &CustomGuardrail{guardrailBase: guardrailBase{Name: name}, Check: check}
 }
 
-// GuardrailFunc is a custom check. Returning passed=false rejects the content,
-// and an error counts as a failure too, so a broken guardrail never lets
-// content through.
-//
-// It takes a struct rather than the bare string Python and Java pass because
-// the server sends more than the content — the retry iteration and the turn's
-// tool calls — and a struct lets a check use them, and lets fields be added
-// later without changing every caller.
+// GuardrailFunc is a custom check. passed=false rejects the content, and an error
+// counts as a failure too, so a broken guardrail never lets content through. It
+// takes a struct rather than the bare string Python and Java pass because the
+// server also sends the retry iteration and the turn's tool calls.
 type GuardrailFunc func(ctx context.Context, in GuardrailInput) (GuardrailResult, error)
 
-// GuardrailInput is what the server hands a custom guardrail for one check.
-// Only fields the server actually sends are here; Position is not one of
-// them, and a guardrail knows its own Position from its declaration anyway.
+// GuardrailInput is what the server hands a custom guardrail for one check. It
+// has no Position: the server does not send one, and a guardrail knows its own.
 type GuardrailInput struct {
-	// Content is the text under inspection. Non-text content arrives as JSON,
-	// the way Python's _stringify_content renders it.
+	// Content is the text under inspection; non-text content arrives as JSON.
 	Content string
-	// Iteration is which pass this is: 0 on the first check, then one more
-	// for each retry the guardrail itself caused.
+	// Iteration is 0 on the first check, then one per retry this guardrail caused.
 	Iteration int
-	// ToolCalls are the turn's tool calls, when the server includes them.
-	// Nil otherwise.
+	// ToolCalls are the turn's tool calls when the server includes them, else nil.
 	ToolCalls []any
 }
 
@@ -248,11 +225,9 @@ type GuardrailInput struct {
 type GuardrailResult struct {
 	// Passed reports whether the content is acceptable.
 	Passed bool
-	// Message is the feedback sent back to the model on a retry, and the
-	// failure reason when the run is stopped.
+	// Message is the retry feedback to the model, and the reason a run is stopped.
 	Message string
-	// FixedOutput is the corrected content, used when OnFail is OnFailFix.
-	// Empty means there is no fix, and a fix guardrail then fails the run.
+	// FixedOutput is the corrected content for OnFailFix; empty fails the run.
 	FixedOutput string
 }
 
@@ -263,8 +238,7 @@ func (g *CustomGuardrail) guardrailConfig() map[string]any {
 	} else {
 		cfg["guardrailType"] = "custom"
 	}
-	// The task name is the guardrail's name: the server dispatches to it, and
-	// the runtime registers a worker under the same name.
+	// The server dispatches to this name, and the runtime registers a worker under it.
 	cfg["taskName"] = cfg["name"]
 	return cfg
 }
@@ -281,9 +255,8 @@ func (g *CustomGuardrail) validateGuardrail() error {
 	return g.validate("custom")
 }
 
-// validateGuardrails checks every guardrail on an agent or tool. Guardrail
-// itself stays a minimal interface so a caller can implement one; the
-// validation hook is optional.
+// validateGuardrails checks every guardrail on an agent or tool. Guardrail stays
+// a minimal interface so a caller can implement one, so the hook is optional.
 func validateGuardrails(owner string, gs []Guardrail) error {
 	for _, g := range gs {
 		v, ok := g.(interface{ validateGuardrail() error })
@@ -297,20 +270,17 @@ func validateGuardrails(owner string, gs []Guardrail) error {
 	return nil
 }
 
-// guardrailIn is the task input as the server sends it: the content under
-// several aliases (content is the canonical one) and the live loop iteration.
-// Both are bound loosely because the content is whatever the model produced
-// and the iteration may arrive as a number, a numeric string, or nothing.
+// guardrailIn is the task input as the server sends it: the content, sent under
+// several aliases of which "content" is canonical, and the live loop iteration.
 type guardrailIn struct {
 	Content   any   `json:"content"`
 	Iteration any   `json:"iteration"`
 	ToolCalls []any `json:"toolCalls"`
 }
 
-// guardrailOut is the task output, in the shape Python's GuardrailEntry
-// returns. The server's normalize step reads passed, message, on_fail and
-// fixed_output; on_fail drives the retry/raise/fix switch, so it is always
-// sent — without it a failure always raises.
+// guardrailOut is the task output, in the shape Python's GuardrailEntry returns.
+// The server reads passed, message, on_fail and fixed_output; on_fail drives the
+// retry/raise/fix switch and is always sent, as without it a failure raises.
 type guardrailOut struct {
 	Passed         bool    `json:"passed"`
 	Message        string  `json:"message"`
@@ -320,8 +290,7 @@ type guardrailOut struct {
 	ShouldContinue bool    `json:"should_continue"`
 }
 
-// contentOf renders the content the way Python's _stringify_content does:
-// text as is, nothing as empty, anything else as JSON.
+// contentOf matches Python's _stringify_content: text as is, nil empty, else JSON.
 func contentOf(v any) string {
 	switch x := v.(type) {
 	case nil:
@@ -337,8 +306,7 @@ func contentOf(v any) string {
 	}
 }
 
-// iterationOf reads the loop counter, which JSON delivers as a float64 and
-// older servers as a string. Anything else counts as iteration zero.
+// iterationOf reads the loop counter: float64 from JSON, string from old servers.
 func iterationOf(v any) int {
 	switch x := v.(type) {
 	case float64:
@@ -353,10 +321,8 @@ func iterationOf(v any) int {
 	return 0
 }
 
-// guardrailHandler adapts Check to the worker contract, mirroring Python's
-// GuardrailEntry: a retry past MaxRetries and a fix with nothing to substitute
-// both escalate to raise, and a Check that errors is a failure rather than a
-// pass, so a broken guardrail never lets content through.
+// guardrailHandler adapts Check to the worker contract as Python's GuardrailEntry
+// does: a retry past MaxRetries, or a fix with nothing to substitute, raises.
 func (g *CustomGuardrail) guardrailHandler() func(context.Context, guardrailIn) (guardrailOut, error) {
 	onFail := g.onFailOrDefault()
 	maxRetries := g.maxRetriesOrDefault()
@@ -393,9 +359,8 @@ func (g *CustomGuardrail) guardrailHandler() func(context.Context, guardrailIn) 
 	}
 }
 
-// customGuardrails returns the guardrails this process must serve: the
-// agent's own and its tools', skipping regex and LLM guardrails, which the
-// server evaluates itself, and external ones served elsewhere.
+// customGuardrails returns the guardrails this process must serve: the agent's
+// own and its tools', minus server-evaluated regex and LLM ones and external ones.
 func (a *Agent) customGuardrails() []*CustomGuardrail {
 	var out []*CustomGuardrail
 	collect := func(gs []Guardrail) {

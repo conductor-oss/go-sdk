@@ -9,11 +9,8 @@
 
 package ai
 
-// Strategy determines how an agent orchestrates its sub-agents.
-//
-// A strategy is only sent to the server when the agent actually declares
-// sub-agents (via Agents, Planner or Fallback); a leaf agent has no strategy
-// on the wire regardless of what this field holds.
+// Strategy determines how an agent orchestrates its sub-agents. It is sent only
+// when the agent declares sub-agents (via Agents, Planner or Fallback).
 type Strategy string
 
 const (
@@ -37,8 +34,7 @@ const (
 	StrategyPlanExecute Strategy = "plan_execute"
 )
 
-// validStrategies mirrors the Python SDK's Strategy enum. Kept as a set so
-// Validate can reject unknown values with the same message shape.
+// validStrategies mirrors the Python SDK's Strategy enum, as a set for Validate.
 var validStrategies = map[Strategy]struct{}{
 	StrategyHandoff:     {},
 	StrategySequential:  {},

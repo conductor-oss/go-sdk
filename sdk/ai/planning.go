@@ -11,20 +11,18 @@ package ai
 
 import "fmt"
 
-// defaultContextMaxBytes is the server's cap on a fetched context document;
-// Python's Context.max_bytes. It is only sent when changed.
+// defaultContextMaxBytes is the server's cap on a fetched context document (Python's Context.max_bytes).
 const defaultContextMaxBytes = 16384
 
-// PlanContext is material handed to the Planner of a StrategyPlanExecute
-// agent along with the prompt: either literal Text, or a URL the server
-// fetches. Exactly one of the two is set. Python's plans.Context.
+// PlanContext is material handed to the Planner of a StrategyPlanExecute agent
+// with the prompt: exactly one of literal Text or a URL the server fetches
+// (Python's plans.Context).
 type PlanContext struct {
 	Text string
 	URL  string
 	// Headers are sent when fetching URL.
 	Headers map[string]string
-	// Optional lets planning proceed when URL cannot be fetched; by default
-	// a failed fetch fails the run. Python's required=False.
+	// Optional lets planning proceed when URL cannot be fetched (Python's required=False).
 	Optional bool
 	// MaxBytes caps a fetched document. Zero means the server default.
 	MaxBytes int
@@ -37,8 +35,7 @@ func (c PlanContext) validate() error {
 	return nil
 }
 
-// config mirrors Context.to_dict: text alone, or url with only the settings
-// that differ from the defaults.
+// config mirrors Context.to_dict: text alone, or url with only non-default settings.
 func (c PlanContext) config() map[string]any {
 	out := map[string]any{}
 	if c.Text != "" {
@@ -59,18 +56,15 @@ func (c PlanContext) config() map[string]any {
 	return out
 }
 
-// PrefillToolCall runs a tool before the first LLM turn, with fixed
-// arguments, and puts its result into the conversation. Build one with
-// Prefill. The tool need not also be in Agent.Tools; the runtime registers
-// its worker either way, so a prefill-only tool is never scheduled without a
-// poller.
+// PrefillToolCall runs a tool with fixed arguments before the first LLM turn and
+// puts its result into the conversation. The tool need not be in Agent.Tools: the
+// runtime registers its worker either way, so it never lacks a poller.
 type PrefillToolCall struct {
 	Tool      ToolDef
 	Arguments map[string]any
 }
 
-// Prefill declares a tool call to run before the agent's first turn, the
-// counterpart of Python's my_tool.call(arg=value).
+// Prefill builds a PrefillToolCall, the counterpart of Python's my_tool.call(arg=value).
 func Prefill(t ToolDef, arguments map[string]any) PrefillToolCall {
 	return PrefillToolCall{Tool: t, Arguments: arguments}
 }

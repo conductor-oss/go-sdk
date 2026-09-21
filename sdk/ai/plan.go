@@ -14,20 +14,13 @@ import (
 	"reflect"
 )
 
-// Plan is a ready-made plan for a StrategyPlanExecute agent.
-//
-// Passing one to Run or Start via WithPlan skips the planner LLM: the server
-// compiles these steps verbatim and carries them out with the agent's tools.
-// That makes a run deterministic — the same steps, in the same order, with the
-// same arguments — which is what the planner cannot promise.
-//
-// The serialized form is the wire format the server's plan compiler consumes
-// and is shared with the Java (org.conductoross.conductor.ai.plans) and Python
-// (conductor.ai.agents.plans) SDKs; a plan written in one reads in the others.
+// Plan is a ready-made plan for a StrategyPlanExecute agent. Passing one to Run
+// or Start via WithPlan skips the planner LLM: the server compiles these steps
+// verbatim, making the run deterministic. The serialized form is shared with the
+// Java (org.conductoross.conductor.ai.plans) and Python (conductor.ai.agents.plans) SDKs.
 type Plan struct {
-	// Steps is the DAG of operations. At least one is required: the server
-	// treats an empty plan as "no plan" and falls back to the planner, which
-	// would silently undo the point of passing one.
+	// Steps is the DAG of operations. At least one is required: the server reads
+	// an empty plan as "no plan" and falls back to the planner.
 	Steps []Step
 	// Validation lists checks to run after the steps complete.
 	Validation []Validation
@@ -41,8 +34,7 @@ type Plan struct {
 type Step struct {
 	// ID names the step. Other steps refer to its output with Ref{ID}.
 	ID string
-	// Operations are the tool calls this step makes, in order — or at once
-	// when Parallel is set.
+	// Operations are the tool calls this step makes, in order, or at once when Parallel is set.
 	Operations []Op
 	// DependsOn lists the step IDs this step waits for.
 	DependsOn []string
@@ -50,28 +42,21 @@ type Step struct {
 	Parallel bool
 }
 
-// Op is one tool call inside a step.
-//
-// Exactly one of Args or Generate must be set. Args calls the tool with
-// literal values, resolved deterministically at compile time; Generate asks an
-// LLM to write the arguments at run time from Instructions.
+// Op is one tool call inside a step. Exactly one of Args or Generate must be set:
+// Args resolves literal values at compile time, Generate has an LLM write them at run time.
 type Op struct {
 	// Tool is the name of one of the agent's tools.
 	Tool string
-	// Args are the tool's arguments. A Ref value anywhere in the tree — at
-	// the top level or nested in a map or slice — is replaced with the
-	// referenced step's output when the plan runs.
+	// Args are the tool's arguments; a Ref anywhere in the tree, top level or
+	// nested, becomes the referenced step's output at run time.
 	Args map[string]any
 	// Generate defers argument construction to an LLM call.
 	Generate *Generate
 }
 
-// Ref stands in for the whole output of an earlier step.
-//
-// It carries the complete result object, not a field of it, so the receiving
-// tool declares a parameter of the producing tool's output type. There is no
-// field selection ("weather.temp_f"); to pass one field, have the producing
-// tool return it on its own or let Generate pick it out.
+// Ref stands in for the whole output of an earlier step, not a field of it, so the
+// receiving tool declares a parameter of the producing tool's output type. There is
+// no field selection: return the one field from the producing tool, or use Generate.
 type Ref struct {
 	StepID string
 }
@@ -80,15 +65,14 @@ type Ref struct {
 type Generate struct {
 	// Instructions say what the arguments should contain.
 	Instructions string
-	// OutputSchema is an example of the JSON object the LLM must produce,
-	// with the tool's argument names as keys. Give real placeholder values
-	// — {"temp_f": 0}, not {"temp_f": <integer>} — because the server parses
-	// it as JSON to learn which keys to wire into the tool.
+	// OutputSchema is an example of the JSON object the LLM must produce, keyed
+	// by the tool's argument names, with real placeholder values
+	// ({"temp_f": 0}) because the server parses it as JSON to learn the keys.
 	OutputSchema string
 	// MaxTokens caps the LLM's reply. Zero leaves the server default.
 	MaxTokens int
-	// Context is extra material for the LLM: a string, or a Ref so it sees
-	// an earlier step's actual output rather than the reference itself.
+	// Context is extra material for the LLM: a string, or a Ref so it sees an
+	// earlier step's actual output rather than the reference.
 	Context any
 }
 
@@ -96,8 +80,8 @@ type Generate struct {
 type Validation struct {
 	Tool string
 	Args map[string]any
-	// SuccessCondition is a server-evaluated expression over the tool's
-	// output; empty means the tool completing is the check.
+	// SuccessCondition is a server-evaluated expression over the tool's output;
+	// empty means the tool completing is the check.
 	SuccessCondition string
 }
 
@@ -107,11 +91,9 @@ type Action struct {
 	Args map[string]any
 }
 
-// Validate reports the first structural problem with the plan.
-//
-// Everything checked here would otherwise surface as a compile failure on the
-// server, or worse as a step that runs with nothing bound — a Ref to a step
-// that does not exist resolves to nothing, and the tool still runs.
+// Validate reports the first structural problem with the plan. These otherwise fail
+// the server's compile, or bind nothing: a Ref to a missing step resolves to nothing
+// and the tool still runs.
 func (p *Plan) Validate() error {
 	if p == nil {
 		return fmt.Errorf("plan is nil")
@@ -131,7 +113,6 @@ func (p *Plan) Validate() error {
 	return p.validateHooks(ids)
 }
 
-// stepIDs collects the step IDs, rejecting a missing or repeated one.
 func (p *Plan) stepIDs() (map[string]struct{}, error) {
 	ids := make(map[string]struct{}, len(p.Steps))
 	for i, s := range p.Steps {
@@ -160,8 +141,6 @@ func (s Step) validate(ids map[string]struct{}) error {
 	return nil
 }
 
-// validateHooks covers the tool calls that run after the steps: validation,
-// on_success and on_failure.
 func (p *Plan) validateHooks(ids map[string]struct{}) error {
 	for i, v := range p.Validation {
 		if v.Tool == "" {
@@ -205,7 +184,6 @@ func (o Op) validate(ids map[string]struct{}) error {
 	return checkRefs(o.Args, ids)
 }
 
-// checkRefs walks a value tree and rejects any Ref to a step not in ids.
 func checkRefs(v any, ids map[string]struct{}) error {
 	switch x := v.(type) {
 	case Ref:
@@ -242,9 +220,8 @@ func (r Ref) check(ids map[string]struct{}) error {
 	return nil
 }
 
-// anySlice returns v's elements when v is a slice of interface values — []any
-// or a named type with that shape — and nil otherwise. Slices of concrete
-// types (e.g. []string) cannot hold a Ref, so there is nothing to walk.
+// anySlice returns v's elements when v is a slice of interface values; a slice
+// of a concrete type cannot hold a Ref.
 func anySlice(v any) []any {
 	rv := reflect.ValueOf(v)
 	if rv.Kind() != reflect.Slice || rv.Type().Elem().Kind() != reflect.Interface {
@@ -257,11 +234,8 @@ func anySlice(v any) []any {
 	return out
 }
 
-// toPayload renders the plan in the shape the server's plan compiler reads.
-//
-// Optional lists are omitted rather than sent empty, and booleans only when
-// true, matching Plan.toJson() in Java and Plan.to_dict() in Python so the
-// three SDKs produce the same document for the same plan.
+// toPayload renders the plan for the server's plan compiler, omitting empty lists
+// and false booleans to match Java's Plan.toJson() and Python's Plan.to_dict().
 func (p *Plan) toPayload() map[string]any {
 	steps := make([]any, 0, len(p.Steps))
 	for _, s := range p.Steps {
@@ -356,8 +330,7 @@ func (r Ref) toPayload() map[string]any {
 	return map[string]any{"$ref": r.StepID}
 }
 
-// serializePlanValue copies a value tree, replacing every Ref with its wire
-// form. Maps and slices are walked; anything else passes through unchanged.
+// serializePlanValue copies a value tree, replacing every Ref with its wire form.
 func serializePlanValue(v any) any {
 	switch x := v.(type) {
 	case Ref:

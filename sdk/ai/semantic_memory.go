@@ -19,12 +19,9 @@ import (
 	"time"
 )
 
-// Semantic memory: long-term memory with similarity-based retrieval, the
-// counterpart of the Python SDK's SemanticMemory, MemoryStore and
-// InMemoryStore. It stands on its own: neither SDK wires it into the agent
-// runtime yet, because the server side of memory is still moving. Use it from
-// application code to build the context an agent is given, for example with
-// SemanticMemory.Context.
+// Semantic memory: the counterpart of the Python SDK's SemanticMemory,
+// MemoryStore and InMemoryStore. Neither SDK wires it into the agent runtime
+// yet, so use it from application code, for example with SemanticMemory.Context.
 
 // MemoryEntry is one remembered item.
 type MemoryEntry struct {
@@ -40,14 +37,12 @@ type MemoryEntry struct {
 	CreatedAt time.Time
 }
 
-// A MemoryStore keeps entries and finds the ones relevant to a query.
-// Implement it to back memory with a vector database or a memory service;
-// InMemoryStore is the built-in, non-persistent one.
+// A MemoryStore keeps entries and finds the ones relevant to a query; implement
+// it to back memory with a vector database. InMemoryStore is built in.
 type MemoryStore interface {
 	// Add stores an entry and returns its ID.
 	Add(entry MemoryEntry) (string, error)
-	// Search returns up to topK entries relevant to the query, most relevant
-	// first.
+	// Search returns up to topK entries relevant to the query, most relevant first.
 	Search(query string, topK int) ([]MemoryEntry, error)
 	// Delete removes an entry, reporting whether it existed.
 	Delete(id string) (bool, error)
@@ -57,10 +52,9 @@ type MemoryStore interface {
 	List() ([]MemoryEntry, error)
 }
 
-// InMemoryStore keeps entries in memory and ranks them by keyword overlap
-// (Jaccard similarity between the words of the query and of each entry). It
-// is a fallback for development and tests; production memory belongs in a
-// real store behind MemoryStore.
+// InMemoryStore keeps entries in memory, non-persistently, ranked by Jaccard
+// similarity between the words of the query and of each entry. It is a fallback
+// for development and tests; production memory belongs in a real store.
 type InMemoryStore struct {
 	mu      sync.Mutex
 	entries map[string]MemoryEntry
@@ -165,8 +159,8 @@ func jaccard(a, b map[string]struct{}) float64 {
 	return float64(common) / float64(len(a)+len(b)-common)
 }
 
-// SemanticMemory adds and retrieves memories through a MemoryStore and
-// renders the relevant ones as context for a prompt.
+// SemanticMemory adds and retrieves memories through a MemoryStore and renders
+// the relevant ones as context for a prompt.
 type SemanticMemory struct {
 	// Store holds the entries; nil means a fresh InMemoryStore.
 	Store MemoryStore
@@ -239,13 +233,8 @@ func (m *SemanticMemory) Clear() error { return m.backing().Clear() }
 // List returns every memory.
 func (m *SemanticMemory) List() ([]MemoryEntry, error) { return m.backing().List() }
 
-// Context renders the memories relevant to a query as a block to prepend to
-// an agent's instructions, or "" when nothing is relevant. The format is the
-// Python SDK's:
-//
-//	Relevant context from memory:
-//	  1. User prefers concise answers
-//	  2. Project uses Python 3.12
+// Context renders the memories relevant to a query, in the Python SDK's format,
+// as a block to prepend to an agent's instructions; "" when nothing is relevant.
 func (m *SemanticMemory) Context(query string) (string, error) {
 	memories, err := m.Search(query, 0)
 	if err != nil || len(memories) == 0 {

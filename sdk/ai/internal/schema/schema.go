@@ -9,11 +9,8 @@
 
 // Package schema derives JSON Schema from Go types for tool input and output.
 //
-// The output must match what the Python and Java SDKs put on the wire, which is
-// narrower than JSON Schema allows: types and required-ness only, no
-// descriptions, titles, formats or constraints. Python's schema_from_function
-// carries the same restriction — the comment there claims docstrings supply
-// parameter descriptions, but the code never attaches them.
+// The output must match what the Python and Java SDKs put on the wire: types
+// and required-ness only, no descriptions, titles, formats or constraints.
 package schema
 
 import (
@@ -23,13 +20,9 @@ import (
 	"strings"
 )
 
-// Of returns the JSON Schema for t.
-//
-// Structs become objects whose properties come from `json` tags, in declaration
-// order. A field is required unless it is a pointer or carries omitempty; Go has
-// no parameter defaults, so those two stand in for Python's "has a default".
-// Declaration order is load-bearing: `required` is a JSON array, so the golden
-// comparison is positional.
+// Of returns the JSON Schema for t: struct properties come from `json` tags in
+// declaration order, which matters because `required` is a positional array. A
+// pointer or omitempty field is optional, Go's stand-in for a Python default.
 func Of(t reflect.Type) map[string]any {
 	for t != nil && t.Kind() == reflect.Pointer {
 		t = t.Elem()
@@ -57,8 +50,8 @@ func Of(t reflect.Type) map[string]any {
 		return map[string]any{"type": "array", "items": Of(t.Elem())}
 
 	case reflect.Map:
-		// map[string]any is the open object Python emits for a bare dict:
-		// additionalProperties is present but empty, not absent.
+		// Python emits an open object for a bare dict: additionalProperties
+		// present but empty.
 		if isAny(t.Elem()) {
 			return map[string]any{"type": "object", "additionalProperties": map[string]any{}}
 		}
@@ -69,7 +62,6 @@ func Of(t reflect.Type) map[string]any {
 
 	case reflect.Interface:
 		if isAny(t) {
-			// An untyped value places no constraint at all.
 			return map[string]any{}
 		}
 		return map[string]any{"type": "object"}
@@ -82,12 +74,9 @@ func isAny(t reflect.Type) bool {
 	return t.Kind() == reflect.Interface && t.NumMethod() == 0
 }
 
-// Properties is an object schema's property set in declaration order. A Go
-// map would do for the content, but encoding/json writes map keys sorted,
-// while the Python SDK writes a tool's parameters in the order they were
-// declared — and the server copies that order into text the model reads,
-// such as a planner's tool catalog. Keeping the order is what makes the two
-// SDKs produce the same prompt.
+// Properties is an object schema's property set in declaration order, which a
+// Go map would lose: the server copies a tool's parameter order into text the
+// model reads, so it has to match what the Python SDK sends.
 type Properties struct {
 	keys   []string
 	values map[string]any
@@ -177,8 +166,6 @@ func structSchema(t reflect.Type) map[string]any {
 
 	out := map[string]any{"type": "object", "properties": props}
 	if len(required) > 0 {
-		// []string rather than []any: the golden comparison round-trips through
-		// JSON, so either encodes identically.
 		out["required"] = required
 	}
 	return out

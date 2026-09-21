@@ -14,10 +14,8 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/ai/internal/schema"
 )
 
-// More tools the server runs itself, so none registers a Go function: API
-// specs expanded into tools, the two RAG tools, and the workflow message
-// queue. Defaults and config keys match the Python SDK's api_tool, index_tool,
-// search_tool and wait_for_message_tool.
+// More tools the server runs itself. Defaults and config keys match the Python
+// SDK's api_tool, index_tool, search_tool and wait_for_message_tool.
 
 const (
 	defaultAPIName          = "api_tools"
@@ -28,18 +26,11 @@ const (
 )
 
 // API exposes the operations of an OpenAPI 3.x spec, a Swagger 2.0 spec or a
-// Postman collection at url as tools. Like MCP it is entirely server-side:
-// the server fetches the spec when the agent is compiled and expands this one
-// definition into a tool per operation, filtering with an LLM when there are
-// more than WithMaxTools allows.
-//
-// An empty name or description takes Python's default: "api_tools" and
-// "API tools from <url>". Headers may reference a credential as ${NAME};
-// declare the same names with WithCredentials or Validate rejects the tool.
-//
-//	tool.API("stripe", "Stripe API", "https://api.stripe.com/openapi.json",
-//	    tool.WithHeaders(map[string]string{"Authorization": "Bearer ${STRIPE_KEY}"}),
-//	    tool.WithCredentials("STRIPE_KEY"), tool.WithMaxTools(20))
+// Postman collection at url as tools. Like MCP it is entirely server-side: the
+// server fetches the spec at compile time and expands this definition into a
+// tool per operation, filtering with an LLM beyond WithMaxTools. A ${NAME}
+// credential in a header needs the same name in WithCredentials or Validate
+// rejects the tool. Empty name or description: "api_tools", "API tools from <url>".
 func API(name, description, url string, opts ...Option) ai.ToolDef {
 	if name == "" {
 		name = defaultAPIName
@@ -60,11 +51,8 @@ func API(name, description, url string, opts ...Option) ai.ToolDef {
 	return td
 }
 
-// Index adds text to a vector index, Conductor's LLM_INDEX_TEXT task. The
-// model supplies the text and a document id; the vector database, index and
-// embedding model are fixed here. Namespace defaults to "default_ns"; set it
-// with WithNamespace, chunking with WithChunking, and the embedding size with
-// WithDimensions.
+// Index adds text to a vector index, Conductor's LLM_INDEX_TEXT task: the model
+// supplies text and a document id, the rest is fixed here, namespace "default_ns".
 func Index(name, description, vectorDB, index, embeddingProvider, embeddingModel string, opts ...Option) ai.ToolDef {
 	td := ai.ToolDef{
 		Name:        name,
@@ -87,8 +75,7 @@ func Index(name, description, vectorDB, index, embeddingProvider, embeddingModel
 }
 
 // Search queries a vector index, Conductor's LLM_SEARCH_INDEX task, returning
-// up to WithMaxResults matches (default 5). The other settings are as for
-// Index.
+// up to WithMaxResults matches (default 5). Other settings are as for Index.
 func Search(name, description, vectorDB, index, embeddingProvider, embeddingModel string, opts ...Option) ai.ToolDef {
 	td := ai.ToolDef{
 		Name:        name,
@@ -111,10 +98,9 @@ func Search(name, description, vectorDB, index, embeddingProvider, embeddingMode
 	return td
 }
 
-// WaitForMessage lets the agent wait for messages sent into its execution
-// with AgentClient.Signal or the workflow message queue. By default it blocks
-// until one message arrives; WithBatchSize takes more per call and NonBlocking
-// returns at once with whatever is queued. The server needs
+// WaitForMessage waits for messages sent into the execution with
+// AgentClient.Signal or the workflow message queue, blocking for one unless
+// WithBatchSize or NonBlocking says otherwise. Needs the server's
 // conductor.workflow-message-queue.enabled=true.
 func WaitForMessage(name, description string, opts ...Option) ai.ToolDef {
 	td := ai.ToolDef{
@@ -135,8 +121,7 @@ func WithNamespace(namespace string) Option {
 	return func(t *ai.ToolDef) { setConfig(t, "namespace", namespace) }
 }
 
-// WithChunking splits indexed text into chunks of size characters that overlap
-// by overlap. For Index.
+// WithChunking splits Index's text into chunks of size characters overlapping by overlap.
 func WithChunking(size, overlap int) Option {
 	return func(t *ai.ToolDef) {
 		setConfig(t, "chunkSize", size)
@@ -159,8 +144,7 @@ func WithBatchSize(n int) Option {
 	return func(t *ai.ToolDef) { setConfig(t, "batchSize", n) }
 }
 
-// NonBlocking makes WaitForMessage return at once, with an empty result when
-// nothing is queued, instead of waiting for a message.
+// NonBlocking makes WaitForMessage return at once, empty if nothing is queued.
 func NonBlocking() Option {
 	return func(t *ai.ToolDef) { setConfig(t, "blocking", false) }
 }

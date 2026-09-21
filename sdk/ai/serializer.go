@@ -16,23 +16,14 @@ import (
 )
 
 // toConfig serializes the agent tree into the agentConfig document the server
-// compiles.
-//
-// This is the cross-SDK wire contract: the same agent must produce the same
-// document here, in the Python SDK and in the Java SDK. Two rules govern it,
-// and both are load-bearing:
-//
-//  1. A field is emitted only when the Python serializer emits it. Sending a
-//     field Python omits is as wrong as omitting one Python sends.
-//  2. Callables are not sent. They are registered as Conductor workers and
-//     referenced by a derived task name, e.g. "<agent>_stop_when".
-//
-// The golden-file tests in serializer_golden_test.go hold this honest against
-// documents captured from the Python SDK.
+// compiles. It is the cross-SDK wire contract, identical in the Python and Java
+// SDKs: a field is emitted only when the Python serializer emits it, and
+// callables are never sent but registered as Conductor workers referenced by a
+// derived task name, e.g. "<agent>_stop_when". The golden-file tests in
+// serializer_golden_test.go check it against documents captured from Python.
 func (a *Agent) toConfig() map[string]any {
-	// A skill is not described by the fields below: its document is the raw
-	// skill directory, marked with _framework so the server normalizes it.
-	// See skill.go; golden fixture 18_skill pins the shape.
+	// A skill's document is the raw skill directory, marked with _framework so
+	// the server normalizes it; golden fixture 18_skill pins the shape.
 	if a.skill != nil {
 		return a.skill.wireConfig(a.Name)
 	}
@@ -42,8 +33,8 @@ func (a *Agent) toConfig() map[string]any {
 		"timeoutSeconds": a.TimeoutSeconds,
 		"external":       a.External,
 	}
-	// Empty model is omitted rather than sent as "", so a sub-agent can
-	// inherit its parent's model at compile time.
+	// Empty model is omitted rather than sent as "", so a sub-agent inherits
+	// its parent's model at compile time.
 	if a.Model != "" {
 		cfg["model"] = a.Model
 	}
@@ -81,12 +72,9 @@ func (a *Agent) addInstructions(cfg map[string]any) {
 	}
 }
 
-// addLLMKnobs emits the optional model parameters.
-//
-// Optional scalars are emitted whenever they are set, including when set to
-// zero. Python's guard is `is not None`, so temperature=0.0 and maxTokens=0
-// both reach the server; a plain Go float64 or int could not express that,
-// which is why these fields are pointers.
+// addLLMKnobs emits the optional model parameters. Python's guard is
+// `is not None`, so temperature=0.0 and maxTokens=0 must both reach the
+// server, which is why these fields are pointers.
 func (a *Agent) addLLMKnobs(cfg map[string]any) {
 	if a.MaxTokens != nil {
 		cfg["maxTokens"] = *a.MaxTokens
@@ -113,9 +101,8 @@ func (a *Agent) addLLMKnobs(cfg map[string]any) {
 	}
 }
 
-// addMemory emits conversation memory. Its inner fields use emptiness rather
-// than nil-ness, matching Python's truthiness checks: MaxMessages of 0 is
-// omitted, not sent.
+// addMemory emits conversation memory. Its inner fields use emptiness,
+// matching Python's truthiness checks: MaxMessages of 0 is omitted.
 func (a *Agent) addMemory(cfg map[string]any) {
 	if a.Memory == nil {
 		return
@@ -130,7 +117,6 @@ func (a *Agent) addMemory(cfg map[string]any) {
 	cfg["memory"] = mem
 }
 
-// addTools emits the tool list and the required-tool names.
 func (a *Agent) addTools(cfg map[string]any) {
 	declared := a.derivedTools()
 	if len(a.Tools) > 0 || len(declared) > 0 {
@@ -148,8 +134,6 @@ func (a *Agent) addTools(cfg map[string]any) {
 	}
 }
 
-// addDefinition emits structured output, execution config, credentials and
-// the descriptive fields.
 func (a *Agent) addDefinition(cfg map[string]any) {
 	if a.OutputType != nil {
 		t := reflect.TypeOf(a.OutputType)
@@ -182,11 +166,9 @@ func (a *Agent) addDefinition(cfg map[string]any) {
 	}
 }
 
-// addComposition emits the router, loop control, guardrails, and the gate.
 func (a *Agent) addComposition(cfg map[string]any) {
-	// A router is either a nested agent the server runs, or a reference to a
-	// worker. Both land on the same "router" key, so the two forms are
-	// mutually exclusive and Validate rejects setting both.
+	// A router is either a nested agent the server runs or a worker reference,
+	// both on the same "router" key, so Validate rejects setting both.
 	switch {
 	case a.Router != nil:
 		cfg["router"] = a.Router.toConfig()
@@ -196,9 +178,6 @@ func (a *Agent) addComposition(cfg map[string]any) {
 	if a.Termination != nil {
 		cfg["termination"] = a.Termination.terminationConfig()
 	}
-	// Callables are never serialized. They are registered as workers and
-	// referenced by a derived task name, which is why the agent's name is
-	// part of the wire output here.
 	if a.StopWhen != nil {
 		cfg["stopWhen"] = workerRef(a.workerTaskName(stopWhenSuffix))
 	}
@@ -218,14 +197,12 @@ func (a *Agent) addComposition(cfg map[string]any) {
 	a.addPlanning(cfg)
 }
 
-// addPlanning emits the planner and fallback slots and everything that
-// configures how a plan is drawn up and carried out.
 func (a *Agent) addPlanning(cfg map[string]any) {
 	if a.EnablePlanning {
 		cfg["enablePlanning"] = true
 	}
-	// Both slots serialize as nested agent documents, built by this same
-	// serializer so a planner may itself have tools or sub-agents.
+	// Both slots are nested agent documents, so a planner may itself have
+	// tools or sub-agents.
 	if a.Planner != nil {
 		cfg["planner"] = a.Planner.toConfig()
 	}
@@ -242,8 +219,7 @@ func (a *Agent) addPlanning(cfg map[string]any) {
 		}
 		cfg["prefillTools"] = calls
 	}
-	// Python emits planSource whenever it is not None, an empty map included,
-	// so nil-ness rather than emptiness decides here.
+	// Python emits planSource whenever it is not nil, an empty map included.
 	if a.PlanSource != nil {
 		cfg["planSource"] = a.PlanSource
 	}
@@ -260,7 +236,6 @@ func (a *Agent) addPlanning(cfg map[string]any) {
 	}
 }
 
-// addSubAgents emits handoffs, transitions, strategy, and the sub-agent tree.
 func (a *Agent) addSubAgents(cfg map[string]any) {
 	if len(a.Handoffs) > 0 {
 		hs := make([]any, 0, len(a.Handoffs))
@@ -272,8 +247,8 @@ func (a *Agent) addSubAgents(cfg map[string]any) {
 	if len(a.AllowedTransitions) > 0 {
 		cfg["allowedTransitions"] = a.AllowedTransitions
 	}
-	// Strategy rides on the presence of sub-agents, not on the field itself:
-	// a leaf agent sends no strategy even though Strategy defaults to handoff.
+	// Strategy rides on the presence of sub-agents: a leaf agent sends none
+	// even though Strategy defaults to handoff.
 	if a.hasSubAgents() {
 		cfg["strategy"] = string(a.strategyOrDefault())
 	}

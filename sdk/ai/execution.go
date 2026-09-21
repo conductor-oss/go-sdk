@@ -15,43 +15,33 @@ import (
 	"strings"
 )
 
-// Defaults for the execution configs. Python applies these when the field is
-// left out, so Go substitutes them for its zero values: sending 0 where Python
-// sends 30 would quietly halve or double a timeout the server enforces.
+// Python applies these defaults when a field is left out, so Go substitutes
+// them for its zero values rather than sending a 0 the server would enforce.
 const (
 	defaultExecutionTimeout = 30
 	defaultLanguage         = "python"
 )
 
-// CodeExecutionConfig lets the agent run code the model writes.
-//
-// Attaching it gives the agent a derived tool named "{agent}_execute_code";
-// the config itself is what the server enforces. Execution happens server
-// side, so there is nothing here about where the code runs.
+// CodeExecutionConfig lets the agent run code the model writes, through a
+// derived tool named "{agent}_execute_code" whose config the server enforces.
 type CodeExecutionConfig struct {
-	// Enabled defaults to true when nil. Setting it to false keeps the config
-	// on the wire but stops the tool being offered to the model, which is how
-	// Python behaves.
+	// Enabled defaults to true when nil; false keeps the config on the wire but offers no tool, as in Python.
 	Enabled *bool
 	// AllowedLanguages defaults to ["python"] when empty.
 	AllowedLanguages []string
-	// AllowedCommands restricts shell commands the code may invoke. Empty
-	// means no restriction.
+	// AllowedCommands restricts shell commands the code may invoke; empty means no restriction.
 	AllowedCommands []string
 	// TimeoutSeconds defaults to 30 when zero.
 	TimeoutSeconds int
-	// Executor runs the code. Nil means a LocalExecutor, a subprocess on the
-	// worker host with the language the model asked for. A DockerExecutor,
-	// JupyterExecutor or ServerlessExecutor runs it elsewhere; those ignore
-	// the requested language and run what they were built for, as in the
-	// Python SDK. The executor never travels to the server: it is worker-side
-	// configuration, so agentConfig is the same whichever is set.
+	// Executor runs the code. Nil means a LocalExecutor, a subprocess on the worker host with the
+	// language the model asked for; Docker, Jupyter and Serverless executors ignore that language
+	// and run what they were built for, as in Python. The executor never travels to the server,
+	// so agentConfig is the same whichever is set.
 	Executor CodeExecutor
 }
 
-// CLIConfig lets the agent run shell commands directly.
-//
-// Attaching it gives the agent a derived tool named "{agent}_run_command".
+// CLIConfig lets the agent run shell commands directly. Attaching it gives
+// the agent a derived tool named "{agent}_run_command".
 type CLIConfig struct {
 	// Enabled defaults to true when nil, as in CodeExecutionConfig.
 	Enabled *bool
@@ -59,12 +49,10 @@ type CLIConfig struct {
 	AllowedCommands []string
 	// TimeoutSeconds defaults to 30 when zero.
 	TimeoutSeconds int
-	// AllowShell permits shell=true on a call. False by default, and the
-	// derived tool's description tells the model so.
+	// AllowShell permits shell=true on a call; false by default, and the derived tool's description says so.
 	AllowShell bool
 }
 
-// enabled reports the effective value: nil means true.
 func enabledOrDefault(v *bool) bool { return v == nil || *v }
 
 func timeoutOrDefault(v int) int {
@@ -81,8 +69,7 @@ func languagesOrDefault(v []string) []string {
 	return v
 }
 
-// nonNil keeps an empty list an empty list rather than a JSON null: both
-// configs always send allowedCommands, even when nothing is restricted.
+// nonNil avoids a JSON null: both configs always send allowedCommands.
 func nonNil(v []string) []string {
 	if v == nil {
 		return []string{}
@@ -90,8 +77,7 @@ func nonNil(v []string) []string {
 	return v
 }
 
-// config serializes the whole fixed key set. Python emits these four keys
-// unconditionally, so there are no omission rules to mirror here.
+// config emits the four keys Python emits unconditionally, with no omission rules.
 func (c *CodeExecutionConfig) config() map[string]any {
 	return map[string]any{
 		"enabled":          enabledOrDefault(c.Enabled),
@@ -111,14 +97,13 @@ func (c *CLIConfig) config() map[string]any {
 }
 
 // The derived tools' schemas are fixed rather than reflected: they describe the
-// server's own executors, not a Go function, and the other SDKs send exactly
-// these shapes.
+// server's own executors, and the other SDKs send exactly these shapes.
 func dictOutputSchema() map[string]any {
 	return map[string]any{"type": "object", "additionalProperties": map[string]any{}}
 }
 
-// codeTool builds the derived execute_code tool. The description carries the
-// config values because that is what the model reads to decide how to call it.
+// codeTool builds the derived execute_code tool; its description carries the
+// config values because that is what the model reads.
 func (c *CodeExecutionConfig) codeTool(agentName string) ToolDef {
 	langs := languagesOrDefault(c.AllowedLanguages)
 	timeout := timeoutOrDefault(c.TimeoutSeconds)
@@ -146,14 +131,12 @@ func (c *CodeExecutionConfig) codeTool(agentName string) ToolDef {
 	}
 }
 
-// cliTool builds the derived run_command tool.
 func (c *CLIConfig) cliTool(agentName string) ToolDef {
 	timeout := timeoutOrDefault(c.TimeoutSeconds)
 
 	desc := fmt.Sprintf("Run a CLI command directly. Timeout: %ds.", timeout)
 	if len(c.AllowedCommands) > 0 {
-		// Sorted, and on a copy: the description is stable regardless of the
-		// order the caller listed them, and the caller's slice is untouched.
+		// Sorted on a copy: a stable description, and the caller's slice untouched.
 		sorted := append([]string(nil), c.AllowedCommands...)
 		sort.Strings(sorted)
 		desc += fmt.Sprintf(" Allowed commands: %s.", strings.Join(sorted, ", "))
@@ -185,8 +168,7 @@ func (c *CLIConfig) cliTool(agentName string) ToolDef {
 }
 
 // derivedTools returns the tools the execution configs imply, in the order the
-// other SDKs append them. A disabled config still serializes but contributes
-// no tool.
+// other SDKs append them. A disabled config still serializes but adds no tool.
 func (a *Agent) derivedTools() []ToolDef {
 	var out []ToolDef
 	if a.CodeExecution != nil && enabledOrDefault(a.CodeExecution.Enabled) {

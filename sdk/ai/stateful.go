@@ -20,36 +20,28 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/client"
 )
 
-// Per-execution worker domains, the mechanism behind Agent.Stateful.
-//
-// A stateful run sends the server a run id. The server routes that run's tasks
-// to a queue of the same name and records the mapping on the workflow, and
-// this process starts workers that poll that queue. Calls in one run therefore
-// reach the workers of the process that started it, and two runs never take
-// each other's tasks.
-//
-// Without a run id nothing changes: the server schedules into the shared queue
-// and workers poll it undomained, which is what every non-stateful run does.
+// Per-execution worker domains, the mechanism behind Agent.Stateful: a run id
+// doubles as a queue name, the server records the mapping on the workflow and
+// routes that run's tasks there, and this process polls that queue, so two
+// runs never take each other's tasks. Without a run id the server schedules
+// into the shared queue and workers poll it undomained.
 
-// newRunID returns the run id a stateful agent's start request carries, or an
-// empty string when nothing in the agent tree is stateful. The format matches
-// the Python SDK's uuid4().hex: 32 lowercase hex characters, no dashes.
+// newRunID returns the run id a stateful start request carries, empty when
+// nothing in the tree is stateful. Format: the Python SDK's uuid4().hex — 32
+// lowercase hex characters, no dashes.
 func newRunID(agent *Agent) string {
 	if agent == nil || !hasStatefulTools(agent) {
 		return ""
 	}
 	var buf [16]byte
 	if _, err := rand.Read(buf[:]); err != nil {
-		// Only a broken system randomness source reaches here. Losing the
-		// domain would silently drop the isolation the caller asked for, so
-		// fall back to a value that is still unique to this run.
+		// Dropping the domain would silently lose the caller's isolation.
 		return fmt.Sprintf("%032x", buf)
 	}
 	return hex.EncodeToString(buf[:])
 }
 
-// hasStatefulTools reports whether the agent, any of its tools, or anything
-// nested under it asks for a per-execution domain.
+// hasStatefulTools reports whether anything in the tree asks for a domain.
 func hasStatefulTools(a *Agent) bool {
 	if a == nil {
 		return false
@@ -71,8 +63,7 @@ func hasStatefulTools(a *Agent) bool {
 }
 
 // startStatefulWorkers registers this run's workers once the run exists and
-// its routing is known. It does nothing for a run without a run id, whose
-// workers were already started before the run began.
+// its routing is known; a run without a run id started its workers already.
 func (r *Runtime) startStatefulWorkers(ctx context.Context, agent *Agent, executionID, runID string) error {
 	if runID == "" {
 		return nil
@@ -80,11 +71,9 @@ func (r *Runtime) startStatefulWorkers(ctx context.Context, agent *Agent, execut
 	return r.registerWorkers(agent, r.workerDomains(ctx, executionID))
 }
 
-// workerDomains is the run's task-to-domain map: for each task name, the queue
-// the server routes it to. A name the server left out is scheduled on the
-// shared queue, so its worker polls undomained — that is how a nested skill's
-// own tasks behave, since the server routes only the tools it compiled for the
-// agent itself.
+// workerDomains maps each task name to the queue the server routes it to. A
+// name the server left out is scheduled on the shared queue, which is how a
+// nested skill's tasks behave: the server routes only the agent's own tools.
 func (r *Runtime) workerDomains(ctx context.Context, executionID string) map[string]string {
 	wf, _, err := r.workflow.GetExecutionStatus(ctx, executionID,
 		&client.WorkflowResourceApiGetExecutionStatusOpts{IncludeTasks: optional.NewBool(false)})

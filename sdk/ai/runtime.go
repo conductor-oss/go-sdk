@@ -21,15 +21,14 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/worker"
 )
 
-// Config holds runtime settings. The zero value is usable; ConfigFromEnv reads
-// the CONDUCTOR_AGENT_* variables the other SDKs use.
+// Config holds runtime settings. The zero value is usable; ConfigFromEnv reads the
+// CONDUCTOR_AGENT_* variables the other SDKs use.
 type Config struct {
 	// WorkerPollInterval is how often tool workers poll. Zero means 100ms.
 	WorkerPollInterval time.Duration
 	// WorkerBatchSize is how many tasks a worker takes per poll. Zero means 1.
 	WorkerBatchSize int
-	// StatusPollInterval is how often Run checks whether a run has finished.
-	// Zero means 500ms.
+	// StatusPollInterval is how often Run checks for completion. Zero means 500ms.
 	StatusPollInterval time.Duration
 }
 
@@ -54,10 +53,8 @@ func (c Config) statusPoll() time.Duration {
 	return c.StatusPollInterval
 }
 
-// Runtime starts agents and hosts the workers their tools need.
-//
-// It owns a TaskRunner, so one Runtime can serve many agents; workers are
-// registered once per task name and reused across runs.
+// Runtime starts agents and hosts the workers their tools need. One Runtime serves many
+// agents from a single TaskRunner; a worker per task name is reused across runs.
 type Runtime struct {
 	api       *client.APIClient
 	agents    client.AgentClient
@@ -68,35 +65,26 @@ type Runtime struct {
 	config    Config
 	mu        sync.Mutex
 	// started records which (task name, domain) pairs already have a worker.
-	// A stateful run polls its own domain, so one task name can have several.
 	started map[workerKey]bool
-	// defs are the task definitions for started workers, registered after a
-	// run starts; registered records which ones have been sent.
+	// defs are the task definitions for started workers; registered marks the sent ones.
 	defs       map[string]model.TaskDef
 	registered map[string]bool
 }
 
 // NewRuntime builds a Runtime from the environment.
 //
-// CONDUCTOR_SERVER_URL is the server's API base URL, such as
-// http://localhost:8080/api. For open-source Conductor, which has no
-// authentication, it is the only variable needed.
-//
-// CONDUCTOR_AUTH_KEY and CONDUCTOR_AUTH_SECRET are the key ID and secret of
-// an Orkes Conductor application access key. When both are set the client
-// exchanges them for a token and sends it with every request. Leave them
-// unset for an open-source server: it has no token endpoint, so the exchange
-// fails and so does every request after it.
-//
-// To use credentials from somewhere other than the environment, build an
-// APIClient yourself and pass it to NewRuntimeWithClient.
+// CONDUCTOR_SERVER_URL is the server's API base URL, such as http://localhost:8080/api,
+// and is all an unauthenticated open-source Conductor needs. CONDUCTOR_AUTH_KEY and
+// CONDUCTOR_AUTH_SECRET are the key ID and secret of an Orkes Conductor application
+// access key, exchanged for a token sent with every request; leave them unset for open
+// source, which has no token endpoint, or the exchange and every request after it fails.
 func NewRuntime(cfg Config) *Runtime {
 	apiClient := client.NewAPIClientFromEnv()
 	return NewRuntimeWithClient(apiClient, cfg)
 }
 
-// NewRuntimeWithClient builds a Runtime over an existing APIClient, so agents
-// share auth and connection settings with the rest of an application.
+// NewRuntimeWithClient builds a Runtime over an existing APIClient, sharing its auth and
+// connection settings, and is how to take credentials from outside the environment.
 func NewRuntimeWithClient(apiClient *client.APIClient, cfg Config) *Runtime {
 	return &Runtime{
 		api:        apiClient,
@@ -115,20 +103,15 @@ func NewRuntimeWithClient(apiClient *client.APIClient, cfg Config) *Runtime {
 // AgentClient exposes the control plane for operations Runtime does not wrap.
 func (r *Runtime) AgentClient() client.AgentClient { return r.agents }
 
-// Plan compiles the agent into a Conductor workflow definition without
-// running it, and returns the server's response: the workflow under
-// "workflowDef" and the worker task names it needs under "requiredWorkers".
-//
-// It is the Python SDK's runtime.plan(): the same agentConfig document goes
-// to /agent/compile, and nothing is registered or started. Use it to inspect
-// what an agent compiles to, or to compare compiled output across SDKs.
+// Plan compiles the agent into a Conductor workflow definition without running or
+// registering anything, returning the workflow under "workflowDef" and the worker task
+// names it needs under "requiredWorkers". Same /agent/compile call as Python's plan().
 func (r *Runtime) Plan(ctx context.Context, agent *Agent) (map[string]any, error) {
 	if err := agent.Validate(); err != nil {
 		return nil, err
 	}
-	// A skill is compiled from its raw document, the same shape a run sends;
-	// as agentConfig the server would see an ordinary agent and none of the
-	// skill's scripts, resources or sub-agents.
+	// A skill compiles from its raw document; as agentConfig the server would see an
+	// ordinary agent and none of its scripts, resources or sub-agents.
 	payload := map[string]any{"agentConfig": agent.toConfig()}
 	if agent.skill != nil {
 		payload = map[string]any{"framework": skillFramework, "rawConfig": agent.skill.rawConfig()}
@@ -150,9 +133,7 @@ type runOptions struct {
 }
 
 // RunSettings overrides the agent's model parameters for one run, without
-// changing the stored agent. It is the counterpart of the Python SDK's
-// RunSettings: the set fields are merged into the agentConfig sent to the
-// server before the run starts. Apply it with WithRunSettings.
+// changing the stored agent. Apply it with WithRunSettings.
 type RunSettings struct {
 	Model                string
 	Temperature          *float64
@@ -161,8 +142,7 @@ type RunSettings struct {
 	ThinkingBudgetTokens *int
 }
 
-// configOverrides is the wire map merged onto the agentConfig, field for field
-// with Python's RunSettings.to_config_overrides.
+// configOverrides is the wire map merged onto the agentConfig, as Python's to_config_overrides.
 func (rs *RunSettings) configOverrides() map[string]any {
 	out := map[string]any{}
 	if rs.Model != "" {
@@ -183,21 +163,15 @@ func (rs *RunSettings) configOverrides() map[string]any {
 	return out
 }
 
-// WithPlan supplies the plan a StrategyPlanExecute agent carries out, in place
-// of one written by its Planner.
-//
-// The server still requires the Planner slot to be set — the strategy is
-// compiled around it — but with a plan supplied the planner never runs, so
-// its instructions can say as much. The plan is validated before the run
-// starts; see Plan.Validate for what is checked.
+// WithPlan supplies the plan a StrategyPlanExecute agent carries out instead of one from
+// its Planner. The server still requires the Planner slot, since the strategy compiles
+// around it, but the planner never runs. The plan is validated first; see Plan.Validate.
 func WithPlan(plan *Plan) RunOption {
 	return func(o *runOptions) { o.plan = plan }
 }
 
-// WithMedia attaches media inputs to the run, such as image or document paths
-// the server can read, or URLs. It is the counterpart of the Python SDK's
-// run(..., media=[...]). The server reads the paths itself, so a local path
-// must sit under the server's allowed media directory.
+// WithMedia attaches media inputs, paths or URLs, as Python's run(..., media=[...]). The
+// server reads paths itself, so a local one must sit under its allowed media directory.
 func WithMedia(media ...string) RunOption {
 	return func(o *runOptions) { o.media = append(o.media, media...) }
 }
@@ -207,9 +181,7 @@ func WithRunSettings(rs RunSettings) RunOption {
 	return func(o *runOptions) { o.settings = &rs }
 }
 
-// startPayload validates the agent and any options, registers the agent's
-// workers, and builds the body of the /agent/start request. Run and Start
-// share it so a plan reaches the server the same way from either.
+// startPayload validates, registers workers, and builds the /agent/start body Run and Start share.
 func (r *Runtime) startPayload(agent *Agent, prompt string, opts []RunOption, runID string) (map[string]any, error) {
 	if err := agent.Validate(); err != nil {
 		return nil, err
@@ -227,19 +199,16 @@ func (r *Runtime) startPayload(agent *Agent, prompt string, opts []RunOption, ru
 			return nil, fmt.Errorf("agent %q: %w", agent.Name, err)
 		}
 	}
-	// A stateful agent's workers poll a per-run domain, which only exists
-	// once the run has started, so those are registered afterwards by the
-	// caller. Everything else starts polling before the run does, so a tool
-	// call cannot arrive before something is listening.
+	// A stateful agent's workers poll a per-run domain that exists only once the run has
+	// started, so the caller registers those; the rest poll first, so no call goes unheard.
 	if runID == "" {
 		if err := r.registerWorkers(agent, nil); err != nil {
 			return nil, err
 		}
 	}
 
-	// A skill does not travel as agentConfig. The server's SkillNormalizer
-	// compiles the raw document, which /agent/start accepts under
-	// framework and rawConfig — the same request the Python SDK sends.
+	// A skill travels under framework and rawConfig, not agentConfig, for the server's
+	// SkillNormalizer — the same request the Python SDK sends.
 	if agent.skill != nil {
 		payload := map[string]any{
 			"framework": skillFramework,
@@ -255,8 +224,7 @@ func (r *Runtime) startPayload(agent *Agent, prompt string, opts []RunOption, ru
 		return payload, nil
 	}
 
-	// Per-run settings mutate a copy of the agentConfig before it is sent, so
-	// they reach the LLM tasks without a new server field, as in Python.
+	// Per-run settings mutate a copy of the agentConfig, needing no new server field, as in Python.
 	config := agent.toConfig()
 	if o.settings != nil {
 		for k, v := range o.settings.configOverrides() {
@@ -270,21 +238,18 @@ func (r *Runtime) startPayload(agent *Agent, prompt string, opts []RunOption, ru
 		"media":       mediaWire(o.media),
 	}
 	if runID != "" {
-		// The server builds the run's task-to-domain map from this, which is
-		// how a stateful run's tasks reach this process's own workers.
+		// The server builds the run's task-to-domain map from this, routing a stateful run's tasks here.
 		payload["runId"] = runID
 	}
 	if o.plan != nil {
-		// The server reads workflow.input.static_plan ahead of the planner's
-		// output; the key matches AgentRequest in Java and runtime.run(plan=)
-		// in Python.
+		// The server reads workflow.input.static_plan ahead of the planner's output; the
+		// key matches Java's AgentRequest and Python's runtime.run(plan=).
 		payload["static_plan"] = o.plan.toPayload()
 	}
 	return payload, nil
 }
 
-// mediaWire renders the media list for the request, always as a JSON array
-// even when empty, which is what the server expects.
+// mediaWire renders the media list as a JSON array, empty rather than absent, per the server.
 func mediaWire(media []string) []any {
 	out := make([]any, 0, len(media))
 	for _, m := range media {
@@ -293,10 +258,7 @@ func mediaWire(media []string) []any {
 	return out
 }
 
-// Start begins a run and returns at once.
-//
-// Workers for the agent's tools are registered before the run starts, so a tool
-// call cannot arrive before something is polling for it.
+// Start begins a run and returns at once, with the agent's tool workers already polling.
 func (r *Runtime) Start(ctx context.Context, agent *Agent, prompt string, opts ...RunOption) (*AgentHandle, error) {
 	runID := newRunID(agent)
 	payload, err := r.startPayload(agent, prompt, opts, runID)
@@ -320,11 +282,7 @@ func (r *Runtime) Start(ctx context.Context, agent *Agent, prompt string, opts .
 	return &AgentHandle{ExecutionID: executionID, rt: r}, nil
 }
 
-// Run starts an agent and blocks until the execution finishes.
-//
-// It validates the agent, registers a worker for every tool that has a Go
-// handler, starts the run, then polls until the server reports a terminal
-// state. Tool calls arrive as Conductor tasks while this is waiting.
+// Run starts an agent and blocks until it finishes, tool calls arriving as Conductor tasks.
 func (r *Runtime) Run(ctx context.Context, agent *Agent, prompt string, opts ...RunOption) (*AgentResult, error) {
 	runID := newRunID(agent)
 	payload, err := r.startPayload(agent, prompt, opts, runID)
@@ -349,11 +307,8 @@ func (r *Runtime) Run(ctx context.Context, agent *Agent, prompt string, opts ...
 	return r.awaitResult(ctx, executionID)
 }
 
-// awaitResult polls until the run reaches a terminal state.
-//
-// Polling rather than SSE: the existing APIClient reads a whole response body
-// before returning, so a streaming read needs its own request path. That is
-// worth building for Stream; Run only needs the terminal state.
+// awaitResult polls until the run reaches a terminal state. Not SSE: the APIClient reads a
+// whole body before returning, so streaming needs its own request path — worth it for Stream.
 func (r *Runtime) awaitResult(ctx context.Context, executionID string) (*AgentResult, error) {
 	ticker := time.NewTicker(r.config.statusPoll())
 	defer ticker.Stop()
@@ -378,13 +333,8 @@ func (r *Runtime) awaitResult(ctx context.Context, executionID string) (*AgentRe
 	}
 }
 
-// registerWorkers starts a Conductor worker for every tool carrying a Go
-// handler, on this agent and on every agent nested under it. Tools the server
-// dispatches itself, and external tools served elsewhere, have no handler and
-// are skipped.
-//
-// Registration is idempotent per task name so repeated runs of the same agent
-// do not stack workers.
+// registerWorkers starts a worker for each tool with a Go handler, on this agent and every
+// one nested under it, skipping server-dispatched and external tools; idempotent per name.
 func (r *Runtime) registerWorkers(agent *Agent, domains map[string]string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -398,14 +348,11 @@ type workerKey struct {
 	domain string
 }
 
-// walkWorkers registers one agent's workers, then those of the agents nested
-// under it.
+// walkWorkers registers one agent's workers, then those nested under it, sharing its routing.
 func (r *Runtime) walkWorkers(a *Agent, domains map[string]string) error {
 	if err := r.startWorkers(a.workerTools(), domains); err != nil {
 		return err
 	}
-	// Everything nested under the agent is part of the same run, so it reads
-	// the same routing.
 	for _, sub := range a.nestedAgents() {
 		if err := r.walkWorkers(sub, domains); err != nil {
 			return err
@@ -414,11 +361,9 @@ func (r *Runtime) walkWorkers(a *Agent, domains map[string]string) error {
 	return nil
 }
 
-// startWorkers starts a worker for each handler-backed tool not already
-// running.
+// startWorkers starts a worker on the routed queue for each handler-backed tool not running.
 func (r *Runtime) startWorkers(tools []ToolDef, domains map[string]string) error {
 	for _, t := range tools {
-		// Each worker polls the queue the server routes its own task to.
 		domain := domains[t.Name]
 		key := workerKey{name: t.Name, domain: domain}
 		if t.Handler == nil || r.started[key] {
@@ -444,11 +389,9 @@ func (r *Runtime) startWorkers(tools []ToolDef, domains map[string]string) error
 	return nil
 }
 
-// workerTools lists every tool of this agent the server dispatches to a
-// worker: the declared tools plus the derived ones. The derived execution
-// tools, on_condition handoffs, custom guardrails, and skill scripts are all
-// serialized as worker tools, so without a worker under each derived name the
-// server queues a task nothing polls for and the run stalls.
+// workerTools lists every tool the server dispatches to a worker for this agent: the
+// declared ones plus derived execution tools, on_condition handoffs, custom guardrails and
+// skill scripts. Without a worker under each derived name, a queued task stalls the run.
 func (a *Agent) workerTools() []ToolDef {
 	tools := slices.Clone(a.Tools)
 	if a.CodeExecution != nil && enabledOrDefault(a.CodeExecution.Enabled) {
@@ -462,29 +405,23 @@ func (a *Agent) workerTools() []ToolDef {
 		tools = append(tools, t)
 	}
 	tools = append(tools, a.handoffTools()...)
-	// The server compiles each custom guardrail into a SIMPLE task named after
-	// the guardrail, agent-level and tool-level alike.
+	// Each custom guardrail, agent- and tool-level alike, compiles to a SIMPLE task of its name.
 	for _, g := range a.customGuardrails() {
 		tools = append(tools, ToolDef{Name: g.Name, Handler: g.guardrailHandler()})
 	}
 	// Each set lifecycle callback is a worker named "<agent>_<position>".
 	tools = append(tools, a.callbackTools()...)
-	// A skill's scripts and its read_skill_file tool run here too; the server
-	// emits worker tools under these names when it normalizes the skill
-	// document.
+	// The server emits worker tools for a skill's scripts and read_skill_file when normalizing.
 	if a.skill != nil {
 		tools = append(tools, a.skill.workers(a.Name)...)
 	}
-	// A Go gate is a worker under "<agent>_gate", the name the serializer put
-	// in the gate document.
+	// A Go gate is a worker under "<agent>_gate", the name in the gate document.
 	if g, ok := a.Gate.(GateFunc); ok {
 		tools = append(tools, ToolDef{Name: a.workerTaskName(gateSuffix), Handler: g.gateHandler()})
 	}
-	// A termination condition, a stop-when predicate and a router function
-	// each become a task of their own; see system_workers.go.
+	// A termination condition, stop-when predicate and router each become a task; see system_workers.go.
 	tools = append(tools, a.systemWorkers()...)
-	// Prefill tools are scheduled by the server before the first turn whether
-	// or not they are also in Tools, so their workers start too.
+	// Prefill tools are scheduled before the first turn whether or not they are in Tools.
 	for _, p := range a.PrefillTools {
 		if p.Tool.Handler != nil {
 			tools = append(tools, p.Tool)
@@ -493,17 +430,15 @@ func (a *Agent) workerTools() []ToolDef {
 	return tools
 }
 
-// handoffTools returns a worker tool per on_condition handoff. The server
-// compiles each into a SIMPLE task named "<agent>_handoff_<target>".
+// handoffTools returns a worker tool per on_condition handoff, which the server
+// compiles into a SIMPLE task named "<agent>_handoff_<target>".
 func (a *Agent) handoffTools() []ToolDef {
 	conds := a.onConditions()
 	if len(conds) == 0 {
 		return nil
 	}
-	// The server reports the active agent as an index into
-	// [parent, sub-agents...] — MultiAgentCompiler builds allSwarmAgents with
-	// the parent first — so index 0 is this agent, not its first child. The
-	// names go in that order so the handler resolves the index the same way.
+	// The server reports the active agent as an index into [parent, sub-agents...] —
+	// MultiAgentCompiler builds allSwarmAgents parent first — so the names go in that order.
 	names := make([]string, 0, 1+len(a.Agents))
 	names = append(names, a.Name)
 	for _, sub := range a.Agents {
@@ -521,10 +456,8 @@ func (a *Agent) handoffTools() []ToolDef {
 	return out
 }
 
-// nestedAgents lists the agents whose workers a run of this agent also needs:
-// sub-agents, agents exposed as tools (each runs as its own workflow, which
-// is what lets a skill serve as a tool), and the router, planner, and
-// fallback slots.
+// nestedAgents lists the agents a run of this one also needs workers for: sub-agents, tool
+// agents (each its own workflow, which lets a skill serve as a tool), router, planner, fallback.
 func (a *Agent) nestedAgents() []*Agent {
 	out := make([]*Agent, 0, len(a.Agents)+len(a.Tools)+3)
 	for _, sub := range a.Agents {
@@ -545,15 +478,11 @@ func (a *Agent) nestedAgents() []*Agent {
 	return out
 }
 
-// registerTaskDefs registers a task definition for every worker this runtime
-// has started, as the Python SDK does for every worker it hosts. It runs after
-// a run starts, because compiling the agent makes the server write its own
-// definition for each tool, with its own retry and timeout settings; a
-// registration before that would be overwritten, and a tool's RetryCount,
-// RetryDelaySeconds and RetryPolicy would never take effect. Each definition
-// carries the tool's credential names as runtimeMetadata, so it does not wipe
-// what the server compiled there. An existing definition is updated in place;
-// a missing one is created. Each name is registered once per runtime.
+// registerTaskDefs registers a task definition for every worker this runtime started, as
+// Python does, after a run starts: compiling the agent makes the server write its own
+// per-tool definition, so an earlier registration is overwritten and a tool's RetryCount,
+// RetryDelaySeconds and RetryPolicy never take effect. Each definition repeats the tool's
+// credential names as runtimeMetadata so it does not wipe what the server compiled.
 func (r *Runtime) registerTaskDefs(ctx context.Context) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -571,11 +500,8 @@ func (r *Runtime) registerTaskDefs(ctx context.Context) error {
 	return nil
 }
 
-// Deploy compiles and registers the agent on the server without starting a
-// run, and returns the workflow name it was registered under. It is the
-// counterpart of the Python SDK's runtime.deploy for a single agent: deploy
-// once from a release step, then start runs against the stored agent by name,
-// or bring up workers for it with Serve.
+// Deploy compiles and registers the agent without starting a run, returning its workflow
+// name. As in Python, deploy once from a release step, then start runs by name, or Serve it.
 func (r *Runtime) Deploy(ctx context.Context, agent *Agent) (string, error) {
 	if err := agent.Validate(); err != nil {
 		return "", err
@@ -597,12 +523,8 @@ func (r *Runtime) Deploy(ctx context.Context, agent *Agent) (string, error) {
 	return name, nil
 }
 
-// Serve hosts the workers the given agents' tools need and blocks until ctx is
-// cancelled. It deploys each agent, registers its task definitions and starts
-// its workers, so a separate process can start runs against these agents by
-// name while this one answers their tool calls. It is the counterpart of the
-// Python SDK's runtime.serve; a caller wanting it non-blocking runs it in a
-// goroutine and cancels ctx to stop.
+// Serve deploys each agent, registers its definitions and starts its workers, then blocks
+// until ctx is cancelled so another process can run these agents by name; Python's serve.
 func (r *Runtime) Serve(ctx context.Context, agents ...*Agent) error {
 	if len(agents) == 0 {
 		return fmt.Errorf("Serve requires at least one agent")
@@ -611,15 +533,11 @@ func (r *Runtime) Serve(ctx context.Context, agents ...*Agent) error {
 		if err := agent.Validate(); err != nil {
 			return err
 		}
-		// Deploy first: compiling the agent makes the server write its own task
-		// definitions, so register ours afterwards to override them, the same
-		// order Run uses around a start.
+		// Deploy first, then override the task definitions compiling wrote, as Run does.
 		if _, err := r.Deploy(ctx, agent); err != nil {
 			return err
 		}
-		// A standing Serve has no run of its own, so it polls the
-		// domainless queue; a stateful run's own workers are started by
-		// whoever starts that run.
+		// A standing Serve has no run of its own, so it polls the domainless queue.
 		if err := r.registerWorkers(agent, nil); err != nil {
 			return err
 		}
@@ -632,17 +550,14 @@ func (r *Runtime) Serve(ctx context.Context, agents ...*Agent) error {
 	return ctx.Err()
 }
 
-// Signal injects a persistent signal into a running execution's context. The
-// agent prepends it to the next LLM turn; it persists until overwritten, and
-// an empty message clears it. This works on any agent, unlike SendMessage.
+// Signal injects a persistent signal the agent prepends to its next LLM turn; it persists
+// until overwritten, an empty message clears it, and unlike SendMessage it works on any agent.
 func (r *Runtime) Signal(ctx context.Context, executionID, message string) error {
 	return r.agents.Signal(ctx, executionID, message)
 }
 
-// SendMessage pushes a message into a running execution's workflow message
-// queue, for an agent waiting on a wait_for_message tool. A non-map value is
-// wrapped as {"message": value}, matching the Python SDK, so the agent
-// receives it under the message key.
+// SendMessage pushes a message into a running execution's workflow message queue, for an
+// agent waiting on wait_for_message. A non-map value is wrapped as {"message": value}, as in Python.
 func (r *Runtime) SendMessage(ctx context.Context, executionID string, message any) error {
 	body, ok := message.(map[string]any)
 	if !ok {
@@ -651,8 +566,7 @@ func (r *Runtime) SendMessage(ctx context.Context, executionID string, message a
 	return r.agents.SendMessage(ctx, executionID, body)
 }
 
-// Pause suspends a running execution. It stops advancing but keeps its state,
-// so Resume continues it from where it paused.
+// Pause suspends a running execution, keeping its state so Resume continues from there.
 func (r *Runtime) Pause(ctx context.Context, executionID string) error {
 	if _, err := r.workflow.Pause(ctx, executionID); err != nil {
 		return fmt.Errorf("pause %s: %w", executionID, err)
@@ -660,14 +574,10 @@ func (r *Runtime) Pause(ctx context.Context, executionID string) error {
 	return nil
 }
 
-// Resume continues a paused execution, the inverse of Pause.
-//
-// Note this is not "resume from an instance" — re-registering workers for a
-// run started by another process, which the Python SDK spells
-// runtime.resume(id, agent). That case is deferred until the Go runtime
-// routes stateful agents to per-execution worker domains, since without that
-// its main use, re-attaching to a specific execution's domain, cannot be
-// exercised; a standing Serve already covers the domainless fleet case.
+// Resume continues a paused execution, the inverse of Pause. It is not Python's
+// runtime.resume(id, agent), which re-registers workers for a run another process started:
+// that waits on routing stateful agents to per-execution worker domains, since without
+// those there is no domain to re-attach to, and Serve covers the domainless fleet case.
 func (r *Runtime) Resume(ctx context.Context, executionID string) error {
 	if _, err := r.workflow.Resume(ctx, executionID); err != nil {
 		return fmt.Errorf("resume %s: %w", executionID, err)

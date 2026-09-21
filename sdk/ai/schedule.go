@@ -17,10 +17,8 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
-// Schedule runs an agent on a cron cadence. It is scoped to one agent: its
-// Name is unique among that agent's schedules, and the wire name the server
-// stores is "<agent>-<Name>", so two agents may reuse the same short name.
-// It is the counterpart of the Python SDK's Schedule.
+// Schedule runs an agent on a cron cadence. Its Name is unique within one agent
+// because the server stores it as "<agent>-<Name>", as in Python.
 type Schedule struct {
 	// Name identifies the schedule within its agent. Required.
 	Name string
@@ -34,8 +32,7 @@ type Schedule struct {
 	Catchup bool
 	// Paused creates the schedule paused.
 	Paused bool
-	// StartAt and EndAt bound when the schedule is active, epoch millis. Zero
-	// means unbounded.
+	// StartAt and EndAt bound when the schedule is active, epoch millis; zero means unbounded.
 	StartAt int64
 	EndAt   int64
 	// Description is optional free text.
@@ -56,20 +53,14 @@ func (s Schedule) Validate() error {
 	return nil
 }
 
-// scheduleWireName is the server-stored name for a schedule: agent-prefixed so
-// schedules of different agents never collide.
 func scheduleWireName(agentName, short string) string {
 	return agentName + "-" + short
 }
 
-// schedulePrefix is the prefix every one of an agent's schedules carries.
 func schedulePrefix(agentName string) string {
 	return agentName + "-"
 }
 
-// saveRequest builds the wire request: the agent-prefixed name, the schedule
-// settings, and a start-workflow request that runs the agent with this
-// schedule's input. Matches the Python SDK's _to_save_request.
 func (s Schedule) saveRequest(agentName string) model.SaveScheduleRequest {
 	input := s.Input
 	if input == nil {
@@ -167,11 +158,9 @@ func (r *Runtime) ResumeSchedule(ctx context.Context, agentName, name string) er
 	return nil
 }
 
-// ReconcileSchedules makes an agent's schedules match desired exactly: it
-// creates or updates every schedule in desired and deletes any other schedule
-// that belongs to this agent. It is the counterpart of the Python SDK's
-// scheduler reconcile, and the way to declare an agent's schedules from a
-// deploy step. A nil desired is a no-op; an empty desired deletes them all.
+// ReconcileSchedules makes an agent's schedules match desired exactly, deleting
+// any other schedule of this agent. A nil desired is a no-op, an empty one
+// deletes all.
 func (r *Runtime) ReconcileSchedules(ctx context.Context, agentName string, desired []Schedule) error {
 	if desired == nil {
 		return nil
@@ -205,9 +194,7 @@ func (r *Runtime) ReconcileSchedules(ctx context.Context, agentName string, desi
 	return nil
 }
 
-// requestInput is the input a schedule fires its agent with. It travels
-// inside the start request, so reading a schedule back has to reach in there
-// or the input is lost.
+// requestInput reaches into the start request, where a schedule's input travels.
 func requestInput(req *model.StartWorkflowRequest) map[string]any {
 	if req == nil {
 		return nil

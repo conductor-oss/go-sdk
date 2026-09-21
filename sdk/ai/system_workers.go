@@ -16,36 +16,25 @@ import (
 	"strings"
 )
 
-// Workers for the agent's own callables and conditions, the counterparts of
-// the Python runtime's system workers.
-//
-// The server compiles each of these into a task named "<agent>_<suffix>" and
-// waits for a worker to answer it. A task nothing polls stays SCHEDULED and
-// the run never finishes, so every one of these must be registered whenever
-// the agent sets the field that produces it.
+// Workers for the agent's own callables and conditions. The server compiles
+// each into a task named "<agent>_<suffix>" and waits for a worker to answer
+// it; a task nothing polls stays SCHEDULED and the run never finishes, so each
+// must be registered whenever the agent sets the field that produces it.
 
 const terminationSuffix = "termination"
 
-// The worker contracts, from the Python TerminationEntry, StopWhenEntry and
-// RouterEntry. Each fails open: a condition that errors lets the loop go on,
-// and a router that errors falls back to the first sub-agent.
-
-// loopStateIn is what the server sends these tasks. The result is whatever
-// the turn produced: a string for a plain reply, but an array of content
-// blocks or messages in other shapes, so it binds as an untyped value and is
-// rendered to text the way the Python condition's str() does.
+// loopStateIn is what the server sends these tasks. Result is untyped because a
+// turn may produce content blocks, rendered to text as Python's str() does.
 type loopStateIn struct {
 	Result    any              `json:"result"`
 	Messages  []map[string]any `json:"messages,omitempty"`
 	Iteration int              `json:"iteration"`
 }
 
-// state is the predicate's view of the turn.
 func (in loopStateIn) state() StopWhenState {
 	return StopWhenState{Result: resultText(in.Result), Messages: in.Messages, Iteration: in.Iteration}
 }
 
-// resultText renders a turn's result as the text a condition matches against.
 func resultText(v any) string {
 	switch value := v.(type) {
 	case nil:
@@ -73,8 +62,7 @@ type routerOut struct {
 	SelectedAgent string `json:"selected_agent"`
 }
 
-// terminationHandler answers the "<agent>_termination" task: it evaluates the
-// condition over the turn's result and tells the server whether to continue.
+// terminationHandler tells the server whether the condition lets the loop go on.
 func terminationHandler(cond TerminationCondition) func(context.Context, loopStateIn) (shouldContinueOut, error) {
 	return func(_ context.Context, in loopStateIn) (shouldContinueOut, error) {
 		stop, reason := evaluateTermination(cond, in.state())
@@ -82,9 +70,8 @@ func terminationHandler(cond TerminationCondition) func(context.Context, loopSta
 	}
 }
 
-// stopWhenHandler answers the "<agent>_stop_when" task, inverting the
-// predicate's "stop" into the server's "continue". An error continues the
-// loop, as the Python worker does.
+// stopWhenHandler inverts the predicate's "stop" into the server's "continue".
+// An error continues the loop, as the Python worker does.
 func (f StopWhenFunc) stopWhenHandler() func(context.Context, loopStateIn) (shouldContinueOut, error) {
 	return func(ctx context.Context, in loopStateIn) (shouldContinueOut, error) {
 		stop, err := f(ctx, in.state())
@@ -95,8 +82,7 @@ func (f StopWhenFunc) stopWhenHandler() func(context.Context, loopStateIn) (shou
 	}
 }
 
-// routerHandler answers the "<agent>_router_fn" task with the sub-agent the
-// function picked, falling back to the first sub-agent on an error.
+// routerHandler falls back to the first sub-agent when the function errors.
 func (f RouterFunc) routerHandler(fallback string) func(context.Context, routerIn) (routerOut, error) {
 	return func(ctx context.Context, in routerIn) (routerOut, error) {
 		name, err := f(ctx, in.Prompt)
@@ -107,10 +93,8 @@ func (f RouterFunc) routerHandler(fallback string) func(context.Context, routerI
 	}
 }
 
-// evaluateTermination decides whether a condition stops the loop, with the
-// verdicts and reason strings the Python conditions produce. Only this package
-// can implement TerminationCondition, so the cases below are exhaustive; an
-// unknown one lets the loop continue rather than ending a run on a guess.
+// evaluateTermination produces the Python conditions' verdicts and reasons.
+// TerminationCondition is sealed, so an unknown one only continues the loop.
 func evaluateTermination(cond TerminationCondition, state StopWhenState) (stop bool, reason string) {
 	switch c := cond.(type) {
 	case TextMentionTermination:
@@ -120,8 +104,7 @@ func evaluateTermination(cond TerminationCondition, state StopWhenState) (stop b
 	case MaxMessageTermination:
 		return evaluateMaxMessage(c, state)
 	case TokenUsageTermination:
-		// Token counts are not part of this task's input, so the condition
-		// never fires here; the Python worker behaves the same way.
+		// Token counts are absent from this task's input, so it never fires here.
 		return false, ""
 	case andTermination:
 		var reasons []string
@@ -167,8 +150,7 @@ func evaluateStopMessage(c StopMessageTermination, state StopWhenState) (bool, s
 	return false, ""
 }
 
-// Counts the history the server sent, falling back to the loop's iteration
-// when it sent none, as the Python condition does.
+// Counts the history the server sent, or the iteration when it sent none.
 func evaluateMaxMessage(c MaxMessageTermination, state StopWhenState) (bool, string) {
 	count := len(state.Messages)
 	if count == 0 {
@@ -180,8 +162,7 @@ func evaluateMaxMessage(c MaxMessageTermination, state StopWhenState) (bool, str
 	return false, ""
 }
 
-// systemWorkers returns a worker for each of the agent's conditions and
-// callables that the server compiles into a task of its own.
+// systemWorkers returns one worker per field the server compiles into a task.
 func (a *Agent) systemWorkers() []ToolDef {
 	var out []ToolDef
 	if a.Termination != nil {

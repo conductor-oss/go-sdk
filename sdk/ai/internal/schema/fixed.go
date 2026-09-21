@@ -9,17 +9,11 @@
 
 package schema
 
-// Schemas the server defines rather than a Go type.
-//
-// Of derives a schema by reflection, which is right for a worker tool: the
-// contract is whatever the handler accepts. The tool types below have no
-// handler — the server dispatches them — so their schemas are fixed, and the
-// other SDKs send exactly these documents. They live here because both the
-// tool constructors and the wire-conformance tests need them, and those sit in
-// packages that cannot import each other.
-//
-// Each call returns a fresh map: callers may add to a tool's schema, and a
-// shared map would leak that edit into every other tool.
+// Schemas the server defines rather than a Go type: these tool types have no
+// handler, since the server dispatches them, so their schemas are fixed and
+// the other SDKs send exactly these documents. They live here because the tool
+// constructors and the wire-conformance tests both need them and cannot import
+// each other. Each call returns a fresh map, since callers may add to a schema.
 
 // HumanInput is the default schema for a human tool: one question to present.
 func HumanInput() map[string]any {
@@ -49,8 +43,7 @@ func AgentRequest() map[string]any {
 	}
 }
 
-// EmptyObject is the schema for a tool that takes no model-supplied arguments,
-// such as an HTTP tool whose URL is fully determined by its config.
+// EmptyObject is the schema for a tool that takes no model-supplied arguments.
 func EmptyObject() map[string]any {
 	return map[string]any{"type": "object", "properties": map[string]any{}}
 }

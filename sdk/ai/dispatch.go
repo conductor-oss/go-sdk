@@ -19,16 +19,11 @@ import (
 )
 
 // toolExecutor adapts a typed tool handler to the worker signature Conductor
-// expects.
-//
-// The handler is stored as `any` because ToolDef cannot carry the generic
-// parameters of every tool in one slice. Reflection recovers them here: the
-// shape was already validated when tool.Func built the ToolDef, so a mismatch
-// is a programming error rather than a runtime condition.
-//
-// The task's inputData is JSON round-tripped into the handler's input type,
-// which keeps binding consistent with how the schema was derived — both go
-// through `json` tags.
+// expects. The handler is `any` because ToolDef cannot carry every tool's
+// generic parameters, so reflection recovers them here; the shape was already
+// validated when tool.Func built the ToolDef, so a mismatch is a programming
+// error. inputData is JSON round-tripped into the handler's input type, through
+// the same `json` tags the schema was derived from.
 func toolExecutor(t ToolDef) (model.ExecuteTaskFunction, error) {
 	fn := reflect.ValueOf(t.Handler)
 	ft := fn.Type()
@@ -55,12 +50,9 @@ func toolExecutor(t ToolDef) (model.ExecuteTaskFunction, error) {
 			}
 		}
 
-		// The task context carries anything the server delivered with the task,
-		// so a handler can read it without a second call.
 		ctx := withTaskContext(context.Background(), task)
 
-		// The tool's own guardrails run here, around the handler, as in the
-		// Python worker; see tool_guardrails.go.
+		// Guardrails run around the handler, as in the Python worker.
 		if blocked, err := checkToolInput(ctx, t, task.InputData); err != nil {
 			return nil, err
 		} else if blocked != nil {
@@ -79,12 +71,10 @@ func toolExecutor(t ToolDef) (model.ExecuteTaskFunction, error) {
 	}, nil
 }
 
-// toolOutput shapes a handler's return value as task output. A map or a
-// struct is already an object and travels as is. Anything else, a string, a
-// number, a bool, a slice, becomes {"result": value}, which is what the Python
-// worker does with a non-dict return. Without this the worker's JSON
-// round-trip into a map drops a scalar silently and the model sees an empty
-// result.
+// toolOutput shapes a handler's return value as task output: maps and structs
+// travel as is, anything else becomes {"result": value}, as the Python worker
+// does with a non-dict return. Without it the worker's JSON round-trip into a
+// map drops a scalar silently and the model sees an empty result.
 func toolOutput(v any) any {
 	if v == nil {
 		return map[string]any{"result": nil}
@@ -109,8 +99,7 @@ func toolOutput(v any) any {
 
 type taskContextKey struct{}
 
-// withTaskContext attaches the task to the context so credential lookups and
-// anything else task-scoped can reach it.
+// withTaskContext attaches the task so task-scoped lookups can reach it.
 func withTaskContext(ctx context.Context, task *model.Task) context.Context {
 	return context.WithValue(ctx, taskContextKey{}, task)
 }

@@ -15,32 +15,25 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/ai"
 )
 
-// Media generation tools. The server runs these itself, calling the AI
-// provider named in the config, so no worker is involved. The model decides
-// when to call one and supplies the dynamic parameters; the provider and
-// model name are fixed here.
-//
-// The default input schemas are the Python SDK's, field for field, so an
-// agent declared in either SDK compiles to the same tool. Override one with
-// WithInputSchema; add static generation parameters with WithConfig, as
-// Python's **defaults do.
+// Media generation tools, run by the server itself against the provider in the
+// config, so no worker is involved and the model supplies only the dynamic
+// parameters. The default input schemas are the Python SDK's field for field,
+// so an agent declared in either SDK compiles to the same tool; replace one
+// with WithInputSchema, add static generation parameters with WithConfig.
 
-// Image generates an image with the given provider and model, for example
-// "openai" and "dall-e-3".
+// Image generates an image with the given provider and model, e.g. "openai" and "dall-e-3".
 func Image(name, description, llmProvider, model string, opts ...Option) ai.ToolDef {
 	return mediaTool(name, description, ai.ToolTypeGenerateImage, "GENERATE_IMAGE",
 		llmProvider, model, imageSchema(), opts)
 }
 
-// Audio generates speech with the given provider and model, for example
-// "openai" and "tts-1".
+// Audio generates speech with the given provider and model, e.g. "openai" and "tts-1".
 func Audio(name, description, llmProvider, model string, opts ...Option) ai.ToolDef {
 	return mediaTool(name, description, ai.ToolTypeGenerateAudio, "GENERATE_AUDIO",
 		llmProvider, model, audioSchema(), opts)
 }
 
-// Video generates a video with the given provider and model, for example
-// "openai" and "sora".
+// Video generates a video with the given provider and model, e.g. "openai" and "sora".
 func Video(name, description, llmProvider, model string, opts ...Option) ai.ToolDef {
 	return mediaTool(name, description, ai.ToolTypeGenerateVideo, "GENERATE_VIDEO",
 		llmProvider, model, videoSchema(), opts)
@@ -112,10 +105,8 @@ func audioSchema() map[string]any {
 	return objectSchema([]string{"text"}, map[string]any{
 		"text":  prop("string", "Text to convert to speech.", nil),
 		"voice": voice,
-		// json.Number keeps the literal "1.0": Python writes the default as
-		// 1.0, and a float64 would encode as 1, which the server stores as a
-		// different JSON number type and the recorder treats as a different
-		// tool schema.
+		// json.Number keeps Python's literal "1.0": a float64 encodes as 1, a
+		// different JSON number type that reads as a different tool schema.
 		"speed":          prop("number", "Speech speed multiplier (0.25 to 4.0).", json.Number("1.0")),
 		"responseFormat": prop("string", "Audio format: 'mp3', 'wav', 'opus', 'aac', or 'flac'.", "mp3"),
 		"n":              prop("integer", "Number of audio outputs to generate.", 1),

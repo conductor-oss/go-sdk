@@ -14,18 +14,16 @@ import (
 	"fmt"
 )
 
-// GateCondition decides, after an agent inside a sequential pipeline
-// finishes, whether the pipeline goes on to the next agent or stops there.
-// It is one of TextGate, evaluated by the server, or GateFunc, run as a
-// worker. Set it on the agent that produces the output to inspect.
+// GateCondition decides, after an agent inside a sequential pipeline finishes,
+// whether the pipeline goes on. Set it on the agent producing the output.
 type GateCondition interface {
 	gateConfig(agentName string) map[string]any
 	validateGate() error
 }
 
-// TextGate stops the pipeline when the agent's output contains Text.
-// Matching is case-sensitive unless IgnoreCase is set, as in Python's
-// TextGate(case_sensitive=True). Compiled entirely server-side.
+// TextGate stops the pipeline when the agent's output contains Text, matching
+// case-sensitively unless IgnoreCase (Python's case_sensitive, inverted) is set.
+// Compiled server-side.
 type TextGate struct {
 	Text       string
 	IgnoreCase bool
@@ -51,10 +49,9 @@ type GateState struct {
 	Result string
 }
 
-// GateFunc decides in Go whether the pipeline continues. Return true to
-// continue and false to stop. The runtime registers it as a worker under
-// "<agent>_gate"; an error means continue, the safe default the Python
-// worker takes as well.
+// GateFunc decides in Go whether the pipeline continues; return true to continue.
+// It runs as a worker under "<agent>_gate", and an error means continue, as in
+// the Python worker.
 type GateFunc func(ctx context.Context, state GateState) (bool, error)
 
 func (f GateFunc) gateConfig(agentName string) map[string]any {
@@ -68,8 +65,8 @@ func (f GateFunc) validateGate() error {
 	return nil
 }
 
-// The worker contract, from the Python GateEntry: the server sends the
-// agent's result and expects {"decision": "continue" | "stop"}.
+// The worker contract, from the Python GateEntry: the server sends the agent's
+// result and expects {"decision": "continue" | "stop"}.
 type gateIn struct {
 	Result string `json:"result"`
 }

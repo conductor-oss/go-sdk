@@ -9,24 +9,10 @@
 
 // Package tool builds the tools an agent can call.
 //
-// A worker tool is an ordinary Go function. Its input and output schemas are
-// derived by reflection over the argument and return types, so the model sees
-// the same contract the function actually accepts:
-//
-//	type WeatherIn struct {
-//	    City string `json:"city"`
-//	    Days int    `json:"days,omitempty"`
-//	}
-//
-//	func getWeather(ctx context.Context, in WeatherIn) (map[string]any, error) {
-//	    return map[string]any{"city": in.City, "tempF": 72}, nil
-//	}
-//
-//	tool.Func("get_weather", "Get the current weather for a city", getWeather)
-//
-// Fields carry `json` tags because those names are what the model is shown and
-// what it sends back. A field is required unless it is a pointer or carries
-// omitempty.
+// A worker tool is an ordinary Go function; reflection over its argument and
+// return types gives the input and output schemas. A field's `json` tag is the
+// name the model is shown and sends back; a field is required unless it is a
+// pointer or carries omitempty.
 package tool
 
 import (
@@ -40,10 +26,9 @@ import (
 // Option configures a tool at construction.
 type Option func(*ai.ToolDef)
 
-// Func builds a worker tool from a Go function.
-//
-// The runtime registers fn as a Conductor worker under name, so name is both
-// what the model calls and the task name workers poll for.
+// Func builds a worker tool from a Go function. The runtime registers fn as a
+// Conductor worker under name, so name is both what the model calls and the
+// task name workers poll for.
 func Func[In, Out any](name, description string,
 	fn func(context.Context, In) (Out, error), opts ...Option) ai.ToolDef {
 
@@ -64,12 +49,9 @@ func Func[In, Out any](name, description string,
 }
 
 // External declares a worker tool whose worker runs in another process, the
-// counterpart of the Python SDK's @tool(external=True).
-//
-// In and Out describe the task's input and output the way a Func handler's
-// types do, so the model sees the same schema; no worker is started here.
-// Conductor dispatches each call to whatever is polling for name: a worker in
-// another service, another language, or an existing task definition.
+// counterpart of the Python SDK's @tool(external=True). In and Out give the
+// model the schema a Func handler's types would; no worker is started here, so
+// Conductor dispatches each call to whatever is polling for name.
 func External[In, Out any](name, description string, opts ...Option) ai.ToolDef {
 	var in In
 	var out Out
@@ -86,12 +68,10 @@ func External[In, Out any](name, description string, opts ...Option) ai.ToolDef 
 	return td
 }
 
-// WithCredentials declares the secret names this tool may read.
-//
-// The names reach the server in the tool's task definition; the server resolves
-// them at poll time and delivers the values with the task, where ai.Secret
-// reads them. Go cannot see which credentials a function body touches, so this
-// declaration is what tells the server what to resolve.
+// WithCredentials declares the secret names this tool may read; Go cannot see
+// which ones a function body touches. They travel in the tool's task
+// definition, and the server resolves them at poll time and delivers the values
+// with the task, where ai.Secret reads them.
 func WithCredentials(names ...string) Option {
 	return func(t *ai.ToolDef) { t.Credentials = append(t.Credentials, names...) }
 }
@@ -106,10 +86,9 @@ func WithTimeout(seconds int) Option {
 	return func(t *ai.ToolDef) { t.TimeoutSeconds = &seconds }
 }
 
-// WithRetry sets how the worker's task is retried when a call fails: count
-// retries, delaySeconds apart, per policy. It configures the task definition
-// the runtime registers, not the agent document. Without it a tool gets the
-// Python SDK's defaults: 2 retries, 2 seconds apart, linear backoff.
+// WithRetry retries a failed call count times, delaySeconds apart, per policy.
+// It configures the task definition the runtime registers, not the agent
+// document; the default is Python's 2 retries, 2 seconds apart, linear.
 func WithRetry(count, delaySeconds int, policy ai.RetryPolicy) Option {
 	return func(t *ai.ToolDef) {
 		t.RetryCount = ai.Ptr(count)
@@ -123,14 +102,12 @@ func WithMaxCalls(n int) Option {
 	return func(t *ai.ToolDef) { t.MaxCalls = &n }
 }
 
-// Stateful routes this tool to a per-execution worker domain, so calls within
-// one run reach the same process.
+// Stateful routes this tool to a per-execution worker domain, so one run's calls reach one process.
 func Stateful() Option {
 	return func(t *ai.ToolDef) { t.Stateful = true }
 }
 
-// WithConfig sets a type-specific config key. Credentials have their own
-// option; this is for the settings that vary by tool type.
+// WithConfig sets a type-specific config key. Credentials have their own option.
 func WithConfig(key string, value any) Option {
 	return func(t *ai.ToolDef) {
 		if t.Config == nil {

@@ -53,23 +53,14 @@ type AgentResult struct {
 	Error string
 	// TokenUsage is zero when the server does not report it.
 	TokenUsage TokenUsage
-	// Raw is the untouched status document, for fields this struct does not
-	// model yet. The agent surface is still growing; this keeps callers from
-	// being blocked on it.
+	// Raw is the untouched status document, for fields this struct does not model yet.
 	Raw map[string]any
 }
 
-// resultFrom reads a status document into an AgentResult.
-//
-// The shape is taken from a live server, not guessed:
-//
-//	{"executionId": "...", "status": "COMPLETED",
-//	 "output": {"result": "...", "finishReason": "STOP", "rejectionReason": null}}
-//
-// The answer is nested under output.result, not at the top level. Fields are
-// still read leniently — the payload is shared with three other SDKs and has
-// accreted aliases — so an unknown field leaves a zero value rather than
-// failing, and Raw keeps everything for callers that need more.
+// resultFrom reads a status document into an AgentResult. The answer is nested
+// under output.result, not at the top level; fields are read leniently because
+// the payload is shared with three other SDKs, so an unknown alias leaves a
+// zero value rather than failing.
 func resultFrom(executionID string, status map[string]any) *AgentResult {
 	res := &AgentResult{ExecutionID: executionID, Raw: status}
 

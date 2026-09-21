@@ -23,24 +23,19 @@ import (
 	"time"
 )
 
-// A CodeExecutor runs code the model wrote and reports what happened. The
-// executors here are the counterparts of the Python SDK's LocalCodeExecutor,
-// DockerCodeExecutor, JupyterCodeExecutor and ServerlessCodeExecutor.
-//
-// An executor is used in two ways: set on CodeExecutionConfig.Executor, where
-// it replaces the local subprocess behind the agent's derived execute_code
-// tool, or wrapped as a standalone tool with ExecutorTool. Executors run on
-// the worker host; only Docker and a remote service isolate the code from it.
+// A CodeExecutor runs code the model wrote and reports what happened; the
+// executors here are the counterparts of the Python SDK's. Set one on
+// CodeExecutionConfig.Executor, where it replaces the local subprocess behind
+// the agent's derived execute_code tool, or wrap one as a standalone tool with
+// ExecutorTool. They run on the worker host; only Docker and a remote service
+// isolate the code from it.
 type CodeExecutor interface {
-	// Execute runs code and returns the outcome. It reports failures of the
-	// code in the result rather than as an error, so the model can read the
-	// stderr and try again; the error return is for the executor itself
-	// being unusable.
+	// Execute reports the code's own failures in the result, not as an error,
+	// so the model can read the stderr.
 	Execute(ctx context.Context, code string) ExecutionResult
 }
 
-// ExecutionResult is what an executor observed: the code's output, its
-// stderr, its exit code, and whether it was killed for running too long.
+// ExecutionResult is what an executor observed; TimedOut means the code was killed for running too long.
 type ExecutionResult struct {
 	Output   string
 	Error    string
@@ -52,8 +47,7 @@ type ExecutionResult struct {
 func (r ExecutionResult) Success() bool { return r.ExitCode == 0 && !r.TimedOut }
 
 // toolOutput renders a result the way the Python SDK's tool entries do: a
-// success carries stdout and stderr as they were; a failure folds the error,
-// a timeout note and the exit code into stderr, so the model sees one text.
+// failure folds the error, a timeout note and the exit code into one stderr.
 func (r ExecutionResult) toolOutput(timeoutSeconds int) codeExecOut {
 	if r.Success() {
 		return codeExecOut{Status: "success", Stdout: r.Output, Stderr: r.Error}
@@ -76,8 +70,7 @@ type LocalExecutor struct {
 	Language string
 	// TimeoutSeconds kills the process after this long; zero means 30.
 	TimeoutSeconds int
-	// WorkingDir is the process's working directory; empty means the
-	// directory the code file is written to.
+	// WorkingDir is the process's working directory; empty means where the code file is written.
 	WorkingDir string
 }
 
@@ -103,11 +96,9 @@ func (e LocalExecutor) Execute(ctx context.Context, code string) ExecutionResult
 type DockerExecutor struct {
 	// Image is the container image; empty means python:3.12-slim.
 	Image string
-	// Language selects the interpreter inside the image: python, bash or
-	// node. Empty means python.
+	// Language selects the interpreter inside the image: python, bash or node. Empty means python.
 	Language string
-	// TimeoutSeconds bounds the run; zero means 30. The container gets ten
-	// seconds more, for startup.
+	// TimeoutSeconds bounds the run; zero means 30. The container gets ten seconds more, for startup.
 	TimeoutSeconds int
 	// NetworkEnabled gives the container network access. Off by default.
 	NetworkEnabled bool
@@ -117,11 +108,10 @@ type DockerExecutor struct {
 	Volumes map[string]string
 }
 
-// dockerInterpreters maps a language to the command inside the image.
 var dockerInterpreters = map[string]string{"python": "python3", "bash": "bash", "node": "node"}
 
-// args is the docker command line for one snippet, without the leading
-// "docker". Volumes are listed in sorted order so the command is stable.
+// args is the docker command line for one snippet, less the leading "docker".
+// Volumes are sorted so it is stable.
 func (e DockerExecutor) args(code string) []string {
 	args := []string{"run", "--rm"}
 	if !e.NetworkEnabled {
@@ -148,8 +138,7 @@ func (e DockerExecutor) Execute(ctx context.Context, code string) ExecutionResul
 	timeout := timeoutOrDefault(e.TimeoutSeconds)
 	runCtx, cancel := context.WithTimeout(ctx, time.Duration(timeout+10)*time.Second)
 	defer cancel()
-	// The image and interpreter are operator configuration; the model's code
-	// travels as one argument.
+	// The image and interpreter are operator configuration; the model's code travels as one argument.
 	cmd := exec.CommandContext(runCtx, "docker", e.args(code)...) //nolint:gosec // see above
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr
@@ -174,10 +163,8 @@ func (e DockerExecutor) Execute(ctx context.Context, code string) ExecutionResul
 	}
 }
 
-// ServerlessExecutor sends the code to an HTTP service and reads the outcome
-// back, for AWS Lambda, Cloud Functions, or a hosted execution API. The
-// request is a JSON object with code, language and timeout; the response is
-// read for output or stdout, error or stderr, and exit_code.
+// ServerlessExecutor POSTs {code, language, timeout} to an HTTP service (AWS
+// Lambda, Cloud Functions, a hosted API) and reads back output or stdout, error or stderr, and exit_code.
 type ServerlessExecutor struct {
 	// Endpoint is the URL the code is POSTed to. Required.
 	Endpoint string
@@ -185,8 +172,8 @@ type ServerlessExecutor struct {
 	APIKey string
 	// Language is sent with the code; empty means python.
 	Language string
-	// TimeoutSeconds is sent with the code and bounds the request, which
-	// gets five seconds more. Zero means 30.
+	// TimeoutSeconds is sent with the code and bounds the request, which gets
+	// five seconds more. Zero means 30.
 	TimeoutSeconds int
 	// Headers are added to the request.
 	Headers map[string]string
@@ -247,11 +234,10 @@ func (e ServerlessExecutor) Execute(ctx context.Context, code string) ExecutionR
 }
 
 // ExecutorTool wraps an executor as a tool the model can call directly, the
-// counterpart of the Python SDK's executor.as_tool(). The tool takes one
-// argument, code, and returns status, stdout and stderr. An empty name means
-// execute_code; an empty description is derived from the language and
-// timeout. Unlike CodeExecutionConfig, there is no language or command
-// allow-list here: the executor runs whatever it is given.
+// counterpart of the Python SDK's executor.as_tool(): one argument, code,
+// returning status, stdout and stderr. An empty name means execute_code, an
+// empty description is derived from language and timeout. There is no language
+// or command allow-list here, unlike CodeExecutionConfig.
 func ExecutorTool(exec CodeExecutor, name, description string) ToolDef {
 	if name == "" {
 		name = "execute_code"
@@ -279,8 +265,7 @@ func ExecutorTool(exec CodeExecutor, name, description string) ToolDef {
 	}
 }
 
-// executorLanguage and executorTimeout read the settings the concrete
-// executors expose, for descriptions and messages.
+// executorLanguage and executorTimeout read the settings the concrete executors expose.
 func executorLanguage(e CodeExecutor) string {
 	switch x := e.(type) {
 	case LocalExecutor:

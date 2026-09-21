@@ -22,20 +22,18 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
-// The derived run_command tool. Like code execution this runs on the worker
-// host with the worker's privileges, and AllowedCommands is the only limit, so
-// the same caution applies: do not attach CLIConfig to an agent that handles
-// untrusted input unless the worker is isolated.
+// The derived run_command tool runs on the worker host with the worker's
+// privileges, limited only by AllowedCommands: as with code execution, do not
+// attach CLIConfig to an agent handling untrusted input unless it is isolated.
 //
-// Ported from Python's _CliCommandRunner, including how failures are reported.
-// A command that runs and exits non-zero is a result the model can read and
-// act on. A command that cannot run at all — not found, timed out — is a
-// terminal task failure, since retrying will not help. A disallowed command or
-// a shell request the config forbids fails the task as an ordinary error, as
-// Python's ValueError does.
+// Ported from Python's _CliCommandRunner, including how failures are reported:
+// a non-zero exit is a result the model can act on; a command that cannot run
+// at all — not found, timed out — is a terminal task failure, since a retry
+// will not help; a disallowed command or a forbidden shell request is an
+// ordinary error, as Python's ValueError.
 
-// cliIn is what the model sends. The field names match the schema in
-// CLIConfig.cliTool; Args is []any because the model is not held to strings.
+// cliIn is what the model sends; field names match the schema in
+// CLIConfig.cliTool, and Args is []any because the model may not send strings.
 type cliIn struct {
 	Command    string `json:"command"`
 	Args       []any  `json:"args"`
@@ -51,16 +49,13 @@ type cliOut struct {
 	Stderr   string `json:"stderr"`
 }
 
-// runCommand executes one CLI call.
 func (c *CLIConfig) runCommand(ctx context.Context, in cliIn) (cliOut, error) {
 	if strings.TrimSpace(in.Command) == "" {
 		return cliOut{Status: "error", Stderr: "No command provided."}, nil
 	}
 
-	// Models frequently pass the whole command line as Command — "gh repo list
-	// --limit 5" — rather than splitting executable from args. Tokenize so both
-	// styles work: the allow-list keys off the executable, and execution gets a
-	// proper argv.
+	// Models frequently pass the whole command line as Command, so tokenize: the
+	// allow-list keys off the executable and execution gets a proper argv.
 	tokens, err := shellSplit(in.Command)
 	if err != nil {
 		return cliOut{Status: "error", Stderr: "Could not parse command: " + err.Error()}, nil
@@ -91,14 +86,13 @@ func (c *CLIConfig) runCommand(ctx context.Context, in cliIn) (cliOut, error) {
 	var cmd *exec.Cmd
 	if in.Shell {
 		// Quote every token so the shell sees exactly the argv the model built,
-		// while still getting shell features like globbing or pipes it asked for.
+		// while still granting the shell features it asked for.
 		quoted := make([]string, 0, 1+len(argv))
 		for _, a := range append([]string{executable}, argv...) {
 			quoted = append(quoted, shellQuote(a))
 		}
-		// Running model-chosen commands is the point of this tool. The executable
-		// passed validateCLICommand, shell mode is gated by AllowShell, and every
-		// token is shell-quoted above.
+		// The executable passed validateCLICommand, shell mode is gated by
+		// AllowShell, and every token is shell-quoted above.
 		cmd = exec.CommandContext(runCtx, "sh", "-c", strings.Join(quoted, " ")) //nolint:gosec // see above
 	} else {
 		cmd = exec.CommandContext(runCtx, executable, argv...) //nolint:gosec // executable is allow-listed by validateCLICommand
@@ -117,9 +111,8 @@ func (c *CLIConfig) runCommand(ctx context.Context, in cliIn) (cliOut, error) {
 	switch {
 	case err == nil:
 		out.Status = "success"
-		// ContextKey asks for the output to be saved into the agent's state for
-		// later steps. Go has no agent-state API yet, so the key is accepted
-		// (the schema requires it) but not acted on.
+		// ContextKey asks for the output to be saved into the agent's state; Go
+		// has no agent-state API yet, so the key is accepted but not acted on.
 		return out, nil
 	case runCtx.Err() != nil:
 		return cliOut{}, model.NewNonRetryableError(
@@ -127,7 +120,6 @@ func (c *CLIConfig) runCommand(ctx context.Context, in cliIn) (cliOut, error) {
 	default:
 		var ee *exec.ExitError
 		if errors.As(err, &ee) {
-			// It ran and failed: that is information for the model.
 			out.Status = "error"
 			out.ExitCode = ee.ExitCode()
 			return out, nil
@@ -140,9 +132,8 @@ func (c *CLIConfig) runCommand(ctx context.Context, in cliIn) (cliOut, error) {
 	}
 }
 
-// validateCLICommand checks the executable against the allow-list. It strips a
-// path prefix, so /usr/bin/git and git validate the same way. An empty list
-// permits everything.
+// validateCLICommand checks the executable against the allow-list, stripping
+// any path prefix so /usr/bin/git and git validate alike; empty permits all.
 func validateCLICommand(executable string, allowed []string) string {
 	if len(allowed) == 0 {
 		return ""
@@ -159,10 +150,8 @@ func validateCLICommand(executable string, allowed []string) string {
 		base, strings.Join(sorted, ", "))
 }
 
-// shellSplit tokenizes a command line the way a POSIX shell would for the
-// cases a model produces: whitespace separation, single and double quotes,
-// and backslash escapes. It is a small stand-in for Python's shlex.split, so
-// the same command string yields the same argv in both SDKs.
+// shellSplit tokenizes a command line as a POSIX shell would (quotes, backslash
+// escapes): a stand-in for shlex.split, so both SDKs yield the same argv.
 func shellSplit(s string) ([]string, error) {
 	var tokens []string
 	var cur strings.Builder
@@ -217,9 +206,8 @@ func shellSplit(s string) ([]string, error) {
 	return tokens, nil
 }
 
-// readDoubleQuoted consumes one rune of a double-quoted span at runes[i],
-// honouring the few escapes the shell allows there, and reports whether it
-// was the closing quote. It returns the index of the last rune consumed.
+// readDoubleQuoted consumes one rune of a double-quoted span at runes[i] and
+// reports whether it was the closing quote, returning the last index consumed.
 func readDoubleQuoted(runes []rune, i int, cur *strings.Builder) (int, bool) {
 	r := runes[i]
 	switch r {
@@ -237,8 +225,7 @@ func readDoubleQuoted(runes []rune, i int, cur *strings.Builder) (int, bool) {
 	return i, false
 }
 
-// shellQuote wraps s in single quotes so a shell treats it as one word,
-// matching Python's shlex.quote.
+// shellQuote wraps s in single quotes, matching Python's shlex.quote.
 func shellQuote(s string) string {
 	if s == "" {
 		return "''"

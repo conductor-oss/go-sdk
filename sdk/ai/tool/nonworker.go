@@ -17,34 +17,22 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/ai/internal/schema"
 )
 
-// Tool types the server dispatches itself. None of them registers a worker, so
-// none takes a Go function: the schemas below describe what the server accepts,
-// not what a local handler expects.
+// Tool types the server dispatches itself; their schemas describe what the server accepts, not a handler.
 
 // Defaults for an HTTP tool, applied before options so an option can override
-// them. They match the other SDKs, which send these keys whether or not the
-// caller mentioned them.
+// them. The other SDKs send these keys whether or not the caller mentions them.
 const (
 	defaultHTTPMethod      = "GET"
 	defaultHTTPContentType = "application/json"
 )
 
-// HTTP builds a tool the Conductor server calls over HTTP. No worker is
-// involved — the server makes the request itself.
-//
-// Headers may reference a credential as ${NAME}; the server resolves it at
-// execution time, so the value never passes through your process. Declare the
-// same names with WithCredentials.
-//
-//	tool.HTTP("lookup", "Look up a record", "https://example.test/api/{id}",
-//	    tool.WithHeaders(map[string]string{"Authorization": "Bearer ${API_TOKEN}"}),
-//	    tool.WithCredentials("API_TOKEN"))
+// HTTP builds a tool the Conductor server calls over HTTP itself; no worker
+// runs, and a ${NAME} credential in a header, declared too with
+// WithCredentials, is resolved server-side without passing through your process.
 func HTTP(name, description, url string, opts ...Option) ai.ToolDef {
 	td := ai.ToolDef{
 		Name:        name,
 		Description: description,
-		// An HTTP tool takes no model-supplied arguments unless the caller
-		// describes some with WithInputSchema.
 		InputSchema: schema.EmptyObject(),
 		ToolType:    ai.ToolTypeHTTP,
 		Config: map[string]any{
@@ -61,10 +49,8 @@ func HTTP(name, description, url string, opts ...Option) ai.ToolDef {
 	return td
 }
 
-// Human pauses the run for a person to answer, as a Conductor HUMAN task.
-//
-// The default schema asks for a single question string. Pass WithInputSchema to
-// collect something structured instead.
+// Human pauses the run for a person to answer, as a Conductor HUMAN task. The
+// default schema asks one question string; WithInputSchema collects structure.
 func Human(name, description string, opts ...Option) ai.ToolDef {
 	td := ai.ToolDef{
 		Name:        name,
@@ -78,15 +64,12 @@ func Human(name, description string, opts ...Option) ai.ToolDef {
 	return td
 }
 
-// Agent exposes another agent as a tool, so a parent can delegate to it.
-//
-// The sub-agent is serialized into this tool's config, which is why it needs no
-// separate registration. An empty name or description falls back to the
-// sub-agent's own name and a generated description.
+// Agent exposes another agent as a tool for a parent to delegate to. The
+// sub-agent is serialized into this tool's config, needing no registration of
+// its own; an empty name takes the sub-agent's, an empty description is generated.
 func Agent(agent *ai.Agent, name, description string, opts ...Option) ai.ToolDef {
 	if agent == nil {
-		// A nil sub-agent would serialize to nothing useful and the failure
-		// would surface as a server-side compile error; name it here instead.
+		// Otherwise the failure surfaces only as a server-side compile error.
 		return ai.ToolDef{Name: name, Description: description, ToolType: ai.ToolTypeAgent}
 	}
 	if name == "" {
@@ -101,9 +84,7 @@ func Agent(agent *ai.Agent, name, description string, opts ...Option) ai.ToolDef
 		Description: description,
 		InputSchema: schema.AgentRequest(),
 		ToolType:    ai.ToolTypeAgent,
-		// Stored under "agent" and translated to "agentConfig" when the parent
-		// is serialized: the sub-agent's document has to be built by the same
-		// serializer that builds the parent's.
+		// Stored under "agent", translated to "agentConfig" by the parent's own serializer.
 		Config: map[string]any{"agent": agent},
 	}
 	for _, o := range opts {
@@ -118,22 +99,13 @@ const (
 	defaultMCPMaxTools = 64
 )
 
-// MCP exposes the tools of an MCP server. No worker is involved: when the
-// agent is compiled the Conductor server lists what the MCP server offers and
-// expands this one definition into a tool per entry, and each call then runs
-// as a CALL_MCP_TOOL task on the server.
-//
-// The input schema is empty because the model never calls this definition
-// itself; the discovered tools carry their own. Headers may reference a
-// credential as ${NAME}, which the server resolves at execution time; declare
-// the same names with WithCredentials or Validate rejects the tool.
-//
-// An empty name or description takes Python's default: "mcp_tools" and
-// "MCP tools from <serverURL>".
-//
-//	tool.MCP("weather_mcp", "Weather tools", "http://localhost:3001/mcp",
-//	    tool.WithHeaders(map[string]string{"Authorization": "Bearer ${MCP_KEY}"}),
-//	    tool.WithCredentials("MCP_KEY"))
+// MCP exposes the tools of an MCP server. No worker is involved: at compile
+// time the server lists what the MCP server offers and expands this definition
+// into a tool per entry, each call running as a CALL_MCP_TOOL task. The input
+// schema is empty because the model calls those discovered tools, which carry
+// their own. A ${NAME} credential in a header is resolved server-side, and
+// needs the same name in WithCredentials or Validate rejects the tool. Empty
+// name or description: Python's "mcp_tools", "MCP tools from <serverURL>".
 func MCP(name, description, serverURL string, opts ...Option) ai.ToolDef {
 	if name == "" {
 		name = defaultMCPName
@@ -164,8 +136,7 @@ func WithToolNames(names ...string) Option {
 	return func(t *ai.ToolDef) { setConfig(t, "tool_names", names) }
 }
 
-// WithMaxTools sets how many discovered tools an MCP server may expose before
-// the server asks the model to pick a relevant subset each turn. Default 64.
+// WithMaxTools caps discovered tools before the server has the model pick a subset each turn. Default 64.
 func WithMaxTools(n int) Option {
 	return func(t *ai.ToolDef) { setConfig(t, "max_tools", n) }
 }
@@ -190,8 +161,7 @@ func WithContentType(contentType string) Option {
 	return func(t *ai.ToolDef) { setConfig(t, "contentType", contentType) }
 }
 
-// WithInputSchema replaces the schema the model is shown. Use it when a tool
-// type's default schema does not describe the arguments you want.
+// WithInputSchema replaces the schema the model is shown, for a tool type whose default does not fit.
 func WithInputSchema(doc map[string]any) Option {
 	return func(t *ai.ToolDef) { t.InputSchema = doc }
 }

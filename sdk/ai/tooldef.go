@@ -18,11 +18,9 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
-// ToolType selects how the server dispatches a tool call.
-//
-// The values come from the "toolType" field in agent-schema.json. Only
-// ToolTypeWorker is dispatched back to this SDK; the rest the server handles
-// itself, which is why they need no Go handler.
+// ToolType selects how the server dispatches a tool call; the values are the "toolType"
+// field in agent-schema.json. Only ToolTypeWorker is dispatched back to this SDK, so the
+// rest need no Go handler.
 type ToolType string
 
 const (
@@ -54,9 +52,8 @@ var validToolTypes = map[ToolType]struct{}{
 	ToolTypePullWorkflowMessages: {},
 }
 
-// RetryPolicy is how a failed worker call is retried. It lives on the task
-// definition the runtime registers for the tool, not in agentConfig. The names
-// are the Python SDK's retry_policy values.
+// RetryPolicy is how a failed worker call is retried. It lives on the task definition the
+// runtime registers, not in agentConfig; the names are Python's retry_policy values.
 type RetryPolicy string
 
 const (
@@ -72,38 +69,31 @@ var retryLogic = map[RetryPolicy]string{
 	RetryExponentialBackoff: "EXPONENTIAL_BACKOFF",
 }
 
-// Task definition defaults, from the Python SDK's _default_task_def. Timeout
-// is 0 because the agent controls execution duration; the short response
-// timeout detects a dead worker quickly, with lease extension keeping live
-// ones alive.
+// Task definition defaults, from the Python SDK's _default_task_def. Timeout is
+// 0 because the agent controls execution duration; the short response timeout
+// detects a dead worker quickly, with lease extension keeping live ones alive.
 const (
 	defaultRetryCount             = 2
 	defaultRetryDelaySeconds      = 2
 	defaultResponseTimeoutSeconds = 10
 )
 
-// ToolDef is a tool as the server sees it. Build one with the constructors in
-// the tool package rather than by hand: they derive InputSchema and
-// OutputSchema by reflection, which is what keeps the wire format identical to
-// the other SDKs.
+// ToolDef is a tool as the server sees it. Prefer the tool package constructors, which derive
+// InputSchema and OutputSchema by reflection, keeping the wire format identical to other SDKs.
 type ToolDef struct {
-	// Name is the tool name the model calls, and the Conductor task name a
-	// worker is registered under. Required.
+	// Name is the tool name the model calls and the task name a worker registers under. Required.
 	Name string
 	// Description is what the model reads to decide whether to call it.
 	Description string
-	// InputSchema and OutputSchema are JSON Schema documents derived from the
-	// handler's argument and return types.
+	// InputSchema and OutputSchema are JSON Schema for the handler's argument and return types.
 	InputSchema  map[string]any
 	OutputSchema map[string]any
 	// ToolType defaults to ToolTypeWorker.
 	ToolType ToolType
 
-	// Config carries type-specific settings: a URL for http, a server URL for
-	// mcp, and always the declared credential names.
+	// Config carries type-specific settings: an http url, an mcp server url, and always the credentials.
 	Config map[string]any
-	// Credentials are the secret names this tool may read. They land under
-	// Config on the wire, which is where the server's compiler looks for them.
+	// Credentials are the secret names this tool may read; they land under Config on the wire.
 	Credentials []string
 
 	// ApprovalRequired pauses the run for a human before the call is dispatched.
@@ -114,10 +104,9 @@ type ToolDef struct {
 	TimeoutSeconds *int
 	MaxCalls       *int
 
-	// RetryCount, RetryDelaySeconds and RetryPolicy configure the task
-	// definition the runtime registers for a worker tool. They are not part
-	// of agentConfig. Nil and empty take the Python SDK's defaults: 2 retries,
-	// 2 seconds apart, linear backoff. Set them with tool.WithRetry.
+	// RetryCount, RetryDelaySeconds and RetryPolicy configure the task definition the runtime
+	// registers, not agentConfig; unset takes the defaults above plus linear backoff. See
+	// tool.WithRetry.
 	RetryCount        *int
 	RetryDelaySeconds *int
 	RetryPolicy       RetryPolicy
@@ -125,9 +114,8 @@ type ToolDef struct {
 	// Guardrails run against this tool's input or output.
 	Guardrails []Guardrail
 
-	// Handler is the Go function to register as a worker, set by the tool
-	// constructors. Nil for tool types the server dispatches itself, and for
-	// external workers served from another process.
+	// Handler is the worker function, set by the tool constructors. Nil for server-dispatched
+	// tool types and for workers served from another process.
 	Handler any
 }
 
@@ -167,9 +155,8 @@ func (t ToolDef) Validate() error {
 	default:
 		return nil
 	}
-	// A ${NAME} in a header is resolved by the server from the credentials
-	// the tool declares, so an undeclared one would reach the remote server
-	// as literal text. Python refuses the same way for both tool types.
+	// The server resolves a ${NAME} header from the credentials the tool declares, so an
+	// undeclared one would reach the remote server as literal text. Python refuses too.
 	for _, ref := range credentialRefs(t.Config["headers"]) {
 		if !slices.Contains(t.Credentials, ref) {
 			return fmt.Errorf("%s tool %q: header placeholder ${%s} is not declared "+
@@ -179,10 +166,8 @@ func (t ToolDef) Validate() error {
 	return nil
 }
 
-// taskDef is the task definition the runtime registers for this worker,
-// matching the Python SDK's _default_task_def field for field. The tool's
-// credential names ride as runtimeMetadata so the registration does not wipe
-// what the server compiled there.
+// taskDef is the task definition the runtime registers for this worker. The tool's credential
+// names ride as runtimeMetadata so the registration does not wipe what the server compiled.
 func (t ToolDef) taskDef() model.TaskDef {
 	retries, delay := defaultRetryCount, defaultRetryDelaySeconds
 	if t.RetryCount != nil {
@@ -209,8 +194,6 @@ func (t ToolDef) taskDef() model.TaskDef {
 
 var credentialRef = regexp.MustCompile(`\$\{(\w+)\}`)
 
-// credentialRefs lists the ${NAME} placeholders in a header map, which a
-// constructor may have typed as map[string]string or map[string]any.
 func credentialRefs(headers any) []string {
 	var refs []string
 	visit := func(v string) {
@@ -233,11 +216,8 @@ func credentialRefs(headers any) []string {
 	return refs
 }
 
-// toolConfig serializes one tool. Optional fields are emitted only when set,
-// matching the Python serializer field for field.
-//
-// agentStateful is the agent's own Stateful flag: it has no key of its own on
-// the wire and instead marks every tool on that agent stateful.
+// toolConfig serializes one tool, emitting optional fields only when set, as the
+// Python serializer does. agentStateful is the agent's own Stateful flag.
 func (t ToolDef) toolConfig(agentStateful bool) map[string]any {
 	tt := t.ToolType
 	if tt == "" {
@@ -279,11 +259,8 @@ func (t ToolDef) toolConfig(agentStateful bool) map[string]any {
 	return cfg
 }
 
-// configMap assembles the wire config: the type-specific settings, an
-// agent-as-tool's nested document, and the declared credentials.
-//
-// Credentials ride inside config, not at the top level: the server's
-// compiler reads tool.config["credentials"] when collecting what a task
+// configMap assembles the wire config. Credentials ride inside config, not at the top level:
+// the server's compiler reads tool.config["credentials"] to collect what a task may resolve.
 // definition may resolve.
 func (t ToolDef) configMap() map[string]any {
 	var conf map[string]any
@@ -292,9 +269,7 @@ func (t ToolDef) configMap() map[string]any {
 		for k, v := range t.Config {
 			conf[k] = v
 		}
-		// An agent-as-tool carries the sub-agent itself. Its document has to be
-		// produced by this serializer, not by the tool constructor, so the
-		// translation happens here.
+		// An agent-as-tool's nested document must come from this serializer, not the constructor.
 		if sub, ok := conf["agent"].(*Agent); ok {
 			delete(conf, "agent")
 			conf["agentConfig"] = sub.toConfig()
@@ -309,8 +284,7 @@ func (t ToolDef) configMap() map[string]any {
 	return conf
 }
 
-// toInt32 narrows a retry setting to the task definition's int32, clamping
-// rather than wrapping: these are small operator-chosen counts and seconds.
+// toInt32 narrows a retry setting to the task definition's int32, clamping rather than wrapping.
 func toInt32(v int) int32 {
 	switch {
 	case v < 0:

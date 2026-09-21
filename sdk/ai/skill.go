@@ -31,25 +31,20 @@ import (
 
 // Agent Skills (agentskills.io) loaded as agents.
 //
-// A skill directory becomes its own agent: SKILL.md is the orchestrator's
-// instructions, each *-agent.md file is a sub-agent it can call, each file in
-// scripts/ is a worker tool, and everything else is a resource the agent reads
-// on demand through a read_skill_file tool. The skill runs as a separate
-// workflow — used as a tool, a parent agent receives its result, never its
-// instructions. That is the delegation model the Agent Skills integration
-// guide describes as optional, and it is the one every Conductor SDK uses.
-//
-// The SDK does no compiling. It reads the directory into the raw document
-// below and the server's SkillNormalizer turns that into an agentConfig. The
-// document is the cross-SDK contract, so its shape and quirks follow the
-// Python SDK's skill.py exactly; the golden fixture 18_skill pins it.
+// A skill directory becomes an agent: SKILL.md is the orchestrator's
+// instructions, each *-agent.md file a sub-agent, each file in scripts/ a worker
+// tool, everything else a resource read through read_skill_file. It runs as a
+// separate workflow, so a parent using it as a tool gets its result, not its
+// instructions. The SDK does no compiling: the server's SkillNormalizer turns the
+// raw document below into an agentConfig. That document is the cross-SDK
+// contract, so its shape follows Python's skill.py exactly; fixture 18_skill
+// pins it.
 
 const (
 	skillFramework = "skill"
 
-	// sectionSplitThreshold is the SKILL.md body length, in characters, above
-	// which the body is split into ## sections the agent loads on demand.
-	// Python measures len(str), so this counts code points, not bytes.
+	// sectionSplitThreshold is the body length above which SKILL.md is split into
+	// ## sections loaded on demand; Python's len(str) counts code points.
 	sectionSplitThreshold = 50000
 
 	skillSectionPrefix = "skill_section:"
@@ -57,14 +52,11 @@ const (
 )
 
 var (
-	// frontmatterRe matches the YAML block between --- fences and captures the
-	// body after it. It is the union of Python's two patterns, with the same
-	// \s* tolerance around the fences.
+	// frontmatterRe is the union of Python's two patterns, same fence tolerance.
 	frontmatterRe = regexp.MustCompile(`(?s)^---\s*\n(.*?)\n---\s*\n(.*)`)
 
-	// crossSkillRe finds prose like "invoke the writing-plans skill". The name
-	// is looked up as a sibling directory, so a match that resolves to nothing
-	// is ignored rather than reported.
+	// crossSkillRe finds prose like "invoke the writing-plans skill". The name is
+	// looked up as a directory, and a match that resolves to nothing is ignored.
 	crossSkillRe = regexp.MustCompile(`(?i)(?:invoke|use|call)\s+(?:the\s+)?([a-z][a-z0-9-]*)\s+skill`)
 
 	slugDropRe  = regexp.MustCompile(`[^a-z0-9\s-]`)
@@ -72,15 +64,11 @@ var (
 	slugDashRe  = regexp.MustCompile(`-+`)
 )
 
-// scriptLanguages maps a script's extension to the language the worker runs
-// it with; scriptInterpreters maps that language to the interpreter binary.
 var scriptLanguages = map[string]string{
 	".py": "python", ".sh": "bash", ".js": "node", ".mjs": "node", ".ts": "node", ".rb": "ruby",
 }
 
-// shebangLanguages is checked in order against the first line of a script
-// with no recognised extension. The order matters: "sh" would otherwise
-// claim "bash".
+// shebangLanguages is checked in order: "sh" would otherwise claim "bash".
 var shebangLanguages = []struct{ key, lang string }{
 	{"python", "python"}, {"python3", "python"}, {"bash", "bash"},
 	{"sh", "bash"}, {"node", "node"}, {"ruby", "ruby"},
@@ -101,9 +89,8 @@ type skillOptions struct {
 	params         map[string]any
 }
 
-// WithSkillModel sets the model of the skill's orchestrator agent. Sub-agents
-// declared in *-agent.md files use it too unless WithAgentModels overrides
-// them.
+// WithSkillModel sets the model of the skill's orchestrator agent, and of its
+// *-agent.md sub-agents unless WithAgentModels overrides them.
 func WithSkillModel(model string) SkillOption {
 	return func(o *skillOptions) { o.model = model }
 }
@@ -114,37 +101,26 @@ func WithAgentModels(models map[string]string) SkillOption {
 	return func(o *skillOptions) { o.agentModels = models }
 }
 
-// WithSkillAgentModels is WithAgentModels for LoadSkills. The outer key is the
-// skill's directory name, so each skill gets its own overrides; it mirrors the
-// agent_models argument of Python's load_skills.
+// WithSkillAgentModels is WithAgentModels for LoadSkills, keyed by skill
+// directory name; it mirrors the agent_models argument of Python's load_skills.
 func WithSkillAgentModels(perSkill map[string]map[string]string) SkillOption {
 	return func(o *skillOptions) { o.perSkillModels = perSkill }
 }
 
-// WithSkillSearchPath adds directories searched for skills that this skill's
-// instructions reference. They are searched after the skill's own parent
-// directory and the .agents/skills directories under the working directory
-// and the home directory.
+// WithSkillSearchPath adds directories searched for referenced skills, after the
+// skill's parent and the .agents/skills directories under $PWD and $HOME.
 func WithSkillSearchPath(dirs ...string) SkillOption {
 	return func(o *skillOptions) { o.searchPath = append(o.searchPath, dirs...) }
 }
 
-// WithSkillParams overrides the defaults of the params the SKILL.md
-// frontmatter declares, and may add params it does not declare. The merged
-// values are appended to the instructions as a [Skill Parameters] block.
+// WithSkillParams overrides the params the SKILL.md frontmatter declares and
+// may add undeclared ones; the merged values become a [Skill Parameters] block.
 func WithSkillParams(params map[string]any) SkillOption {
 	return func(o *skillOptions) { o.params = params }
 }
 
-// LoadSkill reads an Agent Skills directory and returns it as an Agent.
-//
-// The directory must contain a SKILL.md with a name in its frontmatter. The
-// agent can be run, exposed as a tool with tool.Agent, or placed in another
-// agent's Agents list like any other; its Name is the skill's name.
-//
-//	dg, err := ai.LoadSkill("~/.claude/skills/dg",
-//	    ai.WithSkillModel("openai/gpt-4o"),
-//	    ai.WithAgentModels(map[string]string{"gilfoyle": "anthropic/claude-sonnet-4-6"}))
+// LoadSkill reads an Agent Skills directory and returns it as an Agent named
+// after the skill. The directory must contain a SKILL.md with a frontmatter name.
 func LoadSkill(path string, opts ...SkillOption) (*Agent, error) {
 	var o skillOptions
 	for _, opt := range opts {
@@ -158,9 +134,7 @@ func LoadSkill(path string, opts ...SkillOption) (*Agent, error) {
 	return loadSkill(dir, o.model, agentModels, o.searchPath, o.params)
 }
 
-// LoadSkills loads every skill directory directly under dir, keyed by
-// directory name. Options apply to each skill; use WithSkillAgentModels for
-// per-skill sub-agent models.
+// LoadSkills loads every skill directory directly under dir, keyed by name.
 func LoadSkills(dir string, opts ...SkillOption) (map[string]*Agent, error) {
 	root := resolveSkillPath(dir)
 	entries, err := os.ReadDir(root)
@@ -182,8 +156,8 @@ func LoadSkills(dir string, opts ...SkillOption) (map[string]*Agent, error) {
 	return skills, nil
 }
 
-// skillConfig is what LoadSkill read, kept on the Agent so the serializer can
-// emit the raw document and the runtime can register the skill's workers.
+// skillConfig is what LoadSkill read, kept on the Agent for serialization and
+// the workers.
 type skillConfig struct {
 	dir           string
 	model         string
@@ -244,9 +218,8 @@ func loadSkill(dir, model string, agentModels map[string]string, searchPath []st
 		return nil, err
 	}
 
-	// A body too long to hold in context is replaced server side by a table
-	// of contents; the sections become virtual files the agent reads on
-	// demand, listed alongside the real resources.
+	// A body too long for context is replaced server side by a table of
+	// contents; the sections become virtual files listed with the real resources.
 	sections := map[string]string{}
 	if utf8.RuneCountInString(fm.body) > sectionSplitThreshold {
 		var names []string
@@ -256,8 +229,7 @@ func loadSkill(dir, model string, agentModels map[string]string, searchPath []st
 		}
 	}
 
-	// The parameters are appended to SKILL.md itself so the orchestrator sees
-	// them in its system prompt however the skill is invoked.
+	// Appended to SKILL.md so the orchestrator's prompt carries them however invoked.
 	if len(params) > 0 {
 		skillMd = skillMd + "\n\n" + formatSkillParams(params, paramOrder) + "\n"
 	}
@@ -281,9 +253,8 @@ func loadSkill(dir, model string, agentModels map[string]string, searchPath []st
 	return &Agent{Name: fm.name, Model: model, skill: cfg}, nil
 }
 
-// rawConfig is the document the server's SkillNormalizer consumes. Every key
-// is always present, with empty maps and lists rather than nulls, because
-// that is what the Python SDK sends.
+// rawConfig is the document the server's SkillNormalizer consumes. Every key is
+// always present, with empty maps and lists rather than nulls, as Python sends.
 func (s *skillConfig) rawConfig() map[string]any {
 	return map[string]any{
 		"model":          s.model,
@@ -298,9 +269,8 @@ func (s *skillConfig) rawConfig() map[string]any {
 	}
 }
 
-// wireConfig is rawConfig in the position of an agentConfig: as the document
-// for /agent/start, or nested under an agent tool. The _framework marker is
-// what tells the server to normalize it rather than read it as agentConfig.
+// wireConfig is rawConfig positioned as an agentConfig, for /agent/start or under
+// an agent tool; the _framework marker tells the server to normalize it first.
 func (s *skillConfig) wireConfig(name string) map[string]any {
 	cfg := s.rawConfig()
 	cfg["name"] = name
@@ -316,17 +286,14 @@ func scriptsWire(scripts []skillScript) map[string]any {
 	return out
 }
 
-// ── SKILL.md parsing ────────────────────────────────────────────────
-
 type skillFrontmatter struct {
 	name   string
 	params *yaml.Node // the params mapping, in file order; nil when absent
 	body   string     // markdown after the frontmatter, trimmed
 }
 
-// parseSkillFrontmatter splits SKILL.md into frontmatter and body. A file
-// with no frontmatter is not an error here — a referenced skill may lack
-// one — but frontmatter without a name is, as in Python.
+// parseSkillFrontmatter splits SKILL.md into frontmatter and body. No frontmatter
+// is fine (a referenced skill may lack it); a nameless one errors, as in Python.
 func parseSkillFrontmatter(content string) (skillFrontmatter, error) {
 	m := frontmatterRe.FindStringSubmatch(content)
 	if m == nil {
@@ -371,10 +338,8 @@ func documentMapping(doc *yaml.Node) *yaml.Node {
 	return doc.Content[0]
 }
 
-// paramDefaults reads the frontmatter's params. Each entry is either a
-// mapping with a "default" key or a bare value that is its own default. The
-// order is the file's, because it decides the order of the [Skill
-// Parameters] lines.
+// paramDefaults reads the frontmatter's params: a mapping with a "default" key,
+// or a bare value. File order decides the [Skill Parameters] line order.
 func (fm skillFrontmatter) paramDefaults() (map[string]any, []string) {
 	defaults := map[string]any{}
 	var order []string
@@ -400,9 +365,8 @@ func (fm skillFrontmatter) paramDefaults() (map[string]any, []string) {
 	return defaults, order
 }
 
-// mergeSkillParams lays overrides over the defaults. Declared params keep
-// their file order; params only the override names follow, sorted, since a
-// Go map has no order to preserve.
+// mergeSkillParams lays overrides over the defaults. Declared params keep their
+// file order; override-only params follow, sorted, as a Go map has no order.
 func mergeSkillParams(defaults map[string]any, order []string, overrides map[string]any) (map[string]any, []string) {
 	merged := map[string]any{}
 	mergedOrder := append([]string(nil), order...)
@@ -420,7 +384,6 @@ func mergeSkillParams(defaults map[string]any, order []string, overrides map[str
 	return merged, append(mergedOrder, extra...)
 }
 
-// formatSkillParams renders the block appended to SKILL.md.
 func formatSkillParams(params map[string]any, order []string) string {
 	if len(params) == 0 {
 		return ""
@@ -432,9 +395,8 @@ func formatSkillParams(params map[string]any, order []string) string {
 	return "[Skill Parameters]\n" + strings.Join(lines, "\n")
 }
 
-// pyString formats a value the way Python's str() does, so the prompt text
-// matches across SDKs: True rather than true, 1.0 rather than 1. Lists and
-// maps fall back to Go formatting; skills declare scalar params.
+// pyString formats a value as Python's str() does, so prompt text matches across
+// SDKs: True rather than true, 1.0 rather than 1. Non-scalars use Go's format.
 func pyString(v any) string {
 	switch x := v.(type) {
 	case nil:
@@ -458,10 +420,6 @@ func pyString(v any) string {
 	}
 }
 
-// ── directory conventions ───────────────────────────────────────────
-
-// readAgentFiles collects *-agent.md files as sub-agent instructions, keyed
-// by the name before the suffix.
 func readAgentFiles(dir string) (map[string]string, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
@@ -516,8 +474,6 @@ func discoverScripts(dir string) ([]skillScript, error) {
 	return out, nil
 }
 
-// detectScriptLanguage decides how a script is run: by extension, else by
-// shebang, else as bash.
 func detectScriptLanguage(path string) string {
 	if lang, ok := scriptLanguages[strings.ToLower(pySuffix(filepath.Base(path)))]; ok {
 		return lang
@@ -536,9 +492,8 @@ func detectScriptLanguage(path string) string {
 }
 
 // listResourceFiles lists what read_skill_file may serve: everything under
-// references/, examples/ and assets/, each subtree sorted, then — for the
-// skill itself, not for a referenced one — the loose files in the root other
-// than SKILL.md, the agent files and the skill manifests.
+// references/, examples/ and assets/, each subtree sorted, plus — only for the
+// skill itself — root files other than SKILL.md, *-agent.md and the manifests.
 func listResourceFiles(dir string, includeRoot bool) ([]string, error) {
 	out := []string{}
 	for _, sub := range []string{"references", "examples", "assets"} {
@@ -572,8 +527,6 @@ func listResourceFiles(dir string, includeRoot bool) ([]string, error) {
 	return out, nil
 }
 
-// walkResourceDir lists the regular files under root, as sorted paths
-// relative to dir with forward slashes.
 func walkResourceDir(dir, root string) ([]string, error) {
 	var found []string
 	err := filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
@@ -597,12 +550,8 @@ func walkResourceDir(dir, root string) ([]string, error) {
 	return found, nil
 }
 
-// ── cross-skill references ──────────────────────────────────────────
-
-// resolveCrossSkills finds skills the body names and loads each as a nested
-// raw document, so the server can compile it into an agent tool. A name that
-// resolves nowhere is skipped. A skill that, through any chain of references,
-// names one of its ancestors is a cycle and an error.
+// resolveCrossSkills loads skills the body names as nested raw documents for the
+// server to compile into agent tools; unresolvable names are skipped, cycles error.
 func resolveCrossSkills(skillMd, skillDir string, searchPath []string, ancestors map[string]bool) (map[string]any, error) {
 	body := skillBody(skillMd)
 	refs := map[string]any{}
@@ -649,10 +598,8 @@ func resolveCrossSkills(skillMd, skillDir string, searchPath []string, ancestors
 	return refs, nil
 }
 
-// loadCrossSkillRef reads a referenced skill into the nested document shape.
-// It differs from the top-level document in three ways Python has and this
-// keeps: params carry no overrides, the root's loose files are not listed as
-// resources, and skillSections is included.
+// loadCrossSkillRef reads a referenced skill into the nested document shape, which
+// as in Python has no param overrides, no loose root files, and skillSections.
 func loadCrossSkillRef(refDir string, searchPath []string, ancestors map[string]bool) (map[string]any, error) {
 	refMdPath := filepath.Join(refDir, "SKILL.md")
 	raw, err := os.ReadFile(refMdPath) //nolint:gosec // path is inside a skill directory
@@ -723,11 +670,8 @@ func skillSearchDirs(skillDir string, searchPath []string) []string {
 	return dirs
 }
 
-// ── large SKILL.md bodies ───────────────────────────────────────────
-
-// splitIntoSections cuts the body at each line that starts a ## heading and
-// keys the pieces by the heading's slug, in order. Text before the first
-// heading is the preamble and is not a section.
+// splitIntoSections cuts the body at each ## heading line, keyed by the heading's
+// slug, in order. Text before the first heading is preamble, not a section.
 func splitIntoSections(body string) ([]string, map[string]string) {
 	var parts []string
 	start := 0
@@ -764,8 +708,7 @@ func splitIntoSections(body string) ([]string, map[string]string) {
 	return order, sections
 }
 
-// slugify turns a heading into a section name: lower case, spaces to
-// hyphens, everything else dropped.
+// slugify makes a section name: lower case, spaces to hyphens, rest dropped.
 func slugify(text string) string {
 	slug := slugDropRe.ReplaceAllString(strings.ToLower(text), "")
 	slug = slugSpaceRe.ReplaceAllString(strings.TrimSpace(slug), "-")
@@ -773,28 +716,20 @@ func slugify(text string) string {
 	return strings.Trim(slug, "-")
 }
 
-// ── workers ─────────────────────────────────────────────────────────
-
-// skillScriptIn is what the model sends a script tool: one command line of
-// arguments, split the way a shell would.
+// skillScriptIn is a script tool's input: a command line, split as a shell would.
 type skillScriptIn struct {
 	Command string `json:"command"`
 }
 
-// skillFileIn names a resource, relative to the skill directory, or a
-// skill_section:<name> virtual file.
+// skillFileIn names a skill-relative resource, or a skill_section:<name> file.
 type skillFileIn struct {
 	Path string `json:"path"`
 }
 
-// workers returns the tools the runtime must serve for this skill: one per
-// script and, when there is anything to read, read_skill_file. The names are
-// what the server's SkillNormalizer emits, so the runtime registers workers
-// under exactly these.
-//
-// Failures a model can act on — a script that exits non-zero, a path that is
-// not in the skill — come back as ERROR strings rather than task failures,
-// matching the Python workers.
+// workers returns the tools the runtime must serve: one per script plus
+// read_skill_file, under exactly the names the server's SkillNormalizer emits.
+// Failures a model can act on come back as ERROR strings rather than task
+// failures, as in Python.
 func (s *skillConfig) workers(skillName string) []ToolDef {
 	out := make([]ToolDef, 0, len(s.scripts)+1)
 	for _, sc := range s.scripts {
@@ -814,7 +749,6 @@ func (s *skillConfig) workers(skillName string) []ToolDef {
 	return out
 }
 
-// run executes the script with the interpreter for its language.
 func (sc skillScript) run(ctx context.Context, in skillScriptIn) (string, error) {
 	var args []string
 	if in.Command != "" {
@@ -879,8 +813,7 @@ func (s *skillConfig) readFile(_ context.Context, in skillFileIn) (string, error
 	return string(data), nil
 }
 
-// pyList renders names as Python's sorted(list) repr, which is what the
-// Python worker puts in its error message.
+// pyList renders names as Python's sorted(list) repr, as its worker's error does.
 func pyList(items []string) string {
 	sorted := append([]string(nil), items...)
 	sort.Strings(sorted)
@@ -891,10 +824,7 @@ func pyList(items []string) string {
 	return "[" + strings.Join(quoted, ", ") + "]"
 }
 
-// ── path helpers ────────────────────────────────────────────────────
-
-// skillBody is the markdown after the frontmatter, or the whole file when
-// there is none.
+// skillBody is the markdown after the frontmatter, or the whole file.
 func skillBody(skillMd string) string {
 	if m := frontmatterRe.FindStringSubmatch(skillMd); m != nil {
 		return strings.TrimSpace(m[2])
@@ -902,8 +832,7 @@ func skillBody(skillMd string) string {
 	return skillMd
 }
 
-// resolveSkillPath expands a leading ~ and resolves the path, following
-// symlinks when it exists, like Python's expanduser().resolve().
+// resolveSkillPath is resolvePath with ~ expansion, as expanduser().resolve().
 func resolveSkillPath(p string) string {
 	if p == "~" || strings.HasPrefix(p, "~/") {
 		if home, err := os.UserHomeDir(); err == nil {
@@ -924,8 +853,8 @@ func resolvePath(p string) string {
 	return abs
 }
 
-// pySuffix and pyStem follow pathlib: a leading dot or a trailing dot is not
-// a suffix, so ".bashrc" and "notes." keep their whole name as the stem.
+// pySuffix and pyStem follow pathlib: a leading or trailing dot is no suffix,
+// so ".bashrc" and "notes." keep their whole name as the stem.
 func pySuffix(name string) string {
 	i := strings.LastIndex(name, ".")
 	if i > 0 && i < len(name)-1 {

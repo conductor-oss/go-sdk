@@ -11,20 +11,16 @@ package ai
 
 import "context"
 
-// Go functions are never sent to the server. Each one is registered as a
-// Conductor worker and referenced in agentConfig by a derived task name, so
-// the name is the contract between the serializer and the worker registry:
-// the runtime must register a worker under exactly the name emitted here.
-//
-// The suffixes match the Python SDK, which builds the same names in its
-// serializer and its worker registration.
+// Go functions are never sent to the server: each is registered as a Conductor
+// worker and referenced in agentConfig by the derived task name
+// "<agent>_<suffix>", so the runtime must register a worker under exactly the
+// name emitted here. The suffixes match the Python SDK.
 const (
 	stopWhenSuffix = "stop_when"
 	routerSuffix   = "router_fn"
 	gateSuffix     = "gate"
 )
 
-// workerTaskName derives the task name for one of the agent's callables.
 func (a *Agent) workerTaskName(suffix string) string {
 	return a.Name + "_" + suffix
 }
@@ -34,10 +30,8 @@ func workerRef(taskName string) map[string]any {
 	return map[string]any{"taskName": taskName}
 }
 
-// StopWhenState is the state handed to a StopWhenFunc after each turn.
-//
-// It mirrors the context the Python worker builds — result, messages and
-// iteration — so a predicate ported between SDKs sees the same inputs.
+// StopWhenState is the state handed to a StopWhenFunc after each turn. It
+// mirrors the Python worker's context, so a ported predicate sees the same inputs.
 type StopWhenState struct {
 	// Result is the agent's output so far.
 	Result string
@@ -47,24 +41,14 @@ type StopWhenState struct {
 	Iteration int
 }
 
-// RouterFunc picks which sub-agent handles a prompt, by name.
-//
-// The returned name must be one of the agent's sub-agents. The runtime
-// registers it as a worker under "<agent>_router_fn"; if it returns an unknown
-// name or fails, the server falls back to the first sub-agent, matching the
-// Python worker's behaviour.
-//
-// Use Router instead when the choice is better made by an LLM: that path is a
-// nested agent the server runs, with no worker round trip.
+// RouterFunc picks which sub-agent handles a prompt, by name. The name must be
+// one of the agent's sub-agents; an unknown name or an error falls back to the
+// first sub-agent, matching the Python worker. Use Router when an LLM should
+// make the choice: the server runs that nested agent with no worker round trip.
 type RouterFunc func(ctx context.Context, prompt string) (string, error)
 
-// StopWhenFunc decides whether to stop the agent loop after a turn.
-//
-// Returning true stops the loop. The runtime registers it as a worker under
-// "<agent>_stop_when" and inverts the result into the should_continue flag
-// the server expects, matching the Python worker's contract.
-//
-// Use this for logic the server cannot express; use TerminationCondition for
-// the cases it can, since those are evaluated server-side without a worker
-// round trip.
+// StopWhenFunc decides whether to stop the agent loop after a turn; true stops
+// it. The runtime inverts the result into the should_continue flag the server
+// expects. Use TerminationCondition for checks the server can evaluate itself,
+// since those need no worker round trip.
 type StopWhenFunc func(ctx context.Context, state StopWhenState) (bool, error)
