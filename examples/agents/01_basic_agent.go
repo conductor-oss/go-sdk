@@ -55,7 +55,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "run failed:", err)
 		os.Exit(1)
 	}
-	printResult(result)
+	result.PrintResult()
 
 	// Production pattern:
 	// 1. Deploy once during CI/CD, from a release script:
@@ -63,25 +63,4 @@ func main() {
 	//
 	// 2. In a separate long-lived worker process:
 	//    runtime.Serve(ctx, agent)
-}
-
-// printResult mirrors the Python AgentResult.print_result helper.
-func printResult(r *ai.AgentResult) {
-	const width = 50
-	line := ""
-	for i := 0; i < width; i++ {
-		line += "═"
-	}
-	fmt.Printf("\n╒%s╕\n", line)
-	fmt.Printf("│ %-*s│\n", width-1, "Agent Output")
-	fmt.Printf("╘%s╛\n\n", line)
-
-	if r.Status == ai.StatusFailed && r.Error != "" {
-		fmt.Println("ERROR:", r.Error)
-	} else {
-		fmt.Println(r.Output)
-	}
-	fmt.Println()
-	fmt.Println("Status:", r.Status)
-	fmt.Println("Execution ID:", r.ExecutionID)
 }

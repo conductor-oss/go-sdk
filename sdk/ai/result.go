@@ -9,7 +9,10 @@
 
 package ai
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 // Status is the state of an agent execution.
 type Status string
@@ -55,6 +58,29 @@ type AgentResult struct {
 	TokenUsage TokenUsage
 	// Raw is the untouched status document, for fields this struct does not model yet.
 	Raw map[string]any
+}
+
+// PrintResult writes the result to stdout in a boxed layout, the counterpart of
+// the Python SDK's print_result and Java's printResult.
+func (r *AgentResult) PrintResult() {
+	const width = 50
+	line := strings.Repeat("═", width)
+	fmt.Printf("\n╒%s╕\n", line)
+	fmt.Printf("│ %-*s│\n", width-1, "Agent Output")
+	fmt.Printf("╘%s╛\n\n", line)
+
+	if r.Status == StatusFailed && r.Error != "" {
+		fmt.Println("ERROR:", r.Error)
+	} else {
+		fmt.Println(r.Output)
+	}
+	fmt.Println()
+	fmt.Println("Status:", r.Status)
+	fmt.Println("Execution ID:", r.ExecutionID)
+	if r.TokenUsage.TotalTokens > 0 {
+		fmt.Printf("Tokens: %d prompt + %d completion = %d total\n",
+			r.TokenUsage.PromptTokens, r.TokenUsage.CompletionTokens, r.TokenUsage.TotalTokens)
+	}
 }
 
 // resultFrom reads a status document into an AgentResult. The answer is nested

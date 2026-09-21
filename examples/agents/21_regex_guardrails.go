@@ -84,7 +84,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "run failed:", err)
 		os.Exit(1)
 	}
-	printResult(result)
+	result.PrintResult()
 	if strings.Contains(result.Output, "alice.johnson@example.com") {
 		fmt.Println("[FAIL] Email leaked!")
 	} else {
@@ -110,31 +110,10 @@ func main() {
 		fmt.Fprintln(os.Stderr, "run failed:", err)
 		os.Exit(1)
 	}
-	printResult(result2)
+	result2.PrintResult()
 	if result2.Status == ai.StatusCompleted {
 		fmt.Println("[OK] Clean response passed guardrails successfully")
 	} else {
 		fmt.Printf("[WARN] Unexpected status: %s\n", result2.Status)
 	}
-}
-
-// printResult mirrors the Python AgentResult.print_result helper.
-func printResult(r *ai.AgentResult) {
-	const width = 50
-	line := ""
-	for i := 0; i < width; i++ {
-		line += "═"
-	}
-	fmt.Printf("\n╒%s╕\n", line)
-	fmt.Printf("│ %-*s│\n", width-1, "Agent Output")
-	fmt.Printf("╘%s╛\n\n", line)
-
-	if r.Status == ai.StatusFailed && r.Error != "" {
-		fmt.Println("ERROR:", r.Error)
-	} else {
-		fmt.Println(r.Output)
-	}
-	fmt.Println()
-	fmt.Println("Status:", r.Status)
-	fmt.Println("Execution ID:", r.ExecutionID)
 }
