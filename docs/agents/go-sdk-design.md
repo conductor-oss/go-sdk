@@ -66,8 +66,8 @@ though the default is `handoff`. `StrategyRouter` requires `Router` or `RouterFu
 ### Tools — generics at the boundary, reflection behind it
 
 ```go
-func Func[In, Out any](name, description string,
-	fn func(context.Context, In) (Out, error), opts ...Option) ai.ToolDef
+func Func[In, Out any](name string, fn func(context.Context, In) (Out, error),
+	description string, opts ...Option) ai.ToolDef
 ```
 
 The type parameters make the handler's shape a compile-time contract and give the constructor

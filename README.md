@@ -463,7 +463,7 @@ talks to the provider. Set `Model` to its `provider/model` identifier.
 The Go SDK deliberately ships no bridges to Python agent frameworks such as LangChain, LangGraph or
 the OpenAI Agents SDK, because there are no officially maintained Go SDKs for them. MCP servers are
 supported directly through `tool.MCP`, since MCP is a protocol the Conductor server speaks rather
-than a dependency. See [framework support](docs/ai/framework-support.md) for the full policy.
+than a dependency. See [framework support](docs/agents/framework-support.md) for the full policy.
 
 ## Deprecated Methods
 Some methods in the SDK client interfaces are now deprecated. They’ve been replaced with newer methods that follow more consistent naming. Please refer to our [Migration Guide](docs/migration_guide.md) for detailed information on how to update your code.
@@ -471,9 +471,9 @@ Some methods in the SDK client interfaces are now deprecated. They’ve been rep
 
 - [Writing Workers with the Go SDK](docs/workers_sdk.md)
 - [Authoring Workflows with the Go SDK](docs/workflow_sdk.md)
-- [AI Agents: design and parity docs](docs/ai/README.md) - Go agent types, worked examples, and how the port compares with the Python SDK
-- [Agent framework support](docs/ai/framework-support.md) - which model providers and agent frameworks the Go SDK supports
-- [Agent secrets and credentials](docs/ai/secrets-and-credentials.md) - delivering secrets to tools
+- [AI Agents: design and parity docs](docs/agents/README.md) - Go agent types, worked examples, and how the port compares with the Python SDK
+- [Agent framework support](docs/agents/framework-support.md) - which model providers and agent frameworks the Go SDK supports
+- [Agent secrets and credentials](docs/agents/secrets-and-credentials.md) - delivering secrets to tools
 - [Logging Configuration](docs/logger_sdk.md)
 - [Migration Guide: Deprecated Methods](docs/migration_guide.md)
 - [API Client Configuration](docs/api_client/README.md) - Complete guide to API client setup, authentication, and proxy configuration
