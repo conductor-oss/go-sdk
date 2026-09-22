@@ -245,6 +245,22 @@ process.
 Only names declared with `tool.WithCredentials` are delivered. `Agent.Credentials` is the
 agent-wide fallback for tools that cannot declare their own.
 
+### Coming from Python or Java
+
+Both declare a `ToolContext` parameter on the tool. Go does not need one: a tool already takes a
+`context.Context`, and `ai.Secret` reads from it.
+
+| `ToolContext` gives you | In Go |
+|---|---|
+| `get_credential` / `getCredential` | `ai.Secret(ctx, name)` |
+| execution and session identity | not available; pass what you need as a tool argument, which is what the Java page advises too |
+| `state`, a map shared across tool calls | **not available** |
+
+There is no way to hand data from one tool to another outside the model's messages. If a later
+tool needs an earlier tool's output, either let the model pass it as an argument, or keep it in
+your own store keyed by something the tools share. `CLIConfig.ContextKey` looks like it does this
+and does not: it is accepted and ignored, for want of the same missing state.
+
 ## Options
 
 Options apply to any tool unless noted.

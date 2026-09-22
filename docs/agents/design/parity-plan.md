@@ -18,6 +18,9 @@ server.
 | `gate` (TextGate or callable) | `Agent.Gate`: `TextGate`, `GateFunc` | `{agent}_gate` worker for the func |
 | `prefill_tools`, `plan_source`, `planner_context`, `synthesize` | `PrefillTools` + `Prefill`, `PlanSource`, `PlannerContext`, `Synthesize` | |
 | `dependencies` | not ported | never on the wire; Go tools take what they need through closures |
+| `ToolContext.get_credential` | `ai.Secret(ctx, name)`, `ai.SecretsEnv` | Go tools already take a `context.Context`, so no context parameter or type is needed |
+| `ToolContext.state` | **gap, not ported** | tool-to-tool data that bypasses the model. `CLIConfig.ContextKey` is serialized but ignored because of it; see [remaining-work-plan](remaining-work-plan.md) |
+| `ToolContext.execution_id`, `session_id`, `agent_name` | not ported | java-sdk documents its equivalents as unpopulated and advises passing identifiers as tool arguments |
 | `Strategy` | `ai.Strategy` (9 constants) | emitted only with sub-agents |
 | `OnToolResult`, `OnTextMention`, `OnCondition` | same names; `OnCondition.Condition` is `HandoffFunc(ctx, HandoffState)` | one `OnCondition` per target |
 | regex / llm / custom guardrail | `RegexGuardrail`, `LLMGuardrail`, `CustomGuardrail` + `NewCustomGuardrail` | `GuardrailFunc(ctx, GuardrailInput)` |

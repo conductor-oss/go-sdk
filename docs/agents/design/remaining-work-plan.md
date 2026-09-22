@@ -157,3 +157,14 @@ expect them.
   secret store; they need a server with a writable store to port.
 - The parity plan table lacks a row for the media tool constructors.
 - `RequiredTools` is unusable on current servers, same as Python.
+- **No agent-state API.** Python's `ToolContext.state` and java-sdk's
+  `ToolContext.getState()` give tools a mutable map that survives across tool
+  calls in one execution, so one tool can hand data to another without routing
+  it through the model. Go has no equivalent, and this was an omission rather
+  than a decision: the parity plan recorded `dependencies` as deliberately not
+  ported but never mentioned `state`. The consequence is already in the tree —
+  `CLIConfig.ContextKey` exists, serializes, and is ignored, because the state
+  it would write into does not exist (see the comment in `cli_runner.go`).
+  Closing it means reading and writing the agent state the server already
+  carries, and would make `ContextKey` work. Credentials, the half people reach
+  for most, are covered by `ai.Secret` and need no context type.
