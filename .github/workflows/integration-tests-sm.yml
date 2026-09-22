@@ -289,6 +289,10 @@ jobs:
         if: ${{ failure() || steps.integration_tests.outcome == 'failure' }}
         run: docker compose -f scripts/docker-compose-oss.yaml logs conductor-server
 
+      - name: Tear down Conductor OSS stack
+        if: always()
+        run: docker compose -f scripts/docker-compose-oss.yaml down -v
+
       - name: Publish test results (OSS)
         if: always()
         uses: dorny/test-reporter@v2
