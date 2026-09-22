@@ -80,42 +80,42 @@ func TestCliCredentialLifecycle(t *testing.T) {
 	store := newSecretStore(t)
 	const cred = "GITHUB_TOKEN"
 
-	cliLs := tool.Func("cli_ls", "List directory contents using the ls command.",
-		func(_ context.Context, in s3PathIn) (string, error) {
-			path := in.Path
-			if path == "" {
-				path = "."
-			}
-			out, errOut, err := runCLI(15*time.Second, nil, "ls", path)
-			if err != nil {
-				return "ls_error:" + clip(errOut, 200), nil
-			}
-			return "ls_ok:" + clip(out, 200), nil
-		})
-	cliMktemp := tool.Func("cli_mktemp", "Create a temporary file and return its path.",
-		func(context.Context, struct{}) (string, error) {
-			out, errOut, err := runCLI(15*time.Second, nil, "mktemp")
-			if err != nil {
-				return "mktemp_error:" + clip(errOut, 200), nil
-			}
-			return "mktemp_ok:" + strings.TrimSpace(out), nil
-		})
-	cliGh := tool.Func("cli_gh", "Run a gh CLI command. Requires GITHUB_TOKEN credential.\nExample: subcommand=\"repo list\", args=\"--limit 3\"",
-		func(ctx context.Context, in s3GhIn) (string, error) {
-			// gh reads the token from its environment; it comes from the
-			// task, never from this process.
-			env, err := ai.SecretsEnv(ctx, cred)
-			if err != nil {
-				return "", taskmodel.NewNonRetryableError(err)
-			}
-			args := strings.Fields(in.Subcommand)
-			args = append(args, strings.Fields(in.Args)...)
-			out, errOut, err := runCLI(30*time.Second, append(os.Environ(), env...), "gh", args...)
-			if err != nil {
-				return "gh_error:" + clip(errOut, 200), nil
-			}
-			return "gh_ok:" + clip(out, 200), nil
-		}, tool.WithCredentials(cred))
+	cliLs := tool.Func("cli_ls", func(_ context.Context, in s3PathIn) (string, error) {
+		path := in.Path
+		if path == "" {
+			path = "."
+		}
+		out, errOut, err := runCLI(15*time.Second, nil, "ls", path)
+		if err != nil {
+			return "ls_error:" + clip(errOut, 200), nil
+		}
+		return "ls_ok:" + clip(out, 200), nil
+	},
+		"List directory contents using the ls command.")
+	cliMktemp := tool.Func("cli_mktemp", func(context.Context, struct{}) (string, error) {
+		out, errOut, err := runCLI(15*time.Second, nil, "mktemp")
+		if err != nil {
+			return "mktemp_error:" + clip(errOut, 200), nil
+		}
+		return "mktemp_ok:" + strings.TrimSpace(out), nil
+	},
+		"Create a temporary file and return its path.")
+	cliGh := tool.Func("cli_gh", func(ctx context.Context, in s3GhIn) (string, error) {
+		// gh reads the token from its environment; it comes from the
+		// task, never from this process.
+		env, err := ai.SecretsEnv(ctx, cred)
+		if err != nil {
+			return "", taskmodel.NewNonRetryableError(err)
+		}
+		args := strings.Fields(in.Subcommand)
+		args = append(args, strings.Fields(in.Args)...)
+		out, errOut, err := runCLI(30*time.Second, append(os.Environ(), env...), "gh", args...)
+		if err != nil {
+			return "gh_error:" + clip(errOut, 200), nil
+		}
+		return "gh_ok:" + clip(out, 200), nil
+	},
+		"Run a gh CLI command. Requires GITHUB_TOKEN credential.\nExample: subcommand=\"repo list\", args=\"--limit 3\"", tool.WithCredentials(cred))
 
 	agent := &ai.Agent{Name: "e2e_cli_tools", Model: model(t),
 		Instructions: "You have three tools: cli_ls, cli_mktemp, and cli_gh.\n" +

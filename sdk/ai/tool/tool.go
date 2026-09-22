@@ -29,9 +29,10 @@ type Option func(*ai.ToolDef)
 
 // Func builds a worker tool from a Go function. The runtime registers fn as a
 // Conductor worker under name, so name is both what the model calls and the
-// task name workers poll for.
-func Func[In, Out any](name, description string,
-	fn func(context.Context, In) (Out, error), opts ...Option) ai.ToolDef {
+// task name workers poll for; description is what the model reads to decide
+// whether to call it.
+func Func[In, Out any](name string, fn func(context.Context, In) (Out, error),
+	description string, opts ...Option) ai.ToolDef {
 
 	var in In
 	var out Out

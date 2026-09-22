@@ -53,9 +53,9 @@ func main() {
 		Name:  "banker",
 		Model: model,
 		Tools: ai.Tools(
-			tool.Func("check_balance", "Check the balance of an account.", checkBalance),
-			tool.Func("transfer_funds", "Request a funds transfer; runtime pauses for human approval before execution.",
-				transferFunds, tool.RequiresApproval()),
+			tool.Func("check_balance", checkBalance, "Check the balance of an account."),
+			tool.Func("transfer_funds", transferFunds,
+				"Request a funds transfer; runtime pauses for human approval before execution.", tool.RequiresApproval()),
 		),
 		Instructions: "You are a banking assistant. Use check_balance for balance inquiries. " +
 			"When asked to transfer money, first check the balance, then call " +

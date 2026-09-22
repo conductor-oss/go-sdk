@@ -10,7 +10,7 @@ server.
 | Python | Go | Notes |
 |---|---|---|
 | `Agent` | `ai.Agent` struct + `Validate()` | defaults substituted at serialization |
-| `@tool` | `tool.Func(name, desc, fn)` | input **and output** schema by reflection; properties in struct declaration order, as Python's |
+| `@tool` | `tool.Func(name, fn, desc)` | input **and output** schema by reflection; properties in struct declaration order, as Python's |
 | HTTP / human / agent / MCP tools | `tool.HTTP`, `tool.Human`, `tool.Agent`, `tool.MCP` | settings in `ToolDef.Config` |
 | `api_tool`, `index_tool`, `search_tool`, `wait_for_message_tool` | `tool.API`, `tool.Index`, `tool.Search`, `tool.WaitForMessage` | pinned against Python in `sdk/ai/tool/testdata` |
 | `image_tool`, `audio_tool`, `video_tool`, `pdf_tool` | `tool.Image`, `tool.Audio`, `tool.Video`, `tool.PDF` | Python's default schemas, pinned |
@@ -23,7 +23,7 @@ server.
 | regex / llm / custom guardrail | `RegexGuardrail`, `LLMGuardrail`, `CustomGuardrail` + `NewCustomGuardrail` | `GuardrailFunc(ctx, GuardrailInput)` |
 | `CallbackHandler` (6 hooks) | `Callbacks` struct of `CallbackFunc` fields | one `{agent}_{position}` worker per set hook |
 | `LocalCodeExecutor`, `DockerCodeExecutor`, `JupyterCodeExecutor`, `ServerlessCodeExecutor` | `CodeExecutor` interface: `LocalExecutor`, `DockerExecutor`, `JupyterExecutor`, `ServerlessExecutor` | worker-side only; `CodeExecutionConfig.Executor` selects one |
-| `executor.as_tool()` | `ExecutorTool(exec, name, description)` | |
+| `executor.as_tool()` | `ExecutorTool(name, exec, description)` | |
 | `SemanticMemory`, `MemoryStore`, `InMemoryStore`, `MemoryEntry` | same names | standalone in both SDKs; not wired into the runtime |
 | termination conditions, `and`/`or` | same names; `AndTermination`, `OrTermination` | sealed interface |
 | `stop_when`, router fn | `StopWhenFunc`, `RouterFunc` | `{agent}_stop_when`, `{agent}_router_fn` |

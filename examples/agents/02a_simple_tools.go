@@ -51,8 +51,8 @@ func main() {
 		Name:  "weather_stock_agent",
 		Model: model,
 		Tools: ai.Tools(
-			tool.Func("get_weather", "Get the current weather for a city.", getWeather),
-			tool.Func("get_stock_price", "Get the current stock price for a ticker symbol.", getStockPrice),
+			tool.Func("get_weather", getWeather, "Get the current weather for a city."),
+			tool.Func("get_stock_price", getStockPrice, "Get the current stock price for a ticker symbol."),
 		),
 		Instructions: "You are a helpful assistant. Use tools to answer questions.",
 	}

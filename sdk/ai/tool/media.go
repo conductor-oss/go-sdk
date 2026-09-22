@@ -22,19 +22,19 @@ import (
 // with WithInputSchema, add static generation parameters with WithConfig.
 
 // Image generates an image with the given provider and model, e.g. "openai" and "dall-e-3".
-func Image(name, description, llmProvider, model string, opts ...Option) ai.ToolDef {
+func Image(name, llmProvider, model, description string, opts ...Option) ai.ToolDef {
 	return mediaTool(name, description, ai.ToolTypeGenerateImage, "GENERATE_IMAGE",
 		llmProvider, model, imageSchema(), opts)
 }
 
 // Audio generates speech with the given provider and model, e.g. "openai" and "tts-1".
-func Audio(name, description, llmProvider, model string, opts ...Option) ai.ToolDef {
+func Audio(name, llmProvider, model, description string, opts ...Option) ai.ToolDef {
 	return mediaTool(name, description, ai.ToolTypeGenerateAudio, "GENERATE_AUDIO",
 		llmProvider, model, audioSchema(), opts)
 }
 
 // Video generates a video with the given provider and model, e.g. "openai" and "sora".
-func Video(name, description, llmProvider, model string, opts ...Option) ai.ToolDef {
+func Video(name, llmProvider, model, description string, opts ...Option) ai.ToolDef {
 	return mediaTool(name, description, ai.ToolTypeGenerateVideo, "GENERATE_VIDEO",
 		llmProvider, model, videoSchema(), opts)
 }

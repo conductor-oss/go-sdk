@@ -82,21 +82,21 @@ func reverseString(s string) string {
 }
 
 var (
-	doMath = tool.Func("do_math", "Evaluate a math expression.",
-		func(_ context.Context, in s9ExprIn) (string, error) {
-			v, err := evalExpr(in.Expr)
-			if err != nil {
-				return "", err
-			}
-			return "math_result:" + in.Expr + "=" + v, nil
-		})
-	doText = tool.Func("do_text", "Reverse a string.",
-		func(_ context.Context, in s9TextIn) (string, error) {
-			return "text_result:" + reverseString(in.Text), nil
-		})
+	doMath = tool.Func("do_math", func(_ context.Context, in s9ExprIn) (string, error) {
+		v, err := evalExpr(in.Expr)
+		if err != nil {
+			return "", err
+		}
+		return "math_result:" + in.Expr + "=" + v, nil
+	},
+		"Evaluate a math expression.")
+	doText = tool.Func("do_text", func(_ context.Context, in s9TextIn) (string, error) {
+		return "text_result:" + reverseString(in.Text), nil
+	},
+		"Reverse a string.")
 	// do_data and the data agent exist in the Python suite but no test uses them.
-	doData = tool.Func("do_data", "Echo a data query.",
-		func(_ context.Context, in s9QueryIn) (string, error) { return "data_result:" + in.Query, nil })
+	doData = tool.Func("do_data", func(_ context.Context, in s9QueryIn) (string, error) { return "data_result:" + in.Query, nil },
+		"Echo a data query.")
 )
 
 func s9MathAgent(m string) *ai.Agent {

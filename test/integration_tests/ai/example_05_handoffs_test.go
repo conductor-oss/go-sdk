@@ -65,19 +65,19 @@ func TestExample05Handoffs(t *testing.T) {
 		Name:         "billing",
 		Model:        mockModel,
 		Instructions: "You handle billing questions: balances, payments, invoices.",
-		Tools:        ai.Tools(tool.Func("check_balance", "Check the balance of a bank account.", checkBalance)),
+		Tools:        ai.Tools(tool.Func("check_balance", checkBalance, "Check the balance of a bank account.")),
 	}
 	technical := &ai.Agent{
 		Name:         "technical",
 		Model:        mockModel,
 		Instructions: "You handle technical questions: order status, shipping, returns.",
-		Tools:        ai.Tools(tool.Func("lookup_order", "Look up the status of an order.", lookupOrder)),
+		Tools:        ai.Tools(tool.Func("lookup_order", lookupOrder, "Look up the status of an order.")),
 	}
 	sales := &ai.Agent{
 		Name:         "sales",
 		Model:        mockModel,
 		Instructions: "You handle sales questions: pricing, products, promotions.",
-		Tools:        ai.Tools(tool.Func("get_pricing", "Get pricing information for a product.", getPricing)),
+		Tools:        ai.Tools(tool.Func("get_pricing", getPricing, "Get pricing information for a product.")),
 	}
 	support := &ai.Agent{
 		Name:         "support",

@@ -22,7 +22,7 @@ func getWeather(ctx context.Context, in WeatherIn) (map[string]any, error) {
 // The example from the plan must actually build, and its schema must match what
 // the Python SDK emits for the equivalent @tool function.
 func TestFuncMatchesPythonSchema(t *testing.T) {
-	td := tool.Func("get_weather", "Get the current weather for a city.", getWeather)
+	td := tool.Func("get_weather", getWeather, "Get the current weather for a city.")
 
 	if td.Name != "get_weather" || td.ToolType != ai.ToolTypeWorker {
 		t.Fatalf("unexpected tool: %+v", td)
@@ -54,7 +54,7 @@ func TestFuncMatchesPythonSchema(t *testing.T) {
 func TestExternalHasSchemaButNoHandler(t *testing.T) {
 	td := tool.External[WeatherIn, map[string]any]("get_weather", "Get the current weather for a city.",
 		tool.RequiresApproval())
-	local := tool.Func("get_weather", "Get the current weather for a city.", getWeather)
+	local := tool.Func("get_weather", getWeather, "Get the current weather for a city.")
 
 	if td.Handler != nil {
 		t.Error("External must not carry a handler; the worker runs elsewhere")
@@ -71,7 +71,7 @@ func TestExternalHasSchemaButNoHandler(t *testing.T) {
 }
 
 func TestOptions(t *testing.T) {
-	td := tool.Func("open_pr", "Open a pull request", getWeather,
+	td := tool.Func("open_pr", getWeather, "Open a pull request",
 		tool.WithCredentials("GH_TOKEN"),
 		tool.RequiresApproval(),
 		tool.WithTimeout(45),

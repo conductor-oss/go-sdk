@@ -363,9 +363,9 @@ func getWeather(ctx context.Context, in weatherIn) (map[string]any, error) {
 agent := &ai.Agent{
 	Name:  "weather_stock_agent",
 	Model: "openai/gpt-4o",
-	Tools: []ai.ToolDef{
-		tool.Func("get_weather", "Get the current weather for a city.", getWeather),
-	},
+	Tools: ai.Tools(
+		tool.Func("get_weather", getWeather, "Get the current weather for a city."),
+	),
 	Instructions: "You are a helpful assistant. Use tools to answer questions.",
 }
 ```

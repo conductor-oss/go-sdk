@@ -99,9 +99,9 @@ func TestExample103PlanAndCompile(t *testing.T) {
 	}
 
 	tools := ai.Tools(
-		tool.Func("factorial", factorialDoc, factorial),
-		tool.Func("write_summary", summaryDoc, writeSummary),
-		tool.Func("check_summary", checkDoc, checkSummary),
+		tool.Func("factorial", factorial, factorialDoc),
+		tool.Func("write_summary", writeSummary, summaryDoc),
+		tool.Func("check_summary", checkSummary, checkDoc),
 	)
 	harness := &ai.Agent{
 		Name:     "plan_and_compile_demo",

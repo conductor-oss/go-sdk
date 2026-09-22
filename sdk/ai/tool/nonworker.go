@@ -29,7 +29,7 @@ const (
 // HTTP builds a tool the Conductor server calls over HTTP itself; no worker
 // runs, and a ${NAME} credential in a header, declared too with
 // WithCredentials, is resolved server-side without passing through your process.
-func HTTP(name, description, url string, opts ...Option) ai.ToolDef {
+func HTTP(name, url, description string, opts ...Option) ai.ToolDef {
 	td := ai.ToolDef{
 		Name:        name,
 		Description: description,
@@ -67,7 +67,7 @@ func Human(name, description string, opts ...Option) ai.ToolDef {
 // Agent exposes another agent as a tool for a parent to delegate to. The
 // sub-agent is serialized into this tool's config, needing no registration of
 // its own; an empty name takes the sub-agent's, an empty description is generated.
-func Agent(agent *ai.Agent, name, description string, opts ...Option) ai.ToolDef {
+func Agent(name string, agent *ai.Agent, description string, opts ...Option) ai.ToolDef {
 	if agent == nil {
 		// Otherwise the failure surfaces only as a server-side compile error.
 		return ai.ToolDef{Name: name, Description: description, ToolType: ai.ToolTypeAgent}
@@ -106,7 +106,7 @@ const (
 // their own. A ${NAME} credential in a header is resolved server-side, and
 // needs the same name in WithCredentials or Validate rejects the tool. Empty
 // name or description: Python's "mcp_tools", "MCP tools from <serverURL>".
-func MCP(name, description, serverURL string, opts ...Option) ai.ToolDef {
+func MCP(name, serverURL, description string, opts ...Option) ai.ToolDef {
 	if name == "" {
 		name = defaultMCPName
 	}

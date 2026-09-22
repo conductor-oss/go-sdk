@@ -88,9 +88,9 @@ func main() {
 	}
 
 	tools := ai.Tools(
-		tool.Func("factorial", factorialDoc, factorial),
-		tool.Func("write_summary", summaryDoc, writeSummary),
-		tool.Func("check_summary", checkDoc, checkSummary),
+		tool.Func("factorial", factorial, factorialDoc),
+		tool.Func("write_summary", writeSummary, summaryDoc),
+		tool.Func("check_summary", checkSummary, checkDoc),
 	)
 	// The Python example builds this with plan_execute(...): a planner and a
 	// fallback sub-agent named after the harness.

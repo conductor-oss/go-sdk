@@ -140,7 +140,7 @@ func TestExample33ExternalWorkers(t *testing.T) {
 			"look up customers, check inventory, process orders, and format " +
 			"responses for the customer.",
 		Tools: ai.Tools(
-			tool.Func("format_response", "Format a data dictionary into a human-readable string.", formatResponse),
+			tool.Func("format_response", formatResponse, "Format a data dictionary into a human-readable string."),
 			tool.External[crmCustomerIn, map[string]any]("get_customer", "Look up customer details from the CRM system."),
 			tool.External[inventoryIn, map[string]any]("check_inventory", "Check product availability in a warehouse."),
 			tool.External[orderActionIn, map[string]any]("process_order", "Process a customer order. Actions: refund, cancel, update."),

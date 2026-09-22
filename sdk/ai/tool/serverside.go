@@ -31,7 +31,7 @@ const (
 // tool per operation, filtering with an LLM beyond WithMaxTools. A ${NAME}
 // credential in a header needs the same name in WithCredentials or Validate
 // rejects the tool. Empty name or description: "api_tools", "API tools from <url>".
-func API(name, description, url string, opts ...Option) ai.ToolDef {
+func API(name, url, description string, opts ...Option) ai.ToolDef {
 	if name == "" {
 		name = defaultAPIName
 	}
@@ -53,7 +53,7 @@ func API(name, description, url string, opts ...Option) ai.ToolDef {
 
 // Index adds text to a vector index, Conductor's LLM_INDEX_TEXT task: the model
 // supplies text and a document id, the rest is fixed here, namespace "default_ns".
-func Index(name, description, vectorDB, index, embeddingProvider, embeddingModel string, opts ...Option) ai.ToolDef {
+func Index(name, vectorDB, index, embeddingProvider, embeddingModel, description string, opts ...Option) ai.ToolDef {
 	td := ai.ToolDef{
 		Name:        name,
 		Description: description,
@@ -76,7 +76,7 @@ func Index(name, description, vectorDB, index, embeddingProvider, embeddingModel
 
 // Search queries a vector index, Conductor's LLM_SEARCH_INDEX task, returning
 // up to WithMaxResults matches (default 5). Other settings are as for Index.
-func Search(name, description, vectorDB, index, embeddingProvider, embeddingModel string, opts ...Option) ai.ToolDef {
+func Search(name, vectorDB, index, embeddingProvider, embeddingModel, description string, opts ...Option) ai.ToolDef {
 	td := ai.ToolDef{
 		Name:        name,
 		Description: description,

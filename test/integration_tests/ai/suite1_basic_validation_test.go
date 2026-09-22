@@ -60,17 +60,17 @@ type dataIn struct {
 
 // The suite's tools, signature for signature with the Python @tool functions.
 var (
-	addTool = tool.Func("add", "Add two numbers.",
-		func(ctx context.Context, in addIn) (int, error) { return in.A + in.B, nil })
-	multiplyTool = tool.Func("multiply", "Multiply two numbers.",
-		func(ctx context.Context, in multiplyIn) (int, error) { return in.X * in.Y, nil })
-	greetTool = tool.Func("greet", "Greet someone.",
-		func(ctx context.Context, in greetIn) (string, error) { return "Hello " + in.Name, nil })
-	credentialedTool = tool.Func("credentialed_tool", "A tool that needs credentials.",
-		func(ctx context.Context, in queryIn) (string, error) { return in.Query, nil },
+	addTool = tool.Func("add", func(ctx context.Context, in addIn) (int, error) { return in.A + in.B, nil },
+		"Add two numbers.")
+	multiplyTool = tool.Func("multiply", func(ctx context.Context, in multiplyIn) (int, error) { return in.X * in.Y, nil },
+		"Multiply two numbers.")
+	greetTool = tool.Func("greet", func(ctx context.Context, in greetIn) (string, error) { return "Hello " + in.Name, nil },
+		"Greet someone.")
+	credentialedTool = tool.Func("credentialed_tool", func(ctx context.Context, in queryIn) (string, error) { return in.Query, nil },
+		"A tool that needs credentials.",
 		tool.WithCredentials("API_KEY_1"))
-	multiCredTool = tool.Func("multi_cred_tool", "A tool needing multiple credentials.",
-		func(ctx context.Context, in dataIn) (string, error) { return in.Data, nil },
+	multiCredTool = tool.Func("multi_cred_tool", func(ctx context.Context, in dataIn) (string, error) { return in.Data, nil },
+		"A tool needing multiple credentials.",
 		tool.WithCredentials("SECRET_A", "SECRET_B"))
 )
 
@@ -291,16 +291,16 @@ func kitchenSink() *ai.Agent {
 	return &ai.Agent{
 		Name: "e2e_kitchen_sink", Model: suite1Model, Instructions: "You are the kitchen sink agent.",
 		Tools: ai.Tools(
-			tool.Func("local_tool", "A local worker tool.",
-				func(ctx context.Context, in xIn) (string, error) { return in.X, nil }),
-			tool.Func("cred_local_tool", "Worker tool with credentials.",
-				func(ctx context.Context, in xIn) (string, error) { return in.X, nil },
+			tool.Func("local_tool", func(ctx context.Context, in xIn) (string, error) { return in.X, nil },
+				"A local worker tool."),
+			tool.Func("cred_local_tool", func(ctx context.Context, in xIn) (string, error) { return in.X, nil },
+				"Worker tool with credentials.",
 				tool.WithCredentials("KS_SECRET")),
-			tool.HTTP("ks_http", "HTTP endpoint", suite1MCPURL+"/echo", tool.WithMethod("POST")),
-			tool.MCP("ks_mcp", "MCP tools", suite1MCPURL),
-			tool.Image("ks_image", "Generate image", "openai", "dall-e-3"),
-			tool.Audio("ks_audio", "Generate audio", "openai", "tts-1"),
-			tool.Video("ks_video", "Generate video", "openai", "sora"),
+			tool.HTTP("ks_http", suite1MCPURL+"/echo", "HTTP endpoint", tool.WithMethod("POST")),
+			tool.MCP("ks_mcp", suite1MCPURL, "MCP tools"),
+			tool.Image("ks_image", "openai", "dall-e-3", "Generate image"),
+			tool.Audio("ks_audio", "openai", "tts-1", "Generate audio"),
+			tool.Video("ks_video", "openai", "sora", "Generate video"),
 			tool.PDF("ks_pdf", "Generate PDF"),
 		),
 		Guardrails: []ai.Guardrail{

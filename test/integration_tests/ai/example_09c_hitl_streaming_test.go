@@ -71,10 +71,10 @@ func TestExample09cHITLStreaming(t *testing.T) {
 		Name:  "ops_agent",
 		Model: mockModel,
 		Tools: ai.Tools(
-			tool.Func("check_service", "Check the health of a service.", checkService),
-			tool.Func("restart_service", "Restart a service. Safe operation, no approval needed.", restartService),
-			tool.Func("delete_service_data", "Delete service data. Destructive — requires human approval.",
-				deleteServiceData, tool.RequiresApproval()),
+			tool.Func("check_service", checkService, "Check the health of a service."),
+			tool.Func("restart_service", restartService, "Restart a service. Safe operation, no approval needed."),
+			tool.Func("delete_service_data", deleteServiceData,
+				"Delete service data. Destructive — requires human approval.", tool.RequiresApproval()),
 		),
 		Instructions: "You are an operations assistant. Work through the request one tool call at a " +
 			"time, in this order:\n" +

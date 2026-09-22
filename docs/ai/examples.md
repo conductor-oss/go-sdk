@@ -29,7 +29,7 @@ agent := &ai.Agent{
     Name:         "weather",
     Model:        "openai/gpt-4o-mini",
     Instructions: "Answer in one short sentence.",
-    Tools:        []ai.ToolDef{tool.Func("get_weather", "Current temperature for a city", getWeather)},
+    Tools:        ai.Tools(tool.Func("get_weather", getWeather, "Current temperature for a city")),
     Guardrails:   []ai.Guardrail{noKeys},
 }
 
@@ -63,7 +63,7 @@ support := &ai.Agent{
     Agents: []*ai.Agent{
         {Name: "triage",  Model: model, Instructions: "Triage the request in one sentence."},
         {Name: "billing", Model: model, Instructions: "Handle billing.",
-            Tools: []ai.ToolDef{tool.Func("open_pr", "Open a refund PR", openPR, tool.WithCredentials("GH_TOKEN"))}},
+            Tools: ai.Tools(tool.Func("open_pr", openPR, "Open a refund PR", tool.WithCredentials("GH_TOKEN")))},
     },
     Handoffs: []ai.HandoffCondition{
         &ai.OnCondition{Target: "billing", Condition: func(_ context.Context, s ai.HandoffState) (bool, error) {
@@ -85,11 +85,11 @@ Tests: `TestOnConditionHandoff`, `TestTeamWithSecret`, `TestSecretRequiresDeclar
 ```go
 ops := &ai.Agent{
     Name: "ops", Model: model, Temperature: ai.Ptr(0.0),
-    Tools: []ai.ToolDef{
-        tool.Func("check_service",       "Health of a service",  checkService),
-        tool.Func("restart_service",     "Restart a service",    restartService),
-        tool.Func("delete_service_data", "Delete data. Destructive.", deleteServiceData, tool.RequiresApproval()),
-    },
+    Tools: ai.Tools(
+        tool.Func("check_service",       checkService,      "Health of a service"),
+        tool.Func("restart_service",     restartService,    "Restart a service"),
+        tool.Func("delete_service_data", deleteServiceData, "Delete data. Destructive.", tool.RequiresApproval()),
+    ),
 }
 
 h, _ := rt.Start(ctx, ops, "Payments is down: check it, restart it, then clear its stale cache.")

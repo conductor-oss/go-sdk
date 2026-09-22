@@ -73,8 +73,8 @@ func TestPlanExecute(t *testing.T) {
 			"carried out with its tool, not answered from memory.",
 		// The parent's tools are what a plan may name.
 		Tools: ai.Tools(
-			tool.Func("get_weather", "Get the current temperature for a city", getWeather),
-			tool.Func("packing_advice", "Advise what to pack from the complete weather result", packingAdvice),
+			tool.Func("get_weather", getWeather, "Get the current temperature for a city"),
+			tool.Func("packing_advice", packingAdvice, "Advise what to pack from the complete weather result"),
 		),
 		Planner: &ai.Agent{
 			Name:         "trip_plan_writer",

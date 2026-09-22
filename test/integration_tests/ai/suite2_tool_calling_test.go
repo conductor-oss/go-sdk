@@ -91,17 +91,17 @@ func decodeJSON(resp *http.Response, v any) error {
 // delivered; here the handler asks for it and returns a non-retryable error,
 // which ends the task the same way.
 func paidTool(name, prefix, credential string) ai.ToolDef {
-	return tool.Func(name, fmt.Sprintf("A tool that needs %s. Returns first 3 chars of credential.", credential),
-		func(ctx context.Context, in s2XIn) (string, error) {
-			v, err := ai.Secret(ctx, credential)
-			if err != nil {
-				return "", taskmodel.NewNonRetryableError(err)
-			}
-			if len(v) > 3 {
-				v = v[:3]
-			}
-			return prefix + ":" + v, nil
-		}, tool.WithCredentials(credential))
+	return tool.Func(name, func(ctx context.Context, in s2XIn) (string, error) {
+		v, err := ai.Secret(ctx, credential)
+		if err != nil {
+			return "", taskmodel.NewNonRetryableError(err)
+		}
+		if len(v) > 3 {
+			v = v[:3]
+		}
+		return prefix + ":" + v, nil
+	},
+		fmt.Sprintf("A tool that needs %s. Returns first 3 chars of credential.", credential), tool.WithCredentials(credential))
 }
 
 func TestCredentialLifecycle(t *testing.T) {
@@ -111,8 +111,8 @@ func TestCredentialLifecycle(t *testing.T) {
 	const credA, credB = "E2E_CRED_A", "E2E_CRED_B"
 	const prompt = "Call all three tools."
 
-	freeTool := tool.Func("free_tool", "A tool that needs no credentials. Always succeeds.",
-		func(context.Context, s2XIn) (string, error) { return "free:ok", nil })
+	freeTool := tool.Func("free_tool", func(context.Context, s2XIn) (string, error) { return "free:ok", nil },
+		"A tool that needs no credentials. Always succeeds.")
 	agent := &ai.Agent{Name: "e2e_cred_lifecycle", Model: model(t), MaxTurns: 3,
 		Instructions: "You have three tools: free_tool, paid_tool_a, and paid_tool_b.\n" +
 			"You MUST call all three tools exactly once each, with the argument \"test\".\n" +

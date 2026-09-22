@@ -131,10 +131,10 @@ func runApprovalAttempt(t *testing.T, attempt int, last bool) bool {
 			"delete_service_data if asked to clear data. A human approves the " +
 			"deletion, not you — never ask for approval in your reply.",
 		Tools: ai.Tools(
-			tool.Func("check_service", "Check the health of a service", checkService),
-			tool.Func("restart_service", "Restart a service", restartService),
-			tool.Func("delete_service_data", "Delete service data. Destructive.",
-				deleteServiceData, tool.RequiresApproval()),
+			tool.Func("check_service", checkService, "Check the health of a service"),
+			tool.Func("restart_service", restartService, "Restart a service"),
+			tool.Func("delete_service_data", deleteServiceData,
+				"Delete service data. Destructive.", tool.RequiresApproval()),
 		),
 	}
 

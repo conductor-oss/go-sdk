@@ -25,7 +25,7 @@ import (
 // produce those literals — if the two drift, one of the two tests fails.
 
 func TestHTTPDefaults(t *testing.T) {
-	td := tool.HTTP("lookup", "Look up a record.", "https://example.test/api/{id}")
+	td := tool.HTTP("lookup", "https://example.test/api/{id}", "Look up a record.")
 
 	if td.ToolType != ai.ToolTypeHTTP {
 		t.Errorf("toolType = %q, want %q", td.ToolType, ai.ToolTypeHTTP)
@@ -46,7 +46,7 @@ func TestHTTPDefaults(t *testing.T) {
 }
 
 func TestHTTPOptionsOverrideDefaults(t *testing.T) {
-	td := tool.HTTP("post", "Send it", "https://example.test/x",
+	td := tool.HTTP("post", "https://example.test/x", "Send it",
 		// Lower case on purpose: the method is upper-cased, as in the other SDKs.
 		tool.WithMethod("post"),
 		tool.WithHeaders(map[string]string{"X-Api-Version": "2"}),
@@ -94,7 +94,7 @@ func TestHumanUsesTheFixedSchema(t *testing.T) {
 
 func TestAgentToolCarriesTheSubAgent(t *testing.T) {
 	billing := &ai.Agent{Name: "billing", Model: "openai/gpt-4o"}
-	td := tool.Agent(billing, "delegate_billing", "Delegate.")
+	td := tool.Agent("delegate_billing", billing, "Delegate.")
 
 	if td.ToolType != ai.ToolTypeAgent {
 		t.Errorf("toolType = %q, want %q", td.ToolType, ai.ToolTypeAgent)
@@ -109,7 +109,7 @@ func TestAgentToolCarriesTheSubAgent(t *testing.T) {
 
 // An omitted name or description falls back to the sub-agent's own.
 func TestAgentToolDefaultsToTheSubAgentName(t *testing.T) {
-	td := tool.Agent(&ai.Agent{Name: "billing"}, "", "")
+	td := tool.Agent("", &ai.Agent{Name: "billing"}, "")
 
 	if td.Name != "billing" {
 		t.Errorf("name = %q, want %q", td.Name, "billing")
@@ -138,7 +138,7 @@ func TestFixedSchemasAreNotShared(t *testing.T) {
 // does: default name and description, an empty schema, and the two config
 // keys the server reads.
 func TestMCPDefaults(t *testing.T) {
-	td := tool.MCP("", "", "http://localhost:3001/mcp")
+	td := tool.MCP("", "http://localhost:3001/mcp", "")
 
 	if td.ToolType != ai.ToolTypeMCP {
 		t.Errorf("toolType = %q, want %q", td.ToolType, ai.ToolTypeMCP)
@@ -161,7 +161,7 @@ func TestMCPDefaults(t *testing.T) {
 }
 
 func TestMCPOptions(t *testing.T) {
-	td := tool.MCP("secured_mcp", "Authenticated MCP tools.", "http://localhost:3002/mcp",
+	td := tool.MCP("secured_mcp", "http://localhost:3002/mcp", "Authenticated MCP tools.",
 		tool.WithHeaders(map[string]string{"Authorization": "Bearer ${MCP_AUTH_KEY}"}),
 		tool.WithToolNames("get_weather", "math_add"),
 		tool.WithMaxTools(16),
@@ -187,7 +187,7 @@ func TestMCPValidation(t *testing.T) {
 	if err := tool.MCP("x", "", "").Validate(); err == nil || !strings.Contains(err.Error(), "server_url") {
 		t.Errorf("empty server_url: err = %v, want a server_url error", err)
 	}
-	undeclared := tool.MCP("x", "", "http://h/mcp",
+	undeclared := tool.MCP("x", "http://h/mcp", "",
 		tool.WithHeaders(map[string]string{"Authorization": "Bearer ${MCP_AUTH_KEY}"}))
 	if err := undeclared.Validate(); err == nil || !strings.Contains(err.Error(), "MCP_AUTH_KEY") {
 		t.Errorf("undeclared placeholder: err = %v, want it named", err)

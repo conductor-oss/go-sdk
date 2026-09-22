@@ -71,47 +71,47 @@ type s20AppendIn struct {
 }
 
 func s20AppendLine() ai.ToolDef {
-	return tool.Func("append_line", "Append a single line to a file at path; returns 'ok'.",
-		func(_ context.Context, in s20AppendIn) (string, error) {
-			f, err := os.OpenFile(in.Path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
-			if err != nil {
-				return "", err
-			}
-			defer f.Close()
-			if _, err := f.WriteString(in.Line + "\n"); err != nil {
-				return "", err
-			}
-			return "ok", nil
-		})
+	return tool.Func("append_line", func(_ context.Context, in s20AppendIn) (string, error) {
+		f, err := os.OpenFile(in.Path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+		if err != nil {
+			return "", err
+		}
+		defer f.Close()
+		if _, err := f.WriteString(in.Line + "\n"); err != nil {
+			return "", err
+		}
+		return "ok", nil
+	},
+		"Append a single line to a file at path; returns 'ok'.")
 }
 
 func s20Tools() []ai.ToolDef {
 	return ai.Tools(
-		tool.Func("s20_produce", "Step A — emit a known record.",
-			func(_ context.Context, in s20RecordIn) (s20Record, error) {
-				return s20Record{RecordID: in.RecordID, Value: 42, Tags: []string{"alpha", "beta"}}, nil
-			}),
-		tool.Func("s20_enrich", "Step B — read Step A's whole record. Algorithmic only.",
-			func(_ context.Context, in s20EnrichIn) (s20Enriched, error) {
-				return s20Enriched{s20Record: in.Record, ValueSquared: in.Record.Value * in.Record.Value}, nil
-			}),
-		tool.Func("s20_report", "Step C — read BOTH upstream steps, named in the same arguments.",
-			func(_ context.Context, in s20ReportIn) (s20Report, error) {
-				return s20Report{
-					ID:            in.Record.RecordID,
-					OriginalValue: in.Record.Value,
-					Squared:       in.Enriched.ValueSquared,
-					TagsJoined:    strings.Join(in.Record.Tags, ", "),
-				}, nil
-			}),
+		tool.Func("s20_produce", func(_ context.Context, in s20RecordIn) (s20Record, error) {
+			return s20Record{RecordID: in.RecordID, Value: 42, Tags: []string{"alpha", "beta"}}, nil
+		},
+			"Step A — emit a known record."),
+		tool.Func("s20_enrich", func(_ context.Context, in s20EnrichIn) (s20Enriched, error) {
+			return s20Enriched{s20Record: in.Record, ValueSquared: in.Record.Value * in.Record.Value}, nil
+		},
+			"Step B — read Step A's whole record. Algorithmic only."),
+		tool.Func("s20_report", func(_ context.Context, in s20ReportIn) (s20Report, error) {
+			return s20Report{
+				ID:            in.Record.RecordID,
+				OriginalValue: in.Record.Value,
+				Squared:       in.Enriched.ValueSquared,
+				TagsJoined:    strings.Join(in.Record.Tags, ", "),
+			}, nil
+		},
+			"Step C — read BOTH upstream steps, named in the same arguments."),
 	)
 }
 
 func s20AllowedTool() ai.ToolDef {
-	return tool.Func("s20_allowed", "The one allowed tool for the whitelist tests.",
-		func(_ context.Context, in s20RecordIn) (map[string]any, error) {
-			return map[string]any{"record_id": in.RecordID, "ok": true}, nil
-		})
+	return tool.Func("s20_allowed", func(_ context.Context, in s20RecordIn) (map[string]any, error) {
+		return map[string]any{"record_id": in.RecordID, "ok": true}, nil
+	},
+		"The one allowed tool for the whitelist tests.")
 }
 
 // ── walking the execution tree ───────────────────────────────────────

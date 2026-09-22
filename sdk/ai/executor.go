@@ -238,7 +238,7 @@ func (e ServerlessExecutor) Execute(ctx context.Context, code string) ExecutionR
 // returning status, stdout and stderr. An empty name means execute_code, an
 // empty description is derived from language and timeout. There is no language
 // or command allow-list here, unlike CodeExecutionConfig.
-func ExecutorTool(exec CodeExecutor, name, description string) ToolDef {
+func ExecutorTool(name string, exec CodeExecutor, description string) ToolDef {
 	if name == "" {
 		name = "execute_code"
 	}

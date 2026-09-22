@@ -60,8 +60,8 @@ func TestExample04HTTPAndMCPTools(t *testing.T) {
 			strings.Repeat("=", utf8.RuneCountInString(in.Title)+8))}, nil
 	}
 
-	reverseAPI := tool.HTTP("reverse_string", "Reverse a string using the HTTP API",
-		"http://localhost:3001/api/string/reverse",
+	reverseAPI := tool.HTTP("reverse_string", "http://localhost:3001/api/string/reverse",
+		"Reverse a string using the HTTP API",
 		tool.WithMethod("POST"),
 		tool.WithHeaders(map[string]string{"Authorization": "Bearer ${HTTP_TEST_API_KEY}"}),
 		tool.WithCredentials("HTTP_TEST_API_KEY"),
@@ -74,8 +74,8 @@ func TestExample04HTTPAndMCPTools(t *testing.T) {
 		}),
 	)
 	mcpTestTools := tool.MCP("mcp_test_tools",
-		"Deterministic test tools via MCP — math, string, collection, encoding, hash, datetime, validation, and conversion operations.",
 		"http://localhost:3001/mcp",
+		"Deterministic test tools via MCP — math, string, collection, encoding, hash, datetime, validation, and conversion operations.",
 		tool.WithHeaders(map[string]string{"Authorization": "Bearer ${MCP_TEST_API_KEY}"}),
 		tool.WithCredentials("MCP_TEST_API_KEY"),
 	)
@@ -84,7 +84,7 @@ func TestExample04HTTPAndMCPTools(t *testing.T) {
 		Name:  "http_tools_demo",
 		Model: mockModel,
 		Tools: ai.Tools(
-			tool.Func("format_report", "Format a title and body into a structured report.", formatReport),
+			tool.Func("format_report", formatReport, "Format a title and body into a structured report."),
 			reverseAPI,
 			mcpTestTools,
 		),

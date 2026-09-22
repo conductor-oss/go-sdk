@@ -37,19 +37,19 @@ type s14TaskIn struct {
 }
 
 func s14EchoTool() ai.ToolDef {
-	return tool.Func("echo_tool", "Return the message with a deterministic prefix.",
-		func(_ context.Context, in s14MessageIn) (string, error) { return "ECHO:" + in.Message, nil })
+	return tool.Func("echo_tool", func(_ context.Context, in s14MessageIn) (string, error) { return "ECHO:" + in.Message, nil },
+		"Return the message with a deterministic prefix.")
 }
 
 func s14StatefulEcho() ai.ToolDef {
-	return tool.Func("stateful_echo", "A stateful tool that echoes with a prefix.",
-		func(_ context.Context, in s14MessageIn) (string, error) { return "STATEFUL_ECHO:" + in.Message, nil },
+	return tool.Func("stateful_echo", func(_ context.Context, in s14MessageIn) (string, error) { return "STATEFUL_ECHO:" + in.Message, nil },
+		"A stateful tool that echoes with a prefix.",
 		tool.Stateful())
 }
 
 func s14SwarmTool() ai.ToolDef {
-	return tool.Func("swarm_tool", "Perform a task and return a marker.",
-		func(_ context.Context, in s14TaskIn) (string, error) { return "SWARM_RESULT:" + in.Task, nil },
+	return tool.Func("swarm_tool", func(_ context.Context, in s14TaskIn) (string, error) { return "SWARM_RESULT:" + in.Task, nil },
+		"Perform a task and return a marker.",
 		tool.Stateful())
 }
 

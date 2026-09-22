@@ -93,40 +93,40 @@ func s8AlwaysFail() ai.Guardrail {
 // Go form of @tool(guardrails=[...]).
 
 func s8NormalTool() ai.ToolDef {
-	return tool.Func("normal_tool", "A tool with no guardrails. Always succeeds.",
-		func(_ context.Context, in s8TextIn) (string, error) { return "normal_ok:" + in.Text, nil })
+	return tool.Func("normal_tool", func(_ context.Context, in s8TextIn) (string, error) { return "normal_ok:" + in.Text, nil },
+		"A tool with no guardrails. Always succeeds.")
 }
 
 func s8SafeQuery() ai.ToolDef {
-	td := tool.Func("safe_query", "Run a database query. Input guardrail blocks SQL injection.",
-		func(_ context.Context, in s8QueryIn) (string, error) {
-			q := in.Query
-			if len(q) > 50 {
-				q = q[:50]
-			}
-			return "query_result:[" + q + "]", nil
-		})
+	td := tool.Func("safe_query", func(_ context.Context, in s8QueryIn) (string, error) {
+		q := in.Query
+		if len(q) > 50 {
+			q = q[:50]
+		}
+		return "query_result:[" + q + "]", nil
+	},
+		"Run a database query. Input guardrail blocks SQL injection.")
 	td.Guardrails = []ai.Guardrail{s8SQLGuard()}
 	return td
 }
 
 func s8FormatOutput() ai.ToolDef {
-	td := tool.Func("format_output", "Return the text. Output guardrail forces JSON format.",
-		func(_ context.Context, in s8TextIn) (string, error) { return in.Text, nil })
+	td := tool.Func("format_output", func(_ context.Context, in s8TextIn) (string, error) { return in.Text, nil },
+		"Return the text. Output guardrail forces JSON format.")
 	td.Guardrails = []ai.Guardrail{s8ForceJSON()}
 	return td
 }
 
 func s8RedactTool() ai.ToolDef {
-	td := tool.Func("redact_tool", "Echo text. Output guardrail blocks emails.",
-		func(_ context.Context, in s8TextIn) (string, error) { return in.Text, nil })
+	td := tool.Func("redact_tool", func(_ context.Context, in s8TextIn) (string, error) { return in.Text, nil },
+		"Echo text. Output guardrail blocks emails.")
 	td.Guardrails = []ai.Guardrail{s8NoEmail()}
 	return td
 }
 
 func s8StrictTool() ai.ToolDef {
-	td := tool.Func("strict_tool", "Tool whose guardrail always fails — tests escalation.",
-		func(_ context.Context, in s8TextIn) (string, error) { return "strict_output:" + in.Text, nil })
+	td := tool.Func("strict_tool", func(_ context.Context, in s8TextIn) (string, error) { return "strict_output:" + in.Text, nil },
+		"Tool whose guardrail always fails — tests escalation.")
 	td.Guardrails = []ai.Guardrail{s8AlwaysFail()}
 	return td
 }

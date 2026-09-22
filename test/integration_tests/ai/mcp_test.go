@@ -70,7 +70,7 @@ func TestMCPToolResultReachesTheAnswer(t *testing.T) {
 		Instructions: "You are a weather assistant. Use the available MCP tools to answer " +
 			"questions about weather conditions.",
 		Tools: ai.Tools(
-			tool.MCP("weather_mcp", "Weather tools via MCP: current conditions for a city", url),
+			tool.MCP("weather_mcp", url, "Weather tools via MCP: current conditions for a city"),
 		),
 	}
 

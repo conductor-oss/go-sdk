@@ -25,9 +25,9 @@ func TestMediaToolsMatchPython(t *testing.T) {
 	}
 
 	got := []ai.ToolDef{
-		Image("ks_image", "Generate image", "openai", "dall-e-3"),
-		Audio("ks_audio", "Generate audio", "openai", "tts-1"),
-		Video("ks_video", "Generate video", "openai", "sora"),
+		Image("ks_image", "openai", "dall-e-3", "Generate image"),
+		Audio("ks_audio", "openai", "tts-1", "Generate audio"),
+		Video("ks_video", "openai", "sora", "Generate video"),
 		PDF("ks_pdf", "Generate PDF"),
 	}
 	if len(got) != len(want) {
@@ -59,7 +59,7 @@ func TestMediaToolsMatchPython(t *testing.T) {
 // generation parameters land in config next to the provider and model.
 func TestMediaToolOptions(t *testing.T) {
 	custom := map[string]any{"type": "object", "properties": map[string]any{"prompt": map[string]any{"type": "string"}}}
-	td := Image("art", "Draw.", "openai", "dall-e-3", WithInputSchema(custom), WithConfig("n", 2))
+	td := Image("art", "openai", "dall-e-3", "Draw.", WithInputSchema(custom), WithConfig("n", 2))
 	if !reflect.DeepEqual(td.InputSchema, custom) {
 		t.Errorf("WithInputSchema did not replace the default schema")
 	}

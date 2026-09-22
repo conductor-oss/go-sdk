@@ -213,7 +213,7 @@ func TestAgentToolSkillWorkersWithDomain(t *testing.T) {
 		Name: "e2e_skill_at_domain", Model: model(t), Stateful: true, MaxTurns: 3,
 		Instructions: "You have one tool: " + suite15Skill + ". " +
 			"Call it once with the user's request, then return the result.",
-		Tools: ai.Tools(tool.Agent(skill, "", "Run test skill with echo_args")),
+		Tools: ai.Tools(tool.Agent("", skill, "Run test skill with echo_args")),
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)

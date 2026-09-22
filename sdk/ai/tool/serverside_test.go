@@ -24,19 +24,19 @@ func TestServerSideToolsMatchPython(t *testing.T) {
 	}
 
 	got := []ai.ToolDef{
-		API("", "", "https://api.example.test/openapi.json"),
-		API("stripe", "Stripe API.", "https://api.stripe.test/openapi.json",
+		API("", "https://api.example.test/openapi.json", ""),
+		API("stripe", "https://api.stripe.test/openapi.json", "Stripe API.",
 			WithHeaders(map[string]string{"Authorization": "Bearer ${STRIPE_KEY}"}),
 			WithToolNames("GetCharge", "ListCharges"), WithMaxTools(20), WithCredentials("STRIPE_KEY")),
-		Index("index_document", "Add a document to the knowledge base.",
-			"pgvectordb", "product_docs", "openai", "text-embedding-3-small"),
-		Index("index_chunked", "Index with chunking.",
-			"pineconedb", "notes", "openai", "text-embedding-3-large",
+		Index("index_document", "pgvectordb",
+			"product_docs", "openai", "text-embedding-3-small", "Add a document to the knowledge base."),
+		Index("index_chunked", "pineconedb",
+			"notes", "openai", "text-embedding-3-large", "Index with chunking.",
 			WithNamespace("team_a"), WithChunking(512, 64), WithDimensions(3072)),
-		Search("search_knowledge_base", "Search the product documentation.",
-			"pgvectordb", "product_docs", "openai", "text-embedding-3-small"),
-		Search("search_notes", "Search notes.",
-			"pineconedb", "notes", "openai", "text-embedding-3-large",
+		Search("search_knowledge_base", "pgvectordb",
+			"product_docs", "openai", "text-embedding-3-small", "Search the product documentation."),
+		Search("search_notes", "pineconedb",
+			"notes", "openai", "text-embedding-3-large", "Search notes.",
 			WithNamespace("team_a"), WithMaxResults(3), WithDimensions(3072)),
 		WaitForMessage("wait_for_message", "Wait until a message is sent to this agent."),
 		WaitForMessage("poll_messages", "Take up to five queued messages without waiting.",
@@ -82,7 +82,7 @@ func TestServerSideToolsMatchPython(t *testing.T) {
 // An API tool whose headers name a credential it does not declare is refused,
 // as an MCP tool is: the server would send the placeholder as literal text.
 func TestAPIValidatesHeaderCredentials(t *testing.T) {
-	td := API("stripe", "", "https://api.stripe.test/openapi.json",
+	td := API("stripe", "https://api.stripe.test/openapi.json", "",
 		WithHeaders(map[string]string{"Authorization": "Bearer ${STRIPE_KEY}"}))
 	if err := td.Validate(); err == nil || !strings.Contains(err.Error(), "STRIPE_KEY") {
 		t.Fatalf("Validate = %v, want a complaint about STRIPE_KEY", err)

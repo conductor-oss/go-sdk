@@ -90,8 +90,8 @@ func TestExample10Guardrails(t *testing.T) {
 		Name:  "support_agent",
 		Model: mockModel,
 		Tools: ai.Tools(
-			tool.Func("get_order_status", "Look up the current status of an order.", getOrderStatus),
-			tool.Func("get_customer_info", "Retrieve customer details including payment info on file.", getCustomerInfo),
+			tool.Func("get_order_status", getOrderStatus, "Look up the current status of an order."),
+			tool.Func("get_customer_info", getCustomerInfo, "Retrieve customer details including payment info on file."),
 		),
 		Instructions: "You are a customer support assistant. Use the available tools to " +
 			"answer questions about orders and customers. Always include all " +

@@ -36,8 +36,8 @@ type echoIn struct {
 }
 
 func echoTool() ai.ToolDef {
-	return tool.Func("echo_tool", "Echo the input text back.",
-		func(ctx context.Context, in echoIn) (string, error) { return "echo:" + in.Text, nil })
+	return tool.Func("echo_tool", func(ctx context.Context, in echoIn) (string, error) { return "echo:" + in.Text, nil },
+		"Echo the input text back.")
 }
 
 const echoInstructions = "You are a helpful assistant. You MUST call the echo_tool " +

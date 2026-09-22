@@ -104,7 +104,7 @@ func main() {
 			"look up customers, check inventory, process orders, and format " +
 			"responses for the customer.",
 		Tools: ai.Tools(
-			tool.Func("format_response", "Format a data dictionary into a human-readable string.", formatResponse), // local — runs in this process
+			tool.Func("format_response", formatResponse, "Format a data dictionary into a human-readable string."), // local — runs in this process
 			getCustomer,    // external — runs in the CRM service
 			checkInventory, // external — runs in the inventory service
 			processOrder,   // external — runs in the order service

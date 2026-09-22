@@ -37,8 +37,8 @@ func main() {
 	// HTTP tool with credential-bearing headers.
 	// ${GITHUB_TOKEN} is resolved server-side from the credential store.
 	listRepos := tool.HTTP("list_github_repos",
-		"List public GitHub repositories for a user. Returns JSON array with name, url, and stars.",
 		"https://api.github.com/users/Conductor/repos?per_page=5&sort=updated",
+		"List public GitHub repositories for a user. Returns JSON array with name, url, and stars.",
 		tool.WithHeaders(map[string]string{
 			"Authorization": "Bearer ${GITHUB_TOKEN}",
 			"Accept":        "application/vnd.github.v3+json",

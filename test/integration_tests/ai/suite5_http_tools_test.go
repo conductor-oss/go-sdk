@@ -57,12 +57,12 @@ func s5HTTPTools(base string, headers map[string]string, credentials ...string) 
 	str := func(desc string) map[string]any { return map[string]any{"type": "string", "description": desc} }
 	num := func(desc string) map[string]any { return map[string]any{"type": "number", "description": desc} }
 	return ai.Tools(
-		tool.HTTP("math_add", "Add two numbers (a + b)", base+"/api/math/add", opts("GET", map[string]any{
+		tool.HTTP("math_add", base+"/api/math/add", "Add two numbers (a + b)", opts("GET", map[string]any{
 			"type": "object", "properties": map[string]any{"a": num("First number"), "b": num("Second number")},
 			"required": []string{"a", "b"}})...),
-		tool.HTTP("string_reverse", "Reverse a string", base+"/api/string/reverse", opts("POST", map[string]any{
+		tool.HTTP("string_reverse", base+"/api/string/reverse", "Reverse a string", opts("POST", map[string]any{
 			"type": "object", "properties": map[string]any{"text": str("Text to reverse")}, "required": []string{"text"}})...),
-		tool.HTTP("encoding_base64_encode", "Base64-encode a string", base+"/api/encoding/base64-encode", opts("POST", map[string]any{
+		tool.HTTP("encoding_base64_encode", base+"/api/encoding/base64-encode", "Base64-encode a string", opts("POST", map[string]any{
 			"type": "object", "properties": map[string]any{"text": str("Text to encode")}, "required": []string{"text"}})...),
 	)
 }
@@ -153,7 +153,7 @@ func TestExternalOpenapiSpec(t *testing.T) {
 
 	agent := &ai.Agent{Name: "e2e_orkes_api", Model: model(t),
 		Instructions: "You have access to the Orkes Conductor API tools. Answer questions about available API operations.",
-		Tools:        ai.Tools(tool.API("orkes_api", "Orkes Conductor API", orkesSpecURL, tool.WithToolNames("startWorkflow")))}
+		Tools:        ai.Tools(tool.API("orkes_api", orkesSpecURL, "Orkes Conductor API", tool.WithToolNames("startWorkflow")))}
 	ad := agentDef(t, planAgent(t, rt, agent))
 	var apiTools []map[string]any
 	for _, tl := range asList(ad["tools"]) {

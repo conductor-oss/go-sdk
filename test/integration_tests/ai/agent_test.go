@@ -112,7 +112,7 @@ func TestToolCall(t *testing.T) {
 		Model:        model(t),
 		Instructions: "You are a helpful assistant. Use the tools to answer questions.",
 		Tools: ai.Tools(
-			tool.Func("get_weather", "Get the current weather for a city", getWeather),
+			tool.Func("get_weather", getWeather, "Get the current weather for a city"),
 		),
 	}
 

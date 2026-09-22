@@ -82,7 +82,7 @@ func TestTeamWithSecret(t *testing.T) {
 		Model:        model(t),
 		Instructions: "Open a pull request for the reviewed change using the open_pr tool.",
 		Tools: ai.Tools(
-			tool.Func("open_pr", "Open a pull request", openPR,
+			tool.Func("open_pr", openPR, "Open a pull request",
 				tool.WithCredentials(credentialName)),
 		),
 	}
@@ -161,10 +161,10 @@ func TestTaskdefDeclaresRuntimeMetadata(t *testing.T) {
 		Model:        model(t),
 		Instructions: "You have one tool: open_pr. Call it exactly once with the title 'x'.",
 		Tools: ai.Tools(
-			tool.Func("open_pr_taskdef", "Open a pull request",
-				func(ctx context.Context, in prIn) (prResult, error) {
-					return prResult{URL: "https://github.com/example/repo/pull/1"}, nil
-				}, tool.WithCredentials(credentialName)),
+			tool.Func("open_pr_taskdef", func(ctx context.Context, in prIn) (prResult, error) {
+				return prResult{URL: "https://github.com/example/repo/pull/1"}, nil
+			},
+				"Open a pull request", tool.WithCredentials(credentialName)),
 		),
 	}
 
@@ -225,7 +225,7 @@ func TestSecretRequiresDeclaration(t *testing.T) {
 		Instructions: "Call the peek tool once with any title, then stop.",
 		Tools: ai.Tools(
 			// Deliberately no WithCredentials.
-			tool.Func("peek", "Peek at configuration", peek),
+			tool.Func("peek", peek, "Peek at configuration"),
 		),
 	}
 
@@ -280,7 +280,7 @@ func TestSecretsEnvForSubprocess(t *testing.T) {
 		Model:        model(t),
 		Instructions: "Call the echo_token tool once with the title 'test', then stop.",
 		Tools: ai.Tools(
-			tool.Func("echo_token", "Echo a configured token", echoToken,
+			tool.Func("echo_token", echoToken, "Echo a configured token",
 				tool.WithCredentials(credentialName)),
 		),
 	}

@@ -84,7 +84,7 @@ func TestMcpLifecycle(t *testing.T) {
 	assertSameToolSet(t, "Phase 1: Discovery", discovered)
 
 	agent := &ai.Agent{Name: "e2e_mcp_unauth", Model: model(t), Instructions: toolAgentInstructions,
-		Tools: ai.Tools(tool.MCP("test_mcp", "Deterministic test tools via MCP", mcpLifecycleURL))}
+		Tools: ai.Tools(tool.MCP("test_mcp", mcpLifecycleURL, "Deterministic test tools via MCP"))}
 	res := runTolerant(t, rt, ctx, agent, promptUseThreeTools)
 	validateToolExecution(t, res, "Phase 1: Unauthenticated execution",
 		findMCPToolTasks(getWorkflow(t, res.ExecutionID), testkitToolNames...))
@@ -108,7 +108,7 @@ func TestMcpLifecycle(t *testing.T) {
 	assertSameToolSet(t, "Phase 2: Auth Discovery", discoveredAuth)
 
 	authAgent := &ai.Agent{Name: "e2e_mcp_auth", Model: model(t), Instructions: toolAgentInstructions,
-		Tools: ai.Tools(tool.MCP("test_mcp_auth", "Authenticated MCP test tools", mcpLifecycleURL,
+		Tools: ai.Tools(tool.MCP("test_mcp_auth", mcpLifecycleURL, "Authenticated MCP test tools",
 			tool.WithHeaders(map[string]string{"Authorization": "Bearer ${" + mcpAuthKeyName + "}"}),
 			tool.WithCredentials(mcpAuthKeyName)))}
 	resAuth := runTolerant(t, rt, ctx, authAgent, promptUseThreeTools)

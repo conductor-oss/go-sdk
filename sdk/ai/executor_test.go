@@ -122,7 +122,7 @@ func (r *recordingExecutor) Execute(_ context.Context, code string) ExecutionRes
 // The tool renders results the way the Python tool entries do.
 func TestExecutorTool(t *testing.T) {
 	rec := &recordingExecutor{res: ExecutionResult{Output: "42\n"}}
-	td := ExecutorTool(rec, "", "")
+	td := ExecutorTool("", rec, "")
 	if td.Name != "execute_code" || !strings.Contains(td.Description, "python code") || !strings.Contains(td.Description, "Timeout: 30s") {
 		t.Errorf("tool = %q / %q", td.Name, td.Description)
 	}
@@ -147,7 +147,7 @@ func TestExecutorTool(t *testing.T) {
 	if out := run(""); out.Status != "success" || !strings.Contains(out.Stdout, "No code provided") {
 		t.Errorf("empty code = %+v", out)
 	}
-	named := ExecutorTool(DockerExecutor{Language: "bash", TimeoutSeconds: 5}, "run_shell", "Runs shell.")
+	named := ExecutorTool("run_shell", DockerExecutor{Language: "bash", TimeoutSeconds: 5}, "Runs shell.")
 	if named.Name != "run_shell" || named.Description != "Runs shell." {
 		t.Errorf("named tool = %q / %q", named.Name, named.Description)
 	}
