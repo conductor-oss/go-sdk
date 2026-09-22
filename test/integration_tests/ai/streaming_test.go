@@ -23,17 +23,17 @@ import (
 )
 
 type svcIn struct {
-	ServiceName string `json:"service_name"`
+	ServiceName string
 }
 
 type svcOut struct {
-	Service string `json:"service"`
-	Status  string `json:"status"`
+	Service string
+	Status  string
 }
 
 type deleteIn struct {
-	ServiceName string `json:"service_name"`
-	DataType    string `json:"data_type"`
+	ServiceName string
+	DataType    string
 }
 
 // recorder collects what happened, in order, so the test can assert on the
@@ -130,12 +130,12 @@ func runApprovalAttempt(t *testing.T, attempt int, last bool) bool {
 			"first check_service, then restart_service if unhealthy, then " +
 			"delete_service_data if asked to clear data. A human approves the " +
 			"deletion, not you — never ask for approval in your reply.",
-		Tools: []ai.ToolDef{
+		Tools: ai.Tools(
 			tool.Func("check_service", "Check the health of a service", checkService),
 			tool.Func("restart_service", "Restart a service", restartService),
 			tool.Func("delete_service_data", "Delete service data. Destructive.",
 				deleteServiceData, tool.RequiresApproval()),
-		},
+		),
 	}
 
 	// 90s is generous: a healthy run finishes in 10-25s. Keeping it short is

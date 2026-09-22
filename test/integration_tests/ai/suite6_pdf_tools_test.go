@@ -97,7 +97,7 @@ func TestPdfGenerationAndRoundtrip(t *testing.T) {
 	rt := newRuntime(t)
 	agent := &ai.Agent{Name: "e2e_pdf_gen", Model: model(t),
 		Instructions: "You generate PDF documents from markdown. When asked, call the generate_pdf tool with the exact markdown provided. Do not modify the markdown content.",
-		Tools:        []ai.ToolDef{tool.PDF("generate_pdf", "Generate a PDF document from markdown text.")}}
+		Tools:        ai.Tools(tool.PDF("generate_pdf", "Generate a PDF document from markdown text."))}
 
 	// Step 0: the plan carries the tool.
 	ad := agentDef(t, planAgent(t, rt, agent))

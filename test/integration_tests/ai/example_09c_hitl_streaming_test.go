@@ -24,12 +24,12 @@ import (
 )
 
 type opsServiceIn struct {
-	ServiceName string `json:"service_name"`
+	ServiceName string
 }
 
 type opsDeleteIn struct {
-	ServiceName string `json:"service_name"`
-	DataType    string `json:"data_type"`
+	ServiceName string
+	DataType    string
 }
 
 // Human in the loop with streaming — the Python SDK's
@@ -70,12 +70,12 @@ func TestExample09cHITLStreaming(t *testing.T) {
 	agent := &ai.Agent{
 		Name:  "ops_agent",
 		Model: mockModel,
-		Tools: []ai.ToolDef{
+		Tools: ai.Tools(
 			tool.Func("check_service", "Check the health of a service.", checkService),
 			tool.Func("restart_service", "Restart a service. Safe operation, no approval needed.", restartService),
 			tool.Func("delete_service_data", "Delete service data. Destructive — requires human approval.",
 				deleteServiceData, tool.RequiresApproval()),
-		},
+		),
 		Instructions: "You are an operations assistant. Work through the request one tool call at a " +
 			"time, in this order:\n" +
 			"1. Check the service with check_service.\n" +

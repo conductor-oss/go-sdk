@@ -31,11 +31,11 @@ import (
 )
 
 type accountIn struct {
-	AccountID string `json:"account_id"`
+	AccountID string
 }
 
 type orderIn struct {
-	OrderID string `json:"order_id"`
+	OrderID string
 }
 
 // Domain tools.
@@ -60,14 +60,14 @@ func main() {
 		Model: model,
 		Instructions: "You are a billing specialist. Use the check_balance tool to look up " +
 			"account balances. Include the balance amount in your response.",
-		Tools: []ai.ToolDef{tool.Func("check_balance", "Check the balance of a bank account.", checkBalance)},
+		Tools: ai.Tools(tool.Func("check_balance", "Check the balance of a bank account.", checkBalance)),
 	}
 	orderSpecialist := &ai.Agent{
 		Name:  "order_specialist",
 		Model: model,
 		Instructions: "You are an order specialist. Use the lookup_order tool to check " +
 			"order status. Include the shipping status and ETA in your response.",
-		Tools: []ai.ToolDef{tool.Func("lookup_order", "Look up the status of an order.", lookupOrder)},
+		Tools: ai.Tools(tool.Func("lookup_order", "Look up the status of an order.", lookupOrder)),
 	}
 
 	// Front-line support with swarm handoffs.

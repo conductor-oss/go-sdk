@@ -26,13 +26,13 @@ import (
 )
 
 type accountIn struct {
-	AccountID string `json:"account_id"`
+	AccountID string
 }
 
 type transferIn struct {
-	FromAcct string  `json:"from_acct"`
-	ToAcct   string  `json:"to_acct"`
-	Amount   float64 `json:"amount"`
+	FromAcct string
+	ToAcct   string
+	Amount   float64
 }
 
 func checkBalance(ctx context.Context, in accountIn) (map[string]any, error) {
@@ -52,11 +52,11 @@ func main() {
 	agent := &ai.Agent{
 		Name:  "banker",
 		Model: model,
-		Tools: []ai.ToolDef{
+		Tools: ai.Tools(
 			tool.Func("check_balance", "Check the balance of an account.", checkBalance),
 			tool.Func("transfer_funds", "Request a funds transfer; runtime pauses for human approval before execution.",
 				transferFunds, tool.RequiresApproval()),
-		},
+		),
 		Instructions: "You are a banking assistant. Use check_balance for balance inquiries. " +
 			"When asked to transfer money, first check the balance, then call " +
 			"transfer_funds to request the transfer. The runtime will pause for " +

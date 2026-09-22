@@ -80,7 +80,7 @@ func TestImageOpenai(t *testing.T) {
 	rt := newRuntime(t)
 	agent := &ai.Agent{Name: "e2e_image_openai", Model: model(t),
 		Instructions: "Generate images when asked. Call the gen_image tool.",
-		Tools:        []ai.ToolDef{tool.Image("gen_image", "Generate an image from a text prompt.", "openai", "dall-e-3")}}
+		Tools:        ai.Tools(tool.Image("gen_image", "Generate an image from a text prompt.", "openai", "dall-e-3"))}
 	assertToolCompiled(t, rt, agent, "generate_image", "dall-e-3", "Image/OpenAI")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
@@ -105,7 +105,7 @@ func TestImageGemini(t *testing.T) {
 	rt := newRuntime(t)
 	agent := &ai.Agent{Name: "e2e_image_gemini", Model: model(t),
 		Instructions: "Generate images when asked. Call the gen_image_gemini tool.",
-		Tools:        []ai.ToolDef{tool.Image("gen_image_gemini", "Generate an image using Gemini Imagen.", "google_gemini", "imagen-3.0-generate-002")}}
+		Tools:        ai.Tools(tool.Image("gen_image_gemini", "Generate an image using Gemini Imagen.", "google_gemini", "imagen-3.0-generate-002"))}
 	assertToolCompiled(t, rt, agent, "generate_image", "imagen-3.0-generate-002", "Image/Gemini")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
@@ -122,7 +122,7 @@ func TestAudioOpenai(t *testing.T) {
 	rt := newRuntime(t)
 	agent := &ai.Agent{Name: "e2e_audio_openai", Model: model(t),
 		Instructions: "Convert text to speech when asked. Call the gen_audio tool.",
-		Tools:        []ai.ToolDef{tool.Audio("gen_audio", "Convert text to speech audio.", "openai", "tts-1")}}
+		Tools:        ai.Tools(tool.Audio("gen_audio", "Convert text to speech audio.", "openai", "tts-1"))}
 	assertToolCompiled(t, rt, agent, "generate_audio", "tts-1", "Audio/OpenAI")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)

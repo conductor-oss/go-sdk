@@ -68,8 +68,8 @@ func TestExample22LLMGuardrails(t *testing.T) {
 	// evaluator's verdict on the last draft, which is the last recorded call,
 	// a JSON object {"passed": false, "reason": "..."}.
 	var verdict struct {
-		Passed bool   `json:"passed"`
-		Reason string `json:"reason"`
+		Passed bool
+		Reason string
 	}
 	if jerr := json.Unmarshal([]byte(recorded[len(recorded)-1]), &verdict); jerr != nil {
 		t.Fatalf("last recorded call is not an evaluator verdict: %v", jerr)

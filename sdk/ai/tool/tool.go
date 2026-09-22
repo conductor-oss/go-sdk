@@ -10,9 +10,10 @@
 // Package tool builds the tools an agent can call.
 //
 // A worker tool is an ordinary Go function; reflection over its argument and
-// return types gives the input and output schemas. A field's `json` tag is the
-// name the model is shown and sends back; a field is required unless it is a
-// pointer or carries omitempty.
+// return types gives the input and output schemas. A field is shown to the
+// model under its `json` tag, or under its name in snake_case when it has
+// none, so AccountID is account_id; it is required unless it is a pointer or
+// carries omitempty.
 package tool
 
 import (

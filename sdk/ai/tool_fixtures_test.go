@@ -11,29 +11,29 @@ import (
 // reflected schemas must match what Python's type hints produced.
 
 type weatherIn struct {
-	City string `json:"city"`
-	Days int    `json:"days,omitempty"` // Python: days: int = 3 — has a default
+	City string
+	Days int `json:"days,omitempty"` // Python: days: int = 3 — has a default
 }
 
 type scalarKindsIn struct {
-	S   string  `json:"s"`
-	I   int     `json:"i"`
-	F   float64 `json:"f"`
-	B   bool    `json:"b"`
+	S   string
+	I   int
+	F   float64
+	B   bool
 	Opt *string `json:"opt,omitempty"` // Python: Optional[str] = None
 }
 
 type containerKindsIn struct {
-	Names []string       `json:"names"`
-	Meta  map[string]int `json:"meta"`
+	Names []string
+	Meta  map[string]int
 }
 
 type orderIn struct {
-	OrderID string `json:"order_id"`
+	OrderID string
 }
 
 type branchIn struct {
-	Branch string `json:"branch"`
+	Branch string
 }
 
 // mkTool builds a worker ToolDef with schemas reflected from the given input

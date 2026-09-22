@@ -24,11 +24,11 @@ import (
 )
 
 type orderStatusIn struct {
-	OrderID string `json:"order_id"`
+	OrderID string
 }
 
 type customerInfoIn struct {
-	CustomerID string `json:"customer_id"`
+	CustomerID string
 }
 
 // Guardrails — the Python SDK's examples/agents/10_guardrails.py as a test.
@@ -89,10 +89,10 @@ func TestExample10Guardrails(t *testing.T) {
 	agent := &ai.Agent{
 		Name:  "support_agent",
 		Model: mockModel,
-		Tools: []ai.ToolDef{
+		Tools: ai.Tools(
 			tool.Func("get_order_status", "Look up the current status of an order.", getOrderStatus),
 			tool.Func("get_customer_info", "Retrieve customer details including payment info on file.", getCustomerInfo),
-		},
+		),
 		Instructions: "You are a customer support assistant. Use the available tools to " +
 			"answer questions about orders and customers. Always include all " +
 			"details from the tool results in your response.",

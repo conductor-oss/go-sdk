@@ -75,7 +75,7 @@ func TestTextMentionTerminatesEarly(t *testing.T) {
 		Name: "e2e_s12_text_term", Model: model(t), MaxTurns: 3,
 		Instructions: "You MUST include the exact text TASK_COMPLETE in every response. " +
 			"Answer the user's question and always end with TASK_COMPLETE.",
-		Tools:       []ai.ToolDef{s12EchoTool()},
+		Tools:       ai.Tools(s12EchoTool()),
 		Termination: ai.TextMentionTermination{Text: "TASK_COMPLETE"},
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
@@ -103,7 +103,7 @@ func TestMaxMessageTerminatesAtLimit(t *testing.T) {
 			"step — never answer directly. Call echo_tool once per number with " +
 			"{text: \"<number>\"}. After each tool result, call echo_tool again " +
 			"for the next number. Continue until told to stop.",
-		Tools:       []ai.ToolDef{s12EchoTool()},
+		Tools:       ai.Tools(s12EchoTool()),
 		Termination: ai.MaxMessageTermination{MaxMessages: 1},
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
@@ -148,7 +148,7 @@ func s12Pipeline(t *testing.T, suffix string) *ai.Agent {
 	checker := &ai.Agent{Name: "e2e_s12_checker_" + suffix, Model: m, MaxTurns: 2,
 		Instructions: "Check for issues.", Gate: ai.TextGate{Text: "STOP"}}
 	fixer := &ai.Agent{Name: "e2e_s12_fixer_" + suffix, Model: m, MaxTurns: 2,
-		Instructions: "Fix any issues found.", Tools: []ai.ToolDef{s12EchoTool()}}
+		Instructions: "Fix any issues found.", Tools: ai.Tools(s12EchoTool())}
 	return &ai.Agent{Name: checker.Name + "_" + fixer.Name, Model: m,
 		Agents: []*ai.Agent{checker, fixer}, Strategy: ai.StrategySequential}
 }
@@ -215,7 +215,7 @@ func TestInvalidModelFails(t *testing.T) {
 	rt := newRuntime(t)
 	agent := &ai.Agent{Name: "e2e_s12_bad_model", Model: "nonexistent/xyz-model-does-not-exist",
 		Instructions: "This agent should never execute successfully.",
-		Tools:        []ai.ToolDef{s12EchoTool()}}
+		Tools:        ai.Tools(s12EchoTool())}
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 	res := runTolerant(t, rt, ctx, agent, "Hello.")

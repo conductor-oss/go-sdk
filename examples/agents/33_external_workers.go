@@ -34,25 +34,25 @@ import (
 )
 
 type orderActionIn struct {
-	OrderID string `json:"order_id"`
-	Action  string `json:"action"`
+	OrderID string
+	Action  string
 }
 
 type deleteAccountIn struct {
-	UserID string `json:"user_id"`
-	Reason string `json:"reason"`
+	UserID string
+	Reason string
 }
 
 type formatIn struct {
-	Data map[string]any `json:"data"`
+	Data map[string]any
 }
 
 type customerIn struct {
-	CustomerID string `json:"customer_id"`
+	CustomerID string
 }
 
 type inventoryIn struct {
-	ProductID string `json:"product_id"`
+	ProductID string
 	Warehouse string `json:"warehouse,omitempty"`
 }
 
@@ -103,12 +103,12 @@ func main() {
 		Instructions: "You are a customer support agent. Use the available tools to " +
 			"look up customers, check inventory, process orders, and format " +
 			"responses for the customer.",
-		Tools: []ai.ToolDef{
+		Tools: ai.Tools(
 			tool.Func("format_response", "Format a data dictionary into a human-readable string.", formatResponse), // local — runs in this process
 			getCustomer,    // external — runs in the CRM service
 			checkInventory, // external — runs in the inventory service
 			processOrder,   // external — runs in the order service
-		},
+		),
 	}
 
 	runtime := ai.NewRuntime(ai.Config{})

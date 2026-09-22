@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/conductor-sdk/conductor-go/sdk/ai/internal/schema"
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 )
 
@@ -40,8 +41,11 @@ func toolExecutor(t ToolDef) (model.ExecuteTaskFunction, error) {
 
 	return func(task *model.Task) (any, error) {
 		in := reflect.New(inType)
-		if len(task.InputData) > 0 {
-			raw, err := json.Marshal(task.InputData)
+		// The model sends the wire names the schema advertised; untagged fields
+		// need them mapped back to Go names before encoding/json binds them.
+		input := schema.RekeyInput(task.InputData, inType)
+		if len(input) > 0 {
+			raw, err := json.Marshal(input)
 			if err != nil {
 				return nil, fmt.Errorf("tool %q: encode input: %w", t.Name, err)
 			}
@@ -63,12 +67,40 @@ func toolExecutor(t ToolDef) (model.ExecuteTaskFunction, error) {
 		if err, ok := out[1].Interface().(error); ok && err != nil {
 			return nil, err
 		}
-		value, err := checkToolOutput(ctx, t, out[0].Interface())
+		result := out[0].Interface()
+		if renamed, ok := snakeCaseOutput(result); ok {
+			result = renamed
+		}
+		value, err := checkToolOutput(ctx, t, result)
 		if err != nil {
 			return nil, err
 		}
 		return toolOutput(value), nil
 	}, nil
+}
+
+// snakeCaseOutput is RekeyInput's counterpart for a result: an untagged output
+// field is advertised as snake_case but encoding/json would write its Go name,
+// so a result whose type has such fields is round-tripped through JSON and
+// renamed. A result with none is left alone, in declaration order. Renaming
+// happens before the output guardrails so they judge what the model will see.
+func snakeCaseOutput(v any) (any, bool) {
+	if v == nil {
+		return nil, false
+	}
+	rt := reflect.TypeOf(v)
+	if !schema.NeedsRekey(rt) {
+		return nil, false
+	}
+	raw, err := json.Marshal(v)
+	if err != nil {
+		return nil, false
+	}
+	var decoded any
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		return nil, false
+	}
+	return schema.RekeyOutputValue(decoded, rt), true
 }
 
 // toolOutput shapes a handler's return value as task output: maps and structs

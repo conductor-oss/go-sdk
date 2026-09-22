@@ -38,7 +38,7 @@ const (
 )
 
 type prIn struct {
-	Title string `json:"title"`
+	Title string
 }
 
 type prResult struct {
@@ -81,10 +81,10 @@ func TestTeamWithSecret(t *testing.T) {
 		Name:         "publisher",
 		Model:        model(t),
 		Instructions: "Open a pull request for the reviewed change using the open_pr tool.",
-		Tools: []ai.ToolDef{
+		Tools: ai.Tools(
 			tool.Func("open_pr", "Open a pull request", openPR,
 				tool.WithCredentials(credentialName)),
-		},
+		),
 	}
 
 	team := &ai.Agent{
@@ -160,12 +160,12 @@ func TestTaskdefDeclaresRuntimeMetadata(t *testing.T) {
 		Name:         "e2e_worker_creds_taskdef",
 		Model:        model(t),
 		Instructions: "You have one tool: open_pr. Call it exactly once with the title 'x'.",
-		Tools: []ai.ToolDef{
+		Tools: ai.Tools(
 			tool.Func("open_pr_taskdef", "Open a pull request",
 				func(ctx context.Context, in prIn) (prResult, error) {
 					return prResult{URL: "https://github.com/example/repo/pull/1"}, nil
 				}, tool.WithCredentials(credentialName)),
-		},
+		),
 	}
 
 	// The run is only a way to make the runtime register its workers; what is
@@ -223,10 +223,10 @@ func TestSecretRequiresDeclaration(t *testing.T) {
 		Name:         "go_e2e_undeclared",
 		Model:        model(t),
 		Instructions: "Call the peek tool once with any title, then stop.",
-		Tools: []ai.ToolDef{
+		Tools: ai.Tools(
 			// Deliberately no WithCredentials.
 			tool.Func("peek", "Peek at configuration", peek),
-		},
+		),
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
@@ -279,10 +279,10 @@ func TestSecretsEnvForSubprocess(t *testing.T) {
 		Name:         "go_e2e_shellout",
 		Model:        model(t),
 		Instructions: "Call the echo_token tool once with the title 'test', then stop.",
-		Tools: []ai.ToolDef{
+		Tools: ai.Tools(
 			tool.Func("echo_token", "Echo a configured token", echoToken,
 				tool.WithCredentials(credentialName)),
-		},
+		),
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)

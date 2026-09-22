@@ -167,9 +167,9 @@ func TestSkillAsAgentTool(t *testing.T) {
 		Model: model(t),
 		Instructions: "You have one tool: " + skillName + ". " +
 			"Call it once with the user's request, then return the result.",
-		Tools: []ai.ToolDef{
+		Tools: ai.Tools(
 			tool.Agent(skill, "", "Run the test skill, which echoes its input with echo_args"),
-		},
+		),
 		MaxTurns: 3,
 	}
 

@@ -29,11 +29,11 @@ import (
 // not stateful uses the shared queue and records no domain at all.
 
 type s14MessageIn struct {
-	Message string `json:"message"`
+	Message string
 }
 
 type s14TaskIn struct {
-	Task string `json:"task"`
+	Task string
 }
 
 func s14EchoTool() ai.ToolDef {
@@ -131,7 +131,7 @@ func TestStatefulToolCompletes(t *testing.T) {
 	agent := &ai.Agent{Name: "e2e_s14_stateful_tool", Model: model(t), Stateful: true, MaxTurns: 3,
 		Instructions: "You have an echo_tool. Call echo_tool with message='hello'. " +
 			"Then respond with what the tool returned.",
-		Tools: []ai.ToolDef{s14EchoTool()}}
+		Tools: ai.Tools(s14EchoTool())}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 	res := runTolerant(t, rt, ctx, agent, "Call the echo tool with hello")
@@ -163,7 +163,7 @@ func TestStatefulStopWhenCompletes(t *testing.T) {
 	rt := newRuntime(t)
 	agent := &ai.Agent{Name: "e2e_s14_stateful_stop", Model: model(t), Stateful: true, MaxTurns: 5,
 		Instructions: "Call echo_tool with message='stop_test'. Then report the tool's response.",
-		Tools:        []ai.ToolDef{s14EchoTool()}, StopWhen: shouldStopOnEcho}
+		Tools:        ai.Tools(s14EchoTool()), StopWhen: shouldStopOnEcho}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 	res := runTolerant(t, rt, ctx, agent, "Call echo_tool with stop_test")
@@ -204,7 +204,7 @@ func TestStatefulMixedTools(t *testing.T) {
 	agent := &ai.Agent{Name: "e2e_s14_mixed_tools", Model: model(t), Stateful: true, MaxTurns: 5,
 		Instructions: "You have two tools. First call echo_tool with message='regular'. " +
 			"Then call stateful_echo with message='stateful'. Report both results.",
-		Tools: []ai.ToolDef{s14EchoTool(), s14StatefulEcho()}}
+		Tools: ai.Tools(s14EchoTool(), s14StatefulEcho())}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 	res := runTolerant(t, rt, ctx, agent, "Call both tools")
@@ -248,7 +248,7 @@ func TestConcurrentStatefulIsolation(t *testing.T) {
 	makeAgent := func(suffix string) *ai.Agent {
 		return &ai.Agent{Name: "e2e_s14_concurrent_" + suffix, Model: model(t), Stateful: true, MaxTurns: 3,
 			Instructions: "Call echo_tool with message='concurrent_test'. Respond with the tool result.",
-			Tools:        []ai.ToolDef{s14EchoTool()}}
+			Tools:        ai.Tools(s14EchoTool())}
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
@@ -287,7 +287,7 @@ func TestNonStatefulNoDomain(t *testing.T) {
 	rt := newRuntime(t)
 	agent := &ai.Agent{Name: "e2e_s14_non_stateful", Model: model(t), MaxTurns: 3,
 		Instructions: "Call echo_tool with message='non_stateful'. Respond with the result.",
-		Tools:        []ai.ToolDef{s14EchoTool()}}
+		Tools:        ai.Tools(s14EchoTool())}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 	res := runTolerant(t, rt, ctx, agent, "Call echo_tool")

@@ -41,7 +41,7 @@ type s3PathIn struct {
 }
 
 type s3GhIn struct {
-	Subcommand string `json:"subcommand"`
+	Subcommand string
 	Args       string `json:"args,omitempty"`
 }
 
@@ -121,7 +121,7 @@ func TestCliCredentialLifecycle(t *testing.T) {
 		Instructions: "You have three tools: cli_ls, cli_mktemp, and cli_gh.\n" +
 			"You MUST call each tool exactly once as directed and report the output verbatim.\n" +
 			"Do not skip any tool. Do not add commentary beyond the results.\n",
-		Tools: []ai.ToolDef{cliLs, cliMktemp, cliGh}}
+		Tools: ai.Tools(cliLs, cliMktemp, cliGh)}
 	const promptAllThree = "Call all three tools:\n" +
 		"1. cli_ls with path=\"/tmp\"\n" +
 		"2. cli_mktemp (no arguments)\n" +

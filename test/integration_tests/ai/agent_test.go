@@ -82,13 +82,13 @@ func model(t *testing.T) string {
 }
 
 type weatherIn struct {
-	City string `json:"city"`
+	City string
 }
 
 type weatherOut struct {
-	City      string `json:"city"`
-	TempF     int    `json:"temp_f"`
-	Condition string `json:"condition"`
+	City      string
+	TempF     int
+	Condition string
 }
 
 // A tool-using agent, end to end: the SDK serializes the definition, the server
@@ -111,9 +111,9 @@ func TestToolCall(t *testing.T) {
 		Name:         "go_e2e_weather_bot",
 		Model:        model(t),
 		Instructions: "You are a helpful assistant. Use the tools to answer questions.",
-		Tools: []ai.ToolDef{
+		Tools: ai.Tools(
 			tool.Func("get_weather", "Get the current weather for a city", getWeather),
-		},
+		),
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)

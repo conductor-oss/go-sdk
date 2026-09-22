@@ -33,7 +33,7 @@ import (
 // its later update reach the tool on the next run with a fresh worker.
 
 type s2XIn struct {
-	X string `json:"x"`
+	X string
 }
 
 // skipInPlayback skips a test that can only run against a live model.
@@ -119,7 +119,7 @@ func TestCredentialLifecycle(t *testing.T) {
 			"After calling all three, report each tool's output verbatim in this format:\n" +
 			"  free_tool: <output>\n  paid_tool_a: <output>\n  paid_tool_b: <output>\n" +
 			"Do not skip any tool. Do not add commentary.\n",
-		Tools: []ai.ToolDef{freeTool, paidTool("paid_tool_a", "paid_a", credA), paidTool("paid_tool_b", "paid_b", credB)}}
+		Tools: ai.Tools(freeTool, paidTool("paid_tool_a", "paid_a", credA), paidTool("paid_tool_b", "paid_b", credB))}
 	toolNames := []string{"free_tool", "paid_tool_a", "paid_tool_b"}
 
 	t.Cleanup(func() {

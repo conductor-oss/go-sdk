@@ -56,14 +56,14 @@ func TestExample64SwarmWithTools(t *testing.T) {
 		Model: mockModel,
 		Instructions: "You are a billing specialist. Use the check_balance tool to look up " +
 			"account balances. Include the balance amount in your response.",
-		Tools: []ai.ToolDef{tool.Func("check_balance", "Check the balance of a bank account.", checkBalance)},
+		Tools: ai.Tools(tool.Func("check_balance", "Check the balance of a bank account.", checkBalance)),
 	}
 	orderSpecialist := &ai.Agent{
 		Name:  "order_specialist",
 		Model: mockModel,
 		Instructions: "You are an order specialist. Use the lookup_order tool to check " +
 			"order status. Include the shipping status and ETA in your response.",
-		Tools: []ai.ToolDef{tool.Func("lookup_order", "Look up the status of an order.", lookupOrder)},
+		Tools: ai.Tools(tool.Func("lookup_order", "Look up the status of an order.", lookupOrder)),
 	}
 	support := &ai.Agent{
 		Name:  "support",

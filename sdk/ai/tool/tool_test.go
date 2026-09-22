@@ -11,8 +11,8 @@ import (
 )
 
 type WeatherIn struct {
-	City string `json:"city"`
-	Days int    `json:"days,omitempty"`
+	City string
+	Days int `json:"days,omitempty"`
 }
 
 func getWeather(ctx context.Context, in WeatherIn) (map[string]any, error) {

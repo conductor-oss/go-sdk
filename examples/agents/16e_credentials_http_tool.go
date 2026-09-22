@@ -49,7 +49,7 @@ func main() {
 	agent := &ai.Agent{
 		Name:         "github_http_agent",
 		Model:        model,
-		Tools:        []ai.ToolDef{listRepos},
+		Tools:        ai.Tools(listRepos),
 		Instructions: "You list GitHub repos using the list_github_repos tool. Summarize the results.",
 	}
 

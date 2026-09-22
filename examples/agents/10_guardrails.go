@@ -27,11 +27,11 @@ import (
 )
 
 type orderIn struct {
-	OrderID string `json:"order_id"`
+	OrderID string
 }
 
 type customerIn struct {
-	CustomerID string `json:"customer_id"`
+	CustomerID string
 }
 
 func getOrderStatus(ctx context.Context, in orderIn) (map[string]any, error) {
@@ -83,10 +83,10 @@ func main() {
 	agent := &ai.Agent{
 		Name:  "support_agent",
 		Model: model,
-		Tools: []ai.ToolDef{
+		Tools: ai.Tools(
 			tool.Func("get_order_status", "Look up the current status of an order.", getOrderStatus),
 			tool.Func("get_customer_info", "Retrieve customer details including payment info on file.", getCustomerInfo),
-		},
+		),
 		Instructions: "You are a customer support assistant. Use the available tools to " +
 			"answer questions about orders and customers. Always include all " +
 			"details from the tool results in your response.",

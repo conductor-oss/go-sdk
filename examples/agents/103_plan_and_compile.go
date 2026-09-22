@@ -29,16 +29,16 @@ import (
 )
 
 type factorialIn struct {
-	N int `json:"n"`
+	N int
 }
 
 type summaryIn struct {
-	Text string `json:"text"`
+	Text string
 }
 
 type checkIn struct {
-	Text     string `json:"text"`
-	MinChars int    `json:"min_chars"`
+	Text     string
+	MinChars int
 }
 
 // The tool descriptions are the Python functions' docstrings, verbatim: the
@@ -87,11 +87,11 @@ func main() {
 		topic = strings.Join(os.Args[1:], " ")
 	}
 
-	tools := []ai.ToolDef{
+	tools := ai.Tools(
 		tool.Func("factorial", factorialDoc, factorial),
 		tool.Func("write_summary", summaryDoc, writeSummary),
 		tool.Func("check_summary", checkDoc, checkSummary),
-	}
+	)
 	// The Python example builds this with plan_execute(...): a planner and a
 	// fallback sub-agent named after the harness.
 	harness := &ai.Agent{
@@ -163,7 +163,7 @@ func findPlanAndCompileOutput(executionID string) map[string]any {
 			continue
 		}
 		var wf struct {
-			Tasks []map[string]any `json:"tasks"`
+			Tasks []map[string]any
 		}
 		json.NewDecoder(resp.Body).Decode(&wf)
 		resp.Body.Close()

@@ -23,13 +23,13 @@ import (
 )
 
 type bankAccountIn struct {
-	AccountID string `json:"account_id"`
+	AccountID string
 }
 
 type transferIn struct {
-	FromAcct string  `json:"from_acct"`
-	ToAcct   string  `json:"to_acct"`
-	Amount   float64 `json:"amount"`
+	FromAcct string
+	ToAcct   string
+	Amount   float64
 }
 
 // Human in the loop — the Python SDK's examples/agents/09_human_in_the_loop.py
@@ -70,11 +70,11 @@ func TestExample09HumanInTheLoop(t *testing.T) {
 	agent := &ai.Agent{
 		Name:  "banker",
 		Model: mockModel,
-		Tools: []ai.ToolDef{
+		Tools: ai.Tools(
 			tool.Func("check_balance", "Check the balance of an account.", checkBalance),
 			tool.Func("transfer_funds", "Request a funds transfer; runtime pauses for human approval before execution.",
 				transferFunds, tool.RequiresApproval()),
-		},
+		),
 		Instructions: "You are a banking assistant. Use check_balance for balance inquiries. " +
 			"When asked to transfer money, first check the balance, then call " +
 			"transfer_funds to request the transfer. The runtime will pause for " +

@@ -25,11 +25,11 @@ import (
 // by ai.Ref. The Ref contract is the complete upstream result, not a field of
 // it, so the receiving tool declares the producing tool's output type.
 type packIn struct {
-	Weather weatherOut `json:"weather"`
+	Weather weatherOut
 }
 
 type packOut struct {
-	Advice string `json:"advice"`
+	Advice string
 }
 
 // StrategyPlanExecute with a plan supplied by the caller: the server skips the
@@ -72,10 +72,10 @@ func TestPlanExecute(t *testing.T) {
 		Instructions: "Carry out the plan with the tools. Every step must be " +
 			"carried out with its tool, not answered from memory.",
 		// The parent's tools are what a plan may name.
-		Tools: []ai.ToolDef{
+		Tools: ai.Tools(
 			tool.Func("get_weather", "Get the current temperature for a city", getWeather),
 			tool.Func("packing_advice", "Advise what to pack from the complete weather result", packingAdvice),
-		},
+		),
 		Planner: &ai.Agent{
 			Name:         "trip_plan_writer",
 			Model:        model(t),

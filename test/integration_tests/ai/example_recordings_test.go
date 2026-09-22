@@ -60,7 +60,7 @@ func recordedAnswers(t *testing.T, name string) []string {
 			Response struct {
 				Results []struct {
 					Output struct {
-						Text string `json:"text"`
+						Text string
 					} `json:"output"`
 				} `json:"results"`
 			} `json:"response"`

@@ -39,8 +39,8 @@ import (
 )
 
 type reportIn struct {
-	Title string `json:"title"`
-	Body  string `json:"body"`
+	Title string
+	Body  string
 }
 
 func formatReport(ctx context.Context, in reportIn) (map[string]any, error) {
@@ -78,11 +78,11 @@ func main() {
 	agent := &ai.Agent{
 		Name:  "http_tools_demo",
 		Model: model,
-		Tools: []ai.ToolDef{
+		Tools: ai.Tools(
 			tool.Func("format_report", "Format a title and body into a structured report.", formatReport),
 			reverseAPI,
 			mcpTestTools,
-		},
+		),
 		Instructions: "You can reverse strings and format reports. " +
 			"When asked to reverse a string, use reverse_string first, then format_report with the result.",
 	}

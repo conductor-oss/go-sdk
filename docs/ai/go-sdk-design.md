@@ -71,8 +71,10 @@ func Func[In, Out any](name, description string,
 ```
 
 The type parameters make the handler's shape a compile-time contract and give the constructor
-the `In` and `Out` types to derive `inputSchema` and `outputSchema` from — struct fields and
-`json` tags, types and required-ness only, to match what Python and Java emit. `ToolDef` itself is
+the `In` and `Out` types to derive `inputSchema` and `outputSchema` from — struct fields named by
+`json` tag or, untagged, by snake_case, types and required-ness only, to match what Python and
+Java emit. Dispatch maps the snake_case names back before decoding, since encoding/json would
+otherwise drop them silently. `ToolDef` itself is
 not generic: the handler is stored as `any` so tools of different types share one slice, and
 dispatch binds the task input to `In` and calls the handler by reflection. Deriving `Out` is the
 one place Go gives the planner more than Python can, which chained plan steps need.

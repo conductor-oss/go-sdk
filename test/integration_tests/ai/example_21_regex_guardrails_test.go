@@ -22,7 +22,7 @@ import (
 )
 
 type userProfileIn struct {
-	UserID string `json:"user_id"`
+	UserID string
 }
 
 // Regex guardrails — the Python SDK's examples/agents/21_regex_guardrails.py
@@ -74,7 +74,7 @@ func TestExample21RegexGuardrails(t *testing.T) {
 	agent := &ai.Agent{
 		Name:  "hr_assistant",
 		Model: mockModel,
-		Tools: []ai.ToolDef{tool.Func("get_user_profile", "Retrieve a user's profile from the database.", getUserProfile)},
+		Tools: ai.Tools(tool.Func("get_user_profile", "Retrieve a user's profile from the database.", getUserProfile)),
 		Instructions: "You are an HR assistant. When asked about employees, look up their " +
 			"profile and share ALL the details you find.",
 		Guardrails: []ai.Guardrail{noEmails, noSSN},

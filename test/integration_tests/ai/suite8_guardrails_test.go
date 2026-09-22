@@ -28,11 +28,11 @@ import (
 // blocks input, blocks output, fixes output, or runs out of retries.
 
 type s8TextIn struct {
-	Text string `json:"text"`
+	Text string
 }
 
 type s8QueryIn struct {
-	Query string `json:"query"`
+	Query string
 }
 
 // The suite's guardrails, verbatim from the Python module.
@@ -165,7 +165,7 @@ func TestPlanReflectsAllGuardrails(t *testing.T) {
 	rt := newRuntime(t)
 	agent := &ai.Agent{
 		Name: "e2e_gr_compile", Model: model(t), Instructions: "Test agent.",
-		Tools:      []ai.ToolDef{s8SafeQuery(), s8FormatOutput(), s8RedactTool(), s8StrictTool(), s8NormalTool()},
+		Tools:      ai.Tools(s8SafeQuery(), s8FormatOutput(), s8RedactTool(), s8StrictTool(), s8NormalTool()),
 		Guardrails: []ai.Guardrail{s8BlockInput(), s8NoSecrets()},
 	}
 	ad := agentDef(t, planAgent(t, rt, agent))
@@ -234,7 +234,7 @@ func TestCleanAgentCompiles(t *testing.T) {
 func s8AgentClean(m string) *ai.Agent {
 	return &ai.Agent{Name: "e2e_gr_clean", Model: m,
 		Instructions: "You have one tool: normal_tool. Call it as directed. Report the result verbatim.",
-		Tools:        []ai.ToolDef{s8NormalTool()}}
+		Tools:        ai.Tools(s8NormalTool())}
 }
 
 // An input guardrail with on_fail=raise keeps the tool body from running:
@@ -243,7 +243,7 @@ func TestToolInputRaise(t *testing.T) {
 	rt := newRuntime(t)
 	agent := &ai.Agent{Name: "e2e_gr_sql", Model: model(t),
 		Instructions: "You have safe_query tool. Call it with the query provided. Report the result.",
-		Tools:        []ai.ToolDef{s8SafeQuery()}}
+		Tools:        ai.Tools(s8SafeQuery())}
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 	res := runTolerant(t, rt, ctx, agent, `Call safe_query with query="DROP TABLE users"`)
@@ -257,7 +257,7 @@ func TestToolOutputFixCompiles(t *testing.T) {
 	rt := newRuntime(t)
 	agent := &ai.Agent{Name: "e2e_gr_fix", Model: model(t),
 		Instructions: "You have format_output tool. Call it with the text provided. Report the result.",
-		Tools:        []ai.ToolDef{s8FormatOutput()}}
+		Tools:        ai.Tools(s8FormatOutput())}
 	ad := agentDef(t, planAgent(t, rt, agent))
 	tl := toolByName(ad, "format_output")
 	if tl == nil {
@@ -277,7 +277,7 @@ func TestToolOutputRegexRetry(t *testing.T) {
 	rt := newRuntime(t)
 	agent := &ai.Agent{Name: "e2e_gr_email", Model: model(t),
 		Instructions: "You have redact_tool. Call it with the text provided. Report the result.",
-		Tools:        []ai.ToolDef{s8RedactTool()}, MaxTurns: 3}
+		Tools:        ai.Tools(s8RedactTool()), MaxTurns: 3}
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 	res := runTolerant(t, rt, ctx, agent, `Call redact_tool with text="contact test@example.com for help"`)
@@ -320,7 +320,7 @@ func TestMaxRetriesEscalation(t *testing.T) {
 	rt := newRuntime(t)
 	agent := &ai.Agent{Name: "e2e_gr_strict", Model: model(t),
 		Instructions: "You have strict_tool. Call it with the text provided. Report the result.",
-		Tools:        []ai.ToolDef{s8StrictTool()}}
+		Tools:        ai.Tools(s8StrictTool())}
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 	res := runTolerant(t, rt, ctx, agent, `Call strict_tool with text="test"`)

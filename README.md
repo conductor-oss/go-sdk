@@ -342,8 +342,9 @@ identifier. `Instructions` is the system prompt.
 
 ### Step 2: Add tools
 
-A tool is a Go function. `tool.Func` derives the schema the model sees from the argument type's
-json tags, and the runtime registers the function as a Conductor worker named after the tool, so
+A tool is a Go function. `tool.Func` derives the schema the model sees from the argument type: a
+field is named by its json tag, or by its name in snake_case when it has none, so `AccountID` is
+`account_id`. The runtime registers the function as a Conductor worker named after the tool, so
 every call the model makes shows up as its own task with its inputs and outputs.
 
 From [examples/agents/02a_simple_tools.go](examples/agents/02a_simple_tools.go):

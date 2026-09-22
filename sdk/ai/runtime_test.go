@@ -24,7 +24,7 @@ import (
 )
 
 type echoIn struct {
-	City string `json:"city"`
+	City string
 }
 
 // steps records what the fake server observed, so the test asserts on the whole

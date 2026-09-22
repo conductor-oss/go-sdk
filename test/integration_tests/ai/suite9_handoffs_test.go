@@ -30,15 +30,15 @@ import (
 // children as sub-workflows the way the Python suite checks.
 
 type s9ExprIn struct {
-	Expr string `json:"expr"`
+	Expr string
 }
 
 type s9TextIn struct {
-	Text string `json:"text"`
+	Text string
 }
 
 type s9QueryIn struct {
-	Query string `json:"query"`
+	Query string
 }
 
 // evalExpr stands in for the Python tool's eval() on the small arithmetic
@@ -100,14 +100,14 @@ var (
 )
 
 func s9MathAgent(m string) *ai.Agent {
-	return &ai.Agent{Name: "math_agent", Model: m, Tools: []ai.ToolDef{doMath}, MaxTurns: 3,
+	return &ai.Agent{Name: "math_agent", Model: m, Tools: ai.Tools(doMath), MaxTurns: 3,
 		Instructions: "You are a math agent. When asked to compute something, call do_math with the expression. " +
 			"For example, for \"3+4\" call do_math with expr=\"3+4\". Only handle math operations — ignore non-math requests. " +
 			"If there is nothing to compute, just respond with a summary."}
 }
 
 func s9TextAgent(m string) *ai.Agent {
-	return &ai.Agent{Name: "text_agent", Model: m, Tools: []ai.ToolDef{doText}, MaxTurns: 3,
+	return &ai.Agent{Name: "text_agent", Model: m, Tools: ai.Tools(doText), MaxTurns: 3,
 		Instructions: "You are a text agent. When asked to reverse text, call do_text with the text. " +
 			"For example, for \"hello\" call do_text with text=\"hello\". " +
 			"If there is nothing to reverse, just respond with a summary of what you received."}

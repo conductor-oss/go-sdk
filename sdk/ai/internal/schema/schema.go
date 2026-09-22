@@ -18,11 +18,13 @@ import (
 	"encoding/json"
 	"reflect"
 	"strings"
+	"unicode"
 )
 
-// Of returns the JSON Schema for t: struct properties come from `json` tags in
-// declaration order, which matters because `required` is a positional array. A
-// pointer or omitempty field is optional, Go's stand-in for a Python default.
+// Of returns the JSON Schema for t. A struct property is named by its `json`
+// tag, or by Snake of the field name when there is none, in declaration order,
+// which matters because `required` is a positional array. A pointer or
+// omitempty field is optional, Go's stand-in for a Python default.
 func Of(t reflect.Type) map[string]any {
 	for t != nil && t.Kind() == reflect.Pointer {
 		t = t.Elem()
@@ -156,7 +158,7 @@ func structSchema(t reflect.Type) map[string]any {
 			continue
 		}
 		if name == "" {
-			name = f.Name
+			name = Snake(f.Name)
 		}
 		props.Set(name, Of(f.Type))
 		if f.Type.Kind() != reflect.Pointer && !opts.omitempty {
@@ -176,6 +178,188 @@ func deref(t reflect.Type) reflect.Type {
 		t = t.Elem()
 	}
 	return t
+}
+
+// Snake converts a Go identifier to snake_case, acronyms included: AccountID
+// becomes account_id, HTTPStatus becomes http_status, TempF becomes temp_f.
+// It names an untagged struct field on the wire, so Go tools read like Python
+// ones without a tag on every field.
+func Snake(name string) string {
+	runes := []rune(name)
+	var b strings.Builder
+	for i, r := range runes {
+		if i > 0 && unicode.IsUpper(r) {
+			prev := runes[i-1]
+			nextLower := i+1 < len(runes) && unicode.IsLower(runes[i+1])
+			if unicode.IsLower(prev) || unicode.IsDigit(prev) || (unicode.IsUpper(prev) && nextLower) {
+				b.WriteByte('_')
+			}
+		}
+		b.WriteRune(unicode.ToLower(r))
+	}
+	return b.String()
+}
+
+// RekeyInput returns a copy of a task's input with the wire names Of emits for
+// untagged fields renamed to the Go field names encoding/json binds, so a field
+// declared AccountID receives the model's account_id. encoding/json accepts an
+// untagged field's own name and case-insensitive variants of it, but not the
+// underscored form, and a missed key decodes silently to a zero value; this is
+// what makes untagged fields safe to use. Tagged fields are left alone because
+// encoding/json already matches their tag. It descends into nested structs and
+// into slices and maps of structs, and never overwrites a key already present
+// under the Go name.
+func RekeyInput(in map[string]any, t reflect.Type) map[string]any {
+	if in == nil {
+		return nil
+	}
+	m, ok := rekeyValue(in, t, toGo).(map[string]any)
+	if !ok {
+		return in
+	}
+	return m
+}
+
+// RekeyOutputValue is the inverse of RekeyInput for a handler's result, given
+// its JSON-decoded form: encoding/json wrote each untagged field under its Go
+// name, and this renames it to the snake_case name the output schema
+// advertised, so the model reads the keys it was told to expect. It accepts a
+// struct, or a slice or map of structs, decoded to any.
+func RekeyOutputValue(v any, t reflect.Type) any {
+	return rekeyValue(v, t, toWire)
+}
+
+// NeedsRekey reports whether t has, at any depth, an untagged exported field
+// whose snake_case wire name differs from its Go name. When false, encoding/json
+// already produces the advertised names and a result can travel untouched, in
+// declaration order.
+func NeedsRekey(t reflect.Type) bool {
+	return needsRekey(t, map[reflect.Type]bool{})
+}
+
+func needsRekey(t reflect.Type, seen map[reflect.Type]bool) bool {
+	t = deref(t)
+	switch t.Kind() {
+	case reflect.Slice, reflect.Array, reflect.Map:
+		return needsRekey(t.Elem(), seen)
+	case reflect.Struct:
+	default:
+		return false
+	}
+	if seen[t] {
+		return false
+	}
+	seen[t] = true
+	for i := 0; i < t.NumField(); i++ {
+		f := t.Field(i)
+		// encoding/json promotes an embedded struct's exported fields even when
+		// the embedded type itself is unexported, so only skip named fields.
+		if f.PkgPath != "" && !f.Anonymous {
+			continue
+		}
+		tag, _ := parseTag(f)
+		if tag == "-" {
+			continue
+		}
+		if tag == "" && !f.Anonymous && Snake(f.Name) != f.Name {
+			return true
+		}
+		if needsRekey(f.Type, seen) {
+			return true
+		}
+	}
+	return false
+}
+
+// direction is which way rekeyStruct renames an untagged field: toGo turns the
+// wire name into the field name for decoding, toWire the reverse for encoding.
+type direction bool
+
+const (
+	toGo   direction = true
+	toWire direction = false
+)
+
+func rekeyStruct(m map[string]any, t reflect.Type, d direction) {
+	for i := 0; i < t.NumField(); i++ {
+		f := t.Field(i)
+		if f.PkgPath != "" && !f.Anonymous {
+			continue
+		}
+		tag, _ := parseTag(f)
+		if tag == "-" {
+			continue
+		}
+		if f.Anonymous && tag == "" {
+			// Promoted fields bind at this level, as encoding/json treats them,
+			// including those of an embedded type that is itself unexported.
+			if ft := deref(f.Type); ft.Kind() == reflect.Struct {
+				rekeyStruct(m, ft, d)
+			}
+			continue
+		}
+		key := tag
+		if key == "" {
+			wire := Snake(f.Name)
+			if d == toWire {
+				key = moveKey(m, f.Name, wire)
+			} else {
+				key = moveKey(m, wire, f.Name)
+			}
+		}
+		if v, ok := m[key]; ok {
+			m[key] = rekeyValue(v, f.Type, d)
+		}
+	}
+}
+
+// moveKey renames m[from] to m[to] unless the two are the same or to is
+// already present, and returns to, the key the value now sits under.
+func moveKey(m map[string]any, from, to string) string {
+	if from == to {
+		return to
+	}
+	if v, ok := m[from]; ok {
+		if _, taken := m[to]; !taken {
+			m[to] = v
+			delete(m, from)
+		}
+	}
+	return to
+}
+
+// rekeyValue copies and renames through the containers a field can be: a
+// struct, or a slice or map of structs. Anything else passes through.
+func rekeyValue(v any, t reflect.Type, d direction) any {
+	t = deref(t)
+	switch t.Kind() {
+	case reflect.Struct:
+		if m, ok := v.(map[string]any); ok {
+			out := make(map[string]any, len(m))
+			for k, e := range m {
+				out[k] = e
+			}
+			rekeyStruct(out, t, d)
+			return out
+		}
+	case reflect.Slice, reflect.Array:
+		if list, ok := v.([]any); ok && deref(t.Elem()).Kind() == reflect.Struct {
+			out := make([]any, len(list))
+			for i, e := range list {
+				out[i] = rekeyValue(e, t.Elem(), d)
+			}
+			return out
+		}
+	case reflect.Map:
+		if m, ok := v.(map[string]any); ok && deref(t.Elem()).Kind() == reflect.Struct {
+			out := make(map[string]any, len(m))
+			for k, e := range m {
+				out[k] = rekeyValue(e, t.Elem(), d)
+			}
+			return out
+		}
+	}
+	return v
 }
 
 type tagOpts struct{ omitempty bool }

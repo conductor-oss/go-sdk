@@ -395,9 +395,9 @@ func guardedAgent() *Agent {
 
 // A ticket, as the structured-output fixture's answer type.
 type Ticket struct {
-	Summary  string   `json:"summary"`
-	Priority int      `json:"priority"`
-	Tags     []string `json:"tags"`
+	Summary  string
+	Priority int
+	Tags     []string
 }
 
 func structuredAgent() *Agent {

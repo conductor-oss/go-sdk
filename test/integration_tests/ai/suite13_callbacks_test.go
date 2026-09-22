@@ -32,7 +32,7 @@ import (
 // skill script tests use, and deterministic under replay.
 
 type echoIn struct {
-	Text string `json:"text"`
+	Text string
 }
 
 func echoTool() ai.ToolDef {
@@ -75,7 +75,7 @@ func TestToolCallbacksCompile(t *testing.T) {
 	agent := &ai.Agent{
 		Name: "e2e_s13_tool_cb", Model: model(t), MaxTurns: 3,
 		Instructions: "You are a helpful assistant. Use the echo tool.",
-		Tools:        []ai.ToolDef{echoTool()},
+		Tools:        ai.Tools(echoTool()),
 		Callbacks: &ai.Callbacks{
 			OnToolStart: func(context.Context, ai.CallbackInput) (map[string]any, error) { return nil, nil },
 			OnToolEnd:   func(context.Context, ai.CallbackInput) (map[string]any, error) { return nil, nil },
@@ -114,7 +114,7 @@ func TestBeforeToolCallbackExecutes(t *testing.T) {
 	agent := &ai.Agent{
 		Name: "e2e_s13_before_tool", Model: model(t), MaxTurns: 3,
 		Instructions: echoInstructions,
-		Tools:        []ai.ToolDef{echoTool()},
+		Tools:        ai.Tools(echoTool()),
 		Callbacks: &ai.Callbacks{
 			OnToolStart: func(context.Context, ai.CallbackInput) (map[string]any, error) {
 				calls.Add(1)
@@ -134,7 +134,7 @@ func TestAfterToolCallbackExecutes(t *testing.T) {
 	agent := &ai.Agent{
 		Name: "e2e_s13_after_tool", Model: model(t), MaxTurns: 3,
 		Instructions: echoInstructions,
-		Tools:        []ai.ToolDef{echoTool()},
+		Tools:        ai.Tools(echoTool()),
 		Callbacks: &ai.Callbacks{
 			OnToolEnd: func(context.Context, ai.CallbackInput) (map[string]any, error) {
 				calls.Add(1)
@@ -160,7 +160,7 @@ func TestAllCallbacksDontBlockExecution(t *testing.T) {
 	agent := &ai.Agent{
 		Name: "e2e_s13_all_cb", Model: model(t), MaxTurns: 3,
 		Instructions: echoInstructions,
-		Tools:        []ai.ToolDef{echoTool()},
+		Tools:        ai.Tools(echoTool()),
 		Callbacks: &ai.Callbacks{
 			OnAgentStart: count(&before), OnAgentEnd: count(&after),
 			OnModelStart: count(&before), OnModelEnd: count(&after),

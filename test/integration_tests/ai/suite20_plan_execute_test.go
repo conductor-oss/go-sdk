@@ -35,39 +35,39 @@ import (
 // caller or from a planner the user talked into writing it.
 
 type s20RecordIn struct {
-	RecordID string `json:"record_id"`
+	RecordID string
 }
 
 type s20Record struct {
-	RecordID string   `json:"record_id"`
-	Value    int      `json:"value"`
-	Tags     []string `json:"tags"`
+	RecordID string
+	Value    int
+	Tags     []string
 }
 
 type s20Enriched struct {
 	s20Record
-	ValueSquared int `json:"value_squared"`
+	ValueSquared int
 }
 
 type s20EnrichIn struct {
-	Record s20Record `json:"record"`
+	Record s20Record
 }
 
 type s20ReportIn struct {
-	Record   s20Record   `json:"record"`
-	Enriched s20Enriched `json:"enriched"`
+	Record   s20Record
+	Enriched s20Enriched
 }
 
 type s20Report struct {
-	ID            string `json:"id"`
-	OriginalValue int    `json:"original_value"`
-	Squared       int    `json:"squared"`
-	TagsJoined    string `json:"tags_joined"`
+	ID            string
+	OriginalValue int
+	Squared       int
+	TagsJoined    string
 }
 
 type s20AppendIn struct {
-	Path string `json:"path"`
-	Line string `json:"line"`
+	Path string
+	Line string
 }
 
 func s20AppendLine() ai.ToolDef {
@@ -86,7 +86,7 @@ func s20AppendLine() ai.ToolDef {
 }
 
 func s20Tools() []ai.ToolDef {
-	return []ai.ToolDef{
+	return ai.Tools(
 		tool.Func("s20_produce", "Step A — emit a known record.",
 			func(_ context.Context, in s20RecordIn) (s20Record, error) {
 				return s20Record{RecordID: in.RecordID, Value: 42, Tags: []string{"alpha", "beta"}}, nil
@@ -104,7 +104,7 @@ func s20Tools() []ai.ToolDef {
 					TagsJoined:    strings.Join(in.Record.Tags, ", "),
 				}, nil
 			}),
-	}
+	)
 }
 
 func s20AllowedTool() ai.ToolDef {
@@ -200,11 +200,11 @@ func s20WhitelistHarness(t *testing.T) *ai.Agent {
 	m := model(t)
 	return &ai.Agent{
 		Name: "e2e_s20_whitelist", Model: m, Strategy: ai.StrategyPlanExecute,
-		Tools:   []ai.ToolDef{s20AllowedTool()},
+		Tools:   ai.Tools(s20AllowedTool()),
 		Planner: &ai.Agent{Name: "s20_wl_planner", Model: m, MaxTurns: 3},
 		Fallback: &ai.Agent{Name: "s20_wl_fallback", Model: m, MaxTurns: 3,
 			Instructions: "Acknowledge the user request in one sentence and stop. Do not call any tool.",
-			Tools:        []ai.ToolDef{s20AllowedTool()}},
+			Tools:        ai.Tools(s20AllowedTool())},
 		FallbackMaxTurns: 3,
 	}
 }
@@ -217,14 +217,14 @@ func TestPlanExecuteSubmitsAndSchedules(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "s20.txt")
 	harness := &ai.Agent{
 		Name: "e2e_s20_plan_execute_smoke", Model: m, Strategy: ai.StrategyPlanExecute,
-		Tools: []ai.ToolDef{s20AppendLine()},
+		Tools: ai.Tools(s20AppendLine()),
 		Planner: &ai.Agent{Name: "s20_planner", Model: m, MaxTurns: 3,
 			Instructions: "Produce a JSON plan inside a ```json fence describing exactly one " +
 				"step that calls the ``append_line`` tool with path='" + path + "' " +
 				"and line='hello'."},
 		Fallback: &ai.Agent{Name: "s20_fallback", Model: m, MaxTurns: 3,
 			Instructions: "If you receive this, just say 'fallback ok'.",
-			Tools:        []ai.ToolDef{s20AppendLine()}},
+			Tools:        ai.Tools(s20AppendLine())},
 		FallbackMaxTurns: 3,
 	}
 
@@ -442,10 +442,10 @@ func TestTextPlannerContextAppearsInPlannerPrompt(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "s20_ctx.txt")
 	harness := &ai.Agent{
 		Name: "e2e_s20_planner_ctx_text", Model: m, Strategy: ai.StrategyPlanExecute,
-		Tools:   []ai.ToolDef{s20AppendLine()},
+		Tools:   ai.Tools(s20AppendLine()),
 		Planner: &ai.Agent{Name: "s20_ctx_planner", Model: m, MaxTurns: 3},
 		Fallback: &ai.Agent{Name: "s20_ctx_fallback", Model: m, MaxTurns: 3,
-			Instructions: "Acknowledge and stop.", Tools: []ai.ToolDef{s20AppendLine()}},
+			Instructions: "Acknowledge and stop.", Tools: ai.Tools(s20AppendLine())},
 		FallbackMaxTurns: 3,
 		PlannerContext: []ai.PlanContext{
 			{Text: sentinel},
@@ -484,10 +484,10 @@ func TestNoPlannerContextEmitsNoCtxBuildTask(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "s20_noctx.txt")
 	harness := &ai.Agent{
 		Name: "e2e_s20_no_planner_ctx", Model: m, Strategy: ai.StrategyPlanExecute,
-		Tools:   []ai.ToolDef{s20AppendLine()},
+		Tools:   ai.Tools(s20AppendLine()),
 		Planner: &ai.Agent{Name: "s20_no_ctx_planner", Model: m, MaxTurns: 3},
 		Fallback: &ai.Agent{Name: "s20_no_ctx_fallback", Model: m, MaxTurns: 3,
-			Instructions: "Acknowledge and stop.", Tools: []ai.ToolDef{s20AppendLine()}},
+			Instructions: "Acknowledge and stop.", Tools: ai.Tools(s20AppendLine())},
 		FallbackMaxTurns: 3,
 	}
 

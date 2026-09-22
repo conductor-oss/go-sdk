@@ -28,21 +28,21 @@ import (
 )
 
 type crmCustomerIn struct {
-	CustomerID string `json:"customer_id"`
+	CustomerID string
 }
 
 type inventoryIn struct {
-	ProductID string `json:"product_id"`
+	ProductID string
 	Warehouse string `json:"warehouse,omitempty"`
 }
 
 type orderActionIn struct {
-	OrderID string `json:"order_id"`
-	Action  string `json:"action"`
+	OrderID string
+	Action  string
 }
 
 type formatDataIn struct {
-	Data map[string]any `json:"data"`
+	Data map[string]any
 }
 
 // External worker tools — the Python SDK's examples/agents/33_external_workers.py
@@ -139,12 +139,12 @@ func TestExample33ExternalWorkers(t *testing.T) {
 		Instructions: "You are a customer support agent. Use the available tools to " +
 			"look up customers, check inventory, process orders, and format " +
 			"responses for the customer.",
-		Tools: []ai.ToolDef{
+		Tools: ai.Tools(
 			tool.Func("format_response", "Format a data dictionary into a human-readable string.", formatResponse),
 			tool.External[crmCustomerIn, map[string]any]("get_customer", "Look up customer details from the CRM system."),
 			tool.External[inventoryIn, map[string]any]("check_inventory", "Check product availability in a warehouse."),
 			tool.External[orderActionIn, map[string]any]("process_order", "Process a customer order. Actions: refund, cancel, update."),
-		},
+		),
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)

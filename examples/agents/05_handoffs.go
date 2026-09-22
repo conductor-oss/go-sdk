@@ -23,15 +23,15 @@ import (
 )
 
 type accountIn struct {
-	AccountID string `json:"account_id"`
+	AccountID string
 }
 
 type orderIn struct {
-	OrderID string `json:"order_id"`
+	OrderID string
 }
 
 type productIn struct {
-	Product string `json:"product"`
+	Product string
 }
 
 func checkBalance(ctx context.Context, in accountIn) (map[string]any, error) {
@@ -56,19 +56,19 @@ func main() {
 		Name:         "billing",
 		Model:        model,
 		Instructions: "You handle billing questions: balances, payments, invoices.",
-		Tools:        []ai.ToolDef{tool.Func("check_balance", "Check the balance of a bank account.", checkBalance)},
+		Tools:        ai.Tools(tool.Func("check_balance", "Check the balance of a bank account.", checkBalance)),
 	}
 	technical := &ai.Agent{
 		Name:         "technical",
 		Model:        model,
 		Instructions: "You handle technical questions: order status, shipping, returns.",
-		Tools:        []ai.ToolDef{tool.Func("lookup_order", "Look up the status of an order.", lookupOrder)},
+		Tools:        ai.Tools(tool.Func("lookup_order", "Look up the status of an order.", lookupOrder)),
 	}
 	sales := &ai.Agent{
 		Name:         "sales",
 		Model:        model,
 		Instructions: "You handle sales questions: pricing, products, promotions.",
-		Tools:        []ai.ToolDef{tool.Func("get_pricing", "Get pricing information for a product.", getPricing)},
+		Tools:        ai.Tools(tool.Func("get_pricing", "Get pricing information for a product.", getPricing)),
 	}
 	support := &ai.Agent{
 		Name:         "support",

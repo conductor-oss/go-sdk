@@ -25,7 +25,7 @@ import (
 // weatherIn is shared with agent_test.go.
 
 type stockIn struct {
-	Symbol string `json:"symbol"`
+	Symbol string
 }
 
 // Simple Tool Calling — the Python SDK's examples/agents/02a_simple_tools.py
@@ -59,10 +59,10 @@ func TestExample02aSimpleTools(t *testing.T) {
 	agent := &ai.Agent{
 		Name:  "weather_stock_agent",
 		Model: mockModel,
-		Tools: []ai.ToolDef{
+		Tools: ai.Tools(
 			tool.Func("get_weather", "Get the current weather for a city.", getWeather),
 			tool.Func("get_stock_price", "Get the current stock price for a ticker symbol.", getStockPrice),
-		},
+		),
 		Instructions: "You are a helpful assistant. Use tools to answer questions.",
 	}
 

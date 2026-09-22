@@ -37,25 +37,25 @@ import (
 const suite1Model = "anthropic/claude-sonnet-4-6"
 
 type addIn struct {
-	A int `json:"a"`
-	B int `json:"b"`
+	A int
+	B int
 }
 
 type multiplyIn struct {
-	X int `json:"x"`
-	Y int `json:"y"`
+	X int
+	Y int
 }
 
 type greetIn struct {
-	Name string `json:"name"`
+	Name string
 }
 
 type queryIn struct {
-	Query string `json:"query"`
+	Query string
 }
 
 type dataIn struct {
-	Data string `json:"data"`
+	Data string
 }
 
 // The suite's tools, signature for signature with the Python @tool functions.
@@ -78,7 +78,7 @@ func TestSmokeSimpleAgentPlan(t *testing.T) {
 	rt := newRuntime(t)
 	agent := &ai.Agent{
 		Name: "e2e_smoke", Model: suite1Model, Instructions: "You are a calculator.",
-		Tools: []ai.ToolDef{addTool, multiplyTool},
+		Tools: ai.Tools(addTool, multiplyTool),
 	}
 	plan := planAgent(t, rt, agent)
 	assertPlanStructure(t, plan, "e2e_smoke")
@@ -91,7 +91,7 @@ func TestPlanReflectsTools(t *testing.T) {
 	rt := newRuntime(t)
 	agent := &ai.Agent{
 		Name: "e2e_tools", Model: suite1Model, Instructions: "Use tools.",
-		Tools: []ai.ToolDef{addTool, multiplyTool, greetTool},
+		Tools: ai.Tools(addTool, multiplyTool, greetTool),
 	}
 	plan := planAgent(t, rt, agent)
 	ad := agentDef(t, plan)
@@ -104,7 +104,7 @@ func TestPlanReflectsCredentials(t *testing.T) {
 	rt := newRuntime(t)
 	agent := &ai.Agent{
 		Name: "e2e_creds", Model: suite1Model, Instructions: "Use tools.",
-		Tools: []ai.ToolDef{credentialedTool, multiCredTool},
+		Tools: ai.Tools(credentialedTool, multiCredTool),
 	}
 	plan := planAgent(t, rt, agent)
 	creds := toolCredentials(agentDef(t, plan))
@@ -232,7 +232,7 @@ func TestPlanReflectsGuardrails(t *testing.T) {
 	rt := newRuntime(t)
 	agent := &ai.Agent{
 		Name: "e2e_guardrails", Model: suite1Model, Instructions: "Answer questions.",
-		Tools: []ai.ToolDef{greetTool},
+		Tools: ai.Tools(greetTool),
 		Guardrails: []ai.Guardrail{
 			passingGuardrail("check_input", ai.PositionInput),
 			passingGuardrail("no_pii", ai.PositionOutput),
@@ -290,7 +290,7 @@ func kitchenSink() *ai.Agent {
 
 	return &ai.Agent{
 		Name: "e2e_kitchen_sink", Model: suite1Model, Instructions: "You are the kitchen sink agent.",
-		Tools: []ai.ToolDef{
+		Tools: ai.Tools(
 			tool.Func("local_tool", "A local worker tool.",
 				func(ctx context.Context, in xIn) (string, error) { return in.X, nil }),
 			tool.Func("cred_local_tool", "Worker tool with credentials.",
@@ -302,7 +302,7 @@ func kitchenSink() *ai.Agent {
 			tool.Audio("ks_audio", "Generate audio", "openai", "tts-1"),
 			tool.Video("ks_video", "Generate video", "openai", "sora"),
 			tool.PDF("ks_pdf", "Generate PDF"),
-		},
+		),
 		Guardrails: []ai.Guardrail{
 			passingGuardrail("check_input", ai.PositionInput),
 			passingGuardrail("no_pii", ai.PositionOutput),
@@ -323,7 +323,7 @@ func kitchenSink() *ai.Agent {
 }
 
 type xIn struct {
-	X string `json:"x"`
+	X string
 }
 
 func TestKitchenSinkCompiles(t *testing.T) {

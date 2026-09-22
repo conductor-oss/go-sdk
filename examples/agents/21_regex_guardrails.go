@@ -26,7 +26,7 @@ import (
 )
 
 type userIn struct {
-	UserID string `json:"user_id"`
+	UserID string
 }
 
 func getUserProfile(ctx context.Context, in userIn) (map[string]any, error) {
@@ -66,7 +66,7 @@ func main() {
 	agent := &ai.Agent{
 		Name:  "hr_assistant",
 		Model: model,
-		Tools: []ai.ToolDef{tool.Func("get_user_profile", "Retrieve a user's profile from the database.", getUserProfile)},
+		Tools: ai.Tools(tool.Func("get_user_profile", "Retrieve a user's profile from the database.", getUserProfile)),
 		Instructions: "You are an HR assistant. When asked about employees, look up their " +
 			"profile and share ALL the details you find.",
 		Guardrails: []ai.Guardrail{noEmails, noSSN},

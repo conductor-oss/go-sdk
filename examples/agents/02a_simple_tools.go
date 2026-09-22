@@ -26,11 +26,11 @@ import (
 )
 
 type weatherIn struct {
-	City string `json:"city"`
+	City string
 }
 
 type stockIn struct {
-	Symbol string `json:"symbol"`
+	Symbol string
 }
 
 func getWeather(ctx context.Context, in weatherIn) (map[string]any, error) {
@@ -50,10 +50,10 @@ func main() {
 	agent := &ai.Agent{
 		Name:  "weather_stock_agent",
 		Model: model,
-		Tools: []ai.ToolDef{
+		Tools: ai.Tools(
 			tool.Func("get_weather", "Get the current weather for a city.", getWeather),
 			tool.Func("get_stock_price", "Get the current stock price for a ticker symbol.", getStockPrice),
-		},
+		),
 		Instructions: "You are a helpful assistant. Use tools to answer questions.",
 	}
 

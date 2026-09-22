@@ -69,9 +69,9 @@ func TestMCPToolResultReachesTheAnswer(t *testing.T) {
 		Model: model(t),
 		Instructions: "You are a weather assistant. Use the available MCP tools to answer " +
 			"questions about weather conditions.",
-		Tools: []ai.ToolDef{
+		Tools: ai.Tools(
 			tool.MCP("weather_mcp", "Weather tools via MCP: current conditions for a city", url),
-		},
+		),
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)

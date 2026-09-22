@@ -29,16 +29,16 @@ import (
 )
 
 type factorialIn struct {
-	N int `json:"n"`
+	N int
 }
 
 type summaryIn struct {
-	Text string `json:"text"`
+	Text string
 }
 
 type checkIn struct {
-	Text     string `json:"text"`
-	MinChars int    `json:"min_chars"`
+	Text     string
+	MinChars int
 }
 
 const (
@@ -98,11 +98,11 @@ func TestExample103PlanAndCompile(t *testing.T) {
 		return out, nil
 	}
 
-	tools := []ai.ToolDef{
+	tools := ai.Tools(
 		tool.Func("factorial", factorialDoc, factorial),
 		tool.Func("write_summary", summaryDoc, writeSummary),
 		tool.Func("check_summary", checkDoc, checkSummary),
-	}
+	)
 	harness := &ai.Agent{
 		Name:     "plan_and_compile_demo",
 		Model:    mockModel,
@@ -176,7 +176,7 @@ func findPlanAndCompile(t *testing.T, executionID string) map[string]any {
 			t.Fatalf("read workflow %s: %v", id, err)
 		}
 		var wf struct {
-			Tasks []map[string]any `json:"tasks"`
+			Tasks []map[string]any
 		}
 		derr := json.NewDecoder(resp.Body).Decode(&wf)
 		resp.Body.Close()

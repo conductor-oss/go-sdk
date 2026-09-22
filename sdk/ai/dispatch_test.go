@@ -66,3 +66,54 @@ func TestToolExecutorShapesOutput(t *testing.T) {
 		t.Errorf("map output = %v", got)
 	}
 }
+
+// An untagged input struct binds the snake_case names the schema advertised.
+// The schema and the decoder have to agree here: if they drift, encoding/json
+// reports no error and every call silently receives zero values.
+func TestToolExecutorBindsUntaggedFieldsBySnakeCase(t *testing.T) {
+	type untagged struct {
+		AccountID string
+		MaxItems  int
+	}
+	var got untagged
+	fn, err := toolExecutor(ToolDef{Name: "x", Handler: func(ctx context.Context, in untagged) (string, error) {
+		got = in
+		return "ok", nil
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := fn(&model.Task{InputData: map[string]any{"account_id": "ACC-1", "max_items": 3}}); err != nil {
+		t.Fatal(err)
+	}
+	if got.AccountID != "ACC-1" || got.MaxItems != 3 {
+		t.Errorf("bound = %+v, want AccountID=ACC-1 MaxItems=3", got)
+	}
+}
+
+// An untagged output struct reaches the model under the snake_case names its
+// schema advertised, not the Go field names encoding/json would write.
+func TestToolExecutorEmitsUntaggedOutputInSnakeCase(t *testing.T) {
+	type untaggedOut struct {
+		TempF     int
+		Condition string
+	}
+	fn, err := toolExecutor(ToolDef{Name: "x", Handler: func(ctx context.Context, in echoIn) (untaggedOut, error) {
+		return untaggedOut{TempF: 72, Condition: "Sunny"}, nil
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	v, err := fn(&model.Task{InputData: map[string]any{"city": "Paris"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err := model.GetTaskResultFromTaskExecutionOutput(&model.Task{}, v)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]any{"temp_f": float64(72), "condition": "Sunny"}
+	if !reflect.DeepEqual(res.OutputData, want) {
+		t.Errorf("output = %v, want %v", res.OutputData, want)
+	}
+}

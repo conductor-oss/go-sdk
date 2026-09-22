@@ -58,7 +58,7 @@ func TestExample16eCredentialsHTTPTool(t *testing.T) {
 	agent := &ai.Agent{
 		Name:         "github_http_agent",
 		Model:        model(t),
-		Tools:        []ai.ToolDef{listRepos},
+		Tools:        ai.Tools(listRepos),
 		Instructions: "You list GitHub repos using the list_github_repos tool. Summarize the results.",
 	}
 

@@ -26,15 +26,15 @@ import (
 )
 
 type retryQueryIn struct {
-	Query string `json:"query"`
+	Query string
 }
 
 type retrySQLIn struct {
-	SQL string `json:"sql"`
+	SQL string
 }
 
 type retryDataIn struct {
-	Data string `json:"data"`
+	Data string
 }
 
 // Tool retry configuration — the Python SDK's
@@ -67,14 +67,14 @@ func TestExample02cToolRetryConfig(t *testing.T) {
 	agent := &ai.Agent{
 		Name:  "retry_config_demo",
 		Model: mockModel,
-		Tools: []ai.ToolDef{
+		Tools: ai.Tools(
 			tool.Func("call_external_api", "Call an unreliable external API that may need aggressive retries.",
 				callExternalAPI, tool.WithRetry(5, 1, ai.RetryExponentialBackoff)),
 			tool.Func("query_database", "Run a database query with fixed-interval retries for transient connection issues.",
 				queryDatabase, tool.WithRetry(3, 5, ai.RetryFixed)),
 			tool.Func("process_data", "Process data locally — light retries with linear backoff.",
 				processData, tool.WithRetry(2, 2, ai.RetryLinearBackoff)),
-		},
+		),
 		Instructions: "You help users fetch and process data. Use the appropriate tool for each request.",
 	}
 

@@ -119,6 +119,11 @@ type ToolDef struct {
 	Handler any
 }
 
+// Tools collects tool definitions for Agent.Tools without a slice literal:
+//
+//	Tools: ai.Tools(tool.Func(...), tool.HTTP(...))
+func Tools(tools ...ToolDef) []ToolDef { return tools }
+
 // Guardrail is one of RegexGuardrail, LLMGuardrail or CustomGuardrail.
 type Guardrail interface {
 	guardrailConfig() map[string]any
