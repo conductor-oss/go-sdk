@@ -94,42 +94,47 @@ func TestSchedulerResourceApiService(t *testing.T) {
 	assert.Equal(t, "0 0/5 * * * ?", schedule.CronExpression)
 	assert.Equal(t, WorkflowName, schedule.StartWorkflowRequest.Name)
 
-	// Test case 3: Add tags to the schedule
-	tags := []model.Tag{
-		{
-			Key:   "environment",
-			Value: "test",
-			Type_: "metadata",
-		},
-		{
-			Key:   "owner",
-			Value: "integration-test",
-			Type_: "ownership",
-		},
-	}
-
-	resp, err = schedulerClient.PutTagForSchedule(ctx, tags, scheduleName)
-	assert.Nil(t, err)
-	assert.Equal(t, 200, resp.StatusCode)
-
-	// Test case 4: Get tags for the schedule
-	retrievedTags, resp, err := schedulerClient.GetTagsForSchedule(ctx, scheduleName)
-	assert.Nil(t, err)
-	assert.Equal(t, 200, resp.StatusCode)
-
-	// Verify tags were added correctly
-	assert.GreaterOrEqual(t, len(retrievedTags), 2)
-	var foundEnvironmentTag, foundOwnerTag bool
-	for _, tag := range retrievedTags {
-		if tag.Key == "environment" && tag.Value == "test" {
-			foundEnvironmentTag = true
+	// Test case 3/4: Add and verify tags on the schedule. Skipped on plain OSS
+	// Conductor, but the surrounding core scheduler CRUD is exercised either
+	// way.
+	if !testdata.OSSGapSkippedReason(t, ossGapScheduleTags) {
+		tags := []model.Tag{
+			{
+				Key:   "environment",
+				Value: "test",
+				Type_: "metadata",
+			},
+			{
+				Key:   "owner",
+				Value: "integration-test",
+				Type_: "ownership",
+			},
 		}
-		if tag.Key == "owner" && tag.Value == "integration-test" {
-			foundOwnerTag = true
+
+		resp, err = schedulerClient.PutTagForSchedule(ctx, tags, scheduleName)
+		assert.Nil(t, err)
+		assert.Equal(t, 200, resp.StatusCode)
+
+		// Test case 4: Get tags for the schedule
+		var retrievedTags []model.Tag
+		retrievedTags, resp, err = schedulerClient.GetTagsForSchedule(ctx, scheduleName)
+		assert.Nil(t, err)
+		assert.Equal(t, 200, resp.StatusCode)
+
+		// Verify tags were added correctly
+		assert.GreaterOrEqual(t, len(retrievedTags), 2)
+		var foundEnvironmentTag, foundOwnerTag bool
+		for _, tag := range retrievedTags {
+			if tag.Key == "environment" && tag.Value == "test" {
+				foundEnvironmentTag = true
+			}
+			if tag.Key == "owner" && tag.Value == "integration-test" {
+				foundOwnerTag = true
+			}
 		}
+		assert.True(t, foundEnvironmentTag, "Environment tag not found")
+		assert.True(t, foundOwnerTag, "Owner tag not found")
 	}
-	assert.True(t, foundEnvironmentTag, "Environment tag not found")
-	assert.True(t, foundOwnerTag, "Owner tag not found")
 
 	// Test case 5: Get the next few scheduled executions
 	getNextOpts := &client.SchedulerResourceApiGetNextFewSchedulesOpts{
@@ -195,32 +200,36 @@ func TestSchedulerResourceApiService(t *testing.T) {
 	assert.Equal(t, 200, resp.StatusCode)
 	assert.NotNil(t, searchResults)
 
-	// Test case 12: Delete a tag from the schedule
-	tagToDelete := []model.Tag{
-		{
-			Key:   "environment",
-			Value: "test",
-			Type_: "metadata",
-		},
-	}
-
-	resp, err = schedulerClient.DeleteTagForSchedule(ctx, tagToDelete, scheduleName)
-	assert.Nil(t, err)
-	assert.Equal(t, 200, resp.StatusCode)
-
-	// Test case 13: Verify tag was deleted
-	updatedTags, resp, err := schedulerClient.GetTagsForSchedule(ctx, scheduleName)
-	assert.Nil(t, err)
-	assert.Equal(t, 200, resp.StatusCode)
-
-	environmentTagFound := false
-	for _, tag := range updatedTags {
-		if tag.Key == "environment" && tag.Value == "test" {
-			environmentTagFound = true
-			break
+	// Test case 12/13: Delete a tag and verify it's gone. Same OSS gap as
+	// test case 3/4 above.
+	if !testdata.OSSGapSkippedReason(t, ossGapScheduleTags) {
+		tagToDelete := []model.Tag{
+			{
+				Key:   "environment",
+				Value: "test",
+				Type_: "metadata",
+			},
 		}
+
+		resp, err = schedulerClient.DeleteTagForSchedule(ctx, tagToDelete, scheduleName)
+		assert.Nil(t, err)
+		assert.Equal(t, 200, resp.StatusCode)
+
+		// Test case 13: Verify tag was deleted
+		var updatedTags []model.Tag
+		updatedTags, resp, err = schedulerClient.GetTagsForSchedule(ctx, scheduleName)
+		assert.Nil(t, err)
+		assert.Equal(t, 200, resp.StatusCode)
+
+		environmentTagFound := false
+		for _, tag := range updatedTags {
+			if tag.Key == "environment" && tag.Value == "test" {
+				environmentTagFound = true
+				break
+			}
+		}
+		assert.False(t, environmentTagFound, "Environment tag should have been deleted")
 	}
-	assert.False(t, environmentTagFound, "Environment tag should have been deleted")
 
 	// Test case 14: Delete the schedule
 	_, resp, err = schedulerClient.DeleteSchedule(ctx, scheduleName)

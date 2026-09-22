@@ -13,6 +13,7 @@ import (
 
 func TestGroupResourceApiService(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, ossGapGroupsAPI)
 
 	// Setup
 	groupClient := testdata.GroupClient // Assuming this exists in your testdata package

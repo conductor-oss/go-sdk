@@ -56,6 +56,7 @@ func TestRegisterWorkflowDef(t *testing.T) {
 
 func TestRegisterWorkflowDefWithTags(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, ossGapWorkflowDefTags)
 	_, _ = testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), WorkflowName, 1)
 	task := model.WorkflowTask{
 		Name:              "simple_task",
@@ -103,6 +104,7 @@ func TestRegisterWorkflowDefWithTags(t *testing.T) {
 
 func TestUpdateWorkflowDefWithTags(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, ossGapWorkflowDefTags)
 
 	_, _ = testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), WorkflowName, 1)
 
@@ -166,6 +168,7 @@ func TestUpdateWorkflowDefWithTags(t *testing.T) {
 
 func TestRegisterTaskDefWithTags(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, ossGapTaskDefTags)
 
 	taskDef := model.TaskDef{
 		Name:        TaskName,
@@ -195,6 +198,7 @@ func TestRegisterTaskDefWithTags(t *testing.T) {
 
 func TestGetTagsForTaskDef(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, ossGapTaskDefTags)
 
 	require.Eventually(t, func() bool {
 		tags, err := testdata.MetadataClient.GetTagsForTaskDef(context.Background(), TaskName)
@@ -209,6 +213,7 @@ func TestGetTagsForTaskDef(t *testing.T) {
 
 func TestUpdateTaskDefWithTags(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, ossGapTaskDefTags)
 
 	taskDef := model.TaskDef{
 		Name:        TaskName,

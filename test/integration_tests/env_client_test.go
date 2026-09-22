@@ -9,10 +9,12 @@ import (
 	"github.com/conductor-sdk/conductor-go/sdk/model"
 	"github.com/conductor-sdk/conductor-go/test/testdata"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCreateOrUpdateEnvVariable(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, ossGapEnvVarWrites)
 
 	ctx := context.Background()
 	envClient := NewEnvironmentClient()
@@ -29,6 +31,7 @@ func TestCreateOrUpdateEnvVariable(t *testing.T) {
 
 func TestDeleteEnvVariable(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, ossGapEnvVarWrites)
 
 	TestCreateOrUpdateEnvVariable(t)
 	ctx := context.Background()
@@ -43,6 +46,7 @@ func TestDeleteEnvVariable(t *testing.T) {
 
 func TestDeleteTagForEnvVar(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, ossGapEnvVarTags)
 
 	TestCreateOrUpdateEnvVariable(t)
 	ctx := context.Background()
@@ -58,6 +62,10 @@ func TestDeleteTagForEnvVar(t *testing.T) {
 
 func TestGetEnvVariable(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	// Gated on the write, not the read: this test seeds the variable it reads
+	// back, and it is the seeding that OSS can't do. The read path itself is
+	// covered on OSS by TestGetAllEnvVariables.
+	testdata.SkipIfOSS(t, ossGapEnvVarWrites)
 
 	ctx := context.Background()
 	envClient := NewEnvironmentClient()
@@ -72,9 +80,31 @@ func TestGetEnvVariable(t *testing.T) {
 func TestGetAllEnvVariables(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
 
-	TestCreateOrUpdateEnvVariable(t)
 	ctx := context.Background()
 	envClient := NewEnvironmentClient()
+
+	if testdata.OSSGapSkipped() {
+		// OSS serves GET /environment but has no way to seed a variable
+		// (create/update is Orkes-Enterprise-only, see ossGapEnvVarWrites),
+		// so assert the list call itself works rather than skipping the whole
+		// test. An OSS image predating EnvironmentResource 404s here.
+		variables, resp, err := envClient.GetAll(ctx)
+		if err != nil {
+			// Only a 404 means this build predates EnvironmentResource. Any
+			// other error is a real failure and has to be reported as one --
+			// skipping on it would leave this test silently green while the
+			// only OSS coverage of GetAll had stopped working.
+			if swaggerErr, ok := err.(client.GenericSwaggerError); ok && swaggerErr.StatusCode() == http.StatusNotFound {
+				t.Skip("skip: environment API not served by this OSS server (GetAll: 404)")
+			}
+			require.NoError(t, err, "GetAll")
+		}
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.NotNil(t, variables)
+		return
+	}
+
+	TestCreateOrUpdateEnvVariable(t)
 
 	variables, resp, err := envClient.GetAll(ctx)
 	assert.NoError(t, err)
@@ -84,6 +114,7 @@ func TestGetAllEnvVariables(t *testing.T) {
 
 func TestGetTagsForEnvVar(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, ossGapEnvVarTags)
 
 	TestUpsertUser(t)
 	ctx := context.Background()
@@ -99,6 +130,7 @@ func TestGetTagsForEnvVar(t *testing.T) {
 
 func TestPutTagForEnvVar(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, ossGapEnvVarTags)
 
 	ctx := context.Background()
 	envClient := NewEnvironmentClient()

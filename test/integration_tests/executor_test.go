@@ -73,6 +73,7 @@ func TestRegisterWorkflow(t *testing.T) {
 
 func TestRegisterWorkflowWithTags(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, ossGapWorkflowDefTags)
 
 	executor := testdata.WorkflowExecutor
 
@@ -159,6 +160,7 @@ func TestGetWorkflow(t *testing.T) {
 
 func TestUpdateTaskByRefName(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV41)
+	testdata.SkipIfOSS(t, ossGapUpdateNotFound)
 
 	executor := testdata.WorkflowExecutor
 	err := executor.UpdateTaskByRefName("task_ref", notFoundWorkflowId, model.CompletedTask, map[string]interface{}{})
@@ -547,6 +549,7 @@ func getWorkflowDef(filename string) (*model.WorkflowDef, error) {
 
 func TestSignal_AllStrategies_Comprehensive(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
+	testdata.SkipIfOSS(t, ossGapSignalEndpoints)
 
 	registerComplexWorkflows(t)
 	testCases := []struct {
@@ -860,6 +863,7 @@ func TestSignal_AllStrategies_Comprehensive(t *testing.T) {
 // Add a separate test for default strategy to ensure it behaves like TARGET_WORKFLOW
 func TestSignal_DefaultStrategy_IsTargetWorkflow(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
+	testdata.SkipIfOSS(t, ossGapSignalEndpoints)
 
 	// Setup workflow (same setup code as in your original test)
 	executor := testdata.WorkflowExecutor
@@ -919,6 +923,7 @@ func TestSignal_DefaultStrategy_IsTargetWorkflow(t *testing.T) {
 // Add a separate test for mixed strategy
 func TestSignal_MixedStrategy(t *testing.T) {
 	testdata.RequireAtLeast(t, testdata.VersionResourceV52)
+	testdata.SkipIfOSS(t, ossGapSignalEndpoints)
 
 	// Setup workflow (same setup code as in your original test)
 	executor := testdata.WorkflowExecutor
