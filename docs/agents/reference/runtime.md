@@ -103,8 +103,9 @@ Applies to both `Run` and `Start`.
 | `func WithPlan(plan *Plan) RunOption` | Supplies the plan a `StrategyPlanExecute` agent carries out instead of one from its `Planner`. Errors unless `agent.Strategy == StrategyPlanExecute`; the plan is validated, then sent as `static_plan`. The `Planner` slot is still required, but the planner never runs. |
 | `func WithMedia(media ...string) RunOption` | Attaches media inputs as paths or URLs. The server reads paths itself, so a local path must sit under its allowed media directory. Repeatable. |
 | `func WithRunSettings(rs RunSettings) RunOption` | Overrides the agent's model parameters for this run only, by merging onto a copy of the `agentConfig`. The stored agent is unchanged. |
+| `func WithSession(sessionID string) RunOption` | Groups this run into a conversation, as Python's `run(..., session_id=)`. Sent as `sessionId`; the default is empty, which the server reads as a standalone run. |
 
-An agent loaded with `ai.LoadSkill` travels as `framework` plus `rawConfig`, so `WithPlan` and `WithRunSettings` do not reach the server on that path; `WithMedia` does.
+An agent loaded with `ai.LoadSkill` travels as `framework` plus `rawConfig`, so `WithPlan` and `WithRunSettings` do not reach the server on that path; `WithMedia` and `WithSession` do.
 
 ### RunSettings
 

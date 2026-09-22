@@ -380,3 +380,38 @@ func schedulerListServer(t *testing.T, rec *capture, names []string) *Runtime {
 	t.Cleanup(rt.Shutdown)
 	return rt
 }
+
+// The session id groups runs into one conversation, so it must reach the start
+// request verbatim on both the native and the skill payload.
+func TestWithSessionReachesTheStartRequest(t *testing.T) {
+	rec := &capture{}
+	rt := captureServer(t, rec, map[string]func() map[string]any{
+		"/api/agent/start": func() map[string]any { return map[string]any{"executionId": "e1"} },
+		"/api/agent/e1/status": func() map[string]any {
+			return map[string]any{"status": "COMPLETED", "output": map[string]any{"result": "done"}}
+		},
+	})
+	agent := &Agent{Name: "assistant", Model: testModel, Instructions: "Be brief."}
+	if _, err := rt.Run(context.Background(), agent, "hi", WithSession("user-42")); err != nil {
+		t.Fatal(err)
+	}
+	body, _ := rec.find("/api/agent/start")
+	if body["sessionId"] != "user-42" {
+		t.Errorf("sessionId = %v, want user-42", body["sessionId"])
+	}
+}
+
+// Without the option the key is still sent, empty, which is the shape the server
+// and the Python SDK expect; a missing key is not the same as an empty one.
+func TestSessionDefaultsToEmpty(t *testing.T) {
+	rt := &Runtime{}
+	agent := &Agent{Name: "assistant", Model: testModel, Instructions: "Be brief."}
+	payload, err := rt.startPayload(agent, "hi", nil, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, present := payload["sessionId"]
+	if !present || got != "" {
+		t.Errorf("sessionId = %v (present %v), want an empty string", got, present)
+	}
+}

@@ -1,8 +1,34 @@
 # Stateful agents
 
-How `Agent.Stateful` and `tool.Stateful()` pin one run's tool calls to the process that started it.
+A run is independent by default: the agent remembers nothing from last time, and any worker
+process may serve any tool call. Four separate mechanisms relax that, and you can mix them.
 
-## Declaring it
+| Want | Use |
+|---|---|
+| Several runs to form one conversation | `ai.WithSession(id)` |
+| One run's tool calls to reach one process | `Agent.Stateful`, `tool.Stateful()` |
+| To supply history the run starts from | `Agent.Memory` |
+| Tools to hand data to each other mid-run | `ai.SetState` and `ai.State` |
+
+## Sessions: linking runs into a conversation
+
+Pass the same session id to several runs and the server treats them as turns of one
+conversation.
+
+```go
+for _, turn := range []string{"My name is Alice.", "What is my name?"} {
+    res, err := rt.Run(ctx, agent, turn, ai.WithSession("user-42"))
+    ...
+}
+```
+
+The id is yours to choose; a user id or a chat id is the usual thing. Leave it off and the
+server keys continuity to the execution instead, so the run stands alone.
+
+This is a property of the run, not of the agent, which is why it is an option on `Run` and
+`Start` rather than a field on `Agent`. One deployed agent can serve every user that way.
+
+## Stateful mode: declaring it
 
 `Agent.Stateful` marks every tool on that agent; `tool.Stateful()` marks one tool.
 

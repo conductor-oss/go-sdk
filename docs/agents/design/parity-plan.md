@@ -47,7 +47,7 @@ server.
 | `AgentRuntime.pause`, handle `resume` (un-pause) | `Runtime.Pause` / `Runtime.Resume`, also on `AgentHandle` |
 | `Schedule`, `SchedulerClient` (save/get/list/delete/pause/resume/reconcile) | `Schedule` + agent-scoped `Runtime.SaveSchedule`/`GetSchedule`/`ListSchedules`/`DeleteSchedule`/`PauseSchedule`/`ResumeSchedule`/`ReconcileSchedules` |
 | `run(..., media=)`, `run_settings=` | `WithMedia`, `WithRunSettings` (`RunSettings`) |
-| `run(..., session_id=)` (java-sdk: `Agent.sessionId`) | **not ported**; the start request always sends `sessionId: ""` |
+| `run(..., session_id=)` | `WithSession(id)`; a run option, since `sessionId` is a start-request field in java-sdk's `AgentRequest` too, not part of the agent |
 | `AgentHandle` | `AgentHandle`: `Events`, `Status`, `Waiting`, `Respond`, `Approve`, `Reject`, `Stop`, `Result` |
 | `AgentClient` | `client.AgentClient` + `APIClient.StreamSSE` |
 | forked worker processes | goroutines on one `worker.TaskRunner` |

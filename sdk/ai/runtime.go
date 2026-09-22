@@ -130,6 +130,7 @@ type runOptions struct {
 	plan     *Plan
 	media    []string
 	settings *RunSettings
+	session  string
 }
 
 // RunSettings overrides the agent's model parameters for one run, without
@@ -181,6 +182,13 @@ func WithRunSettings(rs RunSettings) RunOption {
 	return func(o *runOptions) { o.settings = &rs }
 }
 
+// WithSession groups this run into a conversation, as Python's run(..., session_id=...).
+// Runs sharing an id are turns of one conversation. Empty is the default and leaves the
+// server to treat the run as standalone, keying continuity to the execution instead.
+func WithSession(sessionID string) RunOption {
+	return func(o *runOptions) { o.session = sessionID }
+}
+
 // startPayload validates, registers workers, and builds the /agent/start body Run and Start share.
 func (r *Runtime) startPayload(agent *Agent, prompt string, opts []RunOption, runID string) (map[string]any, error) {
 	if err := agent.Validate(); err != nil {
@@ -214,7 +222,7 @@ func (r *Runtime) startPayload(agent *Agent, prompt string, opts []RunOption, ru
 			"framework": skillFramework,
 			"rawConfig": agent.skill.rawConfig(),
 			"prompt":    prompt,
-			"sessionId": "",
+			"sessionId": o.session,
 			"media":     mediaWire(o.media),
 			"context":   map[string]any{},
 		}
@@ -234,7 +242,7 @@ func (r *Runtime) startPayload(agent *Agent, prompt string, opts []RunOption, ru
 	payload := map[string]any{
 		"agentConfig": config,
 		"prompt":      prompt,
-		"sessionId":   "",
+		"sessionId":   o.session,
 		"media":       mediaWire(o.media),
 	}
 	if runID != "" {

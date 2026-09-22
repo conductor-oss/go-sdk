@@ -612,6 +612,16 @@ func TestSkillStartPayload(t *testing.T) {
 			t.Errorf("payload missing %s", key)
 		}
 	}
+
+	// The skill branch builds its own payload, so WithSession has to be applied
+	// there too and not only on the agentConfig path.
+	payload, err = rt.startPayload(agent, "tidy up", []RunOption{WithSession("user-42")}, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if payload["sessionId"] != "user-42" {
+		t.Errorf("sessionId = %v, want user-42", payload["sessionId"])
+	}
 }
 
 // ── helpers ─────────────────────────────────────────────────────────

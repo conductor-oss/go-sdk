@@ -168,11 +168,11 @@ expect them.
   ignored until this landed. Still not ported: the identity fields
   (`execution_id`, `session_id`), which java-sdk itself documents as
   unpopulated and advises replacing with explicit tool arguments.
-- **No way to set `sessionId`.** `Runtime.startPayload` hardcodes `"sessionId": ""`; Python takes
-  it per run (`runtime.run(..., session_id=)`) and java-sdk as an agent field. On conductor-oss
-  the server's only use is `ConductorAgentResults`, which sets the A2A task's context id to
-  `firstNonBlank(sessionId, executionId)`, so the gap is narrow today. A `WithSession` run option
-  would close it.
+- ~~**No way to set `sessionId`.**~~ **Done.** `WithSession(id)` is a run option, matching
+  Python's `runtime.run(..., session_id=)`; java-sdk's docs show it on the agent builder, but its
+  `AgentRequest` carries it as a start-request field, so the option belongs on the run. On
+  conductor-oss the server's only use is `ConductorAgentResults`, which sets the A2A task's
+  context id to `firstNonBlank(sessionId, executionId)`, so the visible effect is narrow today.
 - java-sdk's `concepts/stateful.md` says `stateful(true)` makes the server "persist conversation
   history across runs of the same agent". Not on this server: `AgentConfig.isStateful` has one
   caller, `collectWorkerToolNames`, which `WorkflowExecutorOps` uses to build `taskToDomain` from
