@@ -55,7 +55,8 @@ var validReasoningEfforts = map[ReasoningEffort]struct{}{
 // Both fields are omitted from the wire when empty, so an empty ConversationMemory still
 // sends "memory": {}: non-nil memory means stateful, distinct from having no memory.
 type ConversationMemory struct {
-	// Messages are prior turns, each a role/content map.
+	// Messages are prior turns, each a map of "role" to a role name and
+	// "message" to the text, as the Python SDK's memory builds them.
 	Messages []map[string]any
 	// MaxMessages caps retained history. Zero means no explicit cap.
 	MaxMessages int
@@ -99,7 +100,9 @@ type Agent struct {
 	Fallback *Agent
 	// FallbackMaxTurns bounds the fallback agent; zero omits it, leaving the limit to the server.
 	FallbackMaxTurns int
-	// EnablePlanning adds a plan-before-acting preamble to this one agent; unrelated to Planner.
+	// EnablePlanning makes the server append a fixed "plan first, then execute
+	// step by step" paragraph to this agent's instructions. Prompt text only,
+	// and unrelated to Planner.
 	EnablePlanning bool
 	// PlannerContext is extra text or server-fetched URLs for the Planner. StrategyPlanExecute only.
 	PlannerContext []PlanContext

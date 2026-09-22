@@ -353,7 +353,7 @@ From [examples/agents/02a_simple_tools.go](examples/agents/02a_simple_tools.go):
 import "github.com/conductor-sdk/conductor-go/sdk/ai/tool"
 
 type weatherIn struct {
-	City string `json:"city"`
+	City string
 }
 
 func getWeather(ctx context.Context, in weatherIn) (map[string]any, error) {

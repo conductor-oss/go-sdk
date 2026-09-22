@@ -6,11 +6,11 @@ against a live server and asserts the worker-side effect.
 ## 1. A tool and a guardrail — the hello world
 
 ```go
-type weatherIn  struct{ City string `json:"city"` }
+type weatherIn  struct{ City string }
 type weatherOut struct {
-    City      string `json:"city"`
-    TempF     int    `json:"temp_f"`
-    Condition string `json:"condition"`
+    City      string
+    TempF     int
+    Condition string
 }
 
 func getWeather(ctx context.Context, in weatherIn) (weatherOut, error) {

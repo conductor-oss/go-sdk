@@ -1,54 +1,53 @@
-# Agents — Design Docs (Go SDK)
+# Conductor Go Agent SDK
 
-Status: **implemented on `feat/agent-golden-fixtures`, under review.** These documents describe
-the port of the python-sdk "Agents" feature (`conductor.ai.agents`) to the Go SDK as `sdk/ai`.
-They follow the same set of documents the Rust SDK used to plan its port
-([conductor-oss/rust-sdk#10](https://github.com/conductor-oss/rust-sdk/pull/10)), so the SDKs
-can be compared side by side — but where the Rust docs propose, these record what was built and
-what was verified against a live server.
+Build durable Go AI agents on Conductor. An agent is described as a Go struct, compiled by the
+server into a workflow, and executed like any other workflow, so every model turn, tool call and
+handoff is a task that is persisted, retryable and visible in the Conductor UI. Tools are ordinary
+Go functions the SDK registers as workers.
 
-Source of truth for behaviour is the python-sdk. java-sdk (`conductor-client-ai`) is the
-secondary typed-language reference and was diffed against directly where it mattered.
+**New here?** Follow [Getting Started](getting-started.md) to point the SDK at a server and run an
+agent.
 
-| Doc | Purpose |
-|---|---|
-| [`go-sdk-design.md`](go-sdk-design.md) | The Go types, package layout, how they map onto the existing worker framework, and where Go deliberately differs. |
-| [`secrets-and-credentials.md`](secrets-and-credentials.md) | The server→worker credential delivery contract and the Go surface over it. Flagged up front because it is **not** a 1:1 port of Python's env-var mechanics. |
-| [`framework-support.md`](framework-support.md) | Which external agent frameworks Go supports, which it does not, and why. |
-| [`examples.md`](examples.md) | Three worked examples of the shipped API, each with the e2e test that exercises it. |
-| [`parity-plan.md`](parity-plan.md) | One-page summary (classes / examples / secrets / frameworks) in the cross-SDK comparison format. |
+> [!note]
+> Agents need a Conductor server with an LLM provider configured **on the server**. Your Go process
+> never calls the model provider, so no provider API key is needed locally.
 
-## How to read these
+## Install
 
-Start with `go-sdk-design.md`. The other docs go deep on the parts that needed the most
-scrutiny — credentials, frameworks — and on what is actually exercised end to end. The Python
-SDK remains the behavioural source of truth, but it is documented in its own repo, not here.
+Requirements: Go 1.23+ and a Conductor server.
 
-## How it was verified
+```shell
+go get github.com/conductor-sdk/conductor-go
+```
 
-Two bars, both enforced by tests in this repo:
+## Start here
 
-- **Wire conformance.** `sdk/ai/testdata/agent_config/` holds `agentConfig` documents captured
-  verbatim from the Python serializer. `TestGoldenAgentConfig` builds the equivalent Go agent for
-  each and requires the same document (compared semantically, so key order is free). Every
-  fixture is implemented; `TestGoldenCoverage` reports the current count.
-- **Behaviour.** `test/ai_e2e/` runs its scenarios against a live Conductor server — tools,
-  streaming with human approval, credentials, code execution, CLI, guardrails, handoffs, MCP,
-  plan-execute — and each asserts the effect on the worker side (a counter incremented, a value
-  bound), not just that the run finished. Run with `-tags e2e` and `CONDUCTOR_SERVER_URL` set.
+- **[Getting Started](getting-started.md)** — configure a server and run your first agent.
+- **[Deploy · Serve · Run](concepts/deploy-serve-run.md)** — choose the right runtime mode.
+- **[Scheduling](concepts/scheduling.md)** — run a deployed agent on a cron cadence.
 
-## Open items surfaced while building this
+## Build agents
 
-These are server- or sibling-SDK-side, found because Go's e2e suite checks things the other suites
-do not. The first is covered in `go-sdk-design.md`; the rest are recorded here.
+- **[Agents](concepts/agents.md)** — the `Agent` struct and its fields.
+- **[Tools](concepts/tools.md)** — Go functions, HTTP and MCP tools, human approval, media, and credentials.
+- **[Multi-Agent](concepts/multi-agent.md)** — handoff, sequential, parallel, router, swarm and plan-execute.
+- **[Guardrails](concepts/guardrails.md)**, **[Termination](concepts/termination.md)**, **[Callbacks](concepts/callbacks.md)**, **[Stateful Agents](concepts/stateful.md)**, **[Streaming & Human-in-the-Loop](concepts/streaming-hitl.md)**, and **[Structured Output](concepts/structured-output.md)**.
 
-1. **`on_condition` handoffs stall in python-sdk and java-sdk against current servers.** The server
-   moved to one worker per condition (`{agent}_handoff_{target}`) in July 2026; both SDKs still
-   register the retired `{agent}_handoff_check`. Go registers the per-condition worker. See
-   `go-sdk-design.md` § Derived worker names.
-2. **Plan-execute could not pass a typed value between steps.** Root-caused to the server's planner
-   prompt and compiler; a fix is on a conductor branch. Go's `TestPlanExecute` is the test that
-   catches it, because it chains an `int` between tools where the Python suite chains only strings.
-3. **`Position` on guardrails is not acted on by current servers** at either level. Kept for wire
-   parity; documented honestly on the constant.
-4. **`RequiredTools` is kept for parity but is not usable on current servers.**
+## Reference
+
+- **[Runtime](reference/runtime.md)** — every `Runtime` and `AgentHandle` method, `Config`, and run options.
+- **[Agent definition](reference/agent-definition.md)** — every `Agent` and `ToolDef` field, with defaults and wire keys.
+- **[Client](reference/client.md)** — the lower-level control plane, including starting a deployed agent by name.
+
+## Framework bridges
+
+The Go SDK ships none, deliberately. MCP servers are supported directly through `tool.MCP`, since
+MCP is a protocol the server speaks rather than a dependency. See
+**[Framework support](framework-support.md)** for the policy and what to do instead.
+
+## More
+
+- **[Worked examples](examples.md)** — annotated examples with the tests that exercise them.
+- **[Secrets and credentials](secrets-and-credentials.md)** — how the server delivers secrets to your tools.
+- **[Runnable examples](../../examples/agents/)** — the maintained example programs.
+- **[Design notes](design/README.md)** — how the port was built and verified, and what is still open.
