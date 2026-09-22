@@ -253,13 +253,34 @@ Both declare a `ToolContext` parameter on the tool. Go does not need one: a tool
 | `ToolContext` gives you | In Go |
 |---|---|
 | `get_credential` / `getCredential` | `ai.Secret(ctx, name)` |
+| `state`, a map shared across tool calls | `ai.State`, `ai.StateValue`, `ai.SetState` |
 | execution and session identity | not available; pass what you need as a tool argument, which is what the Java page advises too |
-| `state`, a map shared across tool calls | **not available** |
 
-There is no way to hand data from one tool to another outside the model's messages. If a later
-tool needs an earlier tool's output, either let the model pass it as an argument, or keep it in
-your own store keyed by something the tools share. `CLIConfig.ContextKey` looks like it does this
-and does not: it is accepted and ignored, for want of the same missing state.
+## Agent state
+
+The server keeps a map for each execution and hands it to every tool call in it, so one tool can
+leave data for a later one without routing it through the model.
+
+```go
+func openCase(ctx context.Context, in caseIn) (string, error) {
+	tenant, _ := ai.StateValue(ctx, "tenant")        // read what the run carries
+	id := create(tenant, in.Summary)
+	if err := ai.SetState(ctx, "case_id", id); err != nil {
+		return "", err
+	}
+	return id, nil
+}
+```
+
+`ai.State(ctx)` returns the whole map as a copy. Writing to that copy changes nothing; only
+`ai.SetState` records a change. Outside a tool handler the reads come back empty and `SetState`
+returns `ai.ErrNoTaskContext`, so a misplaced call is visible rather than silently lost.
+
+Only what a tool writes travels back, on its task output, and the server merges it into the
+execution's state. A tool that merely reads adds nothing to its output.
+
+`CLIConfig.ContextKey` is built on this: name a key and the command's output is saved there for
+later tools.
 
 ## Options
 

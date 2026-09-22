@@ -41,9 +41,13 @@ func toolExecutor(t ToolDef) (model.ExecuteTaskFunction, error) {
 
 	return func(task *model.Task) (any, error) {
 		in := reflect.New(inType)
+		// The server delivers the execution's agent state alongside the model's
+		// arguments. Split it off first: it is not a tool argument, so neither
+		// the handler's input nor the input guardrails should see it.
+		args, state := splitAgentState(task.InputData)
 		// The model sends the wire names the schema advertised; untagged fields
 		// need them mapped back to Go names before encoding/json binds them.
-		input := schema.RekeyInput(task.InputData, inType)
+		input := schema.RekeyInput(args, inType)
 		if len(input) > 0 {
 			raw, err := json.Marshal(input)
 			if err != nil {
@@ -54,10 +58,10 @@ func toolExecutor(t ToolDef) (model.ExecuteTaskFunction, error) {
 			}
 		}
 
-		ctx := withTaskContext(context.Background(), task)
+		ctx := withTaskState(withTaskContext(context.Background(), task), state)
 
 		// Guardrails run around the handler, as in the Python worker.
-		if blocked, err := checkToolInput(ctx, t, task.InputData); err != nil {
+		if blocked, err := checkToolInput(ctx, t, args); err != nil {
 			return nil, err
 		} else if blocked != nil {
 			return blocked, nil
@@ -75,8 +79,58 @@ func toolExecutor(t ToolDef) (model.ExecuteTaskFunction, error) {
 		if err != nil {
 			return nil, err
 		}
-		return toolOutput(value), nil
+		return withStateUpdates(toolOutput(value), state, t.Name)
 	}, nil
+}
+
+// splitAgentState separates the execution's agent state from the model's
+// arguments. The server sends both in one map; the state is not an argument, so
+// it must not reach the handler's input type or the input guardrails. The
+// task's own map is left untouched, since it belongs to the task.
+func splitAgentState(inputData map[string]any) (map[string]any, *taskState) {
+	state := &taskState{}
+	if _, sent := inputData[agentStateKey]; !sent {
+		return inputData, state
+	}
+	if m, ok := inputData[agentStateKey].(map[string]any); ok {
+		state.initial = m
+	}
+	args := make(map[string]any, len(inputData)-1)
+	for k, v := range inputData {
+		if k != agentStateKey {
+			args[k] = v
+		}
+	}
+	return args, state
+}
+
+// withStateUpdates attaches what the handler wrote, for the server to persist.
+// A handler that wrote nothing leaves its output exactly as it was, so the
+// common case cannot be changed by this. A handler that did write needs the
+// output to be a JSON object to carry the key, so a struct is round-tripped
+// into one; its fields are preserved.
+func withStateUpdates(out any, state *taskState, toolName string) (any, error) {
+	updates := state.changed()
+	if updates == nil {
+		return out, nil
+	}
+	m, ok := out.(map[string]any)
+	if !ok {
+		raw, err := json.Marshal(out)
+		if err != nil {
+			return nil, fmt.Errorf("tool %q: encode output for state updates: %w", toolName, err)
+		}
+		if err := json.Unmarshal(raw, &m); err != nil {
+			return nil, fmt.Errorf("tool %q: output must be a JSON object to carry state updates: %w",
+				toolName, err)
+		}
+	}
+	merged := make(map[string]any, len(m)+1)
+	for k, v := range m {
+		merged[k] = v
+	}
+	merged[stateUpdatesKey] = updates
+	return merged, nil
 }
 
 // snakeCaseOutput is RekeyInput's counterpart for a result: an untagged output

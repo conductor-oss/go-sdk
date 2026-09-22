@@ -157,14 +157,23 @@ expect them.
   secret store; they need a server with a writable store to port.
 - The parity plan table lacks a row for the media tool constructors.
 - `RequiredTools` is unusable on current servers, same as Python.
-- **No agent-state API.** Python's `ToolContext.state` and java-sdk's
-  `ToolContext.getState()` give tools a mutable map that survives across tool
-  calls in one execution, so one tool can hand data to another without routing
-  it through the model. Go has no equivalent, and this was an omission rather
-  than a decision: the parity plan recorded `dependencies` as deliberately not
-  ported but never mentioned `state`. The consequence is already in the tree —
-  `CLIConfig.ContextKey` exists, serializes, and is ignored, because the state
-  it would write into does not exist (see the comment in `cli_runner.go`).
-  Closing it means reading and writing the agent state the server already
-  carries, and would make `ContextKey` work. Credentials, the half people reach
-  for most, are covered by `ai.Secret` and need no context type.
+- ~~**No agent-state API.**~~ **Done.** `ai.State`, `ai.StateValue` and
+  `ai.SetState` are the counterpart of Python's `ToolContext.state` and
+  java-sdk's `ToolContext.getState()`, on the same wire protocol: the server
+  sends `_agent_state` with the task and reads back `_state_updates`, which
+  `Join` propagates across parallel branches. Go threads it on the
+  `context.Context` a tool already receives, so no context type is needed.
+  Only what a tool writes travels back, so an existing tool's output is
+  unchanged. `CLIConfig.ContextKey` now works, having been serialized and
+  ignored until this landed. Still not ported: the identity fields
+  (`execution_id`, `session_id`), which java-sdk itself documents as
+  unpopulated and advises replacing with explicit tool arguments.
+- **No way to set `sessionId`.** `Runtime.startPayload` hardcodes `"sessionId": ""`; Python takes
+  it per run (`runtime.run(..., session_id=)`) and java-sdk as an agent field. On conductor-oss
+  the server's only use is `ConductorAgentResults`, which sets the A2A task's context id to
+  `firstNonBlank(sessionId, executionId)`, so the gap is narrow today. A `WithSession` run option
+  would close it.
+- java-sdk's `concepts/stateful.md` says `stateful(true)` makes the server "persist conversation
+  history across runs of the same agent". Not on this server: `AgentConfig.isStateful` has one
+  caller, `collectWorkerToolNames`, which `WorkflowExecutorOps` uses to build `taskToDomain` from
+  the run id. Domain routing is the whole effect. Do not copy the claim into the Go docs.

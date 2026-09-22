@@ -24,34 +24,53 @@ Tools: ai.Tools(
 )
 ```
 
-`Agent.Stateful` has no wire key of its own: the serializer stamps `"stateful": true` onto each
-of that agent's tools. One stateful tool anywhere in the tree — a sub-agent, a router, a planner,
-a fallback, an agent-as-tool — turns on domain routing for the whole run.
+`Agent.Stateful` is shorthand for marking each of that agent's tools; the two are equivalent.
+Marking one tool anywhere in the tree — on a sub-agent, a router, a planner, a fallback, an
+agent-as-tool — makes the whole run stateful.
 
-## Per-execution worker domains
+## What it gives you
 
-A Conductor task queue can be partitioned by *domain*. Stateful routing uses one domain per run:
+Without it, any process serving the agent can pick up any tool call. Run three copies of your
+worker and the calls spread across them, which is what you want most of the time.
 
-1. `Runtime.Start` and `Runtime.Run` mint a run id when anything in the tree is stateful — 32
-   lowercase hex characters, the same format as the Python SDK's `uuid4().hex` — and send it as
-   `runId` in the start request. Nothing stateful means no run id and no domain.
-2. The run id doubles as a queue name. The server records the mapping on the workflow, as its
-   task-to-domain map, and schedules that run's tool tasks into those queues.
-3. Once the run exists the runtime reads the mapping back off the execution and starts a worker
-   per task name on the queue named there. So the process that started the run is the one polling
-   that run's queue, and two concurrent runs never take each other's tasks.
+```
+                  ┌── process A   ← any call, any run
+tool "open_case" ─┼── process B
+                  └── process C
+```
 
-The same tool in two stateful runs is two pollers, one per (task name, domain) pair.
+That falls apart when a tool holds something in memory between calls. A run opens a case in
+process A, its next call lands in process B, and the case is not there.
 
-A task name the server leaves out of the mapping is scheduled on the shared queue and its worker
-polls undomained; that is how a nested skill's own tasks behave, since the server routes only the
-agent's declared tools.
+Stateful pins each run to one process. Every call from a run goes back to the process that
+started it, for the life of the run, so anything a tool keeps in memory is still there next call.
 
-### Ordering
+```
+tool "open_case" ─┬── process A   ← run 1's calls, always
+                  └── process B   ← run 2's calls, always
+```
 
-Workers for a stateful run can only start after the run does, because the domain does not exist
-until then — `Start` and `Run` do it in that order, before returning. A run with no stateful tools
-registers its workers *before* the start call instead, so no tool call is enqueued unheard.
+## When to use it
+
+Use it when a tool holds per-run state that is expensive or impossible to rebuild: an open
+database transaction, a logged-in browser session, a loaded model, a file handle, a scratch
+directory. One stateful tool anywhere in the tree pins the whole run.
+
+Skip it otherwise. Pinning costs you the load spreading above: a busy run's calls all queue
+behind one process instead of fanning out.
+
+Where a value is small and serializable, prefer agent state to keeping it in memory. The server
+carries that across tool calls whether or not the agent is stateful; see below.
+
+## What to expect
+
+- Two concurrent runs never take each other's tool calls, even for the same tool.
+- Run a single process and nothing looks different; the benefit shows up once you scale out.
+- `Run` and `Start` set the pinning up themselves. There is nothing extra to call.
+- A nested skill's own tasks are not pinned, only the tools your agent declares.
+- A run cannot be picked up by a different process later. `Serve` re-hosts an agent after a
+  restart, but a run in flight when the process died does not resume; see the note at the end
+  of this page.
 
 ## Seeding prior turns
 
@@ -74,6 +93,15 @@ sends `"memory": {}`: non-nil memory means stateful, which is distinct from havi
 `ai.SemanticMemory` over a `ai.MemoryStore` is separate and in-process. Neither the Go nor the
 Python runtime wires it into a run; call `SemanticMemory.Context` from application code and put
 the result in the prompt.
+
+## Sharing state between tools
+
+Within one run, tools can hand data to each other through a map the server carries: `ai.State`,
+`ai.StateValue` and `ai.SetState`, the counterpart of `ToolContext.state` in Python and
+`ToolContext.getState()` in Java. See [Tools → Agent state](./tools.md#agent-state).
+
+This is independent of `Stateful`. The server carries the map either way, so reach for it first
+and mark the agent stateful only when a tool holds something the server cannot carry.
 
 ## Not implemented: resume from an instance
 

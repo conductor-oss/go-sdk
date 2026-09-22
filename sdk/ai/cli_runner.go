@@ -83,23 +83,7 @@ func (c *CLIConfig) runCommand(ctx context.Context, in cliIn) (cliOut, error) {
 	runCtx, cancel := context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
 	defer cancel()
 
-	var cmd *exec.Cmd
-	if in.Shell {
-		// Quote every token so the shell sees exactly the argv the model built,
-		// while still granting the shell features it asked for.
-		quoted := make([]string, 0, 1+len(argv))
-		for _, a := range append([]string{executable}, argv...) {
-			quoted = append(quoted, shellQuote(a))
-		}
-		// The executable passed validateCLICommand, shell mode is gated by
-		// AllowShell, and every token is shell-quoted above.
-		cmd = exec.CommandContext(runCtx, "sh", "-c", strings.Join(quoted, " ")) //nolint:gosec // see above
-	} else {
-		cmd = exec.CommandContext(runCtx, executable, argv...) //nolint:gosec // executable is allow-listed by validateCLICommand
-	}
-	if in.Cwd != "" {
-		cmd.Dir = in.Cwd
-	}
+	cmd := buildCommand(runCtx, executable, argv, in)
 
 	var stdout, stderr strings.Builder
 	cmd.Stdout = &stdout
@@ -111,8 +95,9 @@ func (c *CLIConfig) runCommand(ctx context.Context, in cliIn) (cliOut, error) {
 	switch {
 	case err == nil:
 		out.Status = "success"
-		// ContextKey asks for the output to be saved into the agent's state; Go
-		// has no agent-state API yet, so the key is accepted but not acted on.
+		if saveErr := saveToState(ctx, in.ContextKey, out); saveErr != nil {
+			return cliOut{}, saveErr
+		}
 		return out, nil
 	case runCtx.Err() != nil:
 		return cliOut{}, model.NewNonRetryableError(
@@ -134,6 +119,48 @@ func (c *CLIConfig) runCommand(ctx context.Context, in cliIn) (cliOut, error) {
 
 // validateCLICommand checks the executable against the allow-list, stripping
 // any path prefix so /usr/bin/git and git validate alike; empty permits all.
+// buildCommand assembles the process to run. Shell mode joins a fully quoted
+// line so the shell sees exactly the argv the model built while still granting
+// the shell features it asked for; direct mode execs the executable itself.
+func buildCommand(ctx context.Context, executable string, argv []string, in cliIn) *exec.Cmd {
+	var cmd *exec.Cmd
+	if in.Shell {
+		quoted := make([]string, 0, 1+len(argv))
+		for _, a := range append([]string{executable}, argv...) {
+			quoted = append(quoted, shellQuote(a))
+		}
+		// The executable passed validateCLICommand, shell mode is gated by
+		// AllowShell, and every token is shell-quoted above.
+		cmd = exec.CommandContext(ctx, "sh", "-c", strings.Join(quoted, " ")) //nolint:gosec // see above
+	} else {
+		cmd = exec.CommandContext(ctx, executable, argv...) //nolint:gosec // executable is allow-listed by validateCLICommand
+	}
+	if in.Cwd != "" {
+		cmd.Dir = in.Cwd
+	}
+	return cmd
+}
+
+// saveToState puts a successful command's output into the agent state under
+// key, as Python's runner does: trimmed stdout, or stderr when stdout is empty,
+// and nothing at all when there is no key or nothing to save.
+func saveToState(ctx context.Context, key string, out cliOut) error {
+	if key == "" {
+		return nil
+	}
+	value := strings.TrimSpace(out.Stdout)
+	if value == "" {
+		value = strings.TrimSpace(out.Stderr)
+	}
+	if value == "" {
+		return nil
+	}
+	if err := SetState(ctx, key, value); err != nil {
+		return fmt.Errorf("save output to state key %q: %w", key, err)
+	}
+	return nil
+}
+
 func validateCLICommand(executable string, allowed []string) string {
 	if len(allowed) == 0 {
 		return ""

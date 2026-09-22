@@ -19,7 +19,7 @@ server.
 | `prefill_tools`, `plan_source`, `planner_context`, `synthesize` | `PrefillTools` + `Prefill`, `PlanSource`, `PlannerContext`, `Synthesize` | |
 | `dependencies` | not ported | never on the wire; Go tools take what they need through closures |
 | `ToolContext.get_credential` | `ai.Secret(ctx, name)`, `ai.SecretsEnv` | Go tools already take a `context.Context`, so no context parameter or type is needed |
-| `ToolContext.state` | **gap, not ported** | tool-to-tool data that bypasses the model. `CLIConfig.ContextKey` is serialized but ignored because of it; see [remaining-work-plan](remaining-work-plan.md) |
+| `ToolContext.state` | `ai.State`, `ai.StateValue`, `ai.SetState` | same wire protocol: `_agent_state` in, `_state_updates` out, only what the tool wrote; `CLIConfig.ContextKey` is built on it |
 | `ToolContext.execution_id`, `session_id`, `agent_name` | not ported | java-sdk documents its equivalents as unpopulated and advises passing identifiers as tool arguments |
 | `Strategy` | `ai.Strategy` (9 constants) | emitted only with sub-agents |
 | `OnToolResult`, `OnTextMention`, `OnCondition` | same names; `OnCondition.Condition` is `HandoffFunc(ctx, HandoffState)` | one `OnCondition` per target |
@@ -47,6 +47,7 @@ server.
 | `AgentRuntime.pause`, handle `resume` (un-pause) | `Runtime.Pause` / `Runtime.Resume`, also on `AgentHandle` |
 | `Schedule`, `SchedulerClient` (save/get/list/delete/pause/resume/reconcile) | `Schedule` + agent-scoped `Runtime.SaveSchedule`/`GetSchedule`/`ListSchedules`/`DeleteSchedule`/`PauseSchedule`/`ResumeSchedule`/`ReconcileSchedules` |
 | `run(..., media=)`, `run_settings=` | `WithMedia`, `WithRunSettings` (`RunSettings`) |
+| `run(..., session_id=)` (java-sdk: `Agent.sessionId`) | **not ported**; the start request always sends `sessionId: ""` |
 | `AgentHandle` | `AgentHandle`: `Events`, `Status`, `Waiting`, `Respond`, `Approve`, `Reject`, `Stop`, `Result` |
 | `AgentClient` | `client.AgentClient` + `APIClient.StreamSSE` |
 | forked worker processes | goroutines on one `worker.TaskRunner` |
