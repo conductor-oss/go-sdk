@@ -16,3 +16,10 @@
 pkg/
 go.sum
 !examples/go.sum
+
+# Python bytecode from test/testdata/agent_config/generate_fixtures.py
+__pycache__/
+*.pyc
+
+# Playback server, fixtures and logs from scripts/run-agents-playback.sh
+tmp/

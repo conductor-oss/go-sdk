@@ -1,0 +1,65 @@
+name: Agents playback
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  playback:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      CONDUCTOR_SERVER_URL: http://localhost:18080/api
+      CONDUCTOR_AGENT_LLM_MODEL: mock/mockLLM
+      CONDUCTOR_AGENTS_PLAYBACK: 'true'
+      CONDUCTOR_PLAYBACK_WORK_DIR: tmp/agent-playback
+      GITHUB_REPOS_URL: http://localhost:3002/users/Conductor/repos?per_page=5&sort=updated
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout matching server and shared recordings
+        uses: actions/checkout@v4
+        with:
+          repository: conductor-oss/conductor
+          ref: main
+          path: tmp/conductor
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build playback server
+        working-directory: tmp/conductor
+        run: ./gradlew --no-daemon :conductor-server:bootJar -x test
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Start HTTP and MCP services
+        uses: ./tmp/conductor/.github/actions/start-playback-services
+      - name: Start fresh playback server
+        id: server
+        uses: ./tmp/conductor/.github/actions/start-playback
+      - name: Run all agent examples
+        env:
+          CONDUCTOR_PLAYBACK_SERVICES_STARTED: 'true'
+        run: bash scripts/run-agents-playback.sh tmp/conductor
+      - name: Check playback outcomes
+        if: always() && steps.server.outcome == 'success'
+        uses: ./tmp/conductor/.github/actions/check-playback
+        with:
+          server-url: http://localhost:18080/api
+      - name: Upload playback diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agents-playback-logs
+          path: tmp/agent-playback/*.log
+      - name: Stop test services
+        if: always()
+        run: |
+          for file in tmp/agent-playback/*.pid; do
+            [ -f "$file" ] && kill "$(cat "$file")" 2>/dev/null || true
+          done

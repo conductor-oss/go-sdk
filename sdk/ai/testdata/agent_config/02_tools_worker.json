@@ -1,0 +1,79 @@
+{
+  "external": false,
+  "instructions": "Use tools.",
+  "maxTurns": 25,
+  "model": "openai/gpt-4o",
+  "name": "tools_worker",
+  "timeoutSeconds": 0,
+  "tools": [
+    {
+      "description": "Get the current weather for a city.",
+      "inputSchema": {
+        "properties": {
+          "city": {
+            "type": "string"
+          },
+          "days": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "city"
+        ],
+        "type": "object"
+      },
+      "name": "get_weather",
+      "outputSchema": {
+        "additionalProperties": {},
+        "type": "object"
+      },
+      "toolType": "worker"
+    },
+    {
+      "approvalRequired": true,
+      "description": "Issue a refund. Carries per-tool wire options.",
+      "inputSchema": {
+        "properties": {
+          "order_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "order_id"
+        ],
+        "type": "object"
+      },
+      "maxCalls": 2,
+      "name": "refund",
+      "outputSchema": {
+        "type": "string"
+      },
+      "timeoutSeconds": 45,
+      "toolType": "worker"
+    },
+    {
+      "config": {
+        "credentials": [
+          "GITHUB_TOKEN"
+        ]
+      },
+      "description": "Declares a credential, which lands under config.credentials.",
+      "inputSchema": {
+        "properties": {
+          "branch": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "branch"
+        ],
+        "type": "object"
+      },
+      "name": "push_branch",
+      "outputSchema": {
+        "type": "string"
+      },
+      "toolType": "worker"
+    }
+  ]
+}
