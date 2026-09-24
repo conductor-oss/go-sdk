@@ -14,6 +14,55 @@ export CONDUCTOR_AUTH_SECRET="your_auth_secret" # Optional, if authentication is
 
 ## Examples
 
+### 🤖 **Agent examples** (`agents/`)
+
+Ports of the Python SDK's `examples/agents`, one file per example in a
+package, with `agents/cmd` to run one by name. The agents, instructions and
+prompts are the Python examples' own, character for character, so the shared
+recordings in conductor-oss/conductor's `llm-recordings/` replay them; CI runs
+every example that way (`.github/workflows/agents-playback.yml`), and the
+conductor repository's `check-playback` action judges the outcomes. Live, they
+need a Conductor server with LLM support and `CONDUCTOR_SERVER_URL`;
+`CONDUCTOR_AGENT_LLM_MODEL` picks the model (default `openai/gpt-4o-mini`).
+
+| Example | Shows |
+|---|---|
+| `01_basic_agent.go` | Define an agent, run it, print the answer. |
+| `02a_simple_tools.go` | Two worker tools; the model picks the right one. |
+| `02c_tool_retry_config.go` | Per-tool retry policy, count and delay (`tool.WithRetry`). |
+| `04_http_and_mcp_tools.go` | Server-side HTTP and MCP tools mixed with a worker tool; needs `mcp-testkit` on port 3001 and two credentials on the server. |
+| `05_handoffs.go` | A support agent hands off to billing, technical or sales sub-agents. |
+| `06_sequential_pipeline.go` | Researcher, writer and editor run in order, each seeing the previous output. |
+| `07_parallel_agents.go` | Three analysts examine the same topic at once. |
+| `09_human_in_the_loop.go` | A transfer tool that pauses the run for approval at the terminal, with streamed events. |
+| `09c_hitl_streaming.go` | Several tools, one needing approval, with streamed events. |
+| `103_plan_and_compile.go` | A planner writes a plan over three tools; the server compiles and runs it. |
+| `10_guardrails.go` | A custom output guardrail makes the model redact PII and revise. |
+| `13_hierarchical_agents.go` | CEO routes to department leads, who route to specialists. |
+| `16e_credentials_http_tool.go` | An HTTP tool whose `Authorization` header names a credential the server resolves; no worker runs. |
+| `17_swarm_orchestration.go` | Front-line support transfers the conversation to a specialist and back. |
+| `21_regex_guardrails.go` | Server-side regex guardrails block emails and SSNs. |
+| `22_llm_guardrails.go` | A second model judges the answer against a policy; retries run out. |
+| `33_external_workers.go` | Tools whose workers run in another service (`tool.External`), mixed with a local one. |
+| `64_swarm_with_tools.go` | Swarm specialists that each carry their own domain tool. |
+| `66_handoff_to_parallel.go` | A coordinator hands off to a single agent or to a parallel group. |
+
+**Run:**
+```bash
+go run ./agents/cmd                     # list the examples
+go run ./agents/cmd 01_basic_agent
+go run ./agents/cmd external-workers    # in another terminal, before 33_external_workers
+```
+
+**Replay against the shared recordings:** build the conductor server from its
+`main` branch, start it with that checkout's
+`.github/actions/start-playback` action, then run every example with
+`scripts/run-agents-playback.sh /path/to/conductor` from the repository root
+and judge the outcomes with the checkout's `check-playback` action. A new
+example needs its recording added to `llm-recordings/` there.
+
+---
+
 ### 🌟 **Hello World** (`hello_world/`)
 **Basic introduction to Conductor workflows**
 
@@ -93,13 +142,15 @@ go mod download
 
 ### 2. Set Environment Variables
 ```bash
-# Required
-export CONDUCTOR_SERVER_URL="http://localhost:8080/api"
-
-# Optional (for authenticated environments)
-export CONDUCTOR_AUTH_KEY="your_auth_key"
-export CONDUCTOR_AUTH_SECRET="your_auth_secret"
+export CONDUCTOR_SERVER_URL=http://localhost:8080/api
+export CONDUCTOR_AUTH_KEY=your_key        # Orkes Conductor only
+export CONDUCTOR_AUTH_SECRET=your_secret  # Orkes Conductor only
 ```
+
+On Orkes Conductor, the key and secret come from an application access key
+(Access Control > Applications in the Orkes UI). On open-source Conductor,
+leave both unset: a set pair makes the client call a token endpoint the
+server does not have, and every request fails.
 
 ### 3. Run Examples
 Navigate to any example directory and run:
@@ -132,4 +183,7 @@ When running examples successfully, you'll see structured logs showing:
    - Ensure Conductor server is running on the specified URL
 
 4. **Authentication errors**
-   - Verify CONDUCTOR_AUTH_KEY and CONDUCTOR_AUTH_SECRET if using authenticated setup
+   - On Orkes Conductor, check that CONDUCTOR_AUTH_KEY and CONDUCTOR_AUTH_SECRET
+     hold the key ID and secret of an application access key
+   - On open-source Conductor, make sure both variables are unset; a set pair
+     makes the client call a token endpoint the server does not have

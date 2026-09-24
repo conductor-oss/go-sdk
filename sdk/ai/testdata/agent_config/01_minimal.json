@@ -1,0 +1,8 @@
+{
+  "external": false,
+  "instructions": "You are a helpful assistant.",
+  "maxTurns": 25,
+  "model": "openai/gpt-4o",
+  "name": "minimal",
+  "timeoutSeconds": 0
+}

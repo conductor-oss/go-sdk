@@ -1,0 +1,40 @@
+{
+  "external": false,
+  "instructions": "MCP tool types.",
+  "maxTurns": 25,
+  "model": "openai/gpt-4o",
+  "name": "tools_mcp",
+  "timeoutSeconds": 0,
+  "tools": [
+    {
+      "config": {
+        "max_tools": 64,
+        "server_url": "http://localhost:3001/mcp"
+      },
+      "description": "MCP tools from http://localhost:3001/mcp",
+      "inputSchema": {},
+      "name": "mcp_tools",
+      "toolType": "mcp"
+    },
+    {
+      "config": {
+        "credentials": [
+          "MCP_AUTH_KEY"
+        ],
+        "headers": {
+          "Authorization": "Bearer ${MCP_AUTH_KEY}"
+        },
+        "max_tools": 16,
+        "server_url": "http://localhost:3002/mcp",
+        "tool_names": [
+          "get_weather",
+          "math_add"
+        ]
+      },
+      "description": "Authenticated MCP tools.",
+      "inputSchema": {},
+      "name": "secured_mcp",
+      "toolType": "mcp"
+    }
+  ]
+}

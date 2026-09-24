@@ -1,0 +1,74 @@
+{
+  "external": false,
+  "instructions": "Plan with context.",
+  "maxTurns": 25,
+  "model": "openai/gpt-4o",
+  "name": "planned",
+  "planSource": {
+    "plan": {
+      "steps": []
+    },
+    "type": "inline"
+  },
+  "planner": {
+    "external": false,
+    "instructions": "Emit JSON plan.",
+    "maxTurns": 25,
+    "model": "openai/gpt-4o",
+    "name": "ctx_planner",
+    "timeoutSeconds": 0
+  },
+  "plannerContext": [
+    {
+      "text": "Prefer metric units."
+    },
+    {
+      "headers": {
+        "X-Team": "ops"
+      },
+      "maxBytes": 4096,
+      "required": false,
+      "url": "https://docs.example.test/policy.md"
+    },
+    {
+      "text": "Plain string context."
+    }
+  ],
+  "prefillTools": [
+    {
+      "arguments": {
+        "city": "Paris",
+        "days": 2
+      },
+      "toolName": "get_weather"
+    }
+  ],
+  "strategy": "plan_execute",
+  "synthesize": false,
+  "timeoutSeconds": 0,
+  "tools": [
+    {
+      "description": "Get the current weather for a city.",
+      "inputSchema": {
+        "properties": {
+          "city": {
+            "type": "string"
+          },
+          "days": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "city"
+        ],
+        "type": "object"
+      },
+      "name": "get_weather",
+      "outputSchema": {
+        "additionalProperties": {},
+        "type": "object"
+      },
+      "toolType": "worker"
+    }
+  ]
+}

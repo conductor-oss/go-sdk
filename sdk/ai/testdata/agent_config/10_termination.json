@@ -1,0 +1,34 @@
+{
+  "external": false,
+  "maxTurns": 25,
+  "model": "openai/gpt-4o",
+  "name": "terminating",
+  "stopWhen": {
+    "taskName": "terminating_stop_when"
+  },
+  "termination": {
+    "conditions": [
+      {
+        "conditions": [
+          {
+            "caseSensitive": true,
+            "text": "DONE",
+            "type": "text_mention"
+          },
+          {
+            "maxMessages": 20,
+            "type": "max_message"
+          }
+        ],
+        "type": "or"
+      },
+      {
+        "maxCompletionTokens": 2000,
+        "maxTotalTokens": 8000,
+        "type": "token_usage"
+      }
+    ],
+    "type": "and"
+  },
+  "timeoutSeconds": 0
+}

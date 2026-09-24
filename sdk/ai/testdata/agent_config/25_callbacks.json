@@ -1,0 +1,34 @@
+{
+  "callbacks": [
+    {
+      "position": "before_agent",
+      "taskName": "observed_before_agent"
+    },
+    {
+      "position": "after_agent",
+      "taskName": "observed_after_agent"
+    },
+    {
+      "position": "before_model",
+      "taskName": "observed_before_model"
+    },
+    {
+      "position": "after_model",
+      "taskName": "observed_after_model"
+    },
+    {
+      "position": "before_tool",
+      "taskName": "observed_before_tool"
+    },
+    {
+      "position": "after_tool",
+      "taskName": "observed_after_tool"
+    }
+  ],
+  "external": false,
+  "instructions": "Watched at every step.",
+  "maxTurns": 25,
+  "model": "openai/gpt-4o",
+  "name": "observed",
+  "timeoutSeconds": 0
+}
