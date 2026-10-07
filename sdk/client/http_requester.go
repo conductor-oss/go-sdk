@@ -159,7 +159,9 @@ func (h *HttpRequester) prepareRequest(
 	}
 
 	for header, value := range h.httpSettings.Headers {
-		localVarRequest.Header.Add(header, value)
+		if localVarRequest.Header.Get(header) == "" {
+			localVarRequest.Header.Set(header, value)
+		}
 	}
 
 	if h.tokenManager != nil {
