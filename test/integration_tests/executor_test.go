@@ -853,8 +853,13 @@ func TestSignal_AllStrategies_Comprehensive(t *testing.T) {
 					ReturnStrategy: tc.returnStrategy,
 				})
 			assert.NoError(t, err, "Signal should not return an error")
-			if tc.returnStrategy == model.ReturnBlockingTask {
-				assert.Empty(t, resp, "Signal response should be empty for workflow %s", workflowId)
+			// This signal leaves nothing blocking. Servers before 5.5.2 returned an empty response; since
+			// orkes-conductor 29f3cbfc49 the server returns the target workflow's metadata with no task fields.
+			if tc.returnStrategy == model.ReturnBlockingTask && resp != nil {
+				assert.Empty(t, resp.TaskId, "No task should be blocking in workflow %s", workflowId)
+				if resp.WorkflowId != "" {
+					assert.Equal(t, workflowId, resp.WorkflowId, "Metadata response should describe workflow %s", workflowId)
+				}
 			}
 		})
 	}
