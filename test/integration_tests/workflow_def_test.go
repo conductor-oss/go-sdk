@@ -217,7 +217,7 @@ func TestDynamicForkWorkflow(t *testing.T) {
 		Name("dynamic_workflow_array_sub_workflow").
 		Version(1).
 		Add(createDynamicForkTask())
-	err := wf.Register(true)
+	err := testdata.ValidateWorkflowRegistration(wf)
 	require.NoError(t, err)
 
 	err = testdata.ValidateWorkflowDeletion(wf)

@@ -230,6 +230,7 @@ func ValidateTaskRegistration(taskDefs ...model.TaskDef) error {
 }
 
 func ValidateWorkflowRegistration(workflow *workflow.ConductorWorkflow) error {
+	WithTestTimeout(workflow)
 	for attempt := 0; attempt < 5; attempt += 1 {
 		err := workflow.Register(true)
 		if err != nil {
@@ -240,6 +241,27 @@ func ValidateWorkflowRegistration(workflow *workflow.ConductorWorkflow) error {
 		return nil
 	}
 	return fmt.Errorf("exhausted retries")
+}
+
+// TestWorkflowTimeoutSeconds bounds how long a leaked test workflow stays RUNNING
+// (and keeps its tasks queued) on a shared server when its test never cleans it up.
+const TestWorkflowTimeoutSeconds = 600
+
+// WithTestTimeout gives wf a TIME_OUT_WF timeout of TestWorkflowTimeoutSeconds unless it already has a timeout.
+func WithTestTimeout(wf *workflow.ConductorWorkflow) *workflow.ConductorWorkflow {
+	if wf.ToWorkflowDef().TimeoutSeconds == 0 {
+		wf.TimeoutPolicy(workflow.TimeOutWorkflow, TestWorkflowTimeoutSeconds)
+	}
+	return wf
+}
+
+// WithTestTimeoutDef is WithTestTimeout for a workflow definition registered directly.
+func WithTestTimeoutDef(def *model.WorkflowDef) *model.WorkflowDef {
+	if def.TimeoutSeconds == 0 {
+		def.TimeoutPolicy = string(workflow.TimeOutWorkflow)
+		def.TimeoutSeconds = TestWorkflowTimeoutSeconds
+	}
+	return def
 }
 
 func ValidateWorkflowDeletion(workflow *workflow.ConductorWorkflow) error {

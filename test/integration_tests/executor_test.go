@@ -246,7 +246,7 @@ func TestRegisterWorkflowWithWaitSignal(t *testing.T) {
 	wf := getSubWorkflow(t)
 
 	// Register the workflow
-	err := executor.RegisterWorkflow(true, wf.ToWorkflowDef())
+	err := executor.RegisterWorkflow(true, testdata.WithTestTimeoutDef(wf.ToWorkflowDef()))
 	assert.Nil(t, err)
 
 	// Start the workflow
@@ -284,7 +284,7 @@ func TestSubWorkflowSignal(t *testing.T) {
 	executor := testdata.WorkflowExecutor
 
 	subWf := getSubWorkflow(t)
-	executor.RegisterWorkflow(true, subWf.ToWorkflowDef())
+	executor.RegisterWorkflow(true, testdata.WithTestTimeoutDef(subWf.ToWorkflowDef()))
 
 	wf := workflow.ConductorWorkflow{}
 	wf.Name("signal_subworkflow").
@@ -295,7 +295,7 @@ func TestSubWorkflowSignal(t *testing.T) {
 		Add(workflow.NewSubWorkflowTask("sub_workflow_ref", "wait_signal_test", 1))
 
 	// Register the workflow
-	err := executor.RegisterWorkflow(true, wf.ToWorkflowDef())
+	err := executor.RegisterWorkflow(true, testdata.WithTestTimeoutDef(wf.ToWorkflowDef()))
 	assert.Nil(t, err)
 
 	// Start the workflow
@@ -506,19 +506,19 @@ func registerComplexWorkflows(t *testing.T) {
 	// Subworkflow-2
 	wfDef, err := getWorkflowDef("complex_wf_signal_test_subworkflow_2.json")
 	require.NoError(t, err, "Failed to get workflow definition")
-	err = executor.RegisterWorkflow(true, wfDef)
+	err = executor.RegisterWorkflow(true, testdata.WithTestTimeoutDef(wfDef))
 	require.NoError(t, err, "Failed to register workflow")
 
 	// Subworkflow-1
 	wfDef, err = getWorkflowDef("complex_wf_signal_test_subworkflow_1.json")
 	require.NoError(t, err, "Failed to get workflow definition")
-	err = executor.RegisterWorkflow(true, wfDef)
+	err = executor.RegisterWorkflow(true, testdata.WithTestTimeoutDef(wfDef))
 	require.NoError(t, err, "Failed to register workflow")
 
 	// Main WF
 	wfDef, err = getWorkflowDef("complex_wf_signal_test.json")
 	require.NoError(t, err, "Failed to get workflow definition")
-	err = executor.RegisterWorkflow(true, wfDef)
+	err = executor.RegisterWorkflow(true, testdata.WithTestTimeoutDef(wfDef))
 	require.NoError(t, err, "Failed to register workflow")
 
 	// Cleanup for registered workflows
@@ -1002,7 +1002,7 @@ func TestWfExecutionWithWaitForSec_Success(t *testing.T) {
 		Add(httpTask)
 
 	// register the workflow
-	err := executor.RegisterWorkflow(true, wf.ToWorkflowDef())
+	err := executor.RegisterWorkflow(true, testdata.WithTestTimeoutDef(wf.ToWorkflowDef()))
 	assert.NoError(t, err)
 
 	startRequest := &model.StartWorkflowRequest{
@@ -1041,7 +1041,7 @@ func TestWfExecutionWithWaitForSec_ContextTimeout(t *testing.T) {
 		Version(1).
 		Add(httpTask)
 
-	err := executor.RegisterWorkflow(true, wf.ToWorkflowDef())
+	err := executor.RegisterWorkflow(true, testdata.WithTestTimeoutDef(wf.ToWorkflowDef()))
 	assert.NoError(t, err)
 
 	startRequest := &model.StartWorkflowRequest{

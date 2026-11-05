@@ -94,7 +94,7 @@ func TestRemoveWorkflow(t *testing.T) {
 	wf := workflow.NewConductorWorkflow(executor)
 	wf.Name("temp_wf_" + strconv.Itoa(time.Now().Nanosecond())).Version(1)
 	wf = wf.Add(workflow.NewSetVariableTask("set_var").Input("var_value", 42))
-	err := wf.Register(true)
+	err := testdata.ValidateWorkflowRegistration(wf)
 
 	assert.NoError(t, err, "Failed to register workflow")
 	testdata.Cleanup(t, func() {
@@ -129,7 +129,7 @@ func TestExecuteWorkflow(t *testing.T) {
 		"param1": "Test",
 		"param2": 123,
 	})
-	err := wf.Register(true)
+	err := testdata.ValidateWorkflowRegistration(wf)
 
 	assert.NoError(t, err, "Failed to register workflow")
 	version := wf.GetVersion()

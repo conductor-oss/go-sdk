@@ -23,7 +23,7 @@ func TestIdempotencyCombinations(t *testing.T) {
 	wf := workflow.NewConductorWorkflow(executor)
 	wf.Name("temp_wf_" + strconv.Itoa(time.Now().Nanosecond())).Version(1)
 	wf = wf.Add(workflow.NewSetVariableTask("set_var").Input("var_value", 42))
-	err := wf.Register(true)
+	err := testdata.ValidateWorkflowRegistration(wf)
 
 	assert.NoError(t, err, "Failed to register workflow")
 	testdata.Cleanup(t, func() {
@@ -62,7 +62,7 @@ func TestIdempotencyFailOnRunning(t *testing.T) {
 	wf := workflow.NewConductorWorkflow(executor)
 	wf.Name("temp_wf_" + strconv.Itoa(time.Now().Nanosecond())).Version(1)
 	wf = wf.Add(workflow.NewSimpleTask("simple_task_1", "simple_task_1"))
-	err := wf.Register(true)
+	err := testdata.ValidateWorkflowRegistration(wf)
 	require.NoError(t, err, "Failed to register workflow")
 	testdata.Cleanup(t, func() {
 		_, err := testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), wf.GetName(), wf.GetVersion())
