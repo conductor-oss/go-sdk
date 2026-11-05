@@ -1,6 +1,6 @@
 # Conductor OSS stack used to run the SDK integration tests against open-source
 # Conductor. Shared by scripts/run-integration-oss.sh and the
-# integration-tests-oss job in .github/workflows/integration-tests-sm.yml.
+# integration-tests-oss job in .github/workflows/integration-tests.yml.
 #
 # The `image:` default below is the SINGLE place the Conductor OSS image tag is
 # written. Everything that does not override OSS_CONDUCTOR_VERSION lands on it:
