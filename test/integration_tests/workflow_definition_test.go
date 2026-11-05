@@ -99,11 +99,11 @@ func TestRemoveWorkflow(t *testing.T) {
 	assert.NoError(t, err, "Failed to register workflow")
 
 	id, err := executor.StartWorkflow(&model.StartWorkflowRequest{Name: wf.GetName()})
-	assert.NoError(t, err, "Failed to start workflow")
+	require.NoError(t, err, "Failed to start workflow")
 
 	execution, err := executor.GetWorkflow(id, true)
-	assert.NoError(t, err, "Failed to get workflow execution")
-	assert.Equal(t, model.CompletedWorkflow, execution.Status, "Workflow is not in the completed state")
+	require.NoError(t, err, "Failed to get workflow execution %s", id)
+	assert.Equal(t, model.CompletedWorkflow, execution.Status, "Workflow %s is not in the completed state; tasks: %s", id, testdata.DescribeTasks(execution))
 
 	err = executor.RemoveWorkflow(id)
 	assert.NoError(t, err, "Failed to remove workflow execution")
@@ -1551,7 +1551,7 @@ func TestJumpToTask(t *testing.T) {
 		Add(workflow.NewHttpTask("http_ref_1", &input))
 
 	err := testdata.ValidateWorkflowRegistration(workflowDef)
-	assert.NoError(t, err, "Failed to register workflow")
+	require.NoError(t, err, "Failed to register workflow")
 
 	// Start a workflow instance
 	startRequest := &model.StartWorkflowRequest{
@@ -1561,7 +1561,7 @@ func TestJumpToTask(t *testing.T) {
 	}
 
 	workflowId, err := testdata.WorkflowExecutor.StartWorkflow(startRequest)
-	assert.NoError(t, err, "Failed to start workflow")
+	require.NoError(t, err, "Failed to start workflow")
 
 	t.Cleanup(func() {
 		err = testdata.WorkflowExecutor.RemoveWorkflow(workflowId)
@@ -1571,7 +1571,7 @@ func TestJumpToTask(t *testing.T) {
 	})
 
 	runningWorkflow, err := testdata.WaitForWorkflowStatus(workflowId, []model.WorkflowStatus{model.RunningWorkflow}, testdata.WorkflowValidationTimeout)
-	assert.NoError(t, err, "Failed to wait for workflow to start")
+	require.NoError(t, err, "Failed to wait for workflow to start")
 	assert.Equal(t, model.RunningWorkflow, runningWorkflow.Status, "Workflow should be running")
 
 	// Jump to the HTTP task, skipping the wait task
@@ -1591,11 +1591,11 @@ func TestJumpToTask(t *testing.T) {
 		opts,
 	)
 
-	assert.NoError(t, err, "Failed to jump to task")
+	require.NoError(t, err, "Failed to jump to task in workflow %s", workflowId)
 
 	// Wait for the jump to be processed and workflow to continue
 	updatedWorkflow, err := testdata.WaitForWorkflowStatus(workflowId, []model.WorkflowStatus{model.CompletedWorkflow}, 30*time.Second)
-	assert.NoError(t, err, "Failed to wait for workflow after jump")
+	require.NoError(t, err, "Failed to wait for workflow after jump")
 
 	// Verify that the wait task was skipped and the HTTP task is active
 	var waitTaskSkipped bool

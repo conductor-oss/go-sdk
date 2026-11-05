@@ -512,7 +512,7 @@ func TestYieldTask(t *testing.T) {
 
 	// Wait for completion
 	_, err = executor.WaitForWorkflowCompletionUntilTimeout(ch, testdata.WorkflowValidationTimeout)
-	require.NoError(t, err)
+	require.NoError(t, err, "workflow %s didn't complete", workflowId)
 
 	wfAfter, wfErr := testdata.WorkflowExecutor.GetWorkflow(workflowId, true)
 	require.NoError(t, wfErr)

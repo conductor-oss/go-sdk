@@ -854,7 +854,7 @@ func TestSignal_AllStrategies_Comprehensive(t *testing.T) {
 				})
 			assert.NoError(t, err, "Signal should not return an error")
 			if tc.returnStrategy == model.ReturnBlockingTask {
-				assert.Empty(t, resp, "Signal response should not be nil")
+				assert.Empty(t, resp, "Signal response should be empty for workflow %s", workflowId)
 			}
 		})
 	}

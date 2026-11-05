@@ -312,6 +312,7 @@ func isWorkflowCompleted(workflow *model.Workflow, expectedStatus model.Workflow
 // WaitForWorkflowStatus waits for a workflow to reach any of the specified statuses
 func WaitForWorkflowStatus(workflowId string, expectedStatuses []model.WorkflowStatus, timeout time.Duration) (*model.Workflow, error) {
 	deadline := time.Now().Add(timeout)
+	var lastSeen *model.Workflow
 
 	for time.Now().Before(deadline) {
 		var workflow *model.Workflow
@@ -324,6 +325,7 @@ func WaitForWorkflowStatus(workflowId string, expectedStatuses []model.WorkflowS
 			time.Sleep(500 * time.Millisecond)
 			continue
 		}
+		lastSeen = workflow
 		// Check if workflow has reached any of the expected statuses
 		for _, expectedStatus := range expectedStatuses {
 			if workflow.Status == expectedStatus {
@@ -347,7 +349,23 @@ func WaitForWorkflowStatus(workflowId string, expectedStatuses []model.WorkflowS
 		time.Sleep(500 * time.Millisecond)
 	}
 
-	return nil, fmt.Errorf("workflow %s didn't reach any of the expected statuses %v within %v", workflowId, expectedStatuses, timeout)
+	if lastSeen == nil {
+		return nil, fmt.Errorf("workflow %s didn't reach any of the expected statuses %v within %v (never fetched)", workflowId, expectedStatuses, timeout)
+	}
+	return nil, fmt.Errorf("workflow %s didn't reach any of the expected statuses %v within %v; last status %s, tasks: %s",
+		workflowId, expectedStatuses, timeout, lastSeen.Status, DescribeTasks(lastSeen))
+}
+
+// DescribeTasks lists the workflow's tasks as refName(type)=status[taskId].
+func DescribeTasks(workflow *model.Workflow) string {
+	if len(workflow.Tasks) == 0 {
+		return "none"
+	}
+	tasks := make([]string, 0, len(workflow.Tasks))
+	for _, task := range workflow.Tasks {
+		tasks = append(tasks, fmt.Sprintf("%s(%s)=%s[%s]", task.ReferenceTaskName, task.TaskType, task.Status, task.TaskId))
+	}
+	return strings.Join(tasks, ", ")
 }
 
 // WaitForWorkflowCompletion waits specifically for workflow completion
