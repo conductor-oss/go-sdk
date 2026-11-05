@@ -522,7 +522,7 @@ func registerComplexWorkflows(t *testing.T) {
 	require.NoError(t, err, "Failed to register workflow")
 
 	// Cleanup for registered workflows
-	t.Cleanup(func() {
+	testdata.Cleanup(t, func() {
 		_, err := testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), "complex_wf_signal_test", 1)
 		assert.NoError(t, err, "Failed to unregister main workflow")
 		_, err = testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), "complex_wf_signal_test_subworkflow_1", 1)
@@ -705,7 +705,7 @@ func TestSignal_AllStrategies_Comprehensive(t *testing.T) {
 			workflowId := resp.WorkflowId
 
 			// Cleanup for workflow execution
-			t.Cleanup(func() {
+			testdata.Cleanup(t, func() {
 				assert.NoError(t, testdata.ValidateWorkflowExecutionDeletion(&model.Workflow{WorkflowId: workflowId}), "Failed to delete workflow execution")
 			})
 

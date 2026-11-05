@@ -499,6 +499,16 @@ func TestYieldTask(t *testing.T) {
 	// Start workflow
 	workflowId, err := wf.StartWorkflowWithInput(map[string]interface{}{"key": "value"})
 	require.NoError(t, err)
+	testdata.Cleanup(t, func() {
+		err := testdata.WorkflowExecutor.RemoveWorkflow(workflowId)
+		assert.NoError(t, err, "Failed to remove workflow")
+		_, err = testdata.MetadataClient.UnregisterWorkflowDef(
+			context.Background(),
+			wf.GetName(),
+			wf.GetVersion(),
+		)
+		assert.NoError(t, err, "Failed to remove workflow definition")
+	})
 
 	// Monitor execution
 	ch, err := testdata.WorkflowExecutor.MonitorExecution(workflowId)
@@ -535,17 +545,6 @@ func TestYieldTask(t *testing.T) {
 		out = v
 	}
 	assert.Equal(t, "Output passed using the API", out)
-
-	t.Cleanup(func() {
-		err = testdata.WorkflowExecutor.RemoveWorkflow(workflowId)
-		assert.NoError(t, err, "Failed to remove workflow")
-		_, err = testdata.MetadataClient.UnregisterWorkflowDef(
-			context.Background(),
-			wf.GetName(),
-			wf.GetVersion(),
-		)
-		assert.NoError(t, err, "Failed to remove workflow definition")
-	})
 }
 
 func countMultipleSwitchInnerTasks(tasks ...model.WorkflowTask) int {

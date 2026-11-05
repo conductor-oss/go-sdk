@@ -706,6 +706,20 @@ func SkipIfOSS(t *testing.T, reason string) {
 	}
 }
 
+// Cleanup registers fn like t.Cleanup, but skips it when the test failed and
+// CONDUCTOR_DISABLE_FAILED_TEST_CLEANUP=true, so the server keeps the failed
+// test's workflows and definitions for investigation.
+func Cleanup(t *testing.T, fn func()) {
+	t.Helper()
+	t.Cleanup(func() {
+		if t.Failed() && os.Getenv("CONDUCTOR_DISABLE_FAILED_TEST_CLEANUP") == "true" {
+			t.Logf("CONDUCTOR_DISABLE_FAILED_TEST_CLEANUP: skipped cleanup for failed test %s", t.Name())
+			return
+		}
+		fn()
+	})
+}
+
 func isVersionAtLeast(have, min string) bool {
 	haveParts := strings.Split(have, ".")
 	minParts := strings.Split(min, ".")

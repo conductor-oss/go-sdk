@@ -40,13 +40,13 @@ func TestWorkflowCreation(t *testing.T) {
 		Description("Simple Population Min Max workflow").
 		Add(testdata.NewSetStateVariableTask(workflow.NewSimpleTask("set_state", "set_state")))
 	require.NoError(t, testdata.ValidateWorkflowRegistration(wf))
-	t.Cleanup(func() {
+	testdata.Cleanup(t, func() {
 		assert.NoError(t, testdata.ValidateWorkflowDeletion(wf), "Failed to delete workflow")
 	})
 
 	workflow := testdata.NewKitchenSinkWorkflow(testdata.WorkflowExecutor)
 	require.NoError(t, testdata.ValidateWorkflowRegistration(workflow))
-	t.Cleanup(func() {
+	testdata.Cleanup(t, func() {
 		assert.NoError(t, testdata.ValidateWorkflowDeletion(workflow), "Failed to delete workflow")
 	})
 	startWorkers()
@@ -58,7 +58,7 @@ func TestWorkflowCreation(t *testing.T) {
 
 	assert.NotEmpty(t, run, "Workflow is null", run)
 	workflowId := run.WorkflowId
-	t.Cleanup(func() {
+	testdata.Cleanup(t, func() {
 		assert.NoError(t, testdata.ValidateWorkflowExecutionDeletion(&model.Workflow{WorkflowId: workflowId}), "Failed to delete workflow execution")
 	})
 	timeout := time.After(60 * time.Second)
@@ -97,13 +97,16 @@ func TestRemoveWorkflow(t *testing.T) {
 	err := wf.Register(true)
 
 	assert.NoError(t, err, "Failed to register workflow")
+	testdata.Cleanup(t, func() {
+		assert.NoError(t, testdata.ValidateWorkflowDeletion(wf), "Failed to delete workflow")
+	})
 
 	id, err := executor.StartWorkflow(&model.StartWorkflowRequest{Name: wf.GetName()})
 	require.NoError(t, err, "Failed to start workflow")
 
 	execution, err := executor.GetWorkflow(id, true)
 	require.NoError(t, err, "Failed to get workflow execution %s", id)
-	assert.Equal(t, model.CompletedWorkflow, execution.Status, "Workflow %s is not in the completed state; tasks: %s", id, testdata.DescribeTasks(execution))
+	require.Equal(t, model.CompletedWorkflow, execution.Status, "Workflow %s is not in the completed state; tasks: %s", id, testdata.DescribeTasks(execution))
 
 	err = executor.RemoveWorkflow(id)
 	assert.NoError(t, err, "Failed to remove workflow execution")
@@ -111,10 +114,6 @@ func TestRemoveWorkflow(t *testing.T) {
 	_, err = executor.GetWorkflow(id, true)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "no such workflow by Id")
-
-	t.Cleanup(func() {
-		assert.NoError(t, testdata.ValidateWorkflowDeletion(wf), "Failed to delete workflow")
-	})
 }
 
 func TestExecuteWorkflow(t *testing.T) {
@@ -1563,7 +1562,7 @@ func TestJumpToTask(t *testing.T) {
 	workflowId, err := testdata.WorkflowExecutor.StartWorkflow(startRequest)
 	require.NoError(t, err, "Failed to start workflow")
 
-	t.Cleanup(func() {
+	testdata.Cleanup(t, func() {
 		err = testdata.WorkflowExecutor.RemoveWorkflow(workflowId)
 		assert.NoError(t, err, "Failed to remove workflow")
 		_, err = testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), workflowDef.GetName(), workflowDef.GetVersion())

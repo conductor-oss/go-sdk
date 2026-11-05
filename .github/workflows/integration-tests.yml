@@ -76,6 +76,8 @@ jobs:
           CONDUCTOR_SERVER_URL: ${{ matrix.cluster == 'v5' && vars.SERVER_URL_SDKDEV_V5 || vars.SERVER_URL }}
           CONDUCTOR_AUTH_KEY: ${{ matrix.cluster == 'v5' && secrets.KEY || secrets.AUTH_KEY }}
           CONDUCTOR_AUTH_SECRET: ${{ matrix.cluster == 'v5' && secrets.SECRET || secrets.AUTH_SECRET }}
+          # Keep failed tests' workflows on sdkdev for investigation; delete them by hand afterwards.
+          CONDUCTOR_DISABLE_FAILED_TEST_CLEANUP: ${{ matrix.cluster == 'v5' && 'true' || 'false' }}
         run: |
           mkdir -p coverage
           REPORT=report-${{ matrix.suite }}-${{ matrix.cluster }}.xml
