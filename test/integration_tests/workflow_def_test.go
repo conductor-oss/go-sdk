@@ -514,6 +514,11 @@ func TestYieldTask(t *testing.T) {
 	ch, err := testdata.WorkflowExecutor.MonitorExecution(workflowId)
 	require.NoError(t, err)
 
+	// The async signal completes whichever task is blocking when it arrives, so
+	// sending it before the YIELD task is scheduled spends it on nothing.
+	_, err = testdata.WaitForTaskInWorkflow(workflowId, "simple_ref_1"+uid, model.InProgressTask, testdata.WorkflowValidationTimeout)
+	require.NoError(t, err)
+
 	output := map[string]interface{}{
 		"taskOutPut": "Output passed using the API",
 	}
