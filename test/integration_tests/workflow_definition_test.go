@@ -1593,7 +1593,9 @@ func TestJumpToTask(t *testing.T) {
 	require.NoError(t, err, "Failed to jump to task in workflow %s", workflowId)
 
 	// Wait for the jump to be processed and workflow to continue
-	updatedWorkflow, err := testdata.WaitForWorkflowStatus(workflowId, []model.WorkflowStatus{model.CompletedWorkflow}, 30*time.Second)
+	// On servers that run HTTP tasks in a separate orkes-workers deployment, the jumped-to task is scheduled
+	// without _createdBy, so its first attempt fails and the retry runs after the 60s retry delay.
+	updatedWorkflow, err := testdata.WaitForWorkflowStatus(workflowId, []model.WorkflowStatus{model.CompletedWorkflow}, 90*time.Second)
 	require.NoError(t, err, "Failed to wait for workflow after jump")
 
 	// Verify that the wait task was skipped and the HTTP task is active
