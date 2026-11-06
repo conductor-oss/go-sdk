@@ -78,6 +78,8 @@ jobs:
           CONDUCTOR_AUTH_SECRET: ${{ matrix.cluster == 'v5' && secrets.SECRET || secrets.AUTH_SECRET }}
           # Keep failed tests' workflows on sdkdev for investigation; delete them by hand afterwards.
           CONDUCTOR_DISABLE_FAILED_TEST_CLEANUP: ${{ matrix.cluster == 'v5' && 'true' || 'false' }}
+          # TEMP: sdkdev runs an orkes-conductor branch build that reports its branch name as its version.
+          CONDUCTOR_SERVER_VERSION_OVERRIDE: ${{ matrix.cluster == 'v5' && '5.6' || '' }}
         run: |
           mkdir -p coverage
           REPORT=report-${{ matrix.suite }}-${{ matrix.cluster }}.xml
