@@ -86,14 +86,6 @@ var VersionResource string
 func init() {
 	log.SetLogger(log.NewZap(zap.Must(zap.NewProduction())))
 
-	// A custom server build can report a non-numeric version (e.g. its branch name), which would
-	// make RequireAtLeast skip every gated test; CONDUCTOR_SERVER_VERSION_OVERRIDE stands in for it.
-	if override := os.Getenv("CONDUCTOR_SERVER_VERSION_OVERRIDE"); override != "" {
-		log.Info("Using server version override", "version", override)
-		VersionResource = parseVersion(override)
-		return
-	}
-
 	version, _, err := VersionResourceClient.GetVersion(context.Background())
 	if err != nil {
 		log.Fatal("Failed to get version", "error", err)
