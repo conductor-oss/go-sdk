@@ -230,6 +230,7 @@ func ValidateTaskRegistration(taskDefs ...model.TaskDef) error {
 }
 
 func ValidateWorkflowRegistration(workflow *workflow.ConductorWorkflow) error {
+	WithTestTimeout(workflow)
 	for attempt := 0; attempt < 5; attempt += 1 {
 		err := workflow.Register(true)
 		if err != nil {
@@ -240,6 +241,27 @@ func ValidateWorkflowRegistration(workflow *workflow.ConductorWorkflow) error {
 		return nil
 	}
 	return fmt.Errorf("exhausted retries")
+}
+
+// TestWorkflowTimeoutSeconds bounds how long a leaked test workflow stays RUNNING
+// (and keeps its tasks queued) on a shared server when its test never cleans it up.
+const TestWorkflowTimeoutSeconds = 600
+
+// WithTestTimeout gives wf a TIME_OUT_WF timeout of TestWorkflowTimeoutSeconds unless it already has a timeout.
+func WithTestTimeout(wf *workflow.ConductorWorkflow) *workflow.ConductorWorkflow {
+	if wf.ToWorkflowDef().TimeoutSeconds == 0 {
+		wf.TimeoutPolicy(workflow.TimeOutWorkflow, TestWorkflowTimeoutSeconds)
+	}
+	return wf
+}
+
+// WithTestTimeoutDef is WithTestTimeout for a workflow definition registered directly.
+func WithTestTimeoutDef(def *model.WorkflowDef) *model.WorkflowDef {
+	if def.TimeoutSeconds == 0 {
+		def.TimeoutPolicy = string(workflow.TimeOutWorkflow)
+		def.TimeoutSeconds = TestWorkflowTimeoutSeconds
+	}
+	return def
 }
 
 func ValidateWorkflowDeletion(workflow *workflow.ConductorWorkflow) error {
@@ -312,6 +334,7 @@ func isWorkflowCompleted(workflow *model.Workflow, expectedStatus model.Workflow
 // WaitForWorkflowStatus waits for a workflow to reach any of the specified statuses
 func WaitForWorkflowStatus(workflowId string, expectedStatuses []model.WorkflowStatus, timeout time.Duration) (*model.Workflow, error) {
 	deadline := time.Now().Add(timeout)
+	var lastSeen *model.Workflow
 
 	for time.Now().Before(deadline) {
 		var workflow *model.Workflow
@@ -324,6 +347,7 @@ func WaitForWorkflowStatus(workflowId string, expectedStatuses []model.WorkflowS
 			time.Sleep(500 * time.Millisecond)
 			continue
 		}
+		lastSeen = workflow
 		// Check if workflow has reached any of the expected statuses
 		for _, expectedStatus := range expectedStatuses {
 			if workflow.Status == expectedStatus {
@@ -347,7 +371,23 @@ func WaitForWorkflowStatus(workflowId string, expectedStatuses []model.WorkflowS
 		time.Sleep(500 * time.Millisecond)
 	}
 
-	return nil, fmt.Errorf("workflow %s didn't reach any of the expected statuses %v within %v", workflowId, expectedStatuses, timeout)
+	if lastSeen == nil {
+		return nil, fmt.Errorf("workflow %s didn't reach any of the expected statuses %v within %v (never fetched)", workflowId, expectedStatuses, timeout)
+	}
+	return nil, fmt.Errorf("workflow %s didn't reach any of the expected statuses %v within %v; last status %s, tasks: %s",
+		workflowId, expectedStatuses, timeout, lastSeen.Status, DescribeTasks(lastSeen))
+}
+
+// DescribeTasks lists the workflow's tasks as refName(type)=status[taskId].
+func DescribeTasks(workflow *model.Workflow) string {
+	if len(workflow.Tasks) == 0 {
+		return "none"
+	}
+	tasks := make([]string, 0, len(workflow.Tasks))
+	for _, task := range workflow.Tasks {
+		tasks = append(tasks, fmt.Sprintf("%s(%s)=%s[%s]", task.ReferenceTaskName, task.TaskType, task.Status, task.TaskId))
+	}
+	return strings.Join(tasks, ", ")
 }
 
 // WaitForWorkflowCompletion waits specifically for workflow completion
@@ -686,6 +726,20 @@ func SkipIfOSS(t *testing.T, reason string) {
 	if OSSGapSkipped() {
 		t.Skipf("skip: not supported on plain OSS Conductor (%s)", reason)
 	}
+}
+
+// Cleanup registers fn like t.Cleanup, but skips it when the test failed and
+// CONDUCTOR_DISABLE_FAILED_TEST_CLEANUP=true, so the server keeps the failed
+// test's workflows and definitions for investigation.
+func Cleanup(t *testing.T, fn func()) {
+	t.Helper()
+	t.Cleanup(func() {
+		if t.Failed() && os.Getenv("CONDUCTOR_DISABLE_FAILED_TEST_CLEANUP") == "true" {
+			t.Logf("CONDUCTOR_DISABLE_FAILED_TEST_CLEANUP: skipped cleanup for failed test %s", t.Name())
+			return
+		}
+		fn()
+	})
 }
 
 func isVersionAtLeast(have, min string) bool {

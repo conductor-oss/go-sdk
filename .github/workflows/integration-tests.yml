@@ -1,4 +1,4 @@
-name: Integration + Backward Compatibility Tests (SM cluster)
+name: Integration + Backward Compatibility Tests
 
 on:
   push:
@@ -19,14 +19,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  integration-tests-sm:
+  integration-tests:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         cluster: [v5, v4]
         suite: [integration, compatibility]
-    name: Integration + Backward Compatibility Tests (SM cluster) - ${{ matrix.cluster }} - ${{ matrix.suite }}
+    name: Integration + Backward Compatibility Tests - ${{ matrix.cluster }} - ${{ matrix.suite }}
 
     permissions:
       contents: read       # minimal read access
@@ -49,6 +49,11 @@ jobs:
       - name: Install gotestsum
         run: go install gotest.tools/gotestsum@v1.12.0
 
+      - name: Show server endpoint
+        env:
+          CONDUCTOR_SERVER_URL: ${{ matrix.cluster == 'v5' && vars.SERVER_URL_SDKDEV_V5 || vars.SERVER_URL }}
+        run: echo "${{ matrix.cluster }} -> $CONDUCTOR_SERVER_URL"
+
       - name: Run Unit tests with coverage
         if: ${{ matrix.suite == 'integration' }}
         run: |
@@ -63,14 +68,16 @@ jobs:
           go test -v -count=1 -coverprofile=coverage/coverage-sdk.out -covermode=atomic ./sdk/...
           echo "SDK test coverage generated"
 
-      - name: Run Integration tests (SM cluster)
+      - name: Run Integration tests (${{ matrix.cluster }})
         if: ${{ matrix.suite == 'integration' }}
         id: integration_tests
         continue-on-error: true
         env:
-          CONDUCTOR_SERVER_URL: ${{ matrix.cluster == 'v5' && vars.SERVER_URL_V5 || vars.SERVER_URL }}
-          CONDUCTOR_AUTH_KEY: ${{ matrix.cluster == 'v5' && secrets.AUTH_KEY_V5 || secrets.AUTH_KEY }}
-          CONDUCTOR_AUTH_SECRET: ${{ matrix.cluster == 'v5' && secrets.AUTH_SECRET_V5 || secrets.AUTH_SECRET }}
+          CONDUCTOR_SERVER_URL: ${{ matrix.cluster == 'v5' && vars.SERVER_URL_SDKDEV_V5 || vars.SERVER_URL }}
+          CONDUCTOR_AUTH_KEY: ${{ matrix.cluster == 'v5' && secrets.KEY || secrets.AUTH_KEY }}
+          CONDUCTOR_AUTH_SECRET: ${{ matrix.cluster == 'v5' && secrets.SECRET || secrets.AUTH_SECRET }}
+          # Keep failed tests' workflows on sdkdev for investigation; delete them by hand afterwards.
+          CONDUCTOR_DISABLE_FAILED_TEST_CLEANUP: ${{ matrix.cluster == 'v5' && 'true' || 'false' }}
         run: |
           mkdir -p coverage
           REPORT=report-${{ matrix.suite }}-${{ matrix.cluster }}.xml
@@ -78,11 +85,11 @@ jobs:
           COVERAGE=coverage/coverage-${{ matrix.suite }}-${{ matrix.cluster }}.out
           gotestsum --format testname --junitfile "$REPORT" --rerun-fails=3 --rerun-fails-report="$RERUN" --packages="./test/integration_tests/..." -- -v -count=1 -coverprofile="$COVERAGE" -covermode=atomic -coverpkg=github.com/conductor-sdk/conductor-go/sdk/...
 
-      - name: Publish test results (SM cluster)
+      - name: Publish test results (${{ matrix.cluster }})
         if: ${{ always() && matrix.suite == 'integration' }}
         uses: dorny/test-reporter@v2
         with:
-          name: Integration tests report (SM cluster) - ${{ matrix.cluster }}
+          name: Integration tests report (${{ matrix.cluster }})
           path: report-${{ matrix.suite }}-${{ matrix.cluster }}.xml
           reporter: java-junit
           fail-on-error: false
@@ -144,13 +151,13 @@ jobs:
             coverage/coverage-sdk.txt
           if-no-files-found: warn
 
-      - name: Run Backward Compatibility Tests (SM cluster)
+      - name: Run Backward Compatibility Tests (${{ matrix.cluster }})
         if: ${{ matrix.suite == 'compatibility' }}
         id: compat_tests
         env:
-          CONDUCTOR_SERVER_URL: ${{ matrix.cluster == 'v5' && vars.SERVER_URL_V5 || vars.SERVER_URL }}
-          CONDUCTOR_AUTH_KEY: ${{ matrix.cluster == 'v5' && secrets.AUTH_KEY_V5 || secrets.AUTH_KEY }}
-          CONDUCTOR_AUTH_SECRET: ${{ matrix.cluster == 'v5' && secrets.AUTH_SECRET_V5 || secrets.AUTH_SECRET }}
+          CONDUCTOR_SERVER_URL: ${{ matrix.cluster == 'v5' && vars.SERVER_URL_SDKDEV_V5 || vars.SERVER_URL }}
+          CONDUCTOR_AUTH_KEY: ${{ matrix.cluster == 'v5' && secrets.KEY || secrets.AUTH_KEY }}
+          CONDUCTOR_AUTH_SECRET: ${{ matrix.cluster == 'v5' && secrets.SECRET || secrets.AUTH_SECRET }}
         run: |
           echo "🚀 Starting Backward Compatibility Tests (cluster ${{ matrix.cluster }})..."
           cd test/backward_compatibility
@@ -190,9 +197,9 @@ jobs:
             } >> "$GITHUB_STEP_SUMMARY"
           fi
 
-  # Runs the same integration suite as integration-tests-sm above, but against a
+  # Runs the same integration suite as integration-tests above, but against a
   # local, disposable OSS Conductor stack (scripts/docker-compose-oss.yaml)
-  # instead of a deployed SM cluster. Orkes-Enterprise-only functionality is
+  # instead of the deployed Orkes servers. Orkes-Enterprise-only functionality is
   # skipped per-test via testdata.SkipIfOSS (see test/testdata/util.go and
   # scripts/run-integration-oss.sh, which runs the equivalent suite locally).
   integration-tests-oss:

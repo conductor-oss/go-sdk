@@ -2,7 +2,7 @@
 #
 # Spin up a local Conductor OSS stack and run the integration suite against
 # it, similar to the `integration-tests-oss` job in
-# .github/workflows/integration-tests-sm.yml -- except this runs plain `go
+# .github/workflows/integration-tests.yml -- except this runs plain `go
 # test`, so there is no gotestsum JUnit report and no --rerun-fails=3 flake
 # retry.
 #
