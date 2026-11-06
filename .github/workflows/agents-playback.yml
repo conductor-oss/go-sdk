@@ -5,6 +5,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      oss_conductor_version:
+        description: 'OSS Conductor release to play back against (falls back to the E2E_TEST_OSS_CONDUCTOR_VERSION org var, then to conductor main on fork PRs)'
+        required: false
+        type: string
 
 jobs:
   playback:
@@ -19,17 +24,43 @@ jobs:
       CONDUCTOR_PLAYBACK_WORK_DIR: tmp/agent-playback
       GITHUB_REPOS_URL: http://localhost:3002/users/Conductor/repos?per_page=5&sort=updated
     steps:
+      # The recordings are the canonical demos every SDK ports, so play back
+      # against the released server that ships them. Fork PRs can't read org
+      # vars and fall back to main: the compose default in
+      # scripts/docker-compose-oss.yaml predates playback.
+      - name: Resolve Conductor ref
+        env:
+          REQUESTED_VERSION: ${{ inputs.oss_conductor_version || vars.E2E_TEST_OSS_CONDUCTOR_VERSION }}
+          IS_FORK_PR: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+        run: |
+          if [ -n "$REQUESTED_VERSION" ]; then
+            echo "CONDUCTOR_REF=v${REQUESTED_VERSION}" >> "$GITHUB_ENV"
+          elif [ "$IS_FORK_PR" = "true" ]; then
+            echo "::notice::Fork PR: org variables are withheld, falling back to conductor main"
+            echo "CONDUCTOR_REF=main" >> "$GITHUB_ENV"
+          else
+            echo "::error::No Conductor OSS version resolved. Set the E2E_TEST_OSS_CONDUCTOR_VERSION organization variable (and ensure its repository access policy includes this repo), or pass the oss_conductor_version input via workflow_dispatch."
+            exit 1
+          fi
       - uses: actions/checkout@v4
       - name: Checkout matching server and shared recordings
         uses: actions/checkout@v4
         with:
           repository: conductor-oss/conductor
-          ref: main
+          ref: ${{ env.CONDUCTOR_REF }}
           path: tmp/conductor
+      # The Gradle wrapper and the jar must both run on the checkout's
+      # toolchain JDK (Gradle 8.14 can't run on 25; a 25 build can't run on 21).
+      - name: Resolve Java version
+        id: java
+        run: |
+          version=$(grep -oE 'JavaLanguageVersion\.of\([0-9]+\)' tmp/conductor/build.gradle | head -1 | grep -oE '[0-9]+')
+          [ -n "$version" ] || { echo "::error::No Java toolchain version found in tmp/conductor/build.gradle"; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: ${{ steps.java.outputs.version }}
       - uses: gradle/actions/setup-gradle@v4
       - name: Build playback server
         working-directory: tmp/conductor
