@@ -23,9 +23,13 @@ func TestIdempotencyCombinations(t *testing.T) {
 	wf := workflow.NewConductorWorkflow(executor)
 	wf.Name("temp_wf_" + strconv.Itoa(time.Now().Nanosecond())).Version(1)
 	wf = wf.Add(workflow.NewSetVariableTask("set_var").Input("var_value", 42))
-	err := wf.Register(true)
+	err := testdata.ValidateWorkflowRegistration(wf)
 
 	assert.NoError(t, err, "Failed to register workflow")
+	testdata.Cleanup(t, func() {
+		_, err := testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), wf.GetName(), wf.GetVersion())
+		assert.NoError(t, err, "Failed to delete workflow definition")
+	})
 
 	id, olderr := executor.StartWorkflow(&model.StartWorkflowRequest{Name: wf.GetName(), IdempotencyKey: "test", IdempotencyStrategy: model.FailOnConflict})
 	require.NoError(t, olderr, "Failed to start workflow")
@@ -48,13 +52,6 @@ func TestIdempotencyCombinations(t *testing.T) {
 	_, err = executor.GetWorkflow(id, true)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "no such workflow by Id")
-
-	_, err = testdata.MetadataClient.UnregisterWorkflowDef(
-		context.Background(),
-		wf.GetName(),
-		wf.GetVersion(),
-	)
-	assert.NoError(t, err, "Failed to delete workflow definition ", err)
 }
 
 func TestIdempotencyFailOnRunning(t *testing.T) {
@@ -65,12 +62,19 @@ func TestIdempotencyFailOnRunning(t *testing.T) {
 	wf := workflow.NewConductorWorkflow(executor)
 	wf.Name("temp_wf_" + strconv.Itoa(time.Now().Nanosecond())).Version(1)
 	wf = wf.Add(workflow.NewSimpleTask("simple_task_1", "simple_task_1"))
-	err := wf.Register(true)
+	err := testdata.ValidateWorkflowRegistration(wf)
 	require.NoError(t, err, "Failed to register workflow")
+	testdata.Cleanup(t, func() {
+		_, err := testdata.MetadataClient.UnregisterWorkflowDef(context.Background(), wf.GetName(), wf.GetVersion())
+		assert.NoError(t, err, "Failed to delete workflow definition")
+	})
 
 	// (1) workflow should start
 	id, err := executor.StartWorkflow(&model.StartWorkflowRequest{Name: wf.GetName(), IdempotencyKey: "test", IdempotencyStrategy: model.FailOnRunning})
 	require.NoError(t, err, "Failed to start workflow")
+	testdata.Cleanup(t, func() {
+		assert.NoError(t, testdata.ValidateWorkflowExecutionDeletion(&model.Workflow{WorkflowId: id}), "Failed to delete workflow execution %s", id)
+	})
 
 	// (2) workflow start should fail because (1) is running
 	_, err = executor.StartWorkflow(&model.StartWorkflowRequest{Name: wf.GetName(), IdempotencyKey: "test", IdempotencyStrategy: model.FailOnRunning})
@@ -85,6 +89,10 @@ func TestIdempotencyFailOnRunning(t *testing.T) {
 	//  workflow should start
 	id2, err := executor.StartWorkflow(&model.StartWorkflowRequest{Name: wf.GetName(), IdempotencyKey: "test", IdempotencyStrategy: model.FailOnRunning})
 	require.NoError(t, err, "Failed to start workflow")
+	// id2 waits on simple_task_1, which no worker serves, so it stays RUNNING until removed.
+	testdata.Cleanup(t, func() {
+		assert.NoError(t, testdata.ValidateWorkflowExecutionDeletion(&model.Workflow{WorkflowId: id2}), "Failed to delete workflow execution %s", id2)
+	})
 	assert.NotEqual(t, id, id2)
 }
 

@@ -217,7 +217,7 @@ func TestDynamicForkWorkflow(t *testing.T) {
 		Name("dynamic_workflow_array_sub_workflow").
 		Version(1).
 		Add(createDynamicForkTask())
-	err := wf.Register(true)
+	err := testdata.ValidateWorkflowRegistration(wf)
 	require.NoError(t, err)
 
 	err = testdata.ValidateWorkflowDeletion(wf)
@@ -499,9 +499,24 @@ func TestYieldTask(t *testing.T) {
 	// Start workflow
 	workflowId, err := wf.StartWorkflowWithInput(map[string]interface{}{"key": "value"})
 	require.NoError(t, err)
+	testdata.Cleanup(t, func() {
+		err := testdata.WorkflowExecutor.RemoveWorkflow(workflowId)
+		assert.NoError(t, err, "Failed to remove workflow")
+		_, err = testdata.MetadataClient.UnregisterWorkflowDef(
+			context.Background(),
+			wf.GetName(),
+			wf.GetVersion(),
+		)
+		assert.NoError(t, err, "Failed to remove workflow definition")
+	})
 
 	// Monitor execution
 	ch, err := testdata.WorkflowExecutor.MonitorExecution(workflowId)
+	require.NoError(t, err)
+
+	// The async signal completes whichever task is blocking when it arrives, so
+	// sending it before the YIELD task is scheduled spends it on nothing.
+	_, err = testdata.WaitForTaskInWorkflow(workflowId, "simple_ref_1"+uid, model.InProgressTask, testdata.WorkflowValidationTimeout)
 	require.NoError(t, err)
 
 	output := map[string]interface{}{
@@ -512,7 +527,7 @@ func TestYieldTask(t *testing.T) {
 
 	// Wait for completion
 	_, err = executor.WaitForWorkflowCompletionUntilTimeout(ch, testdata.WorkflowValidationTimeout)
-	require.NoError(t, err)
+	require.NoError(t, err, "workflow %s didn't complete", workflowId)
 
 	wfAfter, wfErr := testdata.WorkflowExecutor.GetWorkflow(workflowId, true)
 	require.NoError(t, wfErr)
@@ -535,17 +550,6 @@ func TestYieldTask(t *testing.T) {
 		out = v
 	}
 	assert.Equal(t, "Output passed using the API", out)
-
-	t.Cleanup(func() {
-		err = testdata.WorkflowExecutor.RemoveWorkflow(workflowId)
-		assert.NoError(t, err, "Failed to remove workflow")
-		_, err = testdata.MetadataClient.UnregisterWorkflowDef(
-			context.Background(),
-			wf.GetName(),
-			wf.GetVersion(),
-		)
-		assert.NoError(t, err, "Failed to remove workflow definition")
-	})
 }
 
 func countMultipleSwitchInnerTasks(tasks ...model.WorkflowTask) int {

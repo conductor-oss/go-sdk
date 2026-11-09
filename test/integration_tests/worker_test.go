@@ -75,7 +75,7 @@ func TestFaultyWorker(t *testing.T) {
 		Name("TEST_GO_FAULTY_WORKFLOW_" + uuid).
 		Version(1).
 		Add(workflow.NewSimpleTask(taskName, taskName))
-	require.NoError(t, wf.Register(true))
+	require.NoError(t, testdata.ValidateWorkflowRegistration(wf))
 	t.Cleanup(func() {
 		assert.NoError(t, testdata.ValidateWorkflowDeletion(wf), "Failed to delete workflow")
 	})
@@ -105,7 +105,7 @@ func TestWorkerWithNonRetryableError(t *testing.T) {
 		Version(1).
 		Add(workflow.NewSimpleTask(taskName, taskName))
 
-	require.NoError(t, wf.Register(true))
+	require.NoError(t, testdata.ValidateWorkflowRegistration(wf))
 	t.Cleanup(func() {
 		assert.NoError(t, testdata.ValidateWorkflowDeletion(wf), "Failed to delete workflow")
 	})

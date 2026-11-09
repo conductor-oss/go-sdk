@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Run every agent example against a playback-enabled Conductor server built
-# from a conductor-oss/conductor checkout (branch main).
+# from a conductor-oss/conductor checkout (in CI, the release tag pinned by
+# E2E_TEST_OSS_CONDUCTOR_VERSION).
 #
 #   scripts/run-agents-playback.sh /path/to/conductor
 #

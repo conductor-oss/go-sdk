@@ -51,7 +51,7 @@ func TestConcurrentWorkflowExecution(t *testing.T) {
 	wf = wf.Add(workflow.NewSetVariableTask("set_var").Input("var_value", 42)).Add(workflow.NewWaitForDurationTask("wait_task", duration))
 
 	// Register the workflow
-	err := wf.Register(true)
+	err := testdata.ValidateWorkflowRegistration(wf)
 	assert.NoError(t, err)
 
 	// Start 10 workflows simultaneously
@@ -138,7 +138,7 @@ func TestPerCustomerRateLimit(t *testing.T) {
 		Add(workflow.NewWaitForDurationTask("TEST_GO_WAIT_TASK", duration))
 
 	// Register the workflow
-	err := wf.Register(true)
+	err := testdata.ValidateWorkflowRegistration(wf)
 	assert.NoError(t, err)
 
 	type CustomerWorkflow struct {
@@ -266,7 +266,7 @@ func TestWorkflowRateLimitCRUD_Static(t *testing.T) {
 		Add(workflow.NewSetVariableTask("set_var").Input("x", 1))
 
 	// Register
-	err := wf.Register(true)
+	err := testdata.ValidateWorkflowRegistration(wf)
 	require.NoError(t, err)
 
 	// Cleanup: unregister the definition
@@ -310,7 +310,7 @@ func TestWorkflowRateLimitCRUD_Dynamic(t *testing.T) {
 		Add(workflow.NewSetVariableTask("set_var").Input("x", 1))
 
 	// Register
-	err := wf.Register(true)
+	err := testdata.ValidateWorkflowRegistration(wf)
 	require.NoError(t, err)
 
 	// Cleanup: unregister the definition
