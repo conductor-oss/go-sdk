@@ -197,7 +197,9 @@ func prepareRequest(
 	}
 
 	for header, value := range httpSettings.Headers {
-		localVarRequest.Header.Add(header, value)
+		if localVarRequest.Header.Get(header) == "" {
+			localVarRequest.Header.Set(header, value)
+		}
 	}
 
 	return localVarRequest, nil
