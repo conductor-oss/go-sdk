@@ -57,7 +57,7 @@ func NewHttpPollTask(taskRefName string, input *HttpPollInput) *HttpPollTask {
 		httpRequestMap["connectionTimeOut"] = input.ConnectionTimeOut
 	}
 	if input.ReadTimeout > 0 {
-		httpRequestMap["readTimeout"] = input.ReadTimeout
+		httpRequestMap["readTimeOut"] = input.ReadTimeout
 	}
 	if input.Body != nil {
 		httpRequestMap["body"] = input.Body
@@ -95,7 +95,7 @@ type HttpPollInput struct {
 	Accept              string              `json:"accept,omitempty"`
 	ContentType         string              `json:"contentType,omitempty"`
 	ConnectionTimeOut   int16               `json:"connectionTimeOut,omitempty"`
-	ReadTimeout         int16               `json:"readTimeout,omitempty"`
+	ReadTimeout         int16               `json:"readTimeOut,omitempty"`
 	Body                interface{}         `json:"body,omitempty"`
 	PollingInterval     int                 `json:"pollingInterval,omitempty"`      // In seconds
 	PollingStrategy     string              `json:"pollingStrategy,omitempty"`      // "FIXED" or other strategy

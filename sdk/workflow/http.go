@@ -59,8 +59,8 @@ type HttpInput struct {
 	Headers           map[string][]string `json:"headers,omitempty"`
 	Accept            string              `json:"accept,omitempty"`
 	ContentType       string              `json:"contentType,omitempty"`
-	ConnectionTimeOut int16               `json:"ConnectionTimeOut,omitempty"`
-	ReadTimeout       int16               `json:"readTimeout,omitempty"`
+	ConnectionTimeOut int16               `json:"connectionTimeOut,omitempty"`
+	ReadTimeout       int16               `json:"readTimeOut,omitempty"`
 	Body              interface{}         `json:"body,omitempty"`
 }
 
