@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -52,4 +53,22 @@ func TestHttpTaskTaskDefMapping(t *testing.T) {
 	assert.Equal(t, int32(180), taskDef.PollTimeoutSeconds)
 	assert.Equal(t, int64(1200), taskDef.ResponseTimeoutSeconds)
 	assert.Equal(t, "TIMEOUT_FAILURE", taskDef.TimeoutPolicy)
+}
+
+func TestHttpInputTimeoutJSON(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		input HttpInput
+		want  string
+	}{
+		{"configured", HttpInput{Method: GET, Uri: "http://example.com", ConnectionTimeOut: 12000, ReadTimeout: 15000}, `{"method":"GET","uri":"http://example.com","connectionTimeOut":12000,"readTimeOut":15000}`},
+		{"omitted", HttpInput{Method: GET, Uri: "http://example.com"}, `{"method":"GET","uri":"http://example.com"}`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := json.Marshal(tc.input)
+			if assert.NoError(t, err) {
+				assert.JSONEq(t, tc.want, string(data))
+			}
+		})
+	}
 }
