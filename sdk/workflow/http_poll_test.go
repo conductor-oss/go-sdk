@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -94,4 +95,27 @@ func TestHttpPollTaskInputParameters(t *testing.T) {
 	assert.Equal(t, "FIXED", httpRequest["pollingStrategy"])
 	assert.Equal(t, "(function(){ return $.output.response.body.status == 'FAILED';})();", httpRequest["terminationCondition"])
 	assert.Equal(t, true, httpRequest["encode"])
+}
+
+func TestHttpPollInputTimeoutJSON(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		input HttpPollInput
+		want  string
+	}{
+		{"configured", HttpPollInput{Method: GET, Uri: "http://example.com", ConnectionTimeOut: 12000, ReadTimeout: 15000}, `{"method":"GET","uri":"http://example.com","connectionTimeOut":12000,"readTimeOut":15000}`},
+		{"omitted", HttpPollInput{Method: GET, Uri: "http://example.com"}, `{"method":"GET","uri":"http://example.com"}`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			data, err := json.Marshal(tc.input)
+			if assert.NoError(t, err) {
+				assert.JSONEq(t, tc.want, string(data))
+			}
+			task := NewHttpPollTask("http_poll_task_ref", &tc.input)
+			data, err = json.Marshal(task.toWorkflowTask()[0].InputParameters["http_request"])
+			if assert.NoError(t, err) {
+				assert.JSONEq(t, tc.want, string(data))
+			}
+		})
+	}
 }
