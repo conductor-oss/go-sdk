@@ -53,6 +53,13 @@ func (t *CachedTokenManager) RefreshToken(httpSettings *settings.HttpSettings, h
 	return t.refreshToken(httpSettings, httpClient)
 }
 
+// Invalidate drops the cached token so the next RefreshToken fetches a new one.
+func (t *CachedTokenManager) Invalidate() {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+	t.database.Delete(tokenKey)
+}
+
 func (t *CachedTokenManager) getTokenIfCached() string {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()

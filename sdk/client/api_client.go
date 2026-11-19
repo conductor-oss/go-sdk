@@ -194,9 +194,28 @@ func newAPIClient(
 	}
 }
 
-// callAPI do the request.
+// callAPI do the request. On a 401 it drops the cached token, fetches a new one and retries once:
+// the token may have expired, or come from another server (e.g. the peer region after a failover).
 func (c *APIClient) callAPI(request *http.Request) (*http.Response, error) {
-	return c.httpRequester.httpClient.Do(request)
+	resp, err := c.httpRequester.httpClient.Do(request)
+	tm, ok := c.httpRequester.tokenManager.(interface{ Invalidate() })
+	if err != nil || resp.StatusCode != http.StatusUnauthorized || !ok || (request.Body != nil && request.GetBody == nil) {
+		return resp, err
+	}
+	tm.Invalidate()
+	token, terr := c.httpRequester.tokenManager.RefreshToken(c.httpRequester.httpSettings, c.httpRequester.httpClient)
+	if terr != nil {
+		return resp, err
+	}
+	retry := request.Clone(request.Context())
+	if request.GetBody != nil {
+		if retry.Body, terr = request.GetBody(); terr != nil {
+			return resp, err
+		}
+	}
+	retry.Header.Set("X-Authorization", token)
+	resp.Body.Close()
+	return c.httpRequester.httpClient.Do(retry)
 }
 
 func (c *APIClient) decode(v interface{}, b []byte, contentType string) (err error) {
