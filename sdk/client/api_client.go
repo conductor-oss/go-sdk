@@ -214,7 +214,7 @@ func (c *APIClient) callAPI(request *http.Request) (*http.Response, error) {
 		}
 	}
 	retry.Header.Set("X-Authorization", token)
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	return c.httpRequester.httpClient.Do(retry)
 }
 
