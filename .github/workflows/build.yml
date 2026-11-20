@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - main
+      - fix/refresh-token-on-401
   workflow_dispatch:
 
 jobs:
