@@ -221,7 +221,11 @@ func (c *APIClient) callAPI(request *http.Request) (*http.Response, error) {
 		}
 	}
 	retry.Header.Set("X-Authorization", token)
-	_ = resp.Body.Close()
+	// The caller gets the retry's result, so this error is only logged: returning it would fail a
+	// request whose retry succeeded, and callers skip closing a response that comes with an error.
+	if cerr := resp.Body.Close(); cerr != nil {
+		log.Debug("Failed to close the 401 response body", "error", cerr)
+	}
 	return c.httpRequester.httpClient.Do(retry)
 }
 
