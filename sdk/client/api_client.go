@@ -198,8 +198,15 @@ func newAPIClient(
 // the token may have expired, or come from another server (e.g. the peer region after a failover).
 func (c *APIClient) callAPI(request *http.Request) (*http.Response, error) {
 	resp, err := c.httpRequester.httpClient.Do(request)
+	if err != nil || resp.StatusCode != http.StatusUnauthorized {
+		return resp, err
+	}
 	tm, ok := c.httpRequester.tokenManager.(authentication.TokenInvalidator)
-	if err != nil || resp.StatusCode != http.StatusUnauthorized || !ok || (request.Body != nil && request.GetBody == nil) {
+	if !ok {
+		return resp, err
+	}
+	// A body without GetBody was already consumed by the first attempt and cannot be sent again.
+	if request.Body != nil && request.GetBody == nil {
 		return resp, err
 	}
 	tm.Invalidate()
