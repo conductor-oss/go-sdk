@@ -194,9 +194,39 @@ func newAPIClient(
 	}
 }
 
-// callAPI do the request.
+// callAPI do the request. On a 401 it drops the cached token, fetches a new one and retries once:
+// the token may have expired, or come from another server (e.g. the peer region after a failover).
 func (c *APIClient) callAPI(request *http.Request) (*http.Response, error) {
-	return c.httpRequester.httpClient.Do(request)
+	resp, err := c.httpRequester.httpClient.Do(request)
+	if err != nil || resp.StatusCode != http.StatusUnauthorized {
+		return resp, err
+	}
+	tm, ok := c.httpRequester.tokenManager.(authentication.TokenInvalidator)
+	if !ok {
+		return resp, err
+	}
+	// A body without GetBody was already consumed by the first attempt and cannot be sent again.
+	if request.Body != nil && request.GetBody == nil {
+		return resp, err
+	}
+	tm.Invalidate(request.Header.Get("X-Authorization"))
+	token, terr := c.httpRequester.tokenManager.RefreshToken(c.httpRequester.httpSettings, c.httpRequester.httpClient)
+	if terr != nil {
+		return resp, err
+	}
+	retry := request.Clone(request.Context())
+	if request.GetBody != nil {
+		if retry.Body, terr = request.GetBody(); terr != nil {
+			return resp, err
+		}
+	}
+	retry.Header.Set("X-Authorization", token)
+	// The caller gets the retry's result, so this error is only logged: returning it would fail a
+	// request whose retry succeeded, and callers skip closing a response that comes with an error.
+	if cerr := resp.Body.Close(); cerr != nil {
+		log.Debug("Failed to close the 401 response body", "error", cerr)
+	}
+	return c.httpRequester.httpClient.Do(retry)
 }
 
 func (c *APIClient) decode(v interface{}, b []byte, contentType string) (err error) {

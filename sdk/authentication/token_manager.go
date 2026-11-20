@@ -26,6 +26,17 @@ type TokenManager interface {
 	RefreshToken(httpSettings *settings.HttpSettings, httpClient *http.Client) (string, error)
 }
 
+// TokenInvalidator is optionally implemented by a TokenManager that caches tokens. The client then
+// invalidates the cached token on a 401 and retries the request once with a new one.
+type TokenInvalidator interface {
+	// Invalidate drops the cached token only if it is still staleToken, the one the server rejected,
+	// so concurrent 401s after a failover do not drop a token another request has already refreshed.
+	Invalidate(staleToken string)
+}
+
+// The client finds Invalidate by type assertion, so without this a renamed method still compiles.
+var _ TokenInvalidator = (*CachedTokenManager)(nil)
+
 type CachedTokenManager struct {
 	mutex       sync.RWMutex
 	credentials settings.AuthenticationSettings
@@ -53,6 +64,15 @@ func (t *CachedTokenManager) RefreshToken(httpSettings *settings.HttpSettings, h
 	return t.refreshToken(httpSettings, httpClient)
 }
 
+// Invalidate drops the cached token if it is still staleToken, so the next RefreshToken fetches a new one.
+func (t *CachedTokenManager) Invalidate(staleToken string) {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+	if token, found := t.database.Get(tokenKey); found && token == staleToken {
+		t.database.Delete(tokenKey)
+	}
+}
+
 func (t *CachedTokenManager) getTokenIfCached() string {
 	t.mutex.RLock()
 	defer t.mutex.RUnlock()
@@ -66,6 +86,12 @@ func (t *CachedTokenManager) getTokenIfCached() string {
 func (t *CachedTokenManager) refreshToken(httpSettings *settings.HttpSettings, httpClient *http.Client) (string, error) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
+	// Callers that missed the cache together queue on the lock; only the first should fetch.
+	if cached, found := t.database.Get(tokenKey); found {
+		if token, ok := cached.(string); ok {
+			return token, nil
+		}
+	}
 	log.Debug("Refreshing authentication token")
 	token, response, err := GetToken(t.credentials, httpSettings, httpClient)
 	if err != nil {
