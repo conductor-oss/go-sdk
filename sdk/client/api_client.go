@@ -209,7 +209,7 @@ func (c *APIClient) callAPI(request *http.Request) (*http.Response, error) {
 	if request.Body != nil && request.GetBody == nil {
 		return resp, err
 	}
-	tm.Invalidate()
+	tm.Invalidate(request.Header.Get("X-Authorization"))
 	token, terr := c.httpRequester.tokenManager.RefreshToken(c.httpRequester.httpSettings, c.httpRequester.httpClient)
 	if terr != nil {
 		return resp, err
