@@ -198,7 +198,7 @@ func newAPIClient(
 // the token may have expired, or come from another server (e.g. the peer region after a failover).
 func (c *APIClient) callAPI(request *http.Request) (*http.Response, error) {
 	resp, err := c.httpRequester.httpClient.Do(request)
-	tm, ok := c.httpRequester.tokenManager.(interface{ Invalidate() })
+	tm, ok := c.httpRequester.tokenManager.(authentication.TokenInvalidator)
 	if err != nil || resp.StatusCode != http.StatusUnauthorized || !ok || (request.Body != nil && request.GetBody == nil) {
 		return resp, err
 	}

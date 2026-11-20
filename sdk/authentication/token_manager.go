@@ -26,6 +26,15 @@ type TokenManager interface {
 	RefreshToken(httpSettings *settings.HttpSettings, httpClient *http.Client) (string, error)
 }
 
+// TokenInvalidator is optionally implemented by a TokenManager that caches tokens. The client then
+// invalidates the cached token on a 401 and retries the request once with a new one.
+type TokenInvalidator interface {
+	Invalidate()
+}
+
+// The client finds Invalidate by type assertion, so without this a renamed method still compiles.
+var _ TokenInvalidator = (*CachedTokenManager)(nil)
+
 type CachedTokenManager struct {
 	mutex       sync.RWMutex
 	credentials settings.AuthenticationSettings
